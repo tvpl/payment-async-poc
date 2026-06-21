@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+// Root project is just an aggregator; all real config lives in subprojects.
+subprojects {
+    apply plugin: 'java'
+
+    group = 'com.example.payments'
+    version = '0.1.0'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(project.property('javaLanguageVersion') as Integer)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        // Make virtual-thread / preview-free behavior explicit and tests quiet.
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+            exceptionFormat 'full'
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-parameters'
+    }
+}

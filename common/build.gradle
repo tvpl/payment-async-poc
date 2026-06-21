@@ -1,0 +1,18 @@
+plugins {
+    id 'io.micronaut.library'
+}
+
+micronaut {
+    version = project.property('micronautVersion')
+}
+
+dependencies {
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+    api 'io.micronaut.serde:micronaut-serde-api'
+    api 'io.micronaut.serde:micronaut-serde-jackson'
+    compileOnly 'jakarta.validation:jakarta.validation-api'
+
+    testImplementation platform('org.junit:junit-bom:5.10.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

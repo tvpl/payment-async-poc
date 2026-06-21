@@ -1,0 +1,22 @@
+{
+  "title": "Kafka Overview",
+  "uid": "kafka-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "Consumer lag (max records)", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "max(kafka_consumer_fetch_manager_records_lag_max) by (client_id)", "legendFormat": "{{client_id}}" } ]
+    },
+    {
+      "type": "timeseries", "title": "Records consumed/sec", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(kafka_consumer_fetch_manager_records_consumed_total[1m])) by (client_id)", "legendFormat": "{{client_id}}" } ]
+    }
+  ]
+}

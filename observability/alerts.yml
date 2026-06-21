@@ -1,0 +1,56 @@
+groups:
+  - name: payment-simulation
+    rules:
+      - alert: OutboxBacklogHigh
+        expr: sbus_outbox_pending > 500
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox backlog is high"
+          description: "More than 500 unpublished outbox events for 2m (publisher may be stuck)."
+
+      - alert: OutboxPublishFailures
+        expr: increase(sbus_outbox_publish_failures_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Recurring outbox publish failures"
+          description: "Outbox publication is failing repeatedly."
+
+      - alert: DlqReceivingMessages
+        expr: increase(sbus_dlq_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Messages are landing in the DLQ"
+          description: "Permanent failures detected — inspect payment.simulation.dlq."
+
+      - alert: ApiTimeoutRateHigh
+        expr: rate(api_timeouts_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API timeout (202) rate increasing"
+          description: "Many requests are not completing within the synchronous wait window."
+
+      - alert: ApiLatencyP99High
+        expr: histogram_quantile(0.99, sum(rate(api_wait_latency_seconds_bucket[5m])) by (le)) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API async wait p99 above 3s"
+          description: "p99 of time waiting for the async result exceeds the SLA."
+
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumer_fetch_manager_records_lag_max > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag is high"
+          description: "A consumer group is falling behind by more than 1000 records."

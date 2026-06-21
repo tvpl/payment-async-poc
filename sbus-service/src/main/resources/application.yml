@@ -1,0 +1,89 @@
+micronaut:
+  application:
+    name: payment-sbus
+  server:
+    port: 8081
+  metrics:
+    enabled: true
+    binders:
+      jvm:
+        enabled: true
+      kafka:
+        enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+        descriptions: true
+
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
+  consumers:
+    default:
+      key:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max:
+        poll:
+          records: 100
+  producers:
+    default:
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+
+datasources:
+  default:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:sbus}?stringtype=unspecified
+    username: ${POSTGRES_USER:sbus}
+    password: ${POSTGRES_PASSWORD:sbus}
+    driver-class-name: org.postgresql.Driver
+    dialect: POSTGRES
+    schema-generate: NONE
+    maximum-pool-size: 10
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+
+sbus:
+  outbox:
+    batch-size: 100
+    max-attempts: 8
+    base-backoff: 2s
+    max-backoff: 5m
+    poll-interval: 500ms
+    initial-delay: 3s
+  core:
+    # Throughput guard protecting the (slower) Core from request bursts.
+    limit-for-period: 50
+    refresh-period: 1s
+
+otel:
+  service:
+    name: payment-sbus
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: none
+  exporter:
+    otlp:
+      # Plain default avoids the colon being mis-parsed in a ${VAR:default} placeholder.
+      # Override at runtime with env OTEL_EXPORTER_OTLP_ENDPOINT (Micronaut maps it here).
+      endpoint: http://localhost:4317
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    details-visible: ANONYMOUS
+  prometheus:
+    enabled: true
+    sensitive: false

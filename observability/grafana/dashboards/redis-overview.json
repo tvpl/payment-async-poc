@@ -1,0 +1,25 @@
+{
+  "title": "Redis Overview",
+  "uid": "redis-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat", "title": "Requests waiting (PENDING in Redis)", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(api_pending)", "legendFormat": "pending" } ]
+    },
+    {
+      "type": "timeseries", "title": "Idempotent replays & outcomes /sec", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(api_completed_total[1m])", "legendFormat": "completed" },
+        { "expr": "rate(api_failed_total[1m])", "legendFormat": "failed" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+pluginManagement {
+    plugins {
+        id 'io.micronaut.application' version '4.4.4'
+        id 'io.micronaut.library' version '4.4.4'
+    }
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'payment-async-poc'
+
+include 'common'
+include 'api-service'
+include 'sbus-service'
+include 'core-mock'

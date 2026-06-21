@@ -1,0 +1,35 @@
+micronaut:
+  application:
+    name: payment-core-mock
+  server:
+    port: 8082
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
+  consumers:
+    default:
+      key:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  producers:
+    default:
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  prometheus:
+    enabled: true
+    sensitive: false

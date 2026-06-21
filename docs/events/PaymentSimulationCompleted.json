@@ -1,0 +1,24 @@
+{
+  "eventId": "f4d4c3e5-8888-4aaa-9bbb-000000000107",
+  "eventType": "PaymentSimulationCompleted",
+  "eventVersion": "1.0",
+  "occurredAt": "2026-06-21T18:00:00.420Z",
+  "requestId": "8f1e7c10-2222-4ccc-8ddd-0000000000b2",
+  "correlationId": "c0rr-3333-4eee-9fff-0000000000c3",
+  "causationId": "e3c3b2d4-7777-4aaa-9bbb-0000000000f6",
+  "traceId": "0af7651916cd43dd8448eb211c80319c",
+  "source": "payment-sbus",
+  "payload": {
+    "simulationId": "sim-55555555-6666-4777-8888-0000000000e5",
+    "requestId": "8f1e7c10-2222-4ccc-8ddd-0000000000b2",
+    "status": "APPROVED",
+    "authorizationCode": "123456",
+    "amount": 125.50,
+    "currency": "BRL",
+    "installments": 3,
+    "fees": { "mdr": 2.49, "interchange": 1.25, "netAmount": 122.38 },
+    "settlement": { "settlementDate": "2026-06-22", "settlementType": "D+1" },
+    "errorCode": null,
+    "errorMessage": null
+  }
+}

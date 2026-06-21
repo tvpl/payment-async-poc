@@ -1,0 +1,20 @@
+{
+  "eventId": "b1a1f0c2-1111-4aaa-9bbb-0000000000a1",
+  "eventType": "PaymentSimulationRequested",
+  "eventVersion": "1.0",
+  "occurredAt": "2026-06-21T18:00:00.000Z",
+  "requestId": "8f1e7c10-2222-4ccc-8ddd-0000000000b2",
+  "correlationId": "c0rr-3333-4eee-9fff-0000000000c3",
+  "causationId": "8f1e7c10-2222-4ccc-8ddd-0000000000b2",
+  "traceId": "0af7651916cd43dd8448eb211c80319c",
+  "source": "payment-simulation-api",
+  "payload": {
+    "merchantId": "MERCHANT-001",
+    "amount": 125.50,
+    "currency": "BRL",
+    "paymentMethod": "CREDIT_CARD",
+    "brand": "VISA",
+    "installments": 3,
+    "captureMode": "AUTHORIZE_AND_CAPTURE"
+  }
+}

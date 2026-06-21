@@ -1,0 +1,41 @@
+{
+  "title": "SBUS Overview",
+  "uid": "sbus-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "End-to-end latency p50/p95/p99 (s)", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(sbus_end_to_end_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(sbus_end_to_end_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(sbus_end_to_end_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Outbox published/sec", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "rate(sbus_outbox_published_total[1m])", "legendFormat": "published" } ]
+    },
+    {
+      "type": "timeseries", "title": "Publish failures & DLQ /sec", "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(sbus_outbox_publish_failures_total[1m])", "legendFormat": "publish failures" },
+        { "expr": "rate(sbus_dlq_total[1m])", "legendFormat": "dlq" }
+      ]
+    },
+    {
+      "type": "stat", "title": "Outbox pending", "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(sbus_outbox_pending)", "legendFormat": "pending" } ]
+    }
+  ]
+}

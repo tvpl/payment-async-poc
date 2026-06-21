@@ -1,0 +1,31 @@
+{
+  "title": "PostgreSQL Overview",
+  "uid": "postgres-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "HikariCP active connections", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "hikaricp_connections_active{job=\"payment-sbus\"}", "legendFormat": "active" } ]
+    },
+    {
+      "type": "timeseries", "title": "HikariCP pending / idle", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "hikaricp_connections_pending{job=\"payment-sbus\"}", "legendFormat": "pending" },
+        { "expr": "hikaricp_connections_idle{job=\"payment-sbus\"}", "legendFormat": "idle" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Connection acquire time p95 (s)", "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "histogram_quantile(0.95, sum(rate(hikaricp_connections_acquire_seconds_bucket{job=\"payment-sbus\"}[5m])) by (le))", "legendFormat": "p95" } ]
+    }
+  ]
+}

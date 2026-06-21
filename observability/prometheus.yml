@@ -1,0 +1,30 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: payment-simulation-api
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ['api-service:8080']
+
+  - job_name: payment-sbus
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ['sbus-service:8081']
+
+  - job_name: payment-core-mock
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ['core-mock:8082']
+
+  - job_name: otel-collector
+    static_configs:
+      - targets: ['otel-collector:8889']

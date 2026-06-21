@@ -1,0 +1,69 @@
+micronaut:
+  application:
+    name: payment-simulation-api
+  server:
+    port: 8080
+  metrics:
+    enabled: true
+    binders:
+      jvm:
+        enabled: true
+      kafka:
+        enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+        descriptions: true
+  # The BLOCKING executor is backed by virtual threads on JDK 21+, so the POST
+  # handler can park cheaply while waiting for the async result.
+
+payment:
+  simulation:
+    wait-timeout: 3s
+    status-ttl: 15m
+    idempotency-ttl: 15m
+    response-channel: payment-sim-responses
+
+redis:
+  uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
+  consumers:
+    default:
+      key:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  producers:
+    default:
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+
+otel:
+  service:
+    name: payment-simulation-api
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: none
+  exporter:
+    otlp:
+      # Plain default avoids the colon being mis-parsed in a ${VAR:default} placeholder.
+      # Override at runtime with env OTEL_EXPORTER_OTLP_ENDPOINT (Micronaut maps it here).
+      endpoint: http://localhost:4317
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    details-visible: ANONYMOUS
+  prometheus:
+    enabled: true
+    sensitive: false

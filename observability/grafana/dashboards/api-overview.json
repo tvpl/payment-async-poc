@@ -1,0 +1,48 @@
+{
+  "title": "API Overview",
+  "uid": "api-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "HTTP requests/sec", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(http_server_requests_seconds_count{job=\"payment-simulation-api\"}[1m]))", "legendFormat": "rps" } ]
+    },
+    {
+      "type": "timeseries", "title": "HTTP latency p95 (s)", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"payment-simulation-api\"}[5m])) by (le))", "legendFormat": "p95" } ]
+    },
+    {
+      "type": "timeseries", "title": "Async wait latency p50/p95/p99 (s)", "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(api_wait_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(api_wait_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(api_wait_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "type": "stat", "title": "Pending (waiting) requests", "id": 4,
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(api_pending)", "legendFormat": "pending" } ]
+    },
+    {
+      "type": "timeseries", "title": "Outcomes/sec (completed/failed/timeout)", "id": 5,
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(api_completed_total[1m])", "legendFormat": "completed" },
+        { "expr": "rate(api_failed_total[1m])", "legendFormat": "failed" },
+        { "expr": "rate(api_timeouts_total[1m])", "legendFormat": "timeout(202)" }
+      ]
+    }
+  ]
+}
