@@ -15,8 +15,9 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
 
     /**
      * Atomically claims a batch of due, pending events. {@code FOR UPDATE SKIP LOCKED}
-     * lets multiple SBUS instances poll the outbox concurrently without stepping on
-     * each other — each instance grabs a disjoint set of rows. Must run in a tx.
+     * lets multiple SBUS instances poll concurrently without stepping on each other.
+     * Must run in a (short) tx; the caller flips them to IN_PROGRESS and commits
+     * before doing the slow Kafka publish outside the transaction.
      */
     @Query(value = """
             SELECT * FROM outbox_event
@@ -26,6 +27,20 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
     List<OutboxEvent> lockPendingBatch(Instant now, int limit);
+
+    /** Reclaims rows stuck IN_PROGRESS (publisher crashed mid-flight) back to PENDING. */
+    @Query(value = """
+            UPDATE outbox_event SET status = 'PENDING', claimed_at = NULL
+            WHERE status = 'IN_PROGRESS' AND claimed_at < :threshold
+            """, nativeQuery = true)
+    int reclaimStuck(Instant threshold);
+
+    /** Housekeeping: purge successfully published rows older than the retention window. */
+    @Query(value = """
+            DELETE FROM outbox_event
+            WHERE status = 'PUBLISHED' AND published_at < :threshold
+            """, nativeQuery = true)
+    int deletePublishedBefore(Instant threshold);
 
     long countByStatus(OutboxStatus status);
 }

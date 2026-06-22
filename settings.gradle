@@ -2,6 +2,7 @@ pluginManagement {
     plugins {
         id 'io.micronaut.application' version '4.4.4'
         id 'io.micronaut.library' version '4.4.4'
+        id 'com.github.davidmc24.gradle.plugin.avro' version '1.9.1'
     }
     repositories {
         gradlePluginPortal()

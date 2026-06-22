@@ -17,17 +17,21 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
  * Correlates the asynchronous Kafka response back to the blocked HTTP request.
  *
- * <p>Each in-flight request registers a {@link CompletableFuture}. When a final
- * event arrives (on any instance), that instance writes the result to Redis and
- * publishes the requestId on a Redis pub/sub channel. <em>Every</em> API instance
- * is subscribed, so whichever one holds the waiting future completes it — this is
- * what makes correlation work across horizontally scaled instances.
+ * <p>Each in-flight request registers a {@link CompletableFuture}. When a final event
+ * arrives (on any instance), that instance writes the result to Redis and publishes
+ * the requestId on a Redis pub/sub channel; every instance is subscribed, so whichever
+ * holds the waiting future completes it — correlation works across scaled instances.
+ *
+ * <p>The subscription is established tolerantly (retried if Redis is down at startup),
+ * and pending waiters are released on shutdown so connections aren't left hanging.
  */
 @Singleton
 public class ResponseCoordinator {
@@ -36,11 +40,18 @@ public class ResponseCoordinator {
 
     private final ConcurrentHashMap<String, CompletableFuture<StatusEntry>> waiters =
             new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "redis-subscribe-retry");
+                t.setDaemon(true);
+                return t;
+            });
 
     private final RedisClient redisClient;
     private final RedisStatusStore store;
     private final ApiProperties properties;
-    private StatefulRedisPubSubConnection<String, String> pubSub;
+    private volatile StatefulRedisPubSubConnection<String, String> pubSub;
+    private volatile boolean shuttingDown;
 
     public ResponseCoordinator(RedisClient redisClient,
                                RedisStatusStore store,
@@ -51,22 +62,28 @@ public class ResponseCoordinator {
     }
 
     @PostConstruct
-    void subscribe() {
-        pubSub = redisClient.connectPubSub();
-        pubSub.addListener(new RedisPubSubAdapter<>() {
-            @Override
-            public void message(String channel, String requestId) {
-                complete(requestId);
-            }
-        });
-        pubSub.sync().subscribe(properties.getResponseChannel());
-        LOG.info("Subscribed to Redis channel {}", properties.getResponseChannel());
+    void start() {
+        trySubscribe();
     }
 
-    @PreDestroy
-    void close() {
-        if (pubSub != null) {
-            pubSub.close();
+    private void trySubscribe() {
+        if (shuttingDown) {
+            return;
+        }
+        try {
+            pubSub = redisClient.connectPubSub();
+            pubSub.addListener(new RedisPubSubAdapter<>() {
+                @Override
+                public void message(String channel, String requestId) {
+                    complete(requestId);
+                }
+            });
+            // Lettuce re-subscribes channels automatically after a reconnect.
+            pubSub.sync().subscribe(properties.getResponseChannel());
+            LOG.info("Subscribed to Redis channel {}", properties.getResponseChannel());
+        } catch (Exception e) {
+            LOG.warn("Redis pub/sub subscribe failed; retrying in 5s ({})", e.getMessage());
+            scheduler.schedule(this::trySubscribe, 5, TimeUnit.SECONDS);
         }
     }
 
@@ -96,10 +113,15 @@ public class ResponseCoordinator {
         }
     }
 
+    /** Same as {@link #complete} — used right after register to catch already-finished work. */
+    public void completeFromStore(String requestId) {
+        complete(requestId);
+    }
+
     /**
      * Blocks (on the calling virtual thread) up to {@code timeout} for the result.
      *
-     * @return the terminal entry, or empty on timeout.
+     * @return the terminal entry, or empty on timeout/shutdown.
      */
     public Optional<StatusEntry> await(String requestId, CompletableFuture<StatusEntry> future) {
         Duration timeout = properties.getWaitTimeout();
@@ -111,10 +133,22 @@ public class ResponseCoordinator {
             Thread.currentThread().interrupt();
             return Optional.empty();
         } catch (Exception e) {
-            LOG.error("Error awaiting result for {}", requestId, e);
+            LOG.debug("Await ended without result for {}: {}", requestId, e.getMessage());
             return Optional.empty();
         } finally {
             unregister(requestId);
+        }
+    }
+
+    @PreDestroy
+    void close() {
+        shuttingDown = true;
+        // Release blocked requests so they return 202 instead of hanging the connection.
+        waiters.values().forEach(f ->
+                f.completeExceptionally(new IllegalStateException("API shutting down")));
+        scheduler.shutdownNow();
+        if (pubSub != null) {
+            pubSub.close();
         }
     }
 

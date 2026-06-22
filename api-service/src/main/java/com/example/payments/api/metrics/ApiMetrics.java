@@ -25,7 +25,6 @@ public class ApiMetrics {
     private final MeterRegistry registry;
     private final ResponseCoordinator coordinator;
 
-    private Counter requests;
     private Counter timeouts;
     private Counter completed;
     private Counter failed;
@@ -38,7 +37,6 @@ public class ApiMetrics {
 
     @PostConstruct
     void init() {
-        this.requests = registry.counter("api_requests_total");
         this.timeouts = registry.counter("api_timeouts_total");
         this.completed = registry.counter("api_completed_total");
         this.failed = registry.counter("api_failed_total");
@@ -48,8 +46,10 @@ public class ApiMetrics {
         registry.gauge("api_pending", coordinator, ResponseCoordinator::pendingCount);
     }
 
-    public void recordRequest() {
-        requests.increment();
+    /** Tagged by payment method (low cardinality) for per-method request rates. */
+    public void recordRequest(String paymentMethod) {
+        registry.counter("api_requests_total", "payment_method",
+                paymentMethod == null ? "unknown" : paymentMethod).increment();
     }
 
     public void recordTimeout() {

@@ -25,8 +25,15 @@ qualquer serviço externo/legado no futuro.
 | **core-mock** | 8082 | Core simulado: consome comando, calcula taxas/autorização, responde por evento |
 | **common** | — | Contratos de evento compartilhados (`EventEnvelope`, payloads, enums, constantes) |
 
-Infra: **Kafka** (KRaft), **Redis**, **PostgreSQL**, **OpenTelemetry Collector**,
-**Jaeger**, **Prometheus**, **Grafana**.
+Infra: **Kafka** (KRaft), **Redis**, **PostgreSQL**, **Apicurio Schema Registry**,
+**OpenTelemetry Collector**, **Jaeger**, **Prometheus**, **Grafana**.
+
+> **Serialização**: os eventos no Kafka usam **Avro + Apicurio Schema Registry**
+> (os serdes do Confluent não estão disponíveis no Maven Central / repo bloqueado;
+> Apicurio é compatível e está no Central). O schema-id fica embutido no payload
+> (headers desabilitados), tornando os bytes auto-descritivos — é o que permite o SBUS
+> guardá-los na outbox e republicá-los intactos. HTTP e Redis continuam em JSON; a
+> tradução POJO↔Avro fica em `common/.../mapping/AvroMapper.java`.
 
 ---
 
@@ -89,7 +96,8 @@ docker compose ps
 
 UIs e endpoints:
 
-- API: http://localhost:8080
+- API: http://localhost:8080  · OpenAPI: `http://localhost:8080/swagger/payment-simulation-api-1.0.yml`
+- Apicurio Schema Registry: http://localhost:8085 (UI/API)
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin/admin) — dashboards em *Payment Simulation*
 - Jaeger (traces): http://localhost:16686
@@ -116,10 +124,15 @@ curl -i -X POST http://localhost:8080/payment-simulations \
 curl -i http://localhost:8080/payment-simulations/<requestId>
 
 # 3) Idempotência: repetir o POST com a MESMA Idempotency-Key reusa o requestId original
+
+# 4) Carga (rajada) — exercita rate limit (429), 200/202 e virtual threads
+k6 run -e BASE_URL=http://localhost:8080 -e RATE=300 -e DURATION=1m load/k6-simulations.js
 ```
 
 Respostas: `200` (COMPLETED) · `422` (FAILED/recusado) · `202` (segue assíncrono, com `statusUrl`)
-· `400` (payload inválido) · `500/504` (erro/infra).
+· `400` (payload inválido, corpo `application/problem+json`) · `429` (rate limit, com `Retry-After`)
+· `503` (falha de publicação) · `500` (erro). O `GET` cai para o **SBUS (durável)** quando o
+Redis não tem o resultado, então uma resposta finalizada nunca se perde.
 
 ---
 
@@ -130,14 +143,19 @@ Respostas: `200` (COMPLETED) · `422` (FAILED/recusado) · `202` (segue assíncr
 ./gradlew :common:test :api-service:test --tests '*UnitTest*'   # testes unitários (sem Docker)
 ```
 
-Subir infra e rodar um serviço fora do compose (Kafka exposto em `localhost:29092`):
+Subir infra e rodar um serviço fora do compose (Kafka exposto em `localhost:29092`).
+Use o profile **`dev`** para desativar o export OTLP quando não há collector:
 
 ```bash
-docker compose up -d kafka kafka-init redis postgres otel-collector jaeger prometheus grafana
+docker compose up -d kafka kafka-init redis postgres apicurio-registry otel-collector jaeger prometheus grafana
+export MICRONAUT_ENVIRONMENTS=dev
 KAFKA_BOOTSTRAP_SERVERS=localhost:29092 ./gradlew :sbus-service:run
 KAFKA_BOOTSTRAP_SERVERS=localhost:29092 ./gradlew :api-service:run
 KAFKA_BOOTSTRAP_SERVERS=localhost:29092 ./gradlew :core-mock:run
 ```
+
+> **Java 25**: alvo centralizado em `gradle.properties` (`javaLanguageVersion`). O código de
+> virtual threads é idêntico ao 21; para subir, troque a propriedade e as imagens base nos `Dockerfile`.
 
 ---
 
@@ -150,8 +168,10 @@ traceId, source, payload`. Exemplos completos em [`docs/events/`](docs/events):
 - `PaymentSimulationRequested` · `ProcessPaymentSimulationCommand` · `CorePaymentSimulationResponse`
 - `PaymentSimulationCompleted` · `PaymentSimulationFailed`
 
-`eventVersion` permite evolução compatível. O payload é **JSON** hoje; o mesmo envelope
-suporta migração futura para **Avro/Protobuf + Schema Registry** sem mudar a lógica de correlação.
+No Kafka os eventos trafegam em **Avro** (schemas em `common/src/main/avro/*.avsc`, um por
+evento com o envelope inline + payload tipado), registrados no **Apicurio Schema Registry**.
+`eventVersion` + compatibilidade de schema no registry permitem evolução segura. Os JSON em
+`docs/events/` são ilustrativos do envelope/campos (o formato de wire é Avro binário).
 
 ### Tópicos Kafka (particionados por `requestId`)
 
@@ -174,9 +194,10 @@ Estados: `PENDING → SENT_TO_SBUS → PROCESSING → COMPLETED | FAILED | TIMEO
 
 ## PostgreSQL (no SBUS)
 
-Tabelas (migrations Flyway em `sbus-service/.../db/migration`): `payment_sbus_message`,
-`outbox_event`, `idempotency_record`. Colunas JSON em `jsonb` (a URL usa
-`stringtype=unspecified` para o driver fazer o cast a partir de `String`).
+Tabelas (migrations Flyway em `sbus-service/.../db/migration`): `payment_sbus_message`
+(inclui `result` jsonb — fonte durável para o fallback do GET), `outbox_event`
+(`payload` em **`bytea`** = bytes Avro; `status`, `claimed_at` para o lease), `idempotency_record`.
+A URL usa `stringtype=unspecified` para o driver fazer o cast de `String` para `jsonb`.
 
 ---
 
@@ -188,12 +209,16 @@ Resolve o problema de **dual-write** (gravar no banco *e* publicar no Kafka atom
 2. Abre transação no Postgres.
 3. Grava/atualiza `payment_sbus_message`.
 4. Grava o evento em `outbox_event` (ex.: `ProcessPaymentSimulationCommand`).
-5. Commita — banco e outbox no **mesmo** commit.
-6. `OutboxPublisher` (`@Scheduled`) lê pendentes com `FOR UPDATE SKIP LOCKED` (várias instâncias em paralelo, sem colisão).
-7. Publica no Kafka **replayando os headers técnicos** (inclusive `traceparent`).
-8. Marca `PUBLISHED` (`published_at`).
-9. Em falha: `attempts++`, `next_attempt_at` com **backoff exponencial**, `last_error`.
-10. Após `max-attempts`: envia para a **DLQ** e marca `FAILED`.
+5. Commita — banco e outbox no **mesmo** commit (o payload já é o **byte[] Avro** auto-descritivo).
+6. **Claim/lease**: `OutboxClaimService.claimBatch()` (Tx1 curta) reivindica pendentes com
+   `FOR UPDATE SKIP LOCKED` e marca `IN_PROGRESS` + `claimed_at` (várias instâncias em paralelo, sem colisão).
+7. `OutboxDispatcher` publica no Kafka **fora da transação** (sem segurar locks durante o I/O),
+   replayando os headers técnicos (inclusive `traceparent`).
+8. Tx2: marca `PUBLISHED` (`published_at`) ou, em falha, `attempts++` + `next_attempt_at` com
+   **backoff exponencial** (`BackoffCalculator`).
+9. Após `max-attempts`: envia para a **DLQ** e marca `FAILED`.
+10. `OutboxReaper` devolve linhas `IN_PROGRESS` presas (publisher caiu) para `PENDING`;
+    `OutboxHousekeeping` purga `PUBLISHED` antigos (retenção configurável) para a tabela não crescer.
 
 O mesmo mecanismo publica os eventos finais (`PaymentSimulationCompleted/Failed`) de volta para a API.
 
@@ -208,8 +233,8 @@ O mesmo mecanismo publica os eventos finais (`PaymentSimulationCompleted/Failed`
 - **Limite de concorrência / backpressure** *não* vem das virtual threads: virtual threads
   só tornam a espera barata; **não** limitam carga no Core. Quem absorve rajada e dá
   backpressure é **Kafka** (buffer), a **outbox** e o **rate limiter** do `core.command`.
-- Estratégia de rate limit na API: documentada (limite global / por merchant via gateway ou
-  filtro); o backpressure de fato vem do pipeline assíncrono a jusante.
+- Rate limit na API: **`ConcurrencyLimitFilter`** (Resilience4j) na admissão do `POST` →
+  `429` + `Retry-After` quando a taxa configurada (`payment.simulation.rate-limit.*`) é excedida.
 
 ---
 
@@ -231,13 +256,17 @@ O mesmo mecanismo publica os eventos finais (`PaymentSimulationCompleted/Failed`
 
 ## Pontos de resiliência
 
-- **Outbox** garante publicação confiável mesmo com Kafka indisponível no momento do commit.
+- **Outbox** garante publicação confiável mesmo com Kafka indisponível no momento do commit
+  (publica fora da transação via claim/lease; `OutboxReaper` recupera linhas presas).
+- **Consumers sem perda silenciosa**: `OffsetStrategy.SYNC_PER_RECORD` + retry in-process com
+  backoff; ao esgotar (ou em mensagem venenosa) → **DLQ explícita** antes de avançar o offset.
 - **Idempotência** em três camadas: Redis (`idem:`), `payment_sbus_message.request_id` (UNIQUE) e `idempotency_record`.
-- **Retry com backoff** + **DLQ** para mensagens venenosas (parse/validação) e falhas permanentes.
 - **`SKIP LOCKED`** permite múltiplas instâncias do SBUS publicando a outbox sem duplicar.
-- **Rate limiter** no `core.command` (Resilience4j) protege o Core de rajadas.
-- **Producer idempotente** (`acks=all`, `enable.idempotence=true`).
-- **Timeout** na espera HTTP evita segurar conexões indefinidamente.
+- **Rate limiter** no `core.command` (Resilience4j) protege o Core; e na **admissão da API** (→ 429).
+- **GET com fallback durável** (SBUS/Postgres) → resultado nunca se perde por TTL/instância.
+- **Redis lazy + resubscribe**: app sobe mesmo com Redis fora; pub/sub se reinscreve.
+- **Shutdown gracioso**: waiters bloqueados são liberados (não penduram conexões).
+- **Producer idempotente** (`acks=all`, `enable.idempotence=true`) e **timeout** obrigatório na espera HTTP.
 
 ---
 
@@ -265,13 +294,16 @@ O mesmo mecanismo publica os eventos finais (`PaymentSimulationCompleted/Failed`
 
 ## Testes
 
-- **Unitários** (sem Docker): `EventEnvelopeUnitTest` (common), `ApiPaymentServiceUnitTest` (API).
-- **Integração (Testcontainers, exigem Docker)**: `SbusFlowIT` (Postgres+Kafka: requested →
+- **Unitários** (sem Docker): `EventEnvelopeUnitTest` e `AvroMapperUnitTest` (common, round-trip
+  POJO↔Avro), `ApiPaymentServiceUnitTest` (API, inclui a corrida *read-after-register*),
+  `BackoffCalculatorUnitTest` (SBUS).
+- **Integração (Testcontainers, exigem Docker)**: `SbusFlowIT` (Postgres+Kafka+Apicurio: requested →
   persistência+outbox → core.command → core.response → completed) e `ApiFlowIT`
-  (Kafka+Redis: `202` → correlação do evento final → `GET COMPLETED`).
+  (Kafka+Redis+Apicurio: `202` → correlação do evento final → `GET COMPLETED`).
 
 ```bash
-./gradlew test            # roda tudo (precisa de Docker para os *IT)
+./gradlew :common:test :api-service:test :sbus-service:test --tests '*UnitTest*'   # sem Docker
+./gradlew test            # tudo (os *IT precisam de Docker + Apicurio)
 ```
 
 ---
@@ -282,10 +314,11 @@ O mesmo mecanismo publica os eventos finais (`PaymentSimulationCompleted/Failed`
 payment-async-poc/
 ├── settings.gradle, build.gradle, gradle.properties
 ├── docker-compose.yml
-├── common/            # contratos de evento
-├── api-service/       # API HTTP + virtual threads + Redis + Kafka
-├── sbus-service/      # consumers + Outbox + Postgres (Flyway)
+├── common/            # contratos: schemas Avro (src/main/avro), AvroMapper, AvroSerde, envelope/POJOs
+├── api-service/       # API HTTP + virtual threads + Redis + Kafka (Avro) + rate limit + fallback GET
+├── sbus-service/      # consumers (Avro) + Outbox (claim/lease + reaper + housekeeping) + Postgres (Flyway)
 ├── core-mock/         # Core simulado
 ├── observability/     # prometheus.yml, alerts.yml, otel-collector.yml, grafana/
-└── docs/events/       # exemplos de contratos de evento
+├── load/              # k6-simulations.js (teste de carga)
+└── docs/events/       # exemplos de contratos de evento (JSON ilustrativo)
 ```

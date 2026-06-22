@@ -24,6 +24,12 @@ payment:
     status-ttl: 15m
     idempotency-ttl: 15m
     response-channel: payment-sim-responses
+    rate-limit:
+      limit-for-period: 200
+      refresh-period: 1s
+
+sbus:
+  base-url: ${SBUS_BASE_URL:`http://localhost:8081`}
 
 redis:
   uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
@@ -36,13 +42,17 @@ kafka:
       key:
         deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value:
-        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   producers:
     default:
       key:
         serializer: org.apache.kafka.common.serialization.StringSerializer
       value:
-        serializer: org.apache.kafka.common.serialization.StringSerializer
+        serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+
+apicurio:
+  registry:
+    url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
 
 otel:
   service:

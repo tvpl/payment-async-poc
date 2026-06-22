@@ -18,13 +18,17 @@ kafka:
       key:
         deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value:
-        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   producers:
     default:
       key:
         serializer: org.apache.kafka.common.serialization.StringSerializer
       value:
-        serializer: org.apache.kafka.common.serialization.StringSerializer
+        serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+
+apicurio:
+  registry:
+    url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
 
 endpoints:
   all:

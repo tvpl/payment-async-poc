@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "PaymentSimulationFailed",
+  "namespace": "com.example.payments.common.avro",
+  "fields": [
+    { "name": "eventId", "type": "string" },
+    { "name": "eventType", "type": "string" },
+    { "name": "eventVersion", "type": "string" },
+    { "name": "occurredAt", "type": "long" },
+    { "name": "requestId", "type": "string" },
+    { "name": "correlationId", "type": "string" },
+    { "name": "causationId", "type": ["null", "string"], "default": null },
+    { "name": "traceId", "type": ["null", "string"], "default": null },
+    { "name": "source", "type": "string" },
+    { "name": "payload", "type": "com.example.payments.common.avro.SimulationResultPayload" }
+  ]
+}

@@ -6,6 +6,7 @@ import jakarta.inject.Singleton;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
@@ -22,12 +23,12 @@ import java.util.Properties;
 public class KafkaProducerFactory {
 
     @Singleton
-    public Producer<String, String> kafkaProducer(
-            @Value("${kafka.bootstrap.servers:localhost:9092}") String bootstrapServers) {
+    public Producer<String, byte[]> kafkaProducer(
+            @Value("${kafka.bootstrap.servers:`localhost:9092`}") String bootstrapServers) {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, "sbus-outbox-publisher");

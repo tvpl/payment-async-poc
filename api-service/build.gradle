@@ -15,14 +15,20 @@ micronaut {
 dependencies {
     annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
     annotationProcessor 'io.micronaut:micronaut-http-validation'
+    annotationProcessor 'io.micronaut.openapi:micronaut-openapi'
 
     implementation project(':common')
 
     implementation 'io.micronaut:micronaut-http-server-netty'
+    implementation 'io.micronaut:micronaut-http-client'
     implementation 'io.micronaut.serde:micronaut-serde-jackson'
     implementation 'io.micronaut.kafka:micronaut-kafka'
     implementation 'io.micronaut.redis:micronaut-redis-lettuce'
     implementation 'io.micronaut.validation:micronaut-validation'
+    implementation 'io.micronaut.openapi:micronaut-openapi-annotations'
+
+    // Rate limiting (programmatic) -> HTTP 429 under bursts
+    implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.2.0'
 
     // Observability
     implementation 'io.micronaut:micronaut-management'

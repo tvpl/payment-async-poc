@@ -9,18 +9,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-/** Synchronous Kafka send used by the outbox dispatcher and the DLQ path. */
+/** Synchronous Kafka send of raw bytes (Avro), used by the outbox dispatcher and DLQ. */
 @Singleton
 public class KafkaPublisher {
 
-    private final Producer<String, String> producer;
+    private final Producer<String, byte[]> producer;
 
-    public KafkaPublisher(Producer<String, String> producer) {
+    public KafkaPublisher(Producer<String, byte[]> producer) {
         this.producer = producer;
     }
 
     /** Sends and blocks until the broker acknowledges, surfacing any failure. */
-    public void send(String topic, String key, String payload, Map<String, String> headers) {
+    public void send(String topic, String key, byte[] payload, Map<String, String> headers) {
         RecordHeaders recordHeaders = new RecordHeaders();
         if (headers != null) {
             headers.forEach((k, v) -> {
@@ -29,7 +29,7 @@ public class KafkaPublisher {
                 }
             });
         }
-        ProducerRecord<String, String> record =
+        ProducerRecord<String, byte[]> record =
                 new ProducerRecord<>(topic, null, key, payload, recordHeaders);
         try {
             producer.send(record).get();

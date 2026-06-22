@@ -23,8 +23,10 @@ kafka:
     default:
       key:
         deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Avro bytes are decoded explicitly via AvroSerde so we keep control over
+      # poison messages (route them to the DLQ) instead of failing in the deserializer.
       value:
-        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
       max:
         poll:
           records: 100
@@ -33,7 +35,12 @@ kafka:
       key:
         serializer: org.apache.kafka.common.serialization.StringSerializer
       value:
-        serializer: org.apache.kafka.common.serialization.StringSerializer
+        serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+
+# Apicurio Schema Registry (Confluent serdes are not available on Maven Central here).
+apicurio:
+  registry:
+    url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
 
 datasources:
   default:

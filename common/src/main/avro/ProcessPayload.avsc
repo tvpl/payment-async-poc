@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "ProcessPayload",
+  "namespace": "com.example.payments.common.avro",
+  "fields": [
+    { "name": "simulationId", "type": "string" },
+    { "name": "request", "type": "com.example.payments.common.avro.PaymentRequest" }
+  ]
+}

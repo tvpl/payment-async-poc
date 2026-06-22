@@ -4,6 +4,8 @@ import com.example.payments.common.events.EventEnvelope;
 import com.example.payments.common.events.EventTypes;
 import com.example.payments.common.events.Sources;
 import com.example.payments.common.events.Topics;
+import com.example.payments.common.kafka.AvroSerde;
+import com.example.payments.common.mapping.AvroMapper;
 import com.example.payments.common.model.CorePaymentSimulationResponsePayload;
 import com.example.payments.common.model.PaymentSimulationRequestPayload;
 import com.example.payments.common.model.ProcessPaymentSimulationCommandPayload;
@@ -47,17 +49,20 @@ public class PaymentSimulationService {
     private final IdempotencyRecordRepository idempotencyRepository;
     private final Json json;
     private final SbusMetrics metrics;
+    private final AvroSerde avroSerde;
 
     public PaymentSimulationService(PaymentSbusMessageRepository messageRepository,
                                     OutboxEventRepository outboxRepository,
                                     IdempotencyRecordRepository idempotencyRepository,
                                     Json json,
-                                    SbusMetrics metrics) {
+                                    SbusMetrics metrics,
+                                    AvroSerde avroSerde) {
         this.messageRepository = messageRepository;
         this.outboxRepository = outboxRepository;
         this.idempotencyRepository = idempotencyRepository;
         this.json = json;
         this.metrics = metrics;
+        this.avroSerde = avroSerde;
     }
 
     /**
@@ -101,7 +106,8 @@ public class PaymentSimulationService {
                 Sources.SBUS,
                 new ProcessPaymentSimulationCommandPayload(simulationId, env.payload()));
 
-        recordOutbox(command, Topics.CORE_COMMAND, env.requestId(), traceparent);
+        byte[] commandBytes = avroSerde.serialize(Topics.CORE_COMMAND, AvroMapper.toAvroCommand(command));
+        recordOutbox(command, Topics.CORE_COMMAND, env.requestId(), traceparent, commandBytes);
 
         LOG.info("Persisted simulation and enqueued Core command requestId={} simulationId={}",
                 env.requestId(), simulationId);
@@ -145,6 +151,7 @@ public class PaymentSimulationService {
         message.setStatus(approved ? SbusMessageStatus.COMPLETED : SbusMessageStatus.FAILED);
         message.setErrorCode(core.errorCode());
         message.setErrorMessage(core.errorMessage());
+        message.setResult(json.toJson(result));
         messageRepository.update(message);
 
         String finalType = approved
@@ -153,7 +160,10 @@ public class PaymentSimulationService {
         String finalTopic = approved ? Topics.COMPLETED : Topics.FAILED;
 
         EventEnvelope<SimulationResult> finalEvent = env.deriveAs(finalType, Sources.SBUS, result);
-        recordOutbox(finalEvent, finalTopic, message.getRequestId(), null);
+        byte[] finalBytes = approved
+                ? avroSerde.serialize(finalTopic, AvroMapper.toAvroCompleted(finalEvent))
+                : avroSerde.serialize(finalTopic, AvroMapper.toAvroFailed(finalEvent));
+        recordOutbox(finalEvent, finalTopic, message.getRequestId(), null, finalBytes);
 
         if (message.getCreatedAt() != null) {
             metrics.recordEndToEnd(Duration.between(message.getCreatedAt(), Instant.now()));
@@ -162,7 +172,8 @@ public class PaymentSimulationService {
                 finalType, message.getRequestId(), core.simulationId());
     }
 
-    private void recordOutbox(EventEnvelope<?> envelope, String topic, String key, String traceparent) {
+    private void recordOutbox(EventEnvelope<?> envelope, String topic, String key,
+                              String traceparent, byte[] payload) {
         Map<String, String> headers = HeaderMap.from(envelope, traceparent);
         OutboxEvent outbox = new OutboxEvent();
         outbox.setAggregateType(AGGREGATE_TYPE);
@@ -170,7 +181,7 @@ public class PaymentSimulationService {
         outbox.setEventType(envelope.eventType());
         outbox.setTopic(topic);
         outbox.setKey(key);
-        outbox.setPayload(json.toJson(envelope));
+        outbox.setPayload(payload);
         outbox.setHeaders(json.toJson(headers));
         outbox.setStatus(OutboxStatus.PENDING);
         outbox.setAttempts(0);

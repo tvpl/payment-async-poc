@@ -1,10 +1,13 @@
 package com.example.payments.coremock;
 
+import com.example.payments.common.avro.ProcessPaymentSimulationCommand;
 import com.example.payments.common.events.EventEnvelope;
 import com.example.payments.common.events.EventTypes;
 import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Sources;
 import com.example.payments.common.events.Topics;
+import com.example.payments.common.kafka.AvroSerde;
+import com.example.payments.common.mapping.AvroMapper;
 import com.example.payments.common.model.CorePaymentSimulationResponsePayload;
 import com.example.payments.common.model.Fees;
 import com.example.payments.common.model.ProcessPaymentSimulationCommandPayload;
@@ -13,8 +16,6 @@ import com.example.payments.common.model.SimulationResult;
 import io.micronaut.configuration.kafka.annotation.KafkaListener;
 import io.micronaut.configuration.kafka.annotation.OffsetReset;
 import io.micronaut.configuration.kafka.annotation.Topic;
-import io.micronaut.core.type.Argument;
-import io.micronaut.serde.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +27,9 @@ import java.time.LocalDate;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Simulated external Core. Consumes {@code ProcessPaymentSimulationCommand}, fakes
- * authorization + fee computation (with an occasional decline), and replies on
- * {@code payment.simulation.core.response}. Intentionally minimal — the Core is a
- * black box in this architecture.
+ * Simulated external Core. Consumes {@code ProcessPaymentSimulationCommand} (Avro),
+ * fakes authorization + fee computation (with an occasional decline), and replies on
+ * {@code payment.simulation.core.response}. Intentionally minimal.
  */
 @KafkaListener(groupId = "payment-core-mock", offsetReset = OffsetReset.EARLIEST)
 public class CoreSimulationConsumer {
@@ -39,22 +39,18 @@ public class CoreSimulationConsumer {
     private static final BigDecimal MDR_PERCENT = new BigDecimal("2.49");
     private static final BigDecimal INTERCHANGE_PERCENT = new BigDecimal("1.25");
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static final Argument<EventEnvelope<ProcessPaymentSimulationCommandPayload>> TYPE =
-            (Argument) Argument.of(EventEnvelope.class, ProcessPaymentSimulationCommandPayload.class);
-
-    private final ObjectMapper objectMapper;
+    private final AvroSerde avroSerde;
     private final CoreResponseProducer producer;
 
-    public CoreSimulationConsumer(ObjectMapper objectMapper, CoreResponseProducer producer) {
-        this.objectMapper = objectMapper;
+    public CoreSimulationConsumer(AvroSerde avroSerde, CoreResponseProducer producer) {
+        this.avroSerde = avroSerde;
         this.producer = producer;
     }
 
     @Topic(Topics.CORE_COMMAND)
-    public void onCommand(ConsumerRecord<String, String> record) throws Exception {
-        EventEnvelope<ProcessPaymentSimulationCommandPayload> env =
-                objectMapper.readValue(record.value(), TYPE);
+    public void onCommand(ConsumerRecord<String, byte[]> record) throws Exception {
+        ProcessPaymentSimulationCommand avro = avroSerde.deserialize(record.topic(), record.value());
+        EventEnvelope<ProcessPaymentSimulationCommandPayload> env = AvroMapper.fromAvro(avro);
         ProcessPaymentSimulationCommandPayload cmd = env.payload();
 
         // Simulate Core processing latency.
@@ -65,10 +61,9 @@ public class CoreSimulationConsumer {
         EventEnvelope<CorePaymentSimulationResponsePayload> out =
                 env.deriveAs(EventTypes.CORE_PAYMENT_SIMULATION_RESPONSE, Sources.CORE, response);
 
+        byte[] bytes = avroSerde.serialize(Topics.CORE_RESPONSE, AvroMapper.toAvroCoreResponse(out));
         String traceparent = header(record, Headers.TRACEPARENT);
-        producer.send(env.requestId(), env.requestId(),
-                traceparent == null ? "" : traceparent,
-                objectMapper.writeValueAsString(out));
+        producer.send(env.requestId(), env.requestId(), traceparent == null ? "" : traceparent, bytes);
         LOG.info("Core replied status={} requestId={} simulationId={}",
                 response.status(), env.requestId(), cmd.simulationId());
     }
@@ -100,7 +95,7 @@ public class CoreSimulationConsumer {
                 fees, settlement, null, null);
     }
 
-    private static String header(ConsumerRecord<String, String> record, String name) {
+    private static String header(ConsumerRecord<String, byte[]> record, String name) {
         var h = record.headers().lastHeader(name);
         return h == null ? null : new String(h.value(), StandardCharsets.UTF_8);
     }

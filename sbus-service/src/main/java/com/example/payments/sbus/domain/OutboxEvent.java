@@ -28,8 +28,8 @@ public class OutboxEvent {
     @MappedProperty("message_key")
     private String key;
 
-    @MappedProperty(type = DataType.JSON)
-    private String payload;
+    /** Self-describing Avro bytes (schema id embedded) ready to publish as-is. */
+    private byte[] payload;
 
     @MappedProperty(type = DataType.JSON)
     private String headers;
@@ -39,6 +39,7 @@ public class OutboxEvent {
 
     private int attempts;
     private Instant nextAttemptAt;
+    private Instant claimedAt;
 
     @DateCreated
     private Instant createdAt;
@@ -94,11 +95,11 @@ public class OutboxEvent {
         this.key = key;
     }
 
-    public String getPayload() {
+    public byte[] getPayload() {
         return payload;
     }
 
-    public void setPayload(String payload) {
+    public void setPayload(byte[] payload) {
         this.payload = payload;
     }
 
@@ -132,6 +133,14 @@ public class OutboxEvent {
 
     public void setNextAttemptAt(Instant nextAttemptAt) {
         this.nextAttemptAt = nextAttemptAt;
+    }
+
+    public Instant getClaimedAt() {
+        return claimedAt;
+    }
+
+    public void setClaimedAt(Instant claimedAt) {
+        this.claimedAt = claimedAt;
     }
 
     public Instant getCreatedAt() {

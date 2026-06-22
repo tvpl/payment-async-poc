@@ -1,13 +1,14 @@
 package com.example.payments.api.service;
 
+import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.kafka.PaymentRequestProducer;
 import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
+import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.model.SimulationStatus;
-import io.micronaut.serde.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,23 +30,25 @@ class ApiPaymentServiceUnitTest {
     private RedisStatusStore store;
     private ResponseCoordinator coordinator;
     private PaymentRequestProducer producer;
-    private ObjectMapper objectMapper;
+    private AvroSerde avroSerde;
     private ApiMetrics metrics;
+    private SbusStatusClient sbusStatusClient;
     private ApiPaymentService service;
 
     private static final PaymentSimulationRequest REQUEST = new PaymentSimulationRequest(
             "MERCHANT-001", new BigDecimal("125.50"), "BRL", "CREDIT_CARD", "VISA", 3, "AUTHORIZE_AND_CAPTURE");
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         store = mock(RedisStatusStore.class);
         coordinator = mock(ResponseCoordinator.class);
         producer = mock(PaymentRequestProducer.class);
-        objectMapper = mock(ObjectMapper.class);
+        avroSerde = mock(AvroSerde.class);
         metrics = mock(ApiMetrics.class);
-        service = new ApiPaymentService(store, coordinator, producer, objectMapper, metrics);
+        sbusStatusClient = mock(SbusStatusClient.class);
+        service = new ApiPaymentService(store, coordinator, producer, avroSerde, metrics, sbusStatusClient);
 
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(avroSerde.serialize(anyString(), any())).thenReturn(new byte[]{1});
         when(coordinator.register(anyString())).thenReturn(new CompletableFuture<>());
         when(store.reserveIdempotency(anyString(), anyString())).thenReturn(Optional.empty());
     }
@@ -62,8 +65,8 @@ class ApiPaymentServiceUnitTest {
         assertFalse(result.timedOut());
         assertFalse(result.duplicate());
         assertEquals(SimulationStatus.COMPLETED, result.entry().status());
-        verify(metrics).recordRequest();
-        verify(producer).send(anyString(), anyString(), anyString(), any(), anyString());
+        verify(metrics).recordRequest(anyString());
+        verify(producer).send(anyString(), anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -76,6 +79,18 @@ class ApiPaymentServiceUnitTest {
 
         assertTrue(result.timedOut());
         verify(metrics).recordTimeout();
+    }
+
+    @Test
+    void readsAfterRegisterToCatchFastResponses() {
+        // The fix for the "fast response lost the waiter" race: submit must poll the
+        // store right after registering, before blocking on the future.
+        when(coordinator.await(anyString(), any()))
+                .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
+
+        service.submit(REQUEST, null);
+
+        verify(coordinator).completeFromStore(anyString());
     }
 
     @Test

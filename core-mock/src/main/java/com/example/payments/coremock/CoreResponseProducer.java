@@ -13,5 +13,5 @@ public interface CoreResponseProducer {
     void send(@KafkaKey String key,
               @MessageHeader("x-request-id") String requestId,
               @MessageHeader("traceparent") String traceparent,
-              String value);
+              byte[] value);
 }

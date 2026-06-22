@@ -34,6 +34,10 @@ public class PaymentSbusMessage {
     private String errorCode;
     private String errorMessage;
 
+    /** Final SimulationResult as JSON, for the API's durable status fallback. */
+    @MappedProperty(type = DataType.JSON)
+    private String result;
+
     @DateCreated
     private Instant createdAt;
 
@@ -118,6 +122,14 @@ public class PaymentSbusMessage {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
+    public void setResult(String result) {
+        this.result = result;
     }
 
     public Instant getCreatedAt() {
