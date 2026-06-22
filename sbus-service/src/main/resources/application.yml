@@ -42,6 +42,10 @@ apicurio:
   registry:
     url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
 
+# Redis is used only for the distributed (global) core-command rate limiter.
+redis:
+  uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+
 datasources:
   default:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:sbus}?stringtype=unspecified
@@ -64,12 +68,22 @@ sbus:
     max-attempts: 8
     base-backoff: 2s
     max-backoff: 5m
-    poll-interval: 500ms
+    poll-interval: 200ms
     initial-delay: 3s
   core:
     # Throughput guard protecting the (slower) Core from request bursts.
     limit-for-period: 50
     refresh-period: 1s
+  retry:
+    max-attempts: 5
+    base-delay: 1s
+    max-delay: 30s
+    max-wait: 5s
+  housekeeping:
+    idempotency-retention: 7d
+    message-retention: 30d
+    batch-size: 500
+    interval: 1h
 
 otel:
   service:

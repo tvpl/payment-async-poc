@@ -157,15 +157,25 @@ Tópicos: `payment.simulation.requested`, `…core.command`, `…core.response`,
 
 ---
 
-## Resilience4j
+## Rate limiting distribuído (Redis)
 
-- **O que é**: biblioteca de tolerância a falhas (rate limiter, bulkhead, retry, circuit breaker).
-- **Por que usamos**: **rate limiter** para (a) **proteger o Core** limitando publicações de
-  `core.command` e (b) **admissão da API** (rejeita rajada com `429`).
-- **Como configuramos**: limiters criados programaticamente por factories (sem o módulo Micronaut,
-  que não estava disponível no Central).
-- **Onde no código**: `sbus-service/.../config/RateLimiterFactory.java` (Core);
-  `api-service/.../config/ApiRateLimiterFactory.java` + `api-service/.../filter/ConcurrencyLimitFilter.java` (API, 429).
+- **O que é**: limitador de taxa **global** entre instâncias, implementado sobre Redis (janela fixa
+  via script Lua atômico), com fallback local se o Redis cair.
+- **Por que usamos**: **proteger o Core** (limita publicações de `core.command`) e **admissão da API**
+  (rejeita rajada com `429`). Um limiter por instância permitiria `N × limite` no agregado.
+- **Como configuramos**: `RedisRateLimiter` recebe um *supplier* de comandos Redis + nome/limite/janela.
+- **Onde no código**: `common/src/main/java/com/example/payments/common/ratelimit/RedisRateLimiter.java`;
+  factories `sbus-service/.../config/RateLimiterFactory.java` (Core) e
+  `api-service/.../config/ApiRateLimiterFactory.java` (+ `filter/ConcurrencyLimitFilter.java`, 429).
+
+## Segurança (API key → JWT/OAuth2)
+
+- **O que é**: autenticação dos endpoints de negócio via header `X-API-Key` (exemplo do PoC).
+- **Por que usamos**: não deixar a API aberta; base para evoluir a JWT/OAuth2 + mTLS.
+- **Como configuramos**: `payment.security.enabled` + `payment.security.api-keys`; filtro retorna `401`
+  problem+json; health/metrics/swagger ficam livres.
+- **Onde no código**: `api-service/.../filter/ApiKeyFilter.java`, `.../config/SecurityProperties.java`.
+  Caminho de produção em [15 Prontidão para produção](15-prontidao-producao.md).
 
 ---
 

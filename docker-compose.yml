@@ -32,11 +32,14 @@ services:
       - |
         set -e
         BS=kafka:9092
+        RF=$${KAFKA_TOPIC_RF:-1}
+        PARTS=$${KAFKA_TOPIC_PARTITIONS:-3}
         for t in payment.simulation.requested payment.simulation.core.command \
                  payment.simulation.core.response payment.simulation.completed \
-                 payment.simulation.failed payment.simulation.dlq; do
+                 payment.simulation.failed payment.simulation.dlq \
+                 payment.simulation.requested.retry payment.simulation.core.response.retry; do
           kafka-topics.sh --bootstrap-server $$BS --create --if-not-exists \
-            --topic $$t --partitions 3 --replication-factor 1
+            --topic $$t --partitions $$PARTS --replication-factor $$RF
         done
         echo "topics created:"; kafka-topics.sh --bootstrap-server $$BS --list
 

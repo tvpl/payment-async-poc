@@ -7,9 +7,12 @@ PostgreSQL e **protege o Core**. Mantém o Core como dependência externa agnós
 
 | Classe | Arquivo | Papel |
 |---|---|---|
-| `PaymentRequestedConsumer` | `.../kafka/PaymentRequestedConsumer.java` | Consome `Requested` (Avro) |
-| `CoreResponseConsumer` | `.../kafka/CoreResponseConsumer.java` | Consome resposta do Core |
-| `PaymentSimulationService` | `.../service/PaymentSimulationService.java` | TX: estado + outbox |
+| `PaymentRequestedConsumer` | `.../kafka/PaymentRequestedConsumer.java` | Consome `Requested` (thin: poison→DLQ, transitório→retry) |
+| `CoreResponseConsumer` | `.../kafka/CoreResponseConsumer.java` | Consome resposta do Core (idem) |
+| `SimulationMessageHandler` | `.../kafka/SimulationMessageHandler.java` | Decode+rota compartilhado (main e retry) |
+| `RetryPublisher` / `RetryConsumer` | `.../kafka/Retry*.java` | Retry topics dedicados + DLQ |
+| `PaymentSimulationService` | `.../service/PaymentSimulationService.java` | Orquestra: serializa **fora** da TX |
+| `PaymentPersistenceService` | `.../service/PaymentPersistenceService.java` | TX: estado + outbox (escrita) |
 | `OutboxClaimService` | `.../outbox/OutboxClaimService.java` | Transações curtas (claim/mark) |
 | `OutboxDispatcher` | `.../outbox/OutboxDispatcher.java` | Publica fora da TX, com rate limit |
 | `OutboxReaper` | `.../outbox/OutboxReaper.java` | Recupera linhas presas em IN_PROGRESS |
@@ -20,17 +23,37 @@ PostgreSQL e **protege o Core**. Mantém o Core como dependência externa agnós
 | `CoreGateway` / `KafkaCoreGateway` | `.../gateway/*` | Abstração do Core |
 | Entidades + repos | `.../domain/*`, `.../repository/*` | `payment_sbus_message`, `outbox_event`, `idempotency_record` |
 
-## Consumers: zero perda silenciosa
+## Consumers: zero perda silenciosa + retry topics
 
-Os dois consumers usam `offsetStrategy = OffsetStrategy.SYNC_PER_RECORD` (commita por registro só
-após retorno normal) e tratam falhas assim:
+Os consumers principais são finos e usam `offsetStrategy = SYNC_PER_RECORD`:
 
-- **Mensagem venenosa** (deserialização/validação) → vai direto para a **DLQ** e retorna (commit).
-- **Falha transitória** (ex.: banco) → **retry in-process** com backoff (`Retries.run`, N tentativas);
-  esgotou → **DLQ explícita**.
+- **Mensagem venenosa** (deserialização/validação) → **DLQ** (commit).
+- **Falha transitória** → publicada num **retry topic dedicado** (`.retry`) com `x-retry-attempt` e
+  `x-retry-not-before`; o original é commitado. Assim a partição principal **não fica bloqueada**.
+- Se a publicação no retry/DLQ falhar (broker fora), **relançamos** e o `errorStrategy=RETRY_ON_ERROR`
+  faz o offset **não avançar** — nada se perde.
 
-Como sempre retornamos normalmente (sucesso ou DLQ), o offset avança **sem perder mensagem** — nada é
-silenciosamente descartado. Particionamento por `requestId` garante ordem por simulação.
+O `RetryConsumer` (grupo próprio `payment-sbus-retry`) respeita o delay (espera limitada), re-despacha
+pelo `SimulationMessageHandler` e, ao esgotar `sbus.retry.max-attempts`, manda para a **DLQ**.
+Particionamento por `requestId` garante ordem por simulação.
+
+```mermaid
+flowchart LR
+    main[Consumer principal] -->|sucesso| ok((commit))
+    main -->|poison| dlq[(DLQ)]
+    main -->|transitório| retry[(.retry topic)]
+    retry --> rc[RetryConsumer]
+    rc -->|sucesso| ok
+    rc -->|attempt < max| retry
+    rc -->|attempt >= max| dlq
+```
+
+## Serialização fora da transação
+
+O `PaymentSimulationService` monta e **serializa** os eventos Avro (I/O do registry) **fora** de
+qualquer transação; só depois chama o `PaymentPersistenceService`, cujos métodos `@Transactional`
+fazem **apenas escrita** (estado + outbox no mesmo commit). Assim nunca seguramos uma conexão de banco
+durante uma chamada de rede — evitando esgotar o pool sob carga.
 
 ## Outbox Pattern (coração do SBUS)
 
@@ -46,9 +69,10 @@ publicação acontece depois, de forma confiável.
 4. `OutboxDispatcher` reivindica um lote (**claim/lease**) numa TX curta: `FOR UPDATE SKIP LOCKED`,
    marca `IN_PROGRESS` + `claimed_at`. Várias instâncias podem rodar em paralelo sem colidir.
 5. **Publica no Kafka fora da transação** (sem segurar locks durante o I/O), replayando os headers
-   técnicos (inclusive `traceparent`). Rate limiter no `core.command` protege o Core.
-6. **TX curta**: marca `PUBLISHED` (`published_at`) ou, em falha, incrementa `attempts` e agenda
-   `next_attempt_at` com backoff.
+   técnicos (inclusive `traceparent`). Um **rate limiter distribuído (Redis)** no `core.command`
+   protege o Core — limite **global** entre instâncias (ver [03](03-tecnologias.md)).
+6. **TX curta**: o lote bem-sucedido é marcado `PUBLISHED` num **único UPDATE** (`markPublishedBatch`);
+   falhas são tratadas individualmente (backoff em `next_attempt_at`).
 7. Após `max-attempts` → **DLQ** + `FAILED`.
 
 O mesmo mecanismo publica os eventos finais (`Completed/Failed`) de volta para a API.
@@ -69,6 +93,8 @@ stateDiagram-v2
   *lease* (o publicador caiu no meio).
 - **`OutboxHousekeeping`** (`@Scheduled`): apaga `PUBLISHED` mais antigos que a retenção — evita o
   crescimento indefinido da tabela.
+- **`RetentionHousekeeping`** (`@Scheduled`): purga `idempotency_record` e `payment_sbus_message`
+  **terminais** antigos (em lotes), mantendo as tabelas limitadas (`sbus.housekeeping.*`).
 
 ## Idempotência (3 camadas)
 
@@ -88,7 +114,8 @@ Além disso, `CoreResponseConsumer` ignora respostas para simulações já termi
 `payment_sbus_message`. É o que a API consulta quando o Redis não tem o resultado.
 
 ## Migrations
-`V1` message · `V2` outbox · `V3` idempotency · `V4` coluna `result` · `V5` `payload`→`bytea` + `claimed_at`.
+`V1` message · `V2` outbox · `V3` idempotency · `V4` coluna `result` · `V5` `payload`→`bytea` + `claimed_at`
+· `V6` índices de retenção.
 Ver [`db/migration/`](../sbus-service/src/main/resources/db/migration) e [09](09-dados-redis-postgres.md).
 
 ## Ver também

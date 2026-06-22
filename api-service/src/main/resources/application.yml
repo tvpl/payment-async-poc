@@ -27,6 +27,11 @@ payment:
     rate-limit:
       limit-for-period: 200
       refresh-period: 1s
+  security:
+    # API-key auth (PoC). Production: JWT/OAuth2 + mTLS. Override keys via env/secret.
+    enabled: ${PAYMENT_SECURITY_ENABLED:true}
+    api-keys:
+      - ${PAYMENT_API_KEY:dev-key-change-me}
 
 sbus:
   base-url: ${SBUS_BASE_URL:`http://localhost:8081`}
@@ -45,6 +50,8 @@ kafka:
         deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   producers:
     default:
+      acks: all
+      enable.idempotence: true
       key:
         serializer: org.apache.kafka.common.serialization.StringSerializer
       value:

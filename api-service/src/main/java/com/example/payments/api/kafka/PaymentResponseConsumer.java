@@ -26,10 +26,13 @@ import org.slf4j.MDC;
  * persists the result in Redis and wakes any waiting HTTP request (locally and, via
  * Redis pub/sub, on other instances).
  *
- * <p>Unique consumer group per instance ({@code ${random.uuid}}) so every instance
- * sees every final event — we don't know which instance holds the blocked request.
+ * <p>Single, stable consumer group ({@code payment-api}): one instance consumes each
+ * partition, writes the result to Redis and publishes the requestId on the Redis pub/sub
+ * channel; <em>every</em> instance is subscribed and wakes its local waiter. This avoids
+ * the orphan-consumer-group buildup (a random group id per restart leaked groups forever)
+ * and the N× redundant processing of a per-instance group.
  */
-@KafkaListener(groupId = "payment-api-${random.uuid}", offsetReset = OffsetReset.LATEST)
+@KafkaListener(groupId = "payment-api", offsetReset = OffsetReset.LATEST)
 public class PaymentResponseConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(PaymentResponseConsumer.class);

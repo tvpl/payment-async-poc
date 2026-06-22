@@ -10,6 +10,10 @@ public final class Topics {
     public static final String FAILED = "payment.simulation.failed";
     public static final String DLQ = "payment.simulation.dlq";
 
+    /** Dedicated retry topics (non-blocking retries off the main partitions). */
+    public static final String REQUESTED_RETRY = "payment.simulation.requested.retry";
+    public static final String CORE_RESPONSE_RETRY = "payment.simulation.core.response.retry";
+
     private Topics() {
     }
 }

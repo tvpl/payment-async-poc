@@ -79,7 +79,8 @@ class ApiFlowIT implements TestPropertyProvider {
                 "kafka.bootstrap.servers", KAFKA.getBootstrapServers(),
                 "redis.uri", REDIS.getRedisURI(),
                 "apicurio.registry.url", registryUrl(),
-                "payment.simulation.wait-timeout", "1s");
+                "payment.simulation.wait-timeout", "1s",
+                "payment.security.enabled", "false");
     }
 
     @Test

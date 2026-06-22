@@ -14,6 +14,11 @@ public final class Headers {
     public static final String EVENT_VERSION = "x-event-version";
     public static final String TRACEPARENT = "traceparent";
 
+    /** Retry-topic bookkeeping headers. */
+    public static final String RETRY_ATTEMPT = "x-retry-attempt";
+    public static final String RETRY_NOT_BEFORE = "x-retry-not-before";
+    public static final String ORIGIN_TOPIC = "x-orig-topic";
+
     private Headers() {
     }
 }

@@ -1,25 +1,23 @@
 package com.example.payments.api.config;
 
-import io.github.resilience4j.ratelimiter.RateLimiter;
-import io.github.resilience4j.ratelimiter.RateLimiterConfig;
+import com.example.payments.common.ratelimit.RedisRateLimiter;
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import java.time.Duration;
-
-/** Builds the admission {@link RateLimiter} used by the HTTP filter. */
+/**
+ * Builds the API's <strong>distributed</strong> admission rate limiter (global across
+ * instances, via Redis) used by {@code ConcurrencyLimitFilter} to return 429 under bursts.
+ * Falls back to a per-instance window if Redis is unavailable.
+ */
 @Factory
 public class ApiRateLimiterFactory {
 
     @Singleton
     @Named("api-admission")
-    public RateLimiter admissionRateLimiter(RateLimitProperties props) {
-        RateLimiterConfig config = RateLimiterConfig.custom()
-                .limitForPeriod(props.getLimitForPeriod())
-                .limitRefreshPeriod(props.getRefreshPeriod())
-                .timeoutDuration(Duration.ZERO) // non-blocking: reject immediately when full
-                .build();
-        return RateLimiter.of("api-admission", config);
+    public RedisRateLimiter admissionRateLimiter(ApiRedisCommandsProvider redis,
+                                                 RateLimitProperties props) {
+        return new RedisRateLimiter(redis::commands, "api-admission",
+                props.getLimitForPeriod(), props.getRefreshPeriod().toMillis());
     }
 }

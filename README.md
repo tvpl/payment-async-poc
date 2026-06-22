@@ -25,6 +25,7 @@ O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o fu
 - [08 Eventos e contratos](docs/08-eventos-e-contratos.md) · [09 Dados (Redis/Postgres)](docs/09-dados-redis-postgres.md)
 - [10 Observabilidade](docs/10-observabilidade.md) · [11 Resiliência e trade-offs](docs/11-resiliencia-e-tradeoffs.md)
 - [12 Execução e operação](docs/12-execucao-e-operacao.md) · [13 Testes](docs/13-testes.md) · [14 Glossário](docs/14-glossario.md)
+- [15 Prontidão para produção](docs/15-prontidao-producao.md) (gaps corrigidos + checklist de deploy)
 
 ---
 
@@ -118,9 +119,10 @@ UIs e endpoints:
 ### Exemplos curl
 
 ```bash
-# 1) Simulação (pode retornar 200 se o Core responder dentro do timeout, ou 202)
+# 1) Simulação (200 se o Core responder no prazo, ou 202). Requer X-API-Key (default dev).
 curl -i -X POST http://localhost:8080/payment-simulations \
   -H 'Content-Type: application/json' \
+  -H 'X-API-Key: dev-key-change-me' \
   -H 'Idempotency-Key: pedido-123' \
   -d '{
         "merchantId": "MERCHANT-001",
@@ -133,7 +135,7 @@ curl -i -X POST http://localhost:8080/payment-simulations \
       }'
 
 # 2) Consulta de status por requestId (use o requestId retornado acima)
-curl -i http://localhost:8080/payment-simulations/<requestId>
+curl -i -H 'X-API-Key: dev-key-change-me' http://localhost:8080/payment-simulations/<requestId>
 
 # 3) Idempotência: repetir o POST com a MESMA Idempotency-Key reusa o requestId original
 
@@ -270,15 +272,19 @@ O mesmo mecanismo publica os eventos finais (`PaymentSimulationCompleted/Failed`
 
 - **Outbox** garante publicação confiável mesmo com Kafka indisponível no momento do commit
   (publica fora da transação via claim/lease; `OutboxReaper` recupera linhas presas).
-- **Consumers sem perda silenciosa**: `OffsetStrategy.SYNC_PER_RECORD` + retry in-process com
-  backoff; ao esgotar (ou em mensagem venenosa) → **DLQ explícita** antes de avançar o offset.
+- **Consumers sem perda silenciosa**: `SYNC_PER_RECORD`; falha transitória → **retry topics** dedicados
+  (`.retry`, fora da partição principal), venenosa → **DLQ**; falha de publicação relança (offset não avança).
+- **Serialização Avro fora da transação** (sem segurar conexão de DB em I/O de registry).
 - **Idempotência** em três camadas: Redis (`idem:`), `payment_sbus_message.request_id` (UNIQUE) e `idempotency_record`.
 - **`SKIP LOCKED`** permite múltiplas instâncias do SBUS publicando a outbox sem duplicar.
-- **Rate limiter** no `core.command` (Resilience4j) protege o Core; e na **admissão da API** (→ 429).
+- **Rate limiter distribuído (Redis)** no `core.command` (Core) e na **admissão da API** (→ 429) — limite global entre instâncias.
+- **AuthN por API key** (`X-API-Key` → 401); produção: JWT/OAuth2 + mTLS.
 - **GET com fallback durável** (SBUS/Postgres) → resultado nunca se perde por TTL/instância.
-- **Redis lazy + resubscribe**: app sobe mesmo com Redis fora; pub/sub se reinscreve.
-- **Shutdown gracioso**: waiters bloqueados são liberados (não penduram conexões).
-- **Producer idempotente** (`acks=all`, `enable.idempotence=true`) e **timeout** obrigatório na espera HTTP.
+- **Consumer group estável** da API (`payment-api`) + Redis pub/sub (sem grupos órfãos nem trabalho N×).
+- **Retenção/housekeeping** (outbox, idempotency, mensagens) mantém tabelas limitadas.
+- **Redis lazy + resubscribe**; **shutdown gracioso**; **producer idempotente** (`acks=all`); **timeout** obrigatório na espera.
+
+Detalhes e checklist de produção em [docs/15-prontidao-producao.md](docs/15-prontidao-producao.md).
 
 ---
 

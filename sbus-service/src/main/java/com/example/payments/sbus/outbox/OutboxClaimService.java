@@ -39,13 +39,12 @@ public class OutboxClaimService {
         return batch;
     }
 
+    /** Marks a batch PUBLISHED in a single statement (happy path). */
     @Transactional
-    public void markPublished(OutboxEvent event) {
-        event.setStatus(OutboxStatus.PUBLISHED);
-        event.setPublishedAt(Instant.now());
-        event.setClaimedAt(null);
-        event.setLastError(null);
-        repository.update(event);
+    public void markPublishedBatch(java.util.Collection<Long> ids) {
+        if (!ids.isEmpty()) {
+            repository.markPublished(ids, Instant.now());
+        }
     }
 
     /** Tx2 (failure): back to PENDING with backoff, or FAILED once attempts are exhausted. */

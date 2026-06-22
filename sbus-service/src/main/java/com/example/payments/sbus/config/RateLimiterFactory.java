@@ -1,26 +1,23 @@
 package com.example.payments.sbus.config;
 
-import io.github.resilience4j.ratelimiter.RateLimiterConfig;
-import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import com.example.payments.common.ratelimit.RedisRateLimiter;
 import io.micronaut.context.annotation.Factory;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import java.time.Duration;
-
-/** Builds the Resilience4j {@link RateLimiterRegistry} with the {@code core-command} limiter. */
+/**
+ * Builds the distributed {@link RedisRateLimiter} that throttles publication of
+ * {@code core.command} — a <strong>global</strong> guard (across SBUS instances) that
+ * protects a slower Core from bursts. Falls back to a local window if Redis is down.
+ */
 @Factory
 public class RateLimiterFactory {
 
     @Singleton
-    public RateLimiterRegistry rateLimiterRegistry(CoreThroughputProperties props) {
-        RateLimiterConfig coreCommand = RateLimiterConfig.custom()
-                .limitForPeriod(props.getLimitForPeriod())
-                .limitRefreshPeriod(props.getRefreshPeriod())
-                // Non-blocking: acquirePermission() returns immediately true/false.
-                .timeoutDuration(Duration.ZERO)
-                .build();
-        RateLimiterRegistry registry = RateLimiterRegistry.ofDefaults();
-        registry.rateLimiter("core-command", coreCommand);
-        return registry;
+    @Named("core-command")
+    public RedisRateLimiter coreCommandLimiter(RedisCommandsProvider redis,
+                                               CoreThroughputProperties props) {
+        return new RedisRateLimiter(redis::commands, "core-command",
+                props.getLimitForPeriod(), props.getRefreshPeriod().toMillis());
     }
 }

@@ -20,9 +20,12 @@ dependencies {
     }
     compileOnly 'org.apache.kafka:kafka-clients'
     compileOnly 'jakarta.validation:jakarta.validation-api'
+    // Lettuce types are used by RedisRateLimiter; provided at runtime by each service.
+    compileOnly 'io.lettuce:lettuce-core'
 
     testImplementation platform('org.junit:junit-bom:5.10.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'io.lettuce:lettuce-core'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

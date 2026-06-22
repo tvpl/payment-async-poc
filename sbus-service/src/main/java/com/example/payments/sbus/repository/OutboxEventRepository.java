@@ -28,6 +28,14 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     List<OutboxEvent> lockPendingBatch(Instant now, int limit);
 
+    /** Marks a whole batch as PUBLISHED in one statement (happy path of the dispatcher). */
+    @Query(value = """
+            UPDATE outbox_event
+            SET status = 'PUBLISHED', published_at = :now, claimed_at = NULL, last_error = NULL
+            WHERE id IN (:ids)
+            """, nativeQuery = true)
+    int markPublished(java.util.Collection<Long> ids, Instant now);
+
     /** Reclaims rows stuck IN_PROGRESS (publisher crashed mid-flight) back to PENDING. */
     @Query(value = """
             UPDATE outbox_event SET status = 'PENDING', claimed_at = NULL

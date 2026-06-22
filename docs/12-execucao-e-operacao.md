@@ -30,19 +30,23 @@ docker compose ps   # aguarde healthchecks (kafka, postgres, redis, apicurio) + 
 ## Exemplos curl
 
 ```bash
-# Simulação (200 se o Core responder no prazo, ou 202)
+# Simulação (200 se o Core responder no prazo, ou 202). Requer X-API-Key (default dev).
 curl -i -X POST http://localhost:8080/payment-simulations \
   -H 'Content-Type: application/json' \
+  -H 'X-API-Key: dev-key-change-me' \
   -H 'Idempotency-Key: pedido-123' \
   -d '{"merchantId":"MERCHANT-001","amount":125.50,"currency":"BRL",
        "paymentMethod":"CREDIT_CARD","brand":"VISA","installments":3,
        "captureMode":"AUTHORIZE_AND_CAPTURE"}'
 
 # Status por requestId
-curl -i http://localhost:8080/payment-simulations/<requestId>
+curl -i -H 'X-API-Key: dev-key-change-me' http://localhost:8080/payment-simulations/<requestId>
 
-# Idempotência: repetir o POST com a MESMA Idempotency-Key reusa o requestId original
+# Sem/!X-API-Key inválida -> 401. Idempotência: repetir com a MESMA Idempotency-Key reusa o requestId.
 ```
+
+> Auth e segredos: `PAYMENT_SECURITY_ENABLED=false` desativa a auth (dev); `PAYMENT_API_KEY` define a
+> chave. Produção: JWT/OAuth2 + mTLS (ver [15](15-prontidao-producao.md)).
 
 ## Teste de carga (k6)
 
@@ -81,12 +85,20 @@ curl -s http://localhost:8085/apis/registry/v2/search/artifacts | jq .
 
 | Sintoma | Causa provável | Ação |
 |---|---|---|
+| `401` nas chamadas | Falta `X-API-Key` | Enviar a chave (`dev-key-change-me`) ou `PAYMENT_SECURITY_ENABLED=false` em dev |
 | App não sobe por erro OTLP | Collector ausente em dev | `MICRONAUT_ENVIRONMENTS=dev` (desliga export) |
+| Mensagens reprocessando em loop | Falha transitória persistente | Ver tópicos `*.retry` e a DLQ; checar dependência abaixo |
 | `GET` fica em `SENT_TO_SBUS` | Evento final ainda não processado | Aguardar; o `GET` cai para o SBUS (durável) |
 | Muitos `429` | Rate limit de admissão | Ajustar `payment.simulation.rate-limit.*` |
 | `outbox_event` crescendo | Kafka indisponível / publish falhando | Ver `sbus_outbox_pending`, logs do dispatcher |
 | Mensagens na DLQ | Poison/erro permanente | Inspecionar `payment.simulation.dlq` (headers `x-dlq-*`) |
 | `Could not find a valid Docker environment` (testes) | Sem Docker | Rodar só unit: `--tests '*UnitTest'` |
+
+## Kafka de produção (multi-broker)
+Subir tópicos com `KAFKA_TOPIC_RF=3` no `kafka-init` e usar um cluster com RF=3 /
+`min.insync.replicas=2`. Exemplo ilustrativo (não testado aqui):
+[`deploy/docker-compose.kafka-cluster.example.yml`](../deploy/docker-compose.kafka-cluster.example.yml).
+Detalhes no [checklist de produção](15-prontidao-producao.md).
 
 ## Subir para Java 25
 Trocar `javaLanguageVersion` em [`gradle.properties`](../gradle.properties) para `25` e as imagens base

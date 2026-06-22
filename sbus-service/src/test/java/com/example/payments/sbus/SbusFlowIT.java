@@ -14,6 +14,7 @@ import com.example.payments.common.model.Settlement;
 import com.example.payments.common.model.SimulationResult;
 import com.example.payments.sbus.domain.SbusMessageStatus;
 import com.example.payments.sbus.repository.PaymentSbusMessageRepository;
+import com.redis.testcontainers.RedisContainer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.test.support.TestPropertyProvider;
 import jakarta.inject.Inject;
@@ -64,11 +65,14 @@ class SbusFlowIT implements TestPropertyProvider {
     static final GenericContainer<?> APICURIO =
             new GenericContainer<>(DockerImageName.parse("apicurio/apicurio-registry-mem:2.6.2.Final"))
                     .withExposedPorts(8080);
+    static final RedisContainer REDIS =
+            new RedisContainer(DockerImageName.parse("redis:7-alpine"));
 
     static {
         POSTGRES.start();
         KAFKA.start();
         APICURIO.start();
+        REDIS.start();
     }
 
     @Inject
@@ -83,6 +87,7 @@ class SbusFlowIT implements TestPropertyProvider {
         return Map.of(
                 "kafka.bootstrap.servers", KAFKA.getBootstrapServers(),
                 "apicurio.registry.url", registryUrl(),
+                "redis.uri", REDIS.getRedisURI(),
                 "datasources.default.url", POSTGRES.getJdbcUrl() + "?stringtype=unspecified",
                 "datasources.default.username", POSTGRES.getUsername(),
                 "datasources.default.password", POSTGRES.getPassword(),

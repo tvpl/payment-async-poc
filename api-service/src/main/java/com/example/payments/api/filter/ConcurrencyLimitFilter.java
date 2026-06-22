@@ -1,6 +1,6 @@
 package com.example.payments.api.filter;
 
-import io.github.resilience4j.ratelimiter.RateLimiter;
+import com.example.payments.common.ratelimit.RedisRateLimiter;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
@@ -21,15 +21,20 @@ import org.reactivestreams.Publisher;
 @Filter(value = "/payment-simulations", methods = HttpMethod.POST)
 public class ConcurrencyLimitFilter implements HttpServerFilter {
 
-    private final RateLimiter rateLimiter;
+    private final RedisRateLimiter rateLimiter;
 
-    public ConcurrencyLimitFilter(@Named("api-admission") RateLimiter rateLimiter) {
+    public ConcurrencyLimitFilter(@Named("api-admission") RedisRateLimiter rateLimiter) {
         this.rateLimiter = rateLimiter;
     }
 
     @Override
+    public int getOrder() {
+        return -10; // run after auth
+    }
+
+    @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
-        if (!rateLimiter.acquirePermission()) {
+        if (!rateLimiter.tryAcquire()) {
             MutableHttpResponse<?> tooMany = HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS)
                     .header("Retry-After", "1");
             return Publishers.just(tooMany);

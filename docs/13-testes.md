@@ -17,6 +17,8 @@ flowchart TB
 | `AvroMapperUnitTest` | common | round-trip POJO↔Avro (requested e completed) |
 | `ApiPaymentServiceUnitTest` | api | submit (200/202), idempotência (replay) e **read-after-register** |
 | `BackoffCalculatorUnitTest` | sbus | backoff exponencial + teto |
+| `RedisRateLimiterUnitTest` | common | fallback local quando o Redis está fora |
+| `RetryPublisherUnitTest` | sbus | roteamento retry-topic vs DLQ por tentativa |
 
 Rodar:
 ```bash

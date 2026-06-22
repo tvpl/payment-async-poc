@@ -13,6 +13,9 @@ Divisão de responsabilidades: **Redis** é cache/coordenação (rápido, volát
 
 Código: `api-service/.../redis/RedisStatusStore.java`, `.../coordination/ResponseCoordinator.java`.
 
+> O **SBUS** também usa Redis, mas só para o **rate limiter distribuído** do `core.command`
+> (chaves `rl:core-command:{janela}`). A API usa para o limiter de admissão (`rl:api-admission:{janela}`).
+
 ### Estados da simulação (visão da API)
 
 ```mermaid
@@ -47,6 +50,10 @@ bytes Avro)**, `headers` (jsonb), `status` (`PENDING/IN_PROGRESS/PUBLISHED/FAILE
 
 ### `idempotency_record`
 `idempotency_key` (UNIQUE), `request_id`, `status`, `response_payload` (jsonb), timestamps.
+
+> **Retenção**: `RetentionHousekeeping` purga periodicamente `idempotency_record` e
+> `payment_sbus_message` **terminais** antigos (config `sbus.housekeeping.*`), mantendo as tabelas
+> limitadas. Índices em `created_at`/`(status, updated_at)` (migração `V6`) tornam a purga barata.
 
 ### Decisões de tipos
 | Escolha | Por quê |

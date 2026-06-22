@@ -16,6 +16,7 @@ funciona** ponta a ponta.
 | **Vou mexer no código** | [03 Tecnologias](03-tecnologias.md) → [05 API](05-api-service.md) / [06 SBUS](06-sbus-service.md) → [08 Eventos e contratos](08-eventos-e-contratos.md) |
 | **Vou operar/rodar** | [12 Execução e operação](12-execucao-e-operacao.md) → [10 Observabilidade](10-observabilidade.md) → [11 Resiliência e trade-offs](11-resiliencia-e-tradeoffs.md) |
 | **Estou revisando** | [02 Arquitetura](02-arquitetura.md) → [11 Resiliência e trade-offs](11-resiliencia-e-tradeoffs.md) → [13 Testes](13-testes.md) |
+| **Vou levar para produção** | [15 Prontidão para produção](15-prontidao-producao.md) → [11 Resiliência](11-resiliencia-e-tradeoffs.md) → [12 Execução](12-execucao-e-operacao.md) |
 
 ## Índice
 
@@ -35,6 +36,7 @@ funciona** ponta a ponta.
 | 12 | [Execução e operação](12-execucao-e-operacao.md) | Subir o stack, portas, curls, k6, troubleshooting |
 | 13 | [Testes](13-testes.md) | Unitários e integração (Testcontainers) |
 | 14 | [Glossário](14-glossario.md) | Termos-chave |
+| 15 | [Prontidão para produção](15-prontidao-producao.md) | Gaps corrigidos + checklist de deploy |
 
 ## Diagrama de contexto
 

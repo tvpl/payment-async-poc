@@ -15,7 +15,8 @@ respondendo de forma síncrona quando possível.
 | `RedisStatusStore` | `.../redis/RedisStatusStore.java` | Status/result/idempotência no Redis |
 | `PaymentRequestProducer` | `.../kafka/PaymentRequestProducer.java` | Publica `Requested` (Avro bytes) |
 | `PaymentResponseConsumer` | `.../kafka/PaymentResponseConsumer.java` | Consome `Completed/Failed` |
-| `ConcurrencyLimitFilter` | `.../filter/ConcurrencyLimitFilter.java` | Rate limit → 429 |
+| `ConcurrencyLimitFilter` | `.../filter/ConcurrencyLimitFilter.java` | Rate limit distribuído (Redis) → 429 |
+| `ApiKeyFilter` | `.../filter/ApiKeyFilter.java` | AuthN por `X-API-Key` → 401 |
 | `SbusStatusClient` | `.../client/SbusStatusClient.java` | Fallback durável do GET |
 | `ApiMetrics` | `.../metrics/ApiMetrics.java` | Métricas Micrometer |
 | Handlers `problem+json` | `.../error/*` | 400/503 RFC 7807 |
@@ -40,12 +41,16 @@ sem custo de threads de plataforma. O **timeout é obrigatório** para nunca pre
 
 ## Coordenação entre instâncias (o ponto sutil)
 
-O evento final pode ser consumido por **qualquer** instância da API (cada uma tem consumer group
-único `payment-api-${random.uuid}` com `offsetReset=LATEST`, então todas recebem o evento). Para
-acordar a instância que segura o `CompletableFuture`:
+A API usa um **consumer group estável** (`payment-api`): apenas **uma** instância consome cada
+partição dos tópicos finais. O fanout para a instância que segura o `CompletableFuture` é feito pelo
+**Redis pub/sub** (não por consumir o evento em todas as instâncias):
 
 1. A instância que consumiu grava o resultado no Redis e **publica o `requestId`** num canal pub/sub.
 2. **Todas** as instâncias assinam o canal; quem tiver o waiter local o completa (lendo o resultado do Redis).
+
+> Por que grupo estável e não `…${random.uuid}`: um grupo aleatório por instância/restart deixaria
+> **grupos órfãos** acumulando no Kafka e faria **toda** instância reprocessar **todo** evento (N×).
+> Com grupo único + pub/sub, evitamos ambos.
 
 Robustez adicional no `ResponseCoordinator`:
 - **read-after-register**: logo após registrar (e após publicar), checa o Redis — cobre a corrida
@@ -76,10 +81,18 @@ flowchart LR
   primeiro a gravar "vence"; requisições repetidas com a mesma chave **replicam** o `requestId`
   original e retornam o status atual.
 
+## Autenticação (401)
+
+`ApiKeyFilter` exige o header `X-API-Key` nos endpoints de negócio (health/metrics/swagger ficam
+livres); chave inválida/ausente → `401` (`application/problem+json`). Config em
+`payment.security.*` (habilitado por padrão; chave via `PAYMENT_API_KEY`). É um mecanismo de exemplo
+do PoC — produção deve usar **JWT/OAuth2 + mTLS** (ver [15](15-prontidao-producao.md)).
+
 ## Rate limit (429)
 
-`ConcurrencyLimitFilter` aplica um `RateLimiter` (Resilience4j) na admissão do `POST`. Excedeu →
-`429` + `Retry-After`. Limites em `payment.simulation.rate-limit.*`. Isso existe porque virtual
+`ConcurrencyLimitFilter` aplica um **`RedisRateLimiter` distribuído** na admissão do `POST` — limite
+**global** entre instâncias (um limiter local permitiria `N × limite`). Excedeu → `429` + `Retry-After`.
+Limites em `payment.simulation.rate-limit.*`; fallback local se o Redis cair. Existe porque virtual
 threads **não** limitam carga — é preciso um mecanismo explícito.
 
 ## Erros `problem+json`

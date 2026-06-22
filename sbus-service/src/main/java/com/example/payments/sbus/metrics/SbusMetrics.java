@@ -47,8 +47,8 @@ public class SbusMetrics {
                 .register(registry);
     }
 
-    public void recordPublished() {
-        outboxPublished.increment();
+    public void recordPublished(int count) {
+        outboxPublished.increment(count);
     }
 
     public void recordPublishFailure() {

@@ -34,6 +34,7 @@ evento anterior (ex.: o comando ao Core é *causado* pelo `Requested`). Isso per
 | `CorePaymentSimulationResponse` | `payment.simulation.core.response` | resultado do Core | core-mock |
 | `PaymentSimulationCompleted` | `payment.simulation.completed` | `SimulationResult` | SBUS (outbox) |
 | `PaymentSimulationFailed` | `payment.simulation.failed` | `SimulationResult` (erro) | SBUS (outbox) |
+| (retry) | `…requested.retry`, `…core.response.retry` | bytes originais + `x-retry-*`, `x-orig-topic` | consumers (falha transitória) |
 | (poison/falha) | `payment.simulation.dlq` | bytes originais + headers `x-dlq-*` | consumers/outbox |
 
 Exemplos ilustrativos (JSON) do envelope/campos em [`docs/events/`](events):
@@ -60,8 +61,9 @@ Exemplos ilustrativos (JSON) do envelope/campos em [`docs/events/`](events):
 
 - Nomes em `common/.../events/Topics.java`; criados pelo `kafka-init` (3 partições).
 - **Chave = `requestId`** → todos os eventos de uma simulação caem na mesma partição (ordem por simulação).
-- Consumer groups: `payment-sbus` (SBUS), `payment-core-mock` (Core),
-  `payment-api-${random.uuid}` (API — group único por instância, para todas verem o evento final).
+- Consumer groups: `payment-sbus` (SBUS), `payment-sbus-retry` (retry), `payment-core-mock` (Core),
+  `payment-api` (API — **group estável**; fanout para instâncias via Redis pub/sub).
+- Producers idempotentes (`acks=all` + `enable.idempotence=true`) evitam duplicatas por retry do producer.
 
 ## Headers técnicos
 

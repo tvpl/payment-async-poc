@@ -21,6 +21,8 @@ kafka:
         deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   producers:
     default:
+      acks: all
+      enable.idempotence: true
       key:
         serializer: org.apache.kafka.common.serialization.StringSerializer
       value:
