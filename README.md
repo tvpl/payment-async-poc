@@ -14,6 +14,18 @@ qualquer serviço externo/legado no futuro.
 > Java 25 basta alterar essa propriedade e as imagens base nos `Dockerfile` (`jdk21`/`21-jre`
 > → `25`). Este container de desenvolvimento só tem JDK 21, por isso o alvo atual é 21.
 
+## 📚 Documentação detalhada
+
+O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o funcionamento do sistema
+(pt-BR, com diagramas Mermaid). Comece pelo [índice](docs/README.md). Atalhos:
+
+- [01 Visão geral](docs/01-visao-geral.md) · [02 Arquitetura](docs/02-arquitetura.md) · [04 Fluxo ponta a ponta](docs/04-fluxo-ponta-a-ponta.md)
+- [03 Tecnologias e ferramentas](docs/03-tecnologias.md) (o que é / por que / como configuramos / onde no código)
+- [05 API](docs/05-api-service.md) · [06 SBUS](docs/06-sbus-service.md) · [07 Core mock](docs/07-core-mock.md)
+- [08 Eventos e contratos](docs/08-eventos-e-contratos.md) · [09 Dados (Redis/Postgres)](docs/09-dados-redis-postgres.md)
+- [10 Observabilidade](docs/10-observabilidade.md) · [11 Resiliência e trade-offs](docs/11-resiliencia-e-tradeoffs.md)
+- [12 Execução e operação](docs/12-execucao-e-operacao.md) · [13 Testes](docs/13-testes.md) · [14 Glossário](docs/14-glossario.md)
+
 ---
 
 ## Componentes
