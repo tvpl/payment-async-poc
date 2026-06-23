@@ -24,10 +24,8 @@ jobs:
       - name: Compile (all modules)
         run: ./gradlew build -x test --no-daemon
 
-      - name: Unit tests (no Docker)
-        run: >-
-          ./gradlew :common:test :api-service:test :sbus-service:test
-          --tests '*UnitTest' --no-daemon
+      - name: Unit tests (no Docker; integration *IT excluded by default)
+        run: ./gradlew test --no-daemon
 
       - name: Upload test reports
         if: always()

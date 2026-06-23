@@ -164,8 +164,9 @@ Redis não tem o resultado, então uma resposta finalizada nunca se perde.
 ## Desenvolvimento local
 
 ```bash
-./gradlew build -x test          # compila tudo (testes de integração precisam de Docker)
-./gradlew :common:test :api-service:test --tests '*UnitTest*'   # testes unitários (sem Docker)
+./gradlew build -x test   # compila tudo
+./gradlew test            # testes unitários (sem Docker; os *IT são excluídos por padrão)
+./gradlew test -PwithIT   # inclui os testes de integração (precisam de Docker + Apicurio)
 ```
 
 Subir infra e rodar um serviço fora do compose (Kafka exposto em `localhost:29092`).
@@ -331,8 +332,8 @@ Detalhes e checklist de produção em [docs/15-prontidao-producao.md](docs/15-pr
   (Kafka+Redis+Apicurio: `202` → correlação do evento final → `GET COMPLETED`).
 
 ```bash
-./gradlew :common:test :api-service:test :sbus-service:test --tests '*UnitTest*'   # sem Docker
-./gradlew test            # tudo (os *IT precisam de Docker + Apicurio)
+./gradlew test            # unitários (sem Docker; os *IT são excluídos por padrão)
+./gradlew test -PwithIT   # inclui os *IT (precisam de Docker + Apicurio)
 ```
 
 ---

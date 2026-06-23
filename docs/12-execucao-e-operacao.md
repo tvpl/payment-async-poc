@@ -179,7 +179,7 @@ endpoint Confluent-compatível do Apicurio, então o payload dos eventos é deco
 | Muitos `429` | Rate limit de admissão | Ajustar `payment.simulation.rate-limit.*` |
 | `outbox_event` crescendo | Kafka indisponível / publish falhando | Ver `sbus_outbox_pending`, logs do dispatcher |
 | Mensagens na DLQ | Poison/erro permanente | Inspecionar `payment.simulation.dlq` (headers `x-dlq-*`) |
-| `Could not find a valid Docker environment` (testes) | Sem Docker | Rodar só unit: `--tests '*UnitTest'` |
+| `Could not find a valid Docker environment` (testes) | Sem Docker | `./gradlew test` (os `*IT` já são excluídos por padrão; use `-PwithIT` quando houver Docker) |
 
 ## Kafka de produção (multi-broker)
 Subir tópicos com `KAFKA_TOPIC_RF=3` no `kafka-init` e usar um cluster com RF=3 /
