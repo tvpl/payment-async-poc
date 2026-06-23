@@ -1,0 +1,43 @@
+{
+  "title": "k6 Load Test",
+  "uid": "k6-load",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "Request rate (req/s)", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(k6_http_reqs_total[1m]))", "legendFormat": "req/s" } ]
+    },
+    {
+      "type": "timeseries", "title": "Response status mix /sec", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(k6_sim_status_mix_total[1m])) by (status)", "legendFormat": "{{status}}" } ]
+    },
+    {
+      "type": "timeseries", "title": "HTTP request duration p95/p99 (ms)", "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "k6_http_req_duration_p95", "legendFormat": "p95" },
+        { "expr": "k6_http_req_duration_p99", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Failed request rate", "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(k6_http_req_failed_total[1m]))", "legendFormat": "failed/s" } ]
+    },
+    {
+      "type": "timeseries", "title": "Active VUs", "id": 5,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "k6_vus", "legendFormat": "vus" } ]
+    }
+  ]
+}

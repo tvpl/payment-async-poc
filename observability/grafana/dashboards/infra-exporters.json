@@ -1,0 +1,61 @@
+{
+  "title": "Infra Exporters (Redis / Postgres / Kafka)",
+  "uid": "infra-exporters",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat", "title": "Redis connected clients", "id": 1,
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "redis_connected_clients", "legendFormat": "clients" } ]
+    },
+    {
+      "type": "timeseries", "title": "Redis commands processed /sec", "id": 2,
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "rate(redis_commands_processed_total[1m])", "legendFormat": "cmds/s" } ]
+    },
+    {
+      "type": "stat", "title": "Redis memory used (bytes)", "id": 3,
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "redis_memory_used_bytes", "legendFormat": "used" } ]
+    },
+    {
+      "type": "stat", "title": "Postgres up", "id": 4,
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "pg_up", "legendFormat": "up" } ]
+    },
+    {
+      "type": "timeseries", "title": "Postgres active connections (sbus db)", "id": 5,
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "pg_stat_database_numbackends{datname=\"sbus\"}", "legendFormat": "backends" } ]
+    },
+    {
+      "type": "timeseries", "title": "Postgres commits & rollbacks /sec (sbus)", "id": 6,
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(pg_stat_database_xact_commit{datname=\"sbus\"}[1m])", "legendFormat": "commit/s" },
+        { "expr": "rate(pg_stat_database_xact_rollback{datname=\"sbus\"}[1m])", "legendFormat": "rollback/s" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Kafka consumer group lag (by group/topic)", "id": 7,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 12 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(kafka_consumergroup_lag) by (consumergroup, topic)", "legendFormat": "{{consumergroup}} / {{topic}}" } ]
+    },
+    {
+      "type": "timeseries", "title": "Kafka messages in /sec (by topic)", "id": 8,
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 12 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(kafka_topic_partition_current_offset[1m])) by (topic)", "legendFormat": "{{topic}}" } ]
+    }
+  ]
+}

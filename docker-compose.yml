@@ -3,6 +3,7 @@ services:
   kafka:
     image: bitnami/kafka:3.7
     container_name: kafka
+    restart: unless-stopped
     ports:
       - "29092:29092"   # host access (localhost:29092)
     environment:
@@ -15,6 +16,8 @@ services:
       KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "INTERNAL"
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka-data:/bitnami/kafka
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 10s
@@ -27,6 +30,9 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    environment:
+      KAFKA_TOPIC_RF: ${KAFKA_TOPIC_RF:-1}
+      KAFKA_TOPIC_PARTITIONS: ${KAFKA_TOPIC_PARTITIONS:-3}
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -46,6 +52,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     healthcheck:
@@ -57,14 +64,17 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: sbus
-      POSTGRES_USER: sbus
-      POSTGRES_PASSWORD: sbus
+      POSTGRES_DB: ${POSTGRES_DB:-sbus}
+      POSTGRES_USER: ${POSTGRES_USER:-sbus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sbus}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sbus"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sbus}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -72,6 +82,7 @@ services:
   apicurio-registry:
     image: apicurio/apicurio-registry-mem:2.6.2.Final
     container_name: apicurio-registry
+    restart: unless-stopped
     ports:
       - "8085:8080"   # registry UI/API on host:8085
     healthcheck:
@@ -81,8 +92,9 @@ services:
       retries: 12
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: provectuslabs/kafka-ui:v0.7.2
     container_name: kafka-ui
+    restart: unless-stopped
     ports:
       - "8088:8080"   # Kafka UI on host:8088 — browse topics, messages, consumer lag
     environment:
@@ -98,9 +110,14 @@ services:
         condition: service_healthy
 
   # ---------------------------------------------------------- observability
+  # The observability stack is gated behind the "observability" compose profile,
+  # which is enabled by default via COMPOSE_PROFILES in .env. Run a lean stack
+  # (apps + infra only) with: COMPOSE_PROFILES= docker compose up   (or: make up-core)
   jaeger:
     image: jaegertracing/all-in-one:1.57
     container_name: jaeger
+    restart: unless-stopped
+    profiles: ["observability"]
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
@@ -109,6 +126,8 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.102.1
     container_name: otel-collector
+    restart: unless-stopped
+    profiles: ["observability"]
     command: ["--config=/etc/otel-collector.yml"]
     volumes:
       - ./observability/otel-collector.yml:/etc/otel-collector.yml:ro
@@ -118,15 +137,26 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: prometheus
+    restart: unless-stopped
+    profiles: ["observability"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # Receive k6 metrics (remote write) and store exemplars (metric -> trace links).
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
     ports:
       - "9090:9090"
 
   grafana:
     image: grafana/grafana:11.1.0
     container_name: grafana
+    restart: unless-stopped
+    profiles: ["observability"]
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
@@ -134,17 +164,63 @@ services:
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
     ports:
       - "3000:3000"
     depends_on:
       - prometheus
 
+  # Infra exporters feed the Redis / PostgreSQL / Kafka dashboards with real
+  # server-side metrics (in addition to the app-side Micrometer metrics).
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    container_name: redis-exporter
+    restart: unless-stopped
+    profiles: ["observability"]
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres-exporter
+    restart: unless-stopped
+    profiles: ["observability"]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-sbus}:${POSTGRES_PASSWORD:-sbus}@postgres:5432/${POSTGRES_DB:-sbus}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0
+    container_name: kafka-exporter
+    restart: unless-stopped
+    profiles: ["observability"]
+    command: ["--kafka.server=kafka:9092"]
+    ports:
+      - "9308:9308"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
   # ------------------------------------------------------------- application
+  # All three apps share a single Dockerfile (multi-target). BuildKit builds the
+  # common `build` stage once and reuses it per target, so the project is compiled
+  # a single time instead of once per service.
   api-service:
     build:
       context: .
-      dockerfile: api-service/Dockerfile
+      dockerfile: Dockerfile
+      target: api
     container_name: api-service
+    restart: unless-stopped
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REDIS_HOST: redis
@@ -152,6 +228,8 @@ services:
       APICURIO_REGISTRY_URL: http://apicurio-registry:8080/apis/registry/v2
       SBUS_BASE_URL: http://sbus-service:8081
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      PAYMENT_SECURITY_ENABLED: ${PAYMENT_SECURITY_ENABLED:-true}
+      PAYMENT_API_KEY: ${API_KEY:-dev-key-change-me}
     ports:
       - "8080:8080"
     healthcheck:
@@ -173,15 +251,19 @@ services:
   sbus-service:
     build:
       context: .
-      dockerfile: sbus-service/Dockerfile
+      dockerfile: Dockerfile
+      target: sbus
     container_name: sbus-service
+    restart: unless-stopped
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
-      POSTGRES_DB: sbus
-      POSTGRES_USER: sbus
-      POSTGRES_PASSWORD: sbus
+      POSTGRES_DB: ${POSTGRES_DB:-sbus}
+      POSTGRES_USER: ${POSTGRES_USER:-sbus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sbus}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
       APICURIO_REGISTRY_URL: http://apicurio-registry:8080/apis/registry/v2
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     ports:
@@ -205,11 +287,19 @@ services:
   core-mock:
     build:
       context: .
-      dockerfile: core-mock/Dockerfile
+      dockerfile: Dockerfile
+      target: core
     container_name: core-mock
+    restart: unless-stopped
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       APICURIO_REGISTRY_URL: http://apicurio-registry:8080/apis/registry/v2
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      # Tunable simulated Core behavior (for didactic demos: backpressure, DLQ, timeouts).
+      CORE_LATENCY_MIN_MS: ${CORE_LATENCY_MIN_MS:-50}
+      CORE_LATENCY_MAX_MS: ${CORE_LATENCY_MAX_MS:-300}
+      CORE_DECLINE_PCT: ${CORE_DECLINE_PCT:-10}
+      CORE_FAIL_PCT: ${CORE_FAIL_PCT:-0}
     ports:
       - "8082:8082"
     healthcheck:
@@ -225,3 +315,9 @@ services:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
+
+volumes:
+  kafka-data:
+  pg-data:
+  prometheus-data:
+  grafana-data:

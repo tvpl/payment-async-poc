@@ -50,12 +50,19 @@ k6 run -e API_KEY=dev-key-change-me -e RATE=300 -e DURATION=1m load/k6-simulatio
 ```
 O script envia `X-API-Key` e usa `http.expectedStatuses(200,202,422,429)`, então o threshold
 `http_req_failed` só conta erros reais (`401`/`5xx`) — `429` (rate limit) e `422` (recusa do
-Core) são desfechos esperados sob carga. Ver [`load/k6-simulations.js`](../load/k6-simulations.js)
-e [12 Execução](12-execucao-e-operacao.md).
+Core) são desfechos esperados sob carga. Dois scripts: [`load/k6-simulations.js`](../load/k6-simulations.js)
+(síncrono; suporta `EXECUTOR=ramp`) e [`load/k6-poll.js`](../load/k6-poll.js) (assíncrono:
+`POST` 202 → poll do `GET` até terminal). `make load*` exporta as métricas para o Prometheus
+(dashboard **k6 Load Test**). Ver [12 Execução](12-execucao-e-operacao.md).
 
 ## Smoke (ponta a ponta, rápido)
 [`scripts/smoke.sh`](../scripts/smoke.sh) (`make smoke`) faz 1 `POST` e segue o `requestId`
 até o estado terminal — valida o pipeline inteiro sem subir um teste de integração.
+
+## CI (GitHub Actions)
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) roda em cada push/PR:
+compila todos os módulos, executa os `*UnitTest` (sem Docker) e valida o
+`docker compose config`. Relatórios de teste sobem como artefato.
 
 ## Notas
 - Sem Docker, os `*IT` falham com `Could not find a valid Docker environment` — esperado.
