@@ -1,0 +1,24 @@
+{
+  "eventId": "a5e5d4f6-9999-4aaa-9bbb-000000000118",
+  "eventType": "PaymentSimulationFailed",
+  "eventVersion": "1.0",
+  "occurredAt": "2026-06-21T18:00:00.420Z",
+  "requestId": "8f1e7c10-2222-4ccc-8ddd-0000000000b2",
+  "correlationId": "c0rr-3333-4eee-9fff-0000000000c3",
+  "causationId": "e3c3b2d4-7777-4aaa-9bbb-0000000000f6",
+  "traceId": "0af7651916cd43dd8448eb211c80319c",
+  "source": "payment-sbus",
+  "payload": {
+    "simulationId": "sim-55555555-6666-4777-8888-0000000000e5",
+    "requestId": "8f1e7c10-2222-4ccc-8ddd-0000000000b2",
+    "status": "DECLINED",
+    "authorizationCode": null,
+    "amount": 125.50,
+    "currency": "BRL",
+    "installments": 3,
+    "fees": null,
+    "settlement": null,
+    "errorCode": "51",
+    "errorMessage": "Insufficient funds"
+  }
+}

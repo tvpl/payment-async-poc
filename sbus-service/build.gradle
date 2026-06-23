@@ -1,0 +1,64 @@
+plugins {
+    id 'io.micronaut.application'
+}
+
+micronaut {
+    version = project.property('micronautVersion')
+    runtime 'netty'
+    testRuntime 'junit5'
+    processing {
+        incremental true
+        annotations 'com.example.payments.sbus.*'
+    }
+}
+
+dependencies {
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+    annotationProcessor 'io.micronaut.data:micronaut-data-processor'
+    annotationProcessor 'io.micronaut:micronaut-http-validation'
+
+    implementation project(':common')
+
+    implementation 'io.micronaut.serde:micronaut-serde-jackson'
+    implementation 'io.micronaut.kafka:micronaut-kafka'
+
+    // Persistence
+    implementation 'io.micronaut.data:micronaut-data-jdbc'
+    implementation 'io.micronaut.sql:micronaut-jdbc-hikari'
+    implementation 'io.micronaut.flyway:micronaut-flyway'
+    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+
+    // Distributed rate limiter (global across instances) needs Redis.
+    implementation 'io.micronaut.redis:micronaut-redis-lettuce'
+
+    // Observability
+    implementation 'io.micronaut:micronaut-management'
+    implementation 'io.micronaut.micrometer:micronaut-micrometer-registry-prometheus'
+    implementation 'io.micronaut.tracing:micronaut-tracing-opentelemetry-http'
+    implementation 'io.micronaut.tracing:micronaut-tracing-opentelemetry-kafka'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+
+    // Structured JSON logging
+    runtimeOnly 'net.logstash.logback:logstash-logback-encoder:7.4'
+    runtimeOnly 'ch.qos.logback:logback-classic'
+    runtimeOnly 'org.yaml:snakeyaml'
+
+    // Scheduling / DI annotations
+    implementation 'jakarta.annotation:jakarta.annotation-api'
+
+    // Tests
+    testImplementation 'io.micronaut.test:micronaut-test-junit5'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:kafka'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'com.redis:testcontainers-redis:2.2.2'
+    testImplementation 'org.awaitility:awaitility:4.2.1'
+}
+
+application {
+    mainClass = 'com.example.payments.sbus.Application'
+}

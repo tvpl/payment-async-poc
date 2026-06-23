@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "Settlement",
+  "namespace": "com.example.payments.common.avro",
+  "fields": [
+    { "name": "settlementDate", "type": "string" },
+    { "name": "settlementType", "type": "string" }
+  ]
+}

@@ -1,0 +1,110 @@
+micronaut:
+  application:
+    name: payment-sbus
+  server:
+    port: 8081
+  metrics:
+    enabled: true
+    binders:
+      jvm:
+        enabled: true
+      kafka:
+        enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+        descriptions: true
+
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
+  consumers:
+    default:
+      key:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Avro bytes are decoded explicitly via AvroSerde so we keep control over
+      # poison messages (route them to the DLQ) instead of failing in the deserializer.
+      value:
+        deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      max:
+        poll:
+          records: 100
+  producers:
+    default:
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+
+# Apicurio Schema Registry (Confluent serdes are not available on Maven Central here).
+apicurio:
+  registry:
+    url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
+
+# Redis is used only for the distributed (global) core-command rate limiter.
+redis:
+  uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+
+datasources:
+  default:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:sbus}?stringtype=unspecified
+    username: ${POSTGRES_USER:sbus}
+    password: ${POSTGRES_PASSWORD:sbus}
+    driver-class-name: org.postgresql.Driver
+    dialect: POSTGRES
+    schema-generate: NONE
+    maximum-pool-size: 10
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+
+sbus:
+  outbox:
+    batch-size: 100
+    max-attempts: 8
+    base-backoff: 2s
+    max-backoff: 5m
+    poll-interval: 200ms
+    initial-delay: 3s
+  core:
+    # Throughput guard protecting the (slower) Core from request bursts.
+    limit-for-period: 50
+    refresh-period: 1s
+  retry:
+    max-attempts: 5
+    base-delay: 1s
+    max-delay: 30s
+    max-wait: 5s
+  housekeeping:
+    idempotency-retention: 7d
+    message-retention: 30d
+    batch-size: 500
+    interval: 1h
+
+otel:
+  service:
+    name: payment-sbus
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: none
+  exporter:
+    otlp:
+      # Plain default avoids the colon being mis-parsed in a ${VAR:default} placeholder.
+      # Override at runtime with env OTEL_EXPORTER_OTLP_ENDPOINT (Micronaut maps it here).
+      endpoint: http://localhost:4317
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    details-visible: ANONYMOUS
+  prometheus:
+    enabled: true
+    sensitive: false

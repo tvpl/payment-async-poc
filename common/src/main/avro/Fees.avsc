@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "Fees",
+  "namespace": "com.example.payments.common.avro",
+  "doc": "Fee breakdown. Monetary values are decimal strings to avoid float drift.",
+  "fields": [
+    { "name": "mdr", "type": "string" },
+    { "name": "interchange", "type": "string" },
+    { "name": "netAmount", "type": "string" }
+  ]
+}

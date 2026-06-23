@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "PaymentRequest",
+  "namespace": "com.example.payments.common.avro",
+  "fields": [
+    { "name": "merchantId", "type": "string" },
+    { "name": "amount", "type": "string" },
+    { "name": "currency", "type": "string" },
+    { "name": "paymentMethod", "type": "string" },
+    { "name": "brand", "type": ["null", "string"], "default": null },
+    { "name": "installments", "type": "int" },
+    { "name": "captureMode", "type": "string" }
+  ]
+}

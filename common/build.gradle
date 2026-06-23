@@ -1,0 +1,35 @@
+plugins {
+    id 'io.micronaut.library'
+    id 'com.github.davidmc24.gradle.plugin.avro'
+}
+
+micronaut {
+    version = project.property('micronautVersion')
+}
+
+dependencies {
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+    api 'io.micronaut.serde:micronaut-serde-api'
+    api 'io.micronaut.serde:micronaut-serde-jackson'
+    // Avro-generated event classes are part of the shared contract.
+    api "org.apache.avro:avro:${project.property('avroVersion')}"
+    // Apicurio Avro serde (Confluent serdes are not available on Maven Central here).
+    // kafka-clients is provided by each service via micronaut-kafka.
+    api("io.apicurio:apicurio-registry-serdes-avro-serde:${project.property('apicurioVersion')}") {
+        exclude group: 'org.apache.kafka', module: 'kafka-clients'
+    }
+    compileOnly 'org.apache.kafka:kafka-clients'
+    compileOnly 'jakarta.validation:jakarta.validation-api'
+    // Lettuce types are used by RedisRateLimiter; provided at runtime by each service.
+    compileOnly 'io.lettuce:lettuce-core'
+
+    testImplementation platform('org.junit:junit-bom:5.10.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'io.lettuce:lettuce-core'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+avro {
+    stringType = 'String'
+    fieldVisibility = 'PRIVATE'
+}

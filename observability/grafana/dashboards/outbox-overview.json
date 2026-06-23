@@ -1,0 +1,31 @@
+{
+  "title": "Outbox Overview",
+  "uid": "outbox-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "Outbox pending (gauge)", "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(sbus_outbox_pending)", "legendFormat": "pending" } ]
+    },
+    {
+      "type": "timeseries", "title": "Published vs failures /sec", "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(sbus_outbox_published_total[1m])", "legendFormat": "published" },
+        { "expr": "rate(sbus_outbox_publish_failures_total[1m])", "legendFormat": "failures" }
+      ]
+    },
+    {
+      "type": "stat", "title": "DLQ total", "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(sbus_dlq_total)", "legendFormat": "dlq" } ]
+    }
+  ]
+}

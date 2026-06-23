@@ -1,0 +1,36 @@
+# EXEMPLO de cluster Kafka multi-broker (KRaft, 3 nós) para referência de produção.
+# NÃO é exercitado neste repositório/PoC — use como ponto de partida.
+#
+# Diferenças-chave vs. o broker único do docker-compose.yml:
+#   - replication-factor 3 + min.insync.replicas 2 (durabilidade)
+#   - unclean.leader.election desabilitado (não promover réplica fora de sync)
+#   - producers com acks=all + enable.idempotence (já configurado nos serviços)
+#
+# Suba os tópicos com RF=3 apontando KAFKA_TOPIC_RF=3 no kafka-init.
+services:
+  kafka-1: &kafka-base
+    image: bitnami/kafka:3.7
+    environment: &kafka-env
+      KAFKA_CFG_PROCESS_ROLES: "controller,broker"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093"
+      KAFKA_CFG_LISTENERS: "INTERNAL://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      # Durabilidade de produção:
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: "3"
+      KAFKA_CFG_MIN_INSYNC_REPLICAS: "2"
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "3"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "3"
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: "2"
+      KAFKA_CFG_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+    environment_overrides_per_node: "set KAFKA_CFG_NODE_ID and ADVERTISED_LISTENERS per broker"
+
+  kafka-2:
+    <<: *kafka-base
+  kafka-3:
+    <<: *kafka-base
+# Nota: defina KAFKA_CFG_NODE_ID (1/2/3) e KAFKA_CFG_ADVERTISED_LISTENERS por nó.
+# Este arquivo é ilustrativo; valide em um ambiente real antes de usar.
