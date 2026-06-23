@@ -22,9 +22,8 @@ flowchart TB
 
 Rodar:
 ```bash
-./gradlew :common:test :api-service:test :sbus-service:test --tests '*UnitTest'
+./gradlew test     # roda os unitários (os *IT são excluídos por padrão — ver abaixo)
 ```
-> Use o sufixo exato `*UnitTest` (sem `*` no fim) para não acionar os `*IT`.
 
 ## Integração (Testcontainers — exigem Docker)
 
@@ -37,13 +36,35 @@ Padrão: containers estáticos + `TestPropertyProvider` injeta `kafka.bootstrap.
 `apicurio.registry.url`, datasource/redis no contexto Micronaut. O teste codifica/decodifica Avro com
 um `AvroSerde` apontando para o registry do container.
 
-Rodar tudo (precisa de Docker):
+Os `*IT` ficam **excluídos por padrão** do `test` (precisam de Docker/Testcontainers). Para
+incluí-los, passe `-PwithIT`:
 ```bash
-./gradlew test
+./gradlew test                 # só unitários (sem Docker) — é o que o CI roda
+./gradlew test -PwithIT        # inclui os *IT (precisa de Docker + imagens)
 ```
 
 ## Carga
-Ver [`load/k6-simulations.js`](../load/k6-simulations.js) e [12 Execução](12-execucao-e-operacao.md).
+```bash
+make load          # taxa padrão        |   make load-heavy   # taxa alta (429/backpressure)
+# direto (auth ON por padrão — passe a chave):
+k6 run -e API_KEY=dev-key-change-me -e RATE=300 -e DURATION=1m load/k6-simulations.js
+```
+O script envia `X-API-Key` e usa `http.expectedStatuses(200,202,422,429)`, então o threshold
+`http_req_failed` só conta erros reais (`401`/`5xx`) — `429` (rate limit) e `422` (recusa do
+Core) são desfechos esperados sob carga. Dois scripts: [`load/k6-simulations.js`](../load/k6-simulations.js)
+(síncrono; suporta `EXECUTOR=ramp`) e [`load/k6-poll.js`](../load/k6-poll.js) (assíncrono:
+`POST` 202 → poll do `GET` até terminal). `make load*` exporta as métricas para o Prometheus
+(dashboard **k6 Load Test**). Ver [12 Execução](12-execucao-e-operacao.md).
+
+## Smoke (ponta a ponta, rápido)
+[`scripts/smoke.sh`](../scripts/smoke.sh) (`make smoke`) faz 1 `POST` e segue o `requestId`
+até o estado terminal — valida o pipeline inteiro sem subir um teste de integração.
+
+## CI (GitHub Actions)
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) roda em cada push/PR:
+compila todos os módulos, executa `./gradlew test` (unitários; os `*IT` são excluídos
+por padrão, sem Docker) e valida o `docker compose config`. Relatórios de teste sobem
+como artefato.
 
 ## Notas
 - Sem Docker, os `*IT` falham com `Could not find a valid Docker environment` — esperado.

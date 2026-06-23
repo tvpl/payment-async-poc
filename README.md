@@ -11,7 +11,7 @@ qualquer serviço externo/legado no futuro.
 
 > **Java 25**: o código de virtual threads é idêntico ao do Java 21. O alvo da toolchain
 > está centralizado em `gradle.properties` (`javaLanguageVersion=21`). Para mover para o
-> Java 25 basta alterar essa propriedade e as imagens base nos `Dockerfile` (`jdk21`/`21-jre`
+> Java 25 basta alterar essa propriedade e as imagens base no `Dockerfile` raiz (`jdk21`/`21-jre`
 > → `25`). Este container de desenvolvimento só tem JDK 21, por isso o alvo atual é 21.
 
 ## 📚 Documentação detalhada
@@ -39,7 +39,8 @@ O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o fu
 | **common** | — | Contratos de evento compartilhados (`EventEnvelope`, payloads, enums, constantes) |
 
 Infra: **Kafka** (KRaft), **Redis**, **PostgreSQL**, **Apicurio Schema Registry**,
-**OpenTelemetry Collector**, **Jaeger**, **Prometheus**, **Grafana**.
+**Kafka UI**, **OpenTelemetry Collector**, **Jaeger**, **Prometheus**, **Grafana**,
+e exporters (**Redis/Postgres/Kafka**) para métricas server-side.
 
 > **Serialização**: os eventos no Kafka usam **Avro + Apicurio Schema Registry**
 > (os serdes do Confluent não estão disponíveis no Maven Central / repo bloqueado;
@@ -102,19 +103,26 @@ Passo a passo:
 ## Como executar (Docker Compose)
 
 ```bash
-docker compose up -d --build
-# aguarde os healthchecks (kafka, postgres, redis) e o kafka-init criar os tópicos
-docker compose ps
+docker compose up -d --build      # ou: make up
+# aguarde os healthchecks (kafka, postgres, redis, apicurio + os 3 apps via /health)
+docker compose ps                 # ou: make ps
 ```
+
+> **Atalhos** ([`Makefile`](Makefile)): `make demo` (up + espera health + smoke) · `make up` /
+> `make up-core` (enxuto, sem observabilidade) · `make smoke` · `make load` / `load-heavy` /
+> `load-ramp` / `load-poll` (k6 via container → métricas no Grafana) · `make logs` · `make urls`
+> · `make down` / `make clean`. Tunables em [`.env`](.env). Veja [docs/12](docs/12-execucao-e-operacao.md).
 
 UIs e endpoints:
 
 - API: http://localhost:8080  · OpenAPI: `http://localhost:8080/swagger/payment-simulation-api-1.0.yml`
+- Kafka UI (tópicos/mensagens/lag): http://localhost:8088
 - Apicurio Schema Registry: http://localhost:8085 (UI/API)
 - Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000 (admin/admin) — dashboards em *Payment Simulation*
+- Grafana: http://localhost:3000 (admin/admin) — dashboards API/SBUS/Outbox/Infra/**k6 Load Test**
 - Jaeger (traces): http://localhost:16686
 - Métricas: `http://localhost:8080/prometheus`, `:8081/prometheus`, `:8082/prometheus`
+  · exporters: Redis `:9121`, Postgres `:9187`, Kafka `:9308`
 
 ### Exemplos curl
 
@@ -139,8 +147,11 @@ curl -i -H 'X-API-Key: dev-key-change-me' http://localhost:8080/payment-simulati
 
 # 3) Idempotência: repetir o POST com a MESMA Idempotency-Key reusa o requestId original
 
-# 4) Carga (rajada) — exercita rate limit (429), 200/202 e virtual threads
-k6 run -e BASE_URL=http://localhost:8080 -e RATE=300 -e DURATION=1m load/k6-simulations.js
+# 4) Carga (rajada) — exercita rate limit (429), 200/202 e virtual threads.
+#    A auth fica ON por padrão, então o k6 envia X-API-Key (default dev-key-change-me).
+k6 run -e BASE_URL=http://localhost:8080 -e API_KEY=dev-key-change-me \
+       -e RATE=300 -e DURATION=1m load/k6-simulations.js
+# ou, sem instalar k6:  make load   /   make load-heavy
 ```
 
 Respostas: `200` (COMPLETED) · `422` (FAILED/recusado) · `202` (segue assíncrono, com `statusUrl`)
@@ -153,8 +164,9 @@ Redis não tem o resultado, então uma resposta finalizada nunca se perde.
 ## Desenvolvimento local
 
 ```bash
-./gradlew build -x test          # compila tudo (testes de integração precisam de Docker)
-./gradlew :common:test :api-service:test --tests '*UnitTest*'   # testes unitários (sem Docker)
+./gradlew build -x test   # compila tudo
+./gradlew test            # testes unitários (sem Docker; os *IT são excluídos por padrão)
+./gradlew test -PwithIT   # inclui os testes de integração (precisam de Docker + Apicurio)
 ```
 
 Subir infra e rodar um serviço fora do compose (Kafka exposto em `localhost:29092`).
@@ -169,7 +181,7 @@ KAFKA_BOOTSTRAP_SERVERS=localhost:29092 ./gradlew :core-mock:run
 ```
 
 > **Java 25**: alvo centralizado em `gradle.properties` (`javaLanguageVersion`). O código de
-> virtual threads é idêntico ao 21; para subir, troque a propriedade e as imagens base nos `Dockerfile`.
+> virtual threads é idêntico ao 21; para subir, troque a propriedade e as imagens base no `Dockerfile` raiz.
 
 ---
 
@@ -320,8 +332,8 @@ Detalhes e checklist de produção em [docs/15-prontidao-producao.md](docs/15-pr
   (Kafka+Redis+Apicurio: `202` → correlação do evento final → `GET COMPLETED`).
 
 ```bash
-./gradlew :common:test :api-service:test :sbus-service:test --tests '*UnitTest*'   # sem Docker
-./gradlew test            # tudo (os *IT precisam de Docker + Apicurio)
+./gradlew test            # unitários (sem Docker; os *IT são excluídos por padrão)
+./gradlew test -PwithIT   # inclui os *IT (precisam de Docker + Apicurio)
 ```
 
 ---
@@ -331,12 +343,14 @@ Detalhes e checklist de produção em [docs/15-prontidao-producao.md](docs/15-pr
 ```
 payment-async-poc/
 ├── settings.gradle, build.gradle, gradle.properties
-├── docker-compose.yml
+├── docker-compose.yml, Dockerfile (multi-target), Makefile, .env
+├── .github/workflows/ # ci.yml (build + unit tests + compose lint)
+├── scripts/           # smoke.sh (teste ponta a ponta rápido)
 ├── common/            # contratos: schemas Avro (src/main/avro), AvroMapper, AvroSerde, envelope/POJOs
 ├── api-service/       # API HTTP + virtual threads + Redis + Kafka (Avro) + rate limit + fallback GET
 ├── sbus-service/      # consumers (Avro) + Outbox (claim/lease + reaper + housekeeping) + Postgres (Flyway)
-├── core-mock/         # Core simulado
-├── observability/     # prometheus.yml, alerts.yml, otel-collector.yml, grafana/
-├── load/              # k6-simulations.js (teste de carga)
+├── core-mock/         # Core simulado (comportamento configurável: latência/recusa/falha)
+├── observability/     # prometheus.yml, alerts.yml, otel-collector.yml, grafana/ (dashboards + datasources)
+├── load/              # k6-simulations.js (síncrono) e k6-poll.js (assíncrono)
 └── docs/events/       # exemplos de contratos de evento (JSON ilustrativo)
 ```

@@ -21,6 +21,8 @@ flowchart LR
 - Exporter OTLP → `otel-collector` → **Jaeger** (UI em `:16686`).
 - Em dev sem collector, use o profile `dev` (`otel.traces.exporter: none`) para evitar erros de export.
 - Config: bloco `otel` em `*/application.yml`; [`observability/otel-collector.yml`](../observability/otel-collector.yml).
+- O **core-mock** também exporta traces (`-kafka` + OTLP), então o span do Core aparece no
+  trace ponta a ponta — a cadeia no Jaeger não "corta" no broker antes do Core.
 
 ## Métricas (Prometheus)
 
@@ -47,9 +49,39 @@ HTTP server (`http_server_requests_seconds_*`), consumer lag
 
 Código: `api-service/.../metrics/ApiMetrics.java`, `sbus-service/.../metrics/SbusMetrics.java`.
 
+## Métricas de infra (exporters)
+Além das métricas das aplicações, o stack sobe exporters dedicados (profile `observability`)
+que dão a visão **server-side**:
+
+| Exporter | Porta | Métricas (ex.) |
+|---|---|---|
+| `redis-exporter` | 9121 | `redis_connected_clients`, `redis_commands_processed_total`, `redis_memory_used_bytes` |
+| `postgres-exporter` | 9187 | `pg_up`, `pg_stat_database_numbackends`, `pg_stat_database_xact_commit` |
+| `kafka-exporter` | 9308 | `kafka_consumergroup_lag`, `kafka_topic_partition_current_offset` |
+
+Scrapeados pelo [`prometheus.yml`](../observability/prometheus.yml).
+
 ## Dashboards (Grafana)
-Datasource e dashboards **provisionados**: API, SBUS, Outbox, Kafka, Redis, PostgreSQL.
-Ver [`observability/grafana/`](../observability/grafana). Acesso em `:3000` (admin/admin).
+Datasource e dashboards **provisionados** (acesso em `:3000`, admin/admin):
+- **API**, **SBUS**, **Outbox** e **API Waiters** — métricas das aplicações (`api_*`, `sbus_*`,
+  HikariCP, binder Kafka).
+- **Infra Exporters** — Redis/Postgres/Kafka server-side (via os exporters acima).
+- **k6 Load Test** — alimentado pelo remote-write do k6 (`make load*`): RPS, mix de status,
+  p95/p99, falhas e VUs.
+
+Ver [`observability/grafana/`](../observability/grafana).
+
+## Exemplars (métrica → trace)
+O datasource Prometheus está ligado ao **Jaeger** via `exemplarTraceIdDestinations`
+([`datasource.yml`](../observability/grafana/provisioning/datasources/datasource.yml)):
+quando há exemplars nos histogramas de latência, um clique no ponto abre o **trace**
+correspondente no Jaeger — fechando o ciclo métrica↔trace.
+
+## Kafka UI (inspeção de mensageria)
+[`kafka-ui`](http://localhost:8088) (`:8088`) complementa as métricas: navegue por **tópicos**,
+**mensagens** (payload Avro decodificado via Apicurio ccompat), **partições** e **consumer
+groups/lag**. Ótimo para acompanhar a mensageria e o processamento concorrente ao vivo
+durante a carga.
 
 ## Alertas (Prometheus)
 Em [`observability/alerts.yml`](../observability/alerts.yml): outbox pendente alto, falhas recorrentes

@@ -21,6 +21,13 @@ subprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+        // Integration tests (*IT) need Docker (Testcontainers) and are excluded by default
+        // so the normal `./gradlew test` is fast and CI-safe. Include them with -PwithIT.
+        if (!project.hasProperty('withIT')) {
+            filter {
+                excludeTestsMatching '*IT'
+            }
+        }
         // Make virtual-thread / preview-free behavior explicit and tests quiet.
         testLogging {
             events 'passed', 'skipped', 'failed'

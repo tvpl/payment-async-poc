@@ -41,10 +41,13 @@ public class CoreSimulationConsumer {
 
     private final AvroSerde avroSerde;
     private final CoreResponseProducer producer;
+    private final CoreBehaviorProperties behavior;
 
-    public CoreSimulationConsumer(AvroSerde avroSerde, CoreResponseProducer producer) {
+    public CoreSimulationConsumer(AvroSerde avroSerde, CoreResponseProducer producer,
+                                  CoreBehaviorProperties behavior) {
         this.avroSerde = avroSerde;
         this.producer = producer;
+        this.behavior = behavior;
     }
 
     @Topic(Topics.CORE_COMMAND)
@@ -53,8 +56,17 @@ public class CoreSimulationConsumer {
         EventEnvelope<ProcessPaymentSimulationCommandPayload> env = AvroMapper.fromAvro(avro);
         ProcessPaymentSimulationCommandPayload cmd = env.payload();
 
-        // Simulate Core processing latency.
-        Thread.sleep(ThreadLocalRandom.current().nextLong(50, 300));
+        // Simulate Core processing latency (configurable for demos).
+        int min = behavior.getLatencyMinMs();
+        int max = Math.max(min + 1, behavior.getLatencyMaxMs());
+        Thread.sleep(ThreadLocalRandom.current().nextLong(min, max));
+
+        // Optional transient failure: throwing here lets the SBUS exercise retry topics / DLQ.
+        if (behavior.getFailPct() > 0 && ThreadLocalRandom.current().nextInt(100) < behavior.getFailPct()) {
+            LOG.warn("Core simulating transient failure requestId={} simulationId={}",
+                    env.requestId(), cmd.simulationId());
+            throw new RuntimeException("Simulated transient Core failure");
+        }
 
         CorePaymentSimulationResponsePayload response = process(cmd);
 
@@ -70,7 +82,7 @@ public class CoreSimulationConsumer {
 
     private CorePaymentSimulationResponsePayload process(ProcessPaymentSimulationCommandPayload cmd) {
         BigDecimal amount = cmd.request().amount();
-        boolean declined = ThreadLocalRandom.current().nextInt(100) < 10;
+        boolean declined = ThreadLocalRandom.current().nextInt(100) < behavior.getDeclinePct();
         if (declined) {
             return new CorePaymentSimulationResponsePayload(
                     cmd.simulationId(), SimulationResult.DECLINED, null,

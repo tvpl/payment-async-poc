@@ -32,6 +32,27 @@ apicurio:
   registry:
     url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
 
+# Tunable simulated Core behavior (override via env for demos).
+core:
+  behavior:
+    latency-min-ms: ${CORE_LATENCY_MIN_MS:50}
+    latency-max-ms: ${CORE_LATENCY_MAX_MS:300}
+    decline-pct: ${CORE_DECLINE_PCT:10}
+    fail-pct: ${CORE_FAIL_PCT:0}
+
+otel:
+  service:
+    name: payment-core-mock
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: none
+  exporter:
+    otlp:
+      # Plain default avoids the colon being mis-parsed in a ${VAR:default} placeholder.
+      # Override at runtime with env OTEL_EXPORTER_OTLP_ENDPOINT (Micronaut maps it here).
+      endpoint: http://localhost:4317
+
 endpoints:
   all:
     enabled: true
