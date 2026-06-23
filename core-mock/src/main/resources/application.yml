@@ -32,6 +32,19 @@ apicurio:
   registry:
     url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
 
+otel:
+  service:
+    name: payment-core-mock
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: none
+  exporter:
+    otlp:
+      # Plain default avoids the colon being mis-parsed in a ${VAR:default} placeholder.
+      # Override at runtime with env OTEL_EXPORTER_OTLP_ENDPOINT (Micronaut maps it here).
+      endpoint: http://localhost:4317
+
 endpoints:
   all:
     enabled: true

@@ -5,12 +5,43 @@
 - **JDK 21** (alvo atual; ver caminho para 25 abaixo) e o wrapper `./gradlew` (build local).
 - Opcional: **k6** (teste de carga).
 
+## Atalhos (Makefile)
+
+Um [`Makefile`](../Makefile) na raiz cobre o ciclo todo (não exige k6 no host — usa o
+container `grafana/k6`):
+
+```bash
+make up          # build + sobe o stack (detached)
+make ps          # status / health dos serviços
+make smoke       # 1 simulação ponta a ponta (POST -> poll GET -> resultado)
+make load        # teste de carga k6 (taxa padrão)
+make load-heavy  # taxa alta para exercitar rate limit (429) / backpressure
+make logs        # acompanha os logs dos apps
+make urls        # lista as URLs úteis
+make down        # para o stack   |   make clean = down + remove volumes
+```
+
+Variáveis sobrescrevíveis: `make load K6_RATE=300 K6_DURATION=2m`, `API_KEY=...`, `BASE_URL=...`.
+
 ## Subir o stack completo
 
 ```bash
-docker compose up -d --build
-docker compose ps   # aguarde healthchecks (kafka, postgres, redis, apicurio) + kafka-init
+docker compose up -d --build   # ou: make up
+docker compose ps   # aguarde healthchecks: kafka, postgres, redis, apicurio, kafka-init
+                    # e os 3 apps (api/sbus/core-mock) ficarem "healthy" (GET /health)
 ```
+
+> Os apps agora têm **healthcheck** no compose (`/health`), então `docker compose ps` mostra
+> `healthy` quando cada serviço está pronto — útil para esperar antes de disparar carga.
+
+## Smoke test (validação rápida)
+
+```bash
+make smoke   # ou: ./scripts/smoke.sh
+```
+Dispara um `POST`, segue o `requestId` pelos status até um estado terminal
+(`COMPLETED`/`FAILED`/`TIMEOUT`) e imprime o resultado — confirma o fluxo
+API→Kafka→SBUS→core-mock→API. Ver [`scripts/smoke.sh`](../scripts/smoke.sh).
 
 ### Portas / URLs
 
@@ -21,6 +52,7 @@ docker compose ps   # aguarde healthchecks (kafka, postgres, redis, apicurio) + 
 | SBUS | http://localhost:8081 |
 | core-mock | http://localhost:8082 |
 | Apicurio Schema Registry | http://localhost:8085 |
+| Kafka UI | http://localhost:8088 |
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 (admin/admin) |
 | Jaeger (traces) | http://localhost:16686 |
@@ -51,17 +83,26 @@ curl -i -H 'X-API-Key: dev-key-change-me' http://localhost:8080/payment-simulati
 ## Teste de carga (k6)
 
 ```bash
-k6 run -e BASE_URL=http://localhost:8080 -e RATE=300 -e DURATION=1m load/k6-simulations.js
+# via Makefile (container grafana/k6, sem instalar k6):
+make load                      # taxa padrão (100/s)
+make load-heavy                # taxa alta (400/s) — exercita o rate limit
+
+# ou diretamente com k6 instalado. A auth fica ON por padrão, então passe a chave:
+k6 run -e BASE_URL=http://localhost:8080 -e API_KEY=dev-key-change-me \
+       -e RATE=300 -e DURATION=1m load/k6-simulations.js
 ```
-Espere uma mistura de `200/202` e alguns `429` (rate limit) sob taxa alta. Ver
-[`load/k6-simulations.js`](../load/k6-simulations.js).
+Espere uma mistura de `200/202/422` e alguns `429` (rate limit) sob taxa alta. O script
+envia `X-API-Key` e marca `200/202/422/429` como respostas **esperadas**
+(`http.expectedStatuses`), então o threshold `http_req_failed` só acusa erros reais
+(ex.: `401` por chave errada, `5xx`). Ver [`load/k6-simulations.js`](../load/k6-simulations.js).
 
 ## Desenvolvimento local (sem compose para os apps)
 
 Kafka exposto em `localhost:29092`; use o profile `dev` para desligar o export OTLP:
 
 ```bash
-docker compose up -d kafka kafka-init redis postgres apicurio-registry otel-collector jaeger prometheus grafana
+docker compose up -d kafka kafka-init redis postgres apicurio-registry kafka-ui otel-collector jaeger prometheus grafana
+# ou: make up-infra
 export MICRONAUT_ENVIRONMENTS=dev
 KAFKA_BOOTSTRAP_SERVERS=localhost:29092 ./gradlew :sbus-service:run
 KAFKA_BOOTSTRAP_SERVERS=localhost:29092 ./gradlew :api-service:run
@@ -80,6 +121,10 @@ docker compose exec postgres psql -U sbus -d sbus -c \
 # Schemas registrados no Apicurio
 curl -s http://localhost:8085/apis/registry/v2/search/artifacts | jq .
 ```
+
+Para inspecionar **mensageria** visualmente (tópicos, mensagens, partições, consumer groups
+e **lag**), abra o **Kafka UI** em http://localhost:8088. Ele resolve os schemas Avro via o
+endpoint Confluent-compatível do Apicurio, então o payload dos eventos é decodificado na tela.
 
 ## Troubleshooting
 

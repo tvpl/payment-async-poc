@@ -20,6 +20,10 @@ dependencies {
     implementation 'io.micronaut.kafka:micronaut-kafka'
     implementation 'io.micronaut:micronaut-management'
     implementation 'io.micronaut.micrometer:micronaut-micrometer-registry-prometheus'
+    // Observability: trace Kafka consume/produce and export spans via OTLP so the Core
+    // appears in the end-to-end trace (Jaeger).
+    implementation 'io.micronaut.tracing:micronaut-tracing-opentelemetry-kafka'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
     implementation 'jakarta.annotation:jakarta.annotation-api'
 
     runtimeOnly 'net.logstash.logback:logstash-logback-encoder:7.4'

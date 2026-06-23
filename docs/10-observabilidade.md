@@ -21,6 +21,8 @@ flowchart LR
 - Exporter OTLP → `otel-collector` → **Jaeger** (UI em `:16686`).
 - Em dev sem collector, use o profile `dev` (`otel.traces.exporter: none`) para evitar erros de export.
 - Config: bloco `otel` em `*/application.yml`; [`observability/otel-collector.yml`](../observability/otel-collector.yml).
+- O **core-mock** também exporta traces (`-kafka` + OTLP), então o span do Core aparece no
+  trace ponta a ponta — a cadeia no Jaeger não "corta" no broker antes do Core.
 
 ## Métricas (Prometheus)
 
@@ -50,6 +52,14 @@ Código: `api-service/.../metrics/ApiMetrics.java`, `sbus-service/.../metrics/Sb
 ## Dashboards (Grafana)
 Datasource e dashboards **provisionados**: API, SBUS, Outbox, Kafka, Redis, PostgreSQL.
 Ver [`observability/grafana/`](../observability/grafana). Acesso em `:3000` (admin/admin).
+Os dashboards usam métricas das próprias aplicações (`api_*`, `sbus_*`, HikariCP, binder
+Kafka) — não exigem exporters dedicados de Redis/Postgres/Kafka.
+
+## Kafka UI (inspeção de mensageria)
+[`kafka-ui`](http://localhost:8088) (`:8088`) complementa as métricas: navegue por **tópicos**,
+**mensagens** (payload Avro decodificado via Apicurio ccompat), **partições** e **consumer
+groups/lag**. Ótimo para acompanhar a mensageria e o processamento concorrente ao vivo
+durante a carga.
 
 ## Alertas (Prometheus)
 Em [`observability/alerts.yml`](../observability/alerts.yml): outbox pendente alto, falhas recorrentes
