@@ -1,0 +1,87 @@
+micronaut:
+  application:
+    name: feature-demo
+  server:
+    port: 8083
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+  security:
+    # Bearer JWT. All demo endpoints are open (isAnonymous) but a valid token, when present, is
+    # decoded so the resolver can recognize the user/groups. Production would secure real routes.
+    authentication: bearer
+    reject-not-found: false
+    intercept-url-map:
+      - pattern: /**
+        access:
+          - isAnonymous()
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              # HS256 shared secret (dev only — >= 256 bits). Prod: RS256/JWKS + secret manager.
+              secret: ${JWT_SIGNATURE_SECRET:`dev-feature-control-signing-secret-change-me-32b+`}
+              jws-algorithm: HS256
+
+redis:
+  uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+
+# Baseline feature definitions (safe defaults). Redis overrides these at runtime (see admin API).
+platform:
+  features:
+    redis-enabled: ${FEATURES_REDIS_ENABLED:true}
+    cache-ttl: 5s
+    key-prefix: "feature:"
+    flags:
+      # 1) Feature toggle — flip 100% between service A and B.
+      demo-toggle:
+        type: BOOLEAN
+        enabled: true
+        on-variant: service-b
+        off-variant: service-a
+      # 2) A/B rollout — 10% to B, 90% to A, sticky per user.
+      demo-ab:
+        type: PERCENTAGE
+        enabled: true
+        percentage: 10
+        on-variant: B
+        off-variant: A
+      # 3) Restricted group / per-user — only the pilot users/groups get it.
+      demo-restricted:
+        type: ALLOWLIST
+        enabled: true
+        allowed-users:
+          - vip-user
+        allowed-groups:
+          - beta
+        on-variant: granted
+        off-variant: denied
+      # 4) API v0 — restricted to the v0-testers group; everyone else stays on v1.
+      payment-api-v0:
+        type: ALLOWLIST
+        enabled: true
+        allowed-groups:
+          - v0-testers
+        on-variant: v0
+        off-variant: v1
+      # Topic A/B routing demo (off by default -> topic-a).
+      checkout-topic:
+        type: BOOLEAN
+        enabled: false
+        on-variant: checkout.topic-b
+        off-variant: checkout.topic-a
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    details-visible: ANONYMOUS
+  prometheus:
+    enabled: true
+    sensitive: false

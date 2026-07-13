@@ -16,8 +16,12 @@ dependencies {
     annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
     annotationProcessor 'io.micronaut:micronaut-http-validation'
     annotationProcessor 'io.micronaut.openapi:micronaut-openapi'
+    annotationProcessor 'io.micronaut.security:micronaut-security-annotations'
 
     implementation project(':common')
+    implementation project(':feature-control')
+    // JWT auth used to gate the v0 route to a restricted group (feature-control reads the JWT).
+    implementation 'io.micronaut.security:micronaut-security-jwt'
 
     implementation 'io.micronaut:micronaut-http-server-netty'
     implementation 'io.micronaut:micronaut-http-client'

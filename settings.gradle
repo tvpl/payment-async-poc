@@ -13,6 +13,9 @@ pluginManagement {
 rootProject.name = 'payment-async-poc'
 
 include 'common'
+include 'feature-control'
 include 'api-service'
 include 'sbus-service'
 include 'core-mock'
+include 'feature-demo'
+include 'async-redis-service'

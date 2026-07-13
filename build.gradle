@@ -23,8 +23,11 @@ subprojects {
         useJUnitPlatform()
         // Integration tests (*IT) need Docker (Testcontainers) and are excluded by default
         // so the normal `./gradlew test` is fast and CI-safe. Include them with -PwithIT.
-        if (!project.hasProperty('withIT')) {
-            filter {
+        filter {
+            // Some modules (e.g. async-redis-service) ship only *IT tests; don't fail `test`
+            // when the default run filters everything out.
+            setFailOnNoMatchingTests(false)
+            if (!project.hasProperty('withIT')) {
                 excludeTestsMatching '*IT'
             }
         }

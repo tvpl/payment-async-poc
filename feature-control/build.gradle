@@ -1,0 +1,27 @@
+plugins {
+    id 'io.micronaut.library'
+}
+
+micronaut {
+    version = project.property('micronautVersion')
+}
+
+dependencies {
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+
+    // JSON model (flag definitions in YAML/Redis) — part of the shared contract.
+    api 'io.micronaut.serde:micronaut-serde-api'
+    api 'io.micronaut.serde:micronaut-serde-jackson'
+
+    // The JWT->context factory references Authentication; consuming apps bring the
+    // runtime (micronaut-security-jwt), same convention `common` uses for Lettuce/Kafka.
+    compileOnly 'io.micronaut.security:micronaut-security'
+    compileOnly 'io.lettuce:lettuce-core'
+    compileOnly 'jakarta.inject:jakarta.inject-api'
+    compileOnly 'jakarta.annotation:jakarta.annotation-api'
+
+    testImplementation platform('org.junit:junit-bom:5.10.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'io.lettuce:lettuce-core'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
