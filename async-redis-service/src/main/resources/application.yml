@@ -28,8 +28,17 @@ async:
     # Simulated processing time so the demo/benchmark exercises real waiting.
     process-latency-min-ms: ${ASYNC_LATENCY_MIN_MS:20}
     process-latency-max-ms: ${ASYNC_LATENCY_MAX_MS:150}
-    # Reclaim messages idle longer than this from crashed consumers (XAUTOCLAIM).
+    # Reclaim messages idle longer than this from crashed consumers.
     reclaim-idle: 30s
+    # Approximate cap on the stream length (XADD MAXLEN ~) to bound memory.
+    stream-maxlen: ${ASYNC_STREAM_MAXLEN:100000}
+    # Poison protection: after this many deliveries a job is moved to the DLQ.
+    dlq-stream: async.jobs.dlq
+    max-deliveries: ${ASYNC_MAX_DELIVERIES:5}
+    # Admission rate limit for POST /jobs (per second, global via Redis). 0 disables it.
+    admission-limit-per-sec: ${ASYNC_ADMISSION_LIMIT:0}
+    # Max pooled connections for concurrent blocking BRPOP waits.
+    pool-max-total: ${ASYNC_POOL_MAX_TOTAL:64}
 
 endpoints:
   all:

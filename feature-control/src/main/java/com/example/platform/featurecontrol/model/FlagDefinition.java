@@ -24,6 +24,11 @@ import java.util.Set;
  * <p>{@link #allowedUsers()}/{@link #allowedGroups()} are also honored as an <em>override</em>
  * on PERCENTAGE/VARIANT flags, so a restricted group can be pinned to the "on" side regardless
  * of the roll-out percentage — the common "internal testers always see v0" pattern.
+ *
+ * <p>{@link #version()} enables optimistic concurrency on writes (compare-and-set in Redis so two
+ * admins can't silently clobber each other). {@link #bucketingSalt()} lets a set of flags share a
+ * cohort (same users bucketed together) when needed; when null the flag name is the salt (the
+ * default, which decorrelates flags). Both are optional and default to backward-compatible values.
  */
 @Serdeable
 public record FlagDefinition(
@@ -35,7 +40,9 @@ public record FlagDefinition(
         @Nullable Set<String> allowedGroups,
         @Nullable List<Variant> variants,
         @Nullable String onVariant,
-        @Nullable String offVariant) {
+        @Nullable String offVariant,
+        long version,
+        @Nullable String bucketingSalt) {
 
     public FlagDefinition {
         if (name == null || name.isBlank()) {
@@ -47,9 +54,20 @@ public record FlagDefinition(
         if (percentage < 0 || percentage > 100) {
             throw new IllegalArgumentException("percentage must be within [0,100]");
         }
+        if (version < 0) {
+            throw new IllegalArgumentException("version must be >= 0");
+        }
         allowedUsers = allowedUsers == null ? Set.of() : Set.copyOf(allowedUsers);
         allowedGroups = allowedGroups == null ? Set.of() : Set.copyOf(allowedGroups);
         variants = variants == null ? List.of() : List.copyOf(variants);
+    }
+
+    /** Backward-compatible constructor (version=0, salt=flag name) used by existing call sites. */
+    public FlagDefinition(String name, FlagType type, boolean enabled, int percentage,
+                          Set<String> allowedUsers, Set<String> allowedGroups, List<Variant> variants,
+                          String onVariant, String offVariant) {
+        this(name, type, enabled, percentage, allowedUsers, allowedGroups, variants,
+                onVariant, offVariant, 0L, null);
     }
 
     /** Variant name returned when the flag resolves "on". Defaults to {@code "on"}. */
@@ -60,5 +78,16 @@ public record FlagDefinition(
     /** Variant name returned when the flag resolves "off". Defaults to {@code "off"}. */
     public String offName() {
         return offVariant == null || offVariant.isBlank() ? "off" : offVariant;
+    }
+
+    /** Effective bucketing salt: the explicit one, or the flag name (decorrelates flags). */
+    public String effectiveSalt() {
+        return bucketingSalt == null || bucketingSalt.isBlank() ? name : bucketingSalt;
+    }
+
+    /** Returns a copy with the given version (used by the admin CAS write path). */
+    public FlagDefinition withVersion(long newVersion) {
+        return new FlagDefinition(name, type, enabled, percentage, allowedUsers, allowedGroups,
+                variants, onVariant, offVariant, newVersion, bucketingSalt);
     }
 }

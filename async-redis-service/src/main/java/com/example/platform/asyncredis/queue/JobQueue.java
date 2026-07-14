@@ -5,6 +5,7 @@ import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.redis.RedisConnections;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.XAddArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micronaut.serde.ObjectMapper;
@@ -51,7 +52,9 @@ public class JobQueue {
         if (request.note() != null) {
             body.put(FIELD_NOTE, request.note());
         }
-        return redis.shared().xadd(props.getStream(), body);
+        // Approximate MAXLEN trimming bounds the stream's memory without exact-length overhead.
+        XAddArgs args = XAddArgs.Builder.maxlen(props.getStreamMaxlen()).approximateTrimming();
+        return redis.shared().xadd(props.getStream(), args, body);
     }
 
     /**
@@ -62,7 +65,7 @@ public class JobQueue {
      */
     public Optional<JobResult> awaitResult(String jobId) {
         double timeoutSeconds = props.getWaitTimeout().toMillis() / 1000.0;
-        try (StatefulRedisConnection<String, String> conn = redis.dedicated()) {
+        try (StatefulRedisConnection<String, String> conn = redis.borrowBlocking()) {
             KeyValue<String, String> popped = conn.sync().brpop(timeoutSeconds, responseKey(jobId));
             if (popped == null || !popped.hasValue()) {
                 return Optional.empty();

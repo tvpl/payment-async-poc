@@ -26,6 +26,7 @@ O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o fu
 - [10 Observabilidade](docs/10-observabilidade.md) · [11 Resiliência e trade-offs](docs/11-resiliencia-e-tradeoffs.md)
 - [12 Execução e operação](docs/12-execucao-e-operacao.md) · [13 Testes](docs/13-testes.md) · [14 Glossário](docs/14-glossario.md)
 - [15 Prontidão para produção](docs/15-prontidao-producao.md) (gaps corrigidos + checklist de deploy)
+- [16 Feature Control (lib)](docs/16-feature-control-lib.md) · [17 Async→Sync via Redis (sem Kafka)](docs/17-async-sync-redis.md) · [18 Operação de features](docs/18-operacao-features.md)
 
 ---
 

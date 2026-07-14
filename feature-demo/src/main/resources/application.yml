@@ -15,6 +15,11 @@ micronaut:
     authentication: bearer
     reject-not-found: false
     intercept-url-map:
+      # Admin (runtime flag control) requires the ROLE_ADMIN role from the JWT.
+      - pattern: /admin/**
+        access:
+          - ROLE_ADMIN
+      # Everything else is open; a valid token, when present, is still decoded for gating.
       - pattern: /**
         access:
           - isAnonymous()

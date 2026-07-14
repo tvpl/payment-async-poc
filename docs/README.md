@@ -37,8 +37,9 @@ funciona** ponta a ponta.
 | 13 | [Testes](13-testes.md) | Unitários e integração (Testcontainers) |
 | 14 | [Glossário](14-glossario.md) | Termos-chave |
 | 15 | [Prontidão para produção](15-prontidao-producao.md) | Gaps corrigidos + checklist de deploy |
-| 16 | [Feature Control (lib)](16-feature-control-lib.md) | v0 / feature toggle / A-B / chave por usuário (JWT); lib para 30+ apps |
-| 17 | [Async→Sync via Redis](17-async-sync-redis.md) | Síncrono-sobre-assíncrono **sem Kafka** (Streams + BRPOP) |
+| 16 | [Feature Control (lib)](16-feature-control-lib.md) | v0 / feature toggle / A-B / chave por usuário (JWT); lib para 30+ apps; propagação, métricas, governança, publicação |
+| 17 | [Async→Sync via Redis](17-async-sync-redis.md) | Síncrono-sobre-assíncrono **sem Kafka** (Streams + BRPOP), pool/DLQ/backpressure |
+| 18 | [Operação de features](18-operacao-features.md) | Runbook: flipar, rollout, kill-switch, 409, auditoria |
 
 ## Diagrama de contexto
 

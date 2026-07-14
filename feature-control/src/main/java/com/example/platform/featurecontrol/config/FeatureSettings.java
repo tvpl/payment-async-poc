@@ -20,6 +20,7 @@ public class FeatureSettings {
     private boolean redisEnabled = true;
     private Duration cacheTtl = Duration.ofSeconds(5);
     private String keyPrefix = "feature:";
+    private boolean masterEnabled = true;
 
     public boolean isRedisEnabled() {
         return redisEnabled;
@@ -27,6 +28,15 @@ public class FeatureSettings {
 
     public void setRedisEnabled(boolean redisEnabled) {
         this.redisEnabled = redisEnabled;
+    }
+
+    /** Global master switch. When false, every flag resolves off/default (static kill-switch). */
+    public boolean isMasterEnabled() {
+        return masterEnabled;
+    }
+
+    public void setMasterEnabled(boolean masterEnabled) {
+        this.masterEnabled = masterEnabled;
     }
 
     public Duration getCacheTtl() {

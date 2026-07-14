@@ -16,6 +16,16 @@ public class AsyncRedisProperties {
     private long processLatencyMinMs = 20;
     private long processLatencyMaxMs = 150;
     private Duration reclaimIdle = Duration.ofSeconds(30);
+    /** Approximate cap on stream length (XADD MAXLEN ~) to bound memory. */
+    private long streamMaxlen = 100_000;
+    /** Dead-letter stream for poison jobs. */
+    private String dlqStream = "async.jobs.dlq";
+    /** Max deliveries before a job is moved to the DLQ (poison protection). */
+    private int maxDeliveries = 5;
+    /** Admission rate limit for POST /jobs (per second, global via Redis). 0 disables it. */
+    private int admissionLimitPerSec = 0;
+    /** Max pooled connections for concurrent blocking BRPOP waits. */
+    private int poolMaxTotal = 64;
 
     public Duration getWaitTimeout() {
         return waitTimeout;
@@ -79,5 +89,45 @@ public class AsyncRedisProperties {
 
     public void setReclaimIdle(Duration reclaimIdle) {
         this.reclaimIdle = reclaimIdle;
+    }
+
+    public long getStreamMaxlen() {
+        return streamMaxlen;
+    }
+
+    public void setStreamMaxlen(long streamMaxlen) {
+        this.streamMaxlen = streamMaxlen;
+    }
+
+    public String getDlqStream() {
+        return dlqStream;
+    }
+
+    public void setDlqStream(String dlqStream) {
+        this.dlqStream = dlqStream;
+    }
+
+    public int getMaxDeliveries() {
+        return maxDeliveries;
+    }
+
+    public void setMaxDeliveries(int maxDeliveries) {
+        this.maxDeliveries = maxDeliveries;
+    }
+
+    public int getAdmissionLimitPerSec() {
+        return admissionLimitPerSec;
+    }
+
+    public void setAdmissionLimitPerSec(int admissionLimitPerSec) {
+        this.admissionLimitPerSec = admissionLimitPerSec;
+    }
+
+    public int getPoolMaxTotal() {
+        return poolMaxTotal;
+    }
+
+    public void setPoolMaxTotal(int poolMaxTotal) {
+        this.poolMaxTotal = poolMaxTotal;
     }
 }

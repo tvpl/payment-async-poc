@@ -1,0 +1,36 @@
+{
+  "title": "Async Redis (Kafka-free async->sync)",
+  "uid": "async-redis",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat", "title": "Stream length (queued)", "id": 1,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(async_stream_length)", "legendFormat": "queued" } ]
+    },
+    {
+      "type": "stat", "title": "Pending (in-flight / unacked)", "id": 2,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(async_pending)", "legendFormat": "pending" } ]
+    },
+    {
+      "type": "stat", "title": "Processing p99 (s)", "id": 3,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "max(async_process_latency_seconds{quantile=\"0.99\"})", "legendFormat": "p99" } ]
+    },
+    {
+      "type": "timeseries", "title": "POST /jobs by status /sec (200 sync, 202 async, 429 shed)", "id": 4,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum by (status) (rate(http_server_requests_seconds_count{uri=\"/jobs\"}[1m]))", "legendFormat": "{{status}}" }
+      ]
+    }
+  ]
+}

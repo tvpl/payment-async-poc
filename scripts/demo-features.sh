@@ -50,11 +50,16 @@ hr "5) Kafka topic A/B routing from a flag (GET /demo/topic)"
 curl -s "${BASE_URL}/demo/topic"; echo
 
 hr "6) Runtime flip — turn demo-toggle OFF via the admin API, then re-check"
-curl -s -X PUT "${BASE_URL}/admin/features/demo-toggle" \
+echo "   (admin endpoints require ROLE_ADMIN — minting an admin token)"
+ADMIN_JSON=$(curl -s -X POST "${BASE_URL}/auth/token" \
   -H 'Content-Type: application/json' \
+  -d '{"userId":"admin-user","groups":["ROLE_ADMIN"]}')
+ADMIN=$(json_field "$ADMIN_JSON" .accessToken)
+curl -s -X PUT "${BASE_URL}/admin/features/demo-toggle" \
+  -H "Authorization: Bearer ${ADMIN}" -H 'Content-Type: application/json' \
   -d '{"name":"demo-toggle","type":"BOOLEAN","enabled":false,"onVariant":"service-b","offVariant":"service-a"}' >/dev/null
 echo "   after flip:"; curl -s "${BASE_URL}/demo/toggle"; echo
-curl -s -X DELETE "${BASE_URL}/admin/features/demo-toggle" >/dev/null
+curl -s -X DELETE "${BASE_URL}/admin/features/demo-toggle" -H "Authorization: Bearer ${ADMIN}" >/dev/null
 echo "   after removing the override (baseline restored):"; curl -s "${BASE_URL}/demo/toggle"; echo
 
 hr "Done"

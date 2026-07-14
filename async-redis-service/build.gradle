@@ -20,6 +20,8 @@ dependencies {
     implementation 'io.micronaut.serde:micronaut-serde-jackson'
     implementation 'io.micronaut.redis:micronaut-redis-lettuce'
     implementation 'io.micronaut.validation:micronaut-validation'
+    // Connection pool for the blocking BRPOP waits (Lettuce ConnectionPoolSupport).
+    implementation 'org.apache.commons:commons-pool2:2.12.0'
 
     // Observability parity with the other services (Prometheus scrape + /health).
     implementation 'io.micronaut:micronaut-management'

@@ -61,8 +61,11 @@ Passo a passo:
 ## Durabilidade e recuperação de falhas
 
 - Mensagens ficam no stream + PEL até o `XACK`; um worker que morre no meio **não** perde o job.
-- `XAUTOCLAIM` (a cada N ciclos) reivindica mensagens ociosas além de `async.redis.reclaim-idle` de
-  consumidores mortos, e outro worker as finaliza. É a durabilidade que o pub/sub puro não tem.
+- O worker inspeciona os pendentes (`XPENDING`) periodicamente: reivindica (`XCLAIM`) os ociosos além
+  de `reclaim-idle` de consumidores mortos, e outro worker os finaliza — durabilidade que o pub/sub
+  puro não tem.
+- **Poison protection (DLQ):** um job entregue mais de `max-deliveries` vezes é movido para o stream
+  `async.jobs.dlq` (com `dlqReason`) e confirmado, evitando loop infinito de reprocessamento.
 - Cross-instância: o `BRPOP` é numa lista compartilhada no Redis; qualquer instância da API que
   segure o BRPOP daquele `jobId` recebe o resultado — funciona com N réplicas.
 
@@ -75,7 +78,22 @@ Passo a passo:
 | `worker-concurrency` | 2 | Consumidores no group (cada um segura 1 conexão bloqueante) |
 | `stream` / `group` | `async.jobs` / `workers` | Nomes do stream e do consumer group |
 | `process-latency-*-ms` | 20–150 | Latência simulada de processamento (demo/benchmark) |
-| `reclaim-idle` | 30s | Ociosidade a partir da qual o `XAUTOCLAIM` reivindica |
+| `reclaim-idle` | 30s | Ociosidade a partir da qual um pendente é reivindicado (`XCLAIM`) |
+| `stream-maxlen` | 100000 | Cap aproximado do stream (`XADD MAXLEN ~`) — limita memória |
+| `dlq-stream` | `async.jobs.dlq` | Stream de dead-letter para poison jobs |
+| `max-deliveries` | 5 | Entregas antes de mover o job para a DLQ |
+| `admission-limit-per-sec` | 0 | Rate limit global de `POST /jobs` (0 desliga) → 429 |
+| `pool-max-total` | 64 | Máx. de conexões no pool para os BRPOP bloqueantes |
+
+### Endurecimento (produção)
+- **Pool de conexões (BRPOP):** cada espera bloqueante toma uma conexão de um pool
+  (`ConnectionPoolSupport`, `redis/RedisConnections.java`) em vez de abrir uma por request — bounded e
+  reutilizável sob alta concorrência.
+- **Backpressure:** `admission-limit-per-sec` limita a admissão de forma global (Lua atômico no Redis,
+  fallback local) e responde **429 Retry-After** ao saturar — derruba carga antes de empilhar nos workers.
+- **Trim do stream:** `XADD MAXLEN ~` mantém o stream limitado em memória.
+- **Métricas:** `async_stream_length` (XLEN), `async_pending` (XPENDING) e `async_process_latency`
+  (timer) alimentam o dashboard **Async Redis** no Grafana.
 
 ## Executar e testar
 
@@ -129,19 +147,21 @@ maioria vira **200** (síncrono); ao saturar os workers ou baixar o timeout, cre
 **Prós**
 - Uma dependência (Redis); simples de operar e entender.
 - BRPOP por request = wake preciso, sem fan-out; funciona multi-instância.
-- Durável o suficiente (PEL + XAUTOCLAIM) — melhor que pub/sub puro.
+- Durável o suficiente (PEL + reclaim + **DLQ**) — melhor que pub/sub puro.
+- Pool de conexões + backpressure (429) + trim: pronto para carga real.
 - Virtual threads tornam a espera bloqueante barata (milhares esperando).
 
 **Contras / trade-offs**
 - Durabilidade e replay são inferiores ao log do Kafka; não substitui o núcleo transacional.
-- **Conexão por BRPOP:** cada espera segura uma conexão dedicada. Simples e correto, mas sob alta
-  concorrência troque por um **pool** (`ConnectionPoolSupport`) — documentado no código.
+- O BRPOP consome uma conexão enquanto espera — mitigado pelo **pool** (`pool-max-total`), mas ainda é
+  o recurso a dimensionar sob altíssima concorrência.
 - Redis single-node é ponto único; produção pede réplica/failover (Sentinel/Cluster).
 
 **Cuidados**
 - `wait-timeout` **≤** timeout HTTP do cliente/gateway; lista de resposta **sempre com TTL**.
-- Dimensione `worker-concurrency` à latência real do processamento e ao limite de conexões do Redis.
-- Faça **trim** do stream (`XTRIM`/`MAXLEN`) para não crescer sem limite.
+- Dimensione `worker-concurrency` e `pool-max-total` à latência real e ao limite de conexões do Redis.
+- `stream-maxlen` mantém o stream limitado; ajuste ao pico de backlog aceitável.
+- Monitore a **DLQ** (`async.jobs.dlq`) — jobs ali indicam falha real/poison.
 - Idempotência do processamento: com reclaim/retry, um job pode ser processado mais de uma vez — torne
   a liberação idempotente (aqui o `SET` por `jobId` é naturalmente idempotente).
 

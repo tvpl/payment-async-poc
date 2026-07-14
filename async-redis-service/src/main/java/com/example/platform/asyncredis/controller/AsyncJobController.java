@@ -4,7 +4,9 @@ import com.example.platform.asyncredis.dto.JobResponse;
 import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.queue.JobQueue;
+import com.example.platform.asyncredis.ratelimit.AsyncRateLimiter;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -30,14 +32,20 @@ import java.util.UUID;
 public class AsyncJobController {
 
     private final JobQueue queue;
+    private final AsyncRateLimiter rateLimiter;
 
-    public AsyncJobController(JobQueue queue) {
+    public AsyncJobController(JobQueue queue, AsyncRateLimiter rateLimiter) {
         this.queue = queue;
+        this.rateLimiter = rateLimiter;
     }
 
     @Post
     @ExecuteOn(TaskExecutors.BLOCKING)
     public HttpResponse<JobResponse> submit(@Valid @Body SubmitJobRequest request) {
+        if (!rateLimiter.tryAcquire()) {
+            // Backpressure: shed load before it piles onto the workers.
+            return HttpResponse.<JobResponse>status(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "1");
+        }
         String jobId = UUID.randomUUID().toString();
         queue.enqueue(jobId, request);
 

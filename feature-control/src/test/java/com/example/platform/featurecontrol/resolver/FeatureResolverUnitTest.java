@@ -1,5 +1,6 @@
 package com.example.platform.featurecontrol.resolver;
 
+import com.example.platform.featurecontrol.config.FeatureSettings;
 import com.example.platform.featurecontrol.context.FeatureContext;
 import com.example.platform.featurecontrol.model.FeatureDecision;
 import com.example.platform.featurecontrol.model.FlagDefinition;
@@ -36,7 +37,11 @@ class FeatureResolverUnitTest {
     }
 
     private FeatureResolver resolver(FlagSource source) {
-        return new FeatureResolver(source);
+        return new FeatureResolver(source, new MasterSwitch(new FeatureSettings(), source), List.of());
+    }
+
+    private FeatureResolver resolver(FlagSource source, FeatureSettings settings) {
+        return new FeatureResolver(source, new MasterSwitch(settings, source), List.of());
     }
 
     private FeatureContext user(String id, String... groups) {
@@ -136,5 +141,43 @@ class FeatureResolverUnitTest {
         String v = r.variant("engine", user("u123"));
         assertTrue(v.equals("a") || v.equals("b"));
         assertEquals(v, r.variant("engine", user("u123")));
+    }
+
+    @Test
+    void masterSwitchConfigForcesEverythingOff() {
+        FlagSource src = new MapFlagSource().put(new FlagDefinition(
+                "f", FlagType.BOOLEAN, true, 0, null, null, null, "on", "off"));
+        FeatureSettings killed = new FeatureSettings();
+        killed.setMasterEnabled(false);
+        FeatureDecision d = resolver(src, killed).evaluate("f", user("u1"));
+        assertFalse(d.isOn());
+        assertEquals("kill-switch", d.reason());
+    }
+
+    @Test
+    void reservedKillFlagForcesEverythingOff() {
+        FlagSource src = new MapFlagSource()
+                .put(new FlagDefinition(MasterSwitch.KILL_FLAG, FlagType.BOOLEAN, true, 0,
+                        null, null, null, "on", "off"))
+                .put(new FlagDefinition("f", FlagType.BOOLEAN, true, 0, null, null, null, "on", "off"));
+        FeatureDecision d = resolver(src).evaluate("f", user("u1"));
+        assertFalse(d.isOn());
+        assertEquals("kill-switch", d.reason());
+    }
+
+    @Test
+    void sharedBucketingSaltCorrelatesFlags() {
+        // Two flags with the same explicit salt must bucket a user identically (coordinated cohort).
+        FlagSource src = new MapFlagSource()
+                .put(new FlagDefinition("flag-a", FlagType.PERCENTAGE, true, 50, null, null, null,
+                        "on", "off", 0L, "cohort-1"))
+                .put(new FlagDefinition("flag-b", FlagType.PERCENTAGE, true, 50, null, null, null,
+                        "on", "off", 0L, "cohort-1"));
+        FeatureResolver r = resolver(src);
+        for (int i = 0; i < 500; i++) {
+            FeatureContext u = user("user-" + i);
+            assertEquals(r.isEnabled("flag-a", u), r.isEnabled("flag-b", u),
+                    "same salt must yield same bucket for user-" + i);
+        }
     }
 }

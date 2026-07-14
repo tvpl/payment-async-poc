@@ -216,10 +216,108 @@ curl -s -o /dev/null -w '%{http_code}\n' localhost:8083/demo/restricted
 curl -s -H "Authorization: Bearer $TOKEN" localhost:8083/demo/version   # v0
 curl -s localhost:8083/demo/version                                     # v1
 
-# flip em runtime
-curl -s -XPUT localhost:8083/admin/features/demo-toggle -H 'Content-Type: application/json' \
+# flip em runtime (admin exige ROLE_ADMIN)
+ADMIN=$(curl -s -XPOST localhost:8083/auth/token -H 'Content-Type: application/json' \
+  -d '{"userId":"admin","groups":["ROLE_ADMIN"]}' | jq -r .accessToken)
+curl -s -XPUT localhost:8083/admin/features/demo-toggle -H "Authorization: Bearer $ADMIN" \
+  -H 'Content-Type: application/json' \
   -d '{"name":"demo-toggle","type":"BOOLEAN","enabled":false,"onVariant":"service-b","offVariant":"service-a"}'
 curl -s localhost:8083/demo/toggle      # agora service-a
+```
+
+---
+
+## Produção: propagação, métricas, governança e distribuição
+
+### Propagação instantânea (Redis pub/sub)
+Além do cache com `cache-ttl`, um flip é anunciado num canal `feature:changed`
+(`store/FlagChangeNotifier.java`); cada app assina (`store/FlagChangeSubscriber.java`) e **invalida o
+cache na hora** — a mudança aparece em todas as instâncias em milissegundos, e o `cache-ttl` vira só
+uma rede de segurança. Reusa o mesmo padrão de pub/sub tolerante do `ResponseCoordinator`.
+
+```mermaid
+flowchart LR
+  admin[PUT /admin/features/x] --> svc[FlagAdminService]
+  svc -->|SET feature:x| r[(Redis)]
+  svc -->|PUBLISH feature:changed x| ch((canal))
+  ch --> s1[app 1: invalida cache]
+  ch --> s2[app 2: invalida cache]
+  ch --> s3[app N: invalida cache]
+```
+
+### Concorrência otimista (sem lost update)
+Toda flag carrega uma `version`. O write é um **compare-and-set** atômico em Lua (usa o `cjson` do
+Redis): grava só se a `version` enviada casa com a atual, incrementando-a; senão retorna **409** e o
+cliente re-lê. Envie `version: 0` para criar; para atualizar, mande a versão que você leu.
+
+```bash
+# cria (version 0 -> 1)
+curl -s -XPUT :8083/admin/features/x -H "Authorization: Bearer $ADMIN" \
+  -d '{"name":"x","type":"BOOLEAN","enabled":true,"version":0}'
+# repetir com version:0 novamente -> HTTP 409 (conflito)
+```
+
+### Kill-switch global
+`resolver/MasterSwitch.java` é consultado antes de qualquer flag. Dois gatilhos: estático
+(`platform.features.master-enabled=false`) ou dinâmico (habilite a flag reservada `__kill_switch__`
+via admin). Com ele ligado, toda decisão vira off/default com `reason=kill-switch` (fail-safe).
+
+### Métricas de exposição (Micrometer)
+Cada decisão emite `feature_decisions_total{flag,variant,on,reason_kind}` via
+`metrics/MicrometerDecisionListener.java` (só ativo se houver `MeterRegistry`). É a base para ver o
+rollout no Grafana (dashboard **Feature Decisions**) e para análise A/B. O `reason` é reduzido ao
+"kind" (parte antes do `:`) para limitar cardinalidade. Extensível: implemente `spi/DecisionListener`
+para exportar eventos de exposição à sua plataforma de experimentos.
+
+### Governança do admin (ROLE_ADMIN + auditoria)
+`/admin/features/**` exige `ROLE_ADMIN` (no `intercept-url-map` da segurança). Toda mudança é
+auditada (`admin/AuditService.java`): log estruturado (MDC `actor`/`flag`/`action`) e, com Redis, uma
+lista capada `feature:audit` (`LPUSH`+`LTRIM`). Em produção, adicione mTLS e um scope de admin real.
+
+### `@FeatureGate` (açúcar opcional)
+Em vez de resolver a flag na mão, anote o handler:
+
+```java
+@Get("/v2/report")
+@FeatureGate("reporting-v2")   // 404 (ou 403) se a flag estiver off para o chamador
+Report v2() { ... }
+```
+
+Interceptor AOP (`annotation/FeatureGateInterceptor.java`) lê o JWT do `ServerRequestContext` e nega
+quando off (`FeatureDisabledException` → 404/403). Requer micronaut-aop + HTTP server; o resto da lib
+funciona sem.
+
+### Distribuição da lib (Maven)
+A lib publica como artefato **`com.example.platform:feature-control:<versão>`** (com sources+javadoc),
+então as 30+ apps consomem por versão, não por código-fonte:
+
+```bash
+./gradlew :feature-control:publishToMavenLocal          # dev
+./gradlew :feature-control:publishMavenPublicationToLocalBuildRepository   # valida POM/artefato (CI)
+GITHUB_ACTOR=... GITHUB_TOKEN=... \
+  ./gradlew :feature-control:publishMavenPublicationToGitHubPackagesRepository   # GitHub Packages
+```
+
+```groovy
+// numa app consumidora
+implementation 'com.example.platform:feature-control:0.1.0'
+```
+
+O POM leva apenas as deps `api` (serde); Lettuce/segurança/micrometer ficam `compileOnly` — cada app
+traz o runtime que já usa. SemVer: mudanças retrocompatíveis sobem o patch/minor; quebras, o major.
+
+### JWT: dev (HS256) vs produção (RS256/JWKS)
+Dev usa HS256 com segredo compartilhado (`JWT_SIGNATURE_SECRET`) e o emissor `POST /auth/token` só
+para testes. Produção (`MICRONAUT_ENVIRONMENTS=prod`, `application-prod.yml`) valida contra o **JWKS**
+do IdP (RS256, rotação de chaves automática) + `iss`; os tokens vêm do seu IdP, não deste serviço.
+
+## Como testar
+
+```bash
+./gradlew :feature-control:test          # 20 testes unitários (bucketing, resolver, kill-switch, salt, store)
+# ITs (JWT, governança, 409, kill-switch, métricas, flip) contra um Redis local, sem Docker:
+REDIS_TEST_URI=redis://localhost:6379 ./gradlew :feature-demo:test -PwithIT
+make demo-features                       # roteiro curl guiado dos cenários (stack no ar)
 ```
 
 ---
@@ -263,8 +361,9 @@ tocado a cada `cache-ttl`):
 **Cuidados**
 - Use **sempre a mesma chave** de bucketing (userId) para o A/B ser consistente entre serviços.
 - **Nunca fail-open**: mantenha o baseline YAML conservador; se o Redis cair, é ele que vale.
-- **Segredo JWT** só no dev via `.env`; produção com secret manager + **RS256/JWKS**.
-- Proteja `/admin/features` (scope admin/mTLS) em produção — aqui é aberto/`IS_AUTHENTICATED` só para o exemplo.
+- **Segredo JWT** só no dev via `.env`; produção com secret manager + **RS256/JWKS** (`application-prod.yml`).
+- `/admin/features` já exige **ROLE_ADMIN** e é auditado; em produção acrescente mTLS/scope real.
+- Em escrita concorrente, trate o **409** (re-leia a `version` e reenvie) em vez de forçar.
 - `allowed-users`/`allowed-groups` grandes: prefira grupos (claim no JWT) a listas enormes de usuários.
 
 ## Ver também

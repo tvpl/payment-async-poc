@@ -1,9 +1,58 @@
 plugins {
     id 'io.micronaut.library'
+    id 'maven-publish'
 }
+
+// Published for the 30+ apps to consume as a versioned artifact (not a source dependency).
+group = 'com.example.platform'
 
 micronaut {
     version = project.property('micronautVersion')
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// The lib references optional integrations via compileOnly; don't fail javadoc on their absence.
+tasks.named('javadoc') {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifactId = 'feature-control'
+            pom {
+                name = 'feature-control'
+                description = 'Shared feature-control library: v0/toggle/A-B/JWT, dynamic Redis flag store'
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        // Local file repo — lets CI validate the artifact/POM without any credentials.
+        maven {
+            name = 'localBuild'
+            url = layout.buildDirectory.dir('repo')
+        }
+        // GitHub Packages — the real distribution target. Credentials come from the environment.
+        maven {
+            name = 'gitHubPackages'
+            url = 'https://maven.pkg.github.com/tvpl/payment-async-poc'
+            credentials {
+                username = providers.environmentVariable('GITHUB_ACTOR').getOrElse('')
+                password = providers.environmentVariable('GITHUB_TOKEN').getOrElse('')
+            }
+        }
+    }
 }
 
 dependencies {
@@ -19,6 +68,12 @@ dependencies {
     compileOnly 'io.lettuce:lettuce-core'
     compileOnly 'jakarta.inject:jakarta.inject-api'
     compileOnly 'jakarta.annotation:jakarta.annotation-api'
+    // Optional integrations, all resolved lazily via @Requires so the core stays lean:
+    //   micrometer -> feature_decisions_total metrics; aop/http -> the @FeatureGate advice.
+    compileOnly 'io.micrometer:micrometer-core'
+    compileOnly 'io.micronaut:micronaut-aop'
+    compileOnly 'io.micronaut:micronaut-http'
+    compileOnly 'io.micronaut:micronaut-http-server'
 
     testImplementation platform('org.junit:junit-bom:5.10.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'

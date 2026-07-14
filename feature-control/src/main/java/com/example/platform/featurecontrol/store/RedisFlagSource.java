@@ -72,4 +72,9 @@ public class RedisFlagSource implements FlagSource {
     public void invalidate(String name) {
         cache.remove(name);
     }
+
+    /** Drops the entire cache (used on a wildcard change signal). */
+    public void invalidateAll() {
+        cache.clear();
+    }
 }

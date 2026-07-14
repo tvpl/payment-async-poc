@@ -24,6 +24,13 @@ micronaut:
     authentication: bearer
     reject-not-found: false
     intercept-url-map:
+      # Admin (runtime flag control) requires the ROLE_ADMIN role from the JWT.
+      - pattern: /admin/**
+        access:
+          - ROLE_ADMIN
+      # Everything else is anonymous at the security layer (existing routes stay guarded by the
+      # X-API-Key filter; v0 self-enforces from the JWT), so enabling security does not change the
+      # tested /payment-simulations flow.
       - pattern: /**
         access:
           - isAnonymous()
