@@ -108,12 +108,13 @@ curl -i -XPOST localhost:8084/jobs -H 'Content-Type: application/json' \
 curl -s localhost:8084/jobs/<jobId>
 ```
 
-Teste de integração: `AsyncRedisFlowIT` (Testcontainers **ou** um Redis externo via `REDIS_TEST_URI`)
-valida `POST → 200 COMPLETED` e o `GET` durável.
+Testes de integração (contra um Redis em `localhost:6379` — local ou o service do CI, **sem Docker**):
+`AsyncRedisFlowIT` (POST→200 + GET durável), `AsyncDlqIT` (poison job → DLQ) e `AsyncBackpressureIT`
+(rajada → 429).
 
 ```bash
-./gradlew :async-redis-service:test -PwithIT                                   # com Docker
-REDIS_TEST_URI=redis://localhost:6379 ./gradlew :async-redis-service:test -PwithIT   # Redis já rodando
+# suba um redis (ex.: redis-server) e rode:
+./gradlew :async-redis-service:test -PwithIT
 ```
 
 ## Benchmark

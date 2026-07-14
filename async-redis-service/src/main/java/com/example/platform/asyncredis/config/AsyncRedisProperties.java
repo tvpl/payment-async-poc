@@ -26,6 +26,10 @@ public class AsyncRedisProperties {
     private int admissionLimitPerSec = 0;
     /** Max pooled connections for concurrent blocking BRPOP waits. */
     private int poolMaxTotal = 64;
+    /** How often a worker scans pending entries for reclaim/DLQ. */
+    private Duration reclaimInterval = Duration.ofSeconds(5);
+    /** Test hook: when set, the worker fails any job whose reference equals this (drives DLQ tests). */
+    private String failOnReference;
 
     public Duration getWaitTimeout() {
         return waitTimeout;
@@ -129,5 +133,21 @@ public class AsyncRedisProperties {
 
     public void setPoolMaxTotal(int poolMaxTotal) {
         this.poolMaxTotal = poolMaxTotal;
+    }
+
+    public Duration getReclaimInterval() {
+        return reclaimInterval;
+    }
+
+    public void setReclaimInterval(Duration reclaimInterval) {
+        this.reclaimInterval = reclaimInterval;
+    }
+
+    public String getFailOnReference() {
+        return failOnReference;
+    }
+
+    public void setFailOnReference(String failOnReference) {
+        this.failOnReference = failOnReference;
     }
 }

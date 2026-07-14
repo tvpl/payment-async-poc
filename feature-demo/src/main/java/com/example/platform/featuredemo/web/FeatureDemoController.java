@@ -1,5 +1,6 @@
 package com.example.platform.featuredemo.web;
 
+import com.example.platform.featurecontrol.annotation.FeatureGate;
 import com.example.platform.featurecontrol.context.FeatureContext;
 import com.example.platform.featurecontrol.kafka.TopicRouter;
 import com.example.platform.featurecontrol.model.FeatureDecision;
@@ -68,6 +69,17 @@ public class FeatureDemoController {
         DemoResponse body = response("restricted", d, ctx,
                 d.isOn() ? "Access granted (" + d.reason() + ")" : "Access denied — not in allowlist");
         return d.isOn() ? HttpResponse.ok(body) : HttpResponse.<DemoResponse>status(io.micronaut.http.HttpStatus.FORBIDDEN).body(body);
+    }
+
+    /**
+     * Same restriction as {@code /demo/restricted}, but enforced declaratively by {@link FeatureGate}:
+     * the method body only runs when {@code demo-restricted} is on for the caller; otherwise the
+     * interceptor returns 404 (feature hidden). No boilerplate in the handler.
+     */
+    @Get("/demo/gated")
+    @FeatureGate("demo-restricted")
+    public java.util.Map<String, Object> gated() {
+        return java.util.Map.of("ok", true, "scenario", "feature-gate", "note", "reached only when allowed");
     }
 
     /** Scenario 4 — API v0 versioning, feature-gated default (no explicit version). */

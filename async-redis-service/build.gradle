@@ -34,10 +34,7 @@ dependencies {
 
     testImplementation 'io.micronaut.test:micronaut-test-junit5'
     testImplementation 'io.micronaut:micronaut-http-client'
-    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
-    testImplementation 'org.testcontainers:testcontainers'
-    testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'com.redis:testcontainers-redis:2.2.2'
+    // ITs run against a real Redis at localhost:6379 (local or CI service) — no Docker/Testcontainers.
     testImplementation 'org.awaitility:awaitility:4.2.1'
 }
 

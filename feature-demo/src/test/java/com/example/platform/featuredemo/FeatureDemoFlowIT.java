@@ -114,6 +114,20 @@ class FeatureDemoFlowIT implements TestPropertyProvider {
     }
 
     @Test
+    void featureGateAllowsMembersAndHidesOthers() {
+        String beta = token("gwen", List.of("beta"));
+        Map<String, Object> ok = client.toBlocking().retrieve(
+                HttpRequest.GET("/demo/gated").bearerAuth(beta), Argument.mapOf(String.class, Object.class));
+        assertEquals(true, ok.get("ok"));
+
+        // Not in the allowlist -> the @FeatureGate interceptor hides it as 404.
+        HttpClientResponseException hidden = org.junit.jupiter.api.Assertions.assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().exchange(HttpRequest.GET("/demo/gated")));
+        assertEquals(HttpStatus.NOT_FOUND, hidden.getStatus());
+    }
+
+    @Test
     void healthIsUp() {
         HttpResponse<Map> health = client.toBlocking().exchange(HttpRequest.GET("/health"), Map.class);
         assertEquals(HttpStatus.OK, health.getStatus());

@@ -85,14 +85,15 @@ public class JobWorker {
     }
 
     private void runLoop(String consumerName) {
-        long blockMs = 2000;
-        int sinceReclaim = 0;
+        long blockMs = Math.min(2000, Math.max(100, props.getReclaimInterval().toMillis()));
+        long lastReclaim = 0;
         try (StatefulRedisConnection<String, String> conn = redis.dedicated()) {
             RedisCommands<String, String> c = conn.sync();
             while (running) {
                 try {
-                    if (sinceReclaim++ >= 10) {
-                        sinceReclaim = 0;
+                    long now = System.currentTimeMillis();
+                    if (now - lastReclaim >= props.getReclaimInterval().toMillis()) {
+                        lastReclaim = now;
                         reclaim(c, consumerName);
                     }
                     List<StreamMessage<String, String>> messages = c.xreadgroup(
@@ -163,6 +164,11 @@ public class JobWorker {
             if (jobId == null) {
                 c.xack(props.getStream(), props.getGroup(), message.getId());
                 return;
+            }
+            String reference = body.getOrDefault(JobQueue.FIELD_REFERENCE, "");
+            if (props.getFailOnReference() != null && props.getFailOnReference().equals(reference)) {
+                // Test hook: simulate a job that always fails, so it exhausts deliveries -> DLQ.
+                throw new IllegalStateException("simulated poison job: " + reference);
             }
             simulateProcessing();
             long amount = parseLong(body.get(JobQueue.FIELD_AMOUNT));

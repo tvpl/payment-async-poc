@@ -30,6 +30,8 @@ async:
     process-latency-max-ms: ${ASYNC_LATENCY_MAX_MS:150}
     # Reclaim messages idle longer than this from crashed consumers.
     reclaim-idle: 30s
+    # How often each worker scans pending entries for reclaim/DLQ.
+    reclaim-interval: 5s
     # Approximate cap on the stream length (XADD MAXLEN ~) to bound memory.
     stream-maxlen: ${ASYNC_STREAM_MAXLEN:100000}
     # Poison protection: after this many deliveries a job is moved to the DLQ.
