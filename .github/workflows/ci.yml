@@ -64,7 +64,7 @@ jobs:
       - name: Redis-backed integration tests
         env:
           REDIS_TEST_URI: redis://localhost:6379
-        run: ./gradlew :async-redis-service:test :feature-demo:test -PwithIT --no-daemon
+        run: ./gradlew :async-redis-service:test :feature-demo:test :pilot-app:test -PwithIT --no-daemon
 
       - name: Upload test reports
         if: always()

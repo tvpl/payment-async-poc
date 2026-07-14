@@ -371,6 +371,32 @@ services:
       redis:
         condition: service_healthy
 
+  # Reference consumer of the feature-control lib (adoption template). Depends only on Redis.
+  # Set REDIS_URI to a redis-sentinel:// URI for HA (see deploy/docker-compose.redis-ha.example.yml).
+  pilot-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: pilot
+    container_name: pilot-app
+    restart: unless-stopped
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:-dev-feature-control-signing-secret-change-me-32b+}
+      FEATURES_REDIS_ENABLED: ${FEATURES_REDIS_ENABLED:-true}
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8085/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   kafka-data:
   pg-data:

@@ -40,6 +40,7 @@ funciona** ponta a ponta.
 | 16 | [Feature Control (lib)](16-feature-control-lib.md) | v0 / feature toggle / A-B / chave por usuário (JWT); lib para 30+ apps; propagação, métricas, governança, publicação |
 | 17 | [Async→Sync via Redis](17-async-sync-redis.md) | Síncrono-sobre-assíncrono **sem Kafka** (Streams + BRPOP), pool/DLQ/backpressure |
 | 18 | [Operação de features](18-operacao-features.md) | Runbook: flipar, rollout, kill-switch, 409, auditoria |
+| 19 | [Adoção nas 30+ apps](19-adocao.md) | Passo a passo p/ consumir a lib (molde: pilot-app) |
 
 ## Diagrama de contexto
 

@@ -1,0 +1,62 @@
+micronaut:
+  application:
+    name: pilot-app
+  server:
+    port: 8085
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+  security:
+    authentication: bearer
+    reject-not-found: false
+    intercept-url-map:
+      - pattern: /**
+        access:
+          - isAnonymous()
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_SIGNATURE_SECRET:`dev-feature-control-signing-secret-change-me-32b+`}
+              jws-algorithm: HS256
+
+# For HA, override the whole URI with env REDIS_URI (e.g. redis-sentinel://...); env wins over yml.
+# See deploy/docker-compose.redis-ha.example.yml.
+redis:
+  uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+
+# The consuming app ships its own baseline flags; Redis + the platform admin flip them at runtime.
+platform:
+  features:
+    redis-enabled: ${FEATURES_REDIS_ENABLED:true}
+    cache-ttl: 5s
+    key-prefix: "feature:"
+    flags:
+      pilot-checkout:
+        type: PERCENTAGE
+        enabled: true
+        percentage: 50
+        on-variant: v2
+        off-variant: v1
+      pilot-beta:
+        type: ALLOWLIST
+        enabled: true
+        allowed-groups:
+          - beta
+        on-variant: granted
+        off-variant: denied
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    details-visible: ANONYMOUS
+  prometheus:
+    enabled: true
+    sensitive: false

@@ -41,6 +41,7 @@ O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o fu
 | **feature-control** | — | Lib compartilhada (30+ apps): v0 / feature toggle / A-B / chave por usuário (JWT), store dinâmico Redis |
 | **feature-demo** | 8083 | Exemplos executáveis da lib (1 endpoint por cenário) + emissor JWT dev + flip em runtime |
 | **async-redis-service** | 8084 | Async→sync **sem Kafka** (Redis Streams + BRPOP), exemplo autossuficiente |
+| **pilot-app** | 8085 | Consumidor de referência da lib (molde de adoção); ver [docs/19](docs/19-adocao.md) |
 
 Infra: **Kafka** (KRaft), **Redis**, **PostgreSQL**, **Apicurio Schema Registry**,
 **Kafka UI**, **OpenTelemetry Collector**, **Jaeger**, **Prometheus**, **Grafana**,
