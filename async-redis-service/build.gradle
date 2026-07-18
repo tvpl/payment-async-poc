@@ -1,0 +1,43 @@
+plugins {
+    id 'io.micronaut.application'
+}
+
+micronaut {
+    version = project.property('micronautVersion')
+    runtime 'netty'
+    testRuntime 'junit5'
+    processing {
+        incremental true
+        annotations 'com.example.platform.asyncredis.*'
+    }
+}
+
+dependencies {
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+    annotationProcessor 'io.micronaut.validation:micronaut-validation-processor'
+
+    implementation 'io.micronaut:micronaut-http-server-netty'
+    implementation 'io.micronaut.serde:micronaut-serde-jackson'
+    implementation 'io.micronaut.redis:micronaut-redis-lettuce'
+    implementation 'io.micronaut.validation:micronaut-validation'
+    // Connection pool for the blocking BRPOP waits (Lettuce ConnectionPoolSupport).
+    implementation 'org.apache.commons:commons-pool2:2.12.0'
+
+    // Observability parity with the other services (Prometheus scrape + /health).
+    implementation 'io.micronaut:micronaut-management'
+    implementation 'io.micronaut.micrometer:micronaut-micrometer-registry-prometheus'
+    implementation 'jakarta.annotation:jakarta.annotation-api'
+
+    runtimeOnly 'net.logstash.logback:logstash-logback-encoder:7.4'
+    runtimeOnly 'ch.qos.logback:logback-classic'
+    runtimeOnly 'org.yaml:snakeyaml'
+
+    testImplementation 'io.micronaut.test:micronaut-test-junit5'
+    testImplementation 'io.micronaut:micronaut-http-client'
+    // ITs run against a real Redis at localhost:6379 (local or CI service) — no Docker/Testcontainers.
+    testImplementation 'org.awaitility:awaitility:4.2.1'
+}
+
+application {
+    mainClass = 'com.example.platform.asyncredis.Application'
+}

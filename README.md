@@ -26,6 +26,7 @@ O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o fu
 - [10 Observabilidade](docs/10-observabilidade.md) · [11 Resiliência e trade-offs](docs/11-resiliencia-e-tradeoffs.md)
 - [12 Execução e operação](docs/12-execucao-e-operacao.md) · [13 Testes](docs/13-testes.md) · [14 Glossário](docs/14-glossario.md)
 - [15 Prontidão para produção](docs/15-prontidao-producao.md) (gaps corrigidos + checklist de deploy)
+- [16 Feature Control (lib)](docs/16-feature-control-lib.md) · [17 Async→Sync via Redis (sem Kafka)](docs/17-async-sync-redis.md) · [18 Operação de features](docs/18-operacao-features.md)
 
 ---
 
@@ -37,6 +38,10 @@ O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o fu
 | **sbus-service** | 8081 | Consome eventos, persiste no Postgres, **Outbox Pattern**, protege o Core, DLQ |
 | **core-mock** | 8082 | Core simulado: consome comando, calcula taxas/autorização, responde por evento |
 | **common** | — | Contratos de evento compartilhados (`EventEnvelope`, payloads, enums, constantes) |
+| **feature-control** | — | Lib compartilhada (30+ apps): v0 / feature toggle / A-B / chave por usuário (JWT), store dinâmico Redis |
+| **feature-demo** | 8083 | Exemplos executáveis da lib (1 endpoint por cenário) + emissor JWT dev + flip em runtime |
+| **async-redis-service** | 8084 | Async→sync **sem Kafka** (Redis Streams + BRPOP), exemplo autossuficiente |
+| **pilot-app** | 8085 | Consumidor de referência da lib (molde de adoção); ver [docs/19](docs/19-adocao.md) |
 
 Infra: **Kafka** (KRaft), **Redis**, **PostgreSQL**, **Apicurio Schema Registry**,
 **Kafka UI**, **OpenTelemetry Collector**, **Jaeger**, **Prometheus**, **Grafana**,
@@ -116,6 +121,8 @@ docker compose ps                 # ou: make ps
 UIs e endpoints:
 
 - API: http://localhost:8080  · OpenAPI: `http://localhost:8080/swagger/payment-simulation-api-1.0.yml`
+- feature-demo (v0/toggle/A-B/JWT): http://localhost:8083 — roteiro: `make demo-features` · [docs/16](docs/16-feature-control-lib.md)
+- async-redis (async→sync sem Kafka): http://localhost:8084 — `POST /jobs` · `make load-async` · [docs/17](docs/17-async-sync-redis.md)
 - Kafka UI (tópicos/mensagens/lag): http://localhost:8088
 - Apicurio Schema Registry: http://localhost:8085 (UI/API)
 - Prometheus: http://localhost:9090
@@ -152,7 +159,23 @@ curl -i -H 'X-API-Key: dev-key-change-me' http://localhost:8080/payment-simulati
 k6 run -e BASE_URL=http://localhost:8080 -e API_KEY=dev-key-change-me \
        -e RATE=300 -e DURATION=1m load/k6-simulations.js
 # ou, sem instalar k6:  make load   /   make load-heavy
+
+# 5) API v0 (versão de teste para um grupo restrito, via JWT). Fora do grupo -> 404.
+TOKEN=$(curl -s -XPOST http://localhost:8080/auth/token -H 'Content-Type: application/json' \
+  -d '{"userId":"alice","groups":["v0-testers"]}' | jq -r .accessToken)
+curl -i -XPOST http://localhost:8080/v0/payment-simulations \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"merchantId":"MERCHANT-001","amount":10.0,"currency":"BRL",
+       "paymentMethod":"CREDIT_CARD","brand":"VISA","installments":1,"captureMode":"AUTHORIZE_AND_CAPTURE"}'
+# Resposta traz X-Api-Version: v0. Adicione usuários/grupos em runtime:
+#   curl -XPUT http://localhost:8080/admin/features/payment-api-v0 -H "Authorization: Bearer $TOKEN" ...
 ```
+
+> **Feature control** (v0 / toggle / A-B / chave por usuário via JWT) é uma **lib compartilhada**
+> (`feature-control`) para as 30+ apps, com controle dinâmico via Redis. Exemplos executáveis no
+> serviço `feature-demo` (`make demo-features`). Detalhes em [docs/16](docs/16-feature-control-lib.md).
+> Um exemplo de **async→sync sem Kafka** (Redis Streams + BRPOP) está em
+> [docs/17](docs/17-async-sync-redis.md) / serviço `async-redis-service`.
 
 Respostas: `200` (COMPLETED) · `422` (FAILED/recusado) · `202` (segue assíncrono, com `statusUrl`)
 · `400` (payload inválido, corpo `application/problem+json`) · `429` (rate limit, com `Retry-After`)

@@ -1,0 +1,52 @@
+# Redis HA (Sentinel) — ILLUSTRATIVE example, not exercised in this repo (like the Kafka cluster one).
+#
+# Runs a master + replica + 3 Sentinels. Point the apps at it by setting, in each app's environment:
+#
+#   REDIS_URI=redis-sentinel://redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379/mymaster
+#
+# The apps need NO code change: every service uses the injected Lettuce RedisClient, and env REDIS_URI
+# overrides `redis.uri` (env wins over application.yml). Lettuce discovers the current master via the
+# Sentinels and fails over automatically. This covers BOTH the feature-control flag store and the
+# async-redis-service queue, since both share that client.
+#
+# Usage (compose the app stack over this file):
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.redis-ha.example.yml up -d
+# (and set REDIS_URI on the app services, e.g. via an override or .env)
+#
+# For very large scale, Redis Cluster is the alternative (URI: redis://node1:6379,node2:6379,...);
+# note multi-key Lua/ops must hash to the same slot — here keys are per-request/per-flag, which is fine.
+services:
+  redis-master:
+    image: bitnami/redis:7.4
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+      REDIS_REPLICATION_MODE: master
+    ports:
+      - "6379:6379"
+
+  redis-replica:
+    image: bitnami/redis:7.4
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+      REDIS_REPLICATION_MODE: replica
+      REDIS_MASTER_HOST: redis-master
+    depends_on:
+      - redis-master
+
+  # Three Sentinels for quorum. Set the same master name (mymaster) in the app URI above.
+  redis-sentinel-1: &sentinel
+    image: bitnami/redis-sentinel:7.4
+    environment:
+      REDIS_MASTER_HOST: redis-master
+      REDIS_MASTER_SET: mymaster
+      REDIS_SENTINEL_QUORUM: "2"
+      ALLOW_EMPTY_PASSWORD: "yes"
+    depends_on:
+      - redis-master
+      - redis-replica
+
+  redis-sentinel-2:
+    <<: *sentinel
+
+  redis-sentinel-3:
+    <<: *sentinel

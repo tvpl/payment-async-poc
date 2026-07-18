@@ -17,6 +17,53 @@ micronaut:
         descriptions: true
   # The BLOCKING executor is backed by virtual threads on JDK 21+, so the POST
   # handler can park cheaply while waiting for the async result.
+  security:
+    # JWT is used only to identify the caller for feature/v0 gating. Everything is anonymous at the
+    # security layer (existing routes stay guarded by the X-API-Key filter; v0/admin self-enforce
+    # from the JWT), so enabling security does not change the tested /payment-simulations flow.
+    authentication: bearer
+    reject-not-found: false
+    intercept-url-map:
+      # Admin (runtime flag control) requires the ROLE_ADMIN role from the JWT.
+      - pattern: /admin/**
+        access:
+          - ROLE_ADMIN
+      # Everything else is anonymous at the security layer (existing routes stay guarded by the
+      # X-API-Key filter; v0 self-enforces from the JWT), so enabling security does not change the
+      # tested /payment-simulations flow.
+      - pattern: /**
+        access:
+          - isAnonymous()
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_SIGNATURE_SECRET:`dev-feature-control-signing-secret-change-me-32b+`}
+              jws-algorithm: HS256
+
+# Feature control (shared lib). Baseline flags; Redis overrides them at runtime via /admin/features.
+platform:
+  features:
+    redis-enabled: ${FEATURES_REDIS_ENABLED:true}
+    cache-ttl: 5s
+    key-prefix: "feature:"
+    flags:
+      # v0 API is restricted to the v0-testers group (recognized from the JWT).
+      payment-api-v0:
+        type: ALLOWLIST
+        enabled: true
+        allowed-groups:
+          - v0-testers
+        on-variant: v0
+        off-variant: v1
+      # Route the requested event to topic A or B (off by default -> the normal topic).
+      payment-topic-ab:
+        type: PERCENTAGE
+        enabled: false
+        percentage: 0
+        on-variant: payment.simulation.requested.v0
+        off-variant: payment.simulation.requested
 
 payment:
   simulation:

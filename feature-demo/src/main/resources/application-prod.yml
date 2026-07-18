@@ -1,0 +1,19 @@
+# Production security profile (MICRONAUT_ENVIRONMENTS=prod). Validates JWTs against the IdP's JWKS
+# (RS256, key rotation handled by Micronaut) instead of the dev HS256 shared secret, and checks
+# issuer/audience. Secrets/URLs come from the environment — never commit them.
+#
+# In prod, drop the dev HS256 generator (no local token minting) — the DevTokenController is dev-only.
+micronaut:
+  security:
+    token:
+      jwt:
+        signatures:
+          jwks:
+            idp:
+              url: ${JWT_JWKS_URL}          # e.g. https://idp.example.com/.well-known/jwks.json
+        claims-validators:
+          issuer: ${JWT_ISSUER}             # expected `iss`
+        generator:
+          # Small leeway for clock skew between issuer and this service.
+          access-token:
+            expiration: 3600

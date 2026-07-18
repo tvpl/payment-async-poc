@@ -93,5 +93,23 @@ de publicação, DLQ recebendo mensagens, taxa de timeout da API, latência p99,
 `status` (+ `service`). Populado em consumers/serviços (`sbus-service/.../support/Mdc.java`,
 e `MDC.put(...)` na API). Isso permite **filtrar todo o caminho** de uma simulação por `requestId`/`traceId`.
 
+## Feature control e async-redis (métricas + dashboards)
+Os componentes novos expõem métricas próprias (Micrometer → `/prometheus`) e dois dashboards
+provisionados automaticamente na pasta **Payment Simulation**:
+
+| Métrica | Origem | Para quê |
+|---|---|---|
+| `feature_decisions_total{flag,variant,on,reason_kind}` | feature-control (`MicrometerDecisionListener`) | acompanhar o **rollout** por flag/variante/motivo (dashboard **Feature Decisions**) |
+| `async_stream_length` | async-redis (`AsyncMetrics`, XLEN) | **backlog** da fila Redis |
+| `async_pending` | async-redis (XPENDING) | jobs **in-flight/não confirmados** |
+| `async_process_latency` | async-redis (timer do worker) | latência de processamento (p50/p95/p99) |
+| `http_server_requests_seconds_count{uri="/jobs",status}` | Micronaut | mix **200/202/429** do async |
+
+Prometheus já faz scrape de `feature-demo:8083` e `async-redis-service:8084`
+([`observability/prometheus.yml`](../observability/prometheus.yml)); dashboards em
+[`observability/grafana/dashboards/feature-decisions.json`](../observability/grafana/dashboards/feature-decisions.json)
+e [`async-redis.json`](../observability/grafana/dashboards/async-redis.json).
+
 ## Ver também
 - [03 Tecnologias](03-tecnologias.md) · [12 Execução e operação](12-execucao-e-operacao.md)
+  · [16 Feature Control](16-feature-control-lib.md) · [17 Async→Sync Redis](17-async-sync-redis.md)

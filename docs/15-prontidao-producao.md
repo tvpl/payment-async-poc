@@ -48,6 +48,22 @@ ainda é **responsabilidade de deploy/operação**.
 - [ ] **Retenção**: revisar `sbus.housekeeping.*` conforme requisitos regulatórios.
 - [ ] **DR/backup**: backup do Postgres (fonte durável) e plano de reprocessamento via DLQ.
 
+## Redis HA (Sentinel/Cluster)
+
+O store de flags (`feature-control`) e a fila do `async-redis-service` usam o **mesmo** `RedisClient`
+(Lettuce) injetado — então **alta disponibilidade é pura configuração, sem mudança de código**. Basta
+sobrepor a URI por env (env vence o `application.yml`):
+
+```bash
+REDIS_URI=redis-sentinel://redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379/mymaster
+```
+
+O Lettuce descobre o master atual via Sentinels e faz **failover** automático; o pool de BRPOP, os
+Streams/consumer groups e o pub/sub de propagação continuam funcionando. Exemplo ilustrativo (master +
+réplica + 3 Sentinels): [`deploy/docker-compose.redis-ha.example.yml`](../deploy/docker-compose.redis-ha.example.yml).
+Para escala muito alta, **Redis Cluster** é a alternativa (URI `redis://n1,n2,...`); como as chaves são
+por-request/por-flag, não há operação multi-chave cross-slot.
+
 ## Itens implementados mas verificáveis só com runtime
 
 Retry topics, limiter distribuído (Redis), multi-broker e TLS são código/configuração presentes, mas a

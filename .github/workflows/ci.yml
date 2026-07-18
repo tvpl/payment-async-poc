@@ -35,6 +35,60 @@ jobs:
           path: "**/build/reports/tests/**"
           if-no-files-found: ignore
 
+  integration-tests:
+    name: Integration tests (Redis)
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # The async-redis and feature-demo ITs accept an external Redis via REDIS_TEST_URI,
+      # so they run against the service container above without a Docker daemon.
+      - name: Redis-backed integration tests
+        env:
+          REDIS_TEST_URI: redis://localhost:6379
+        run: ./gradlew :async-redis-service:test :feature-demo:test :pilot-app:test -PwithIT --no-daemon
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: it-reports
+          path: "**/build/reports/tests/**"
+          if-no-files-found: ignore
+
+  publish-check:
+    name: Publish artifact (local repo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Validate feature-control publication (POM + sources + javadoc)
+        run: ./gradlew :feature-control:publishMavenPublicationToLocalBuildRepository --no-daemon
+
   compose-lint:
     name: docker compose config
     runs-on: ubuntu-latest

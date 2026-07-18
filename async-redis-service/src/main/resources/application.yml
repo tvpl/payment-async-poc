@@ -1,0 +1,54 @@
+micronaut:
+  application:
+    name: async-redis-service
+  server:
+    port: 8084
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+
+redis:
+  uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+
+# Kafka-free async->sync via Redis Streams (queue) + BRPOP (per-request wakeup).
+async:
+  redis:
+    # Max time the POST blocks (on a virtual thread) waiting for the released response.
+    wait-timeout: 3s
+    # TTL of the durable result and the per-request response list (avoids key leaks).
+    result-ttl: 15m
+    # Number of worker consumers pulling from the stream (each holds one blocking connection).
+    worker-concurrency: 2
+    # Stream + consumer group names.
+    stream: async.jobs
+    group: workers
+    # Simulated processing time so the demo/benchmark exercises real waiting.
+    process-latency-min-ms: ${ASYNC_LATENCY_MIN_MS:20}
+    process-latency-max-ms: ${ASYNC_LATENCY_MAX_MS:150}
+    # Reclaim messages idle longer than this from crashed consumers.
+    reclaim-idle: 30s
+    # How often each worker scans pending entries for reclaim/DLQ.
+    reclaim-interval: 5s
+    # Approximate cap on the stream length (XADD MAXLEN ~) to bound memory.
+    stream-maxlen: ${ASYNC_STREAM_MAXLEN:100000}
+    # Poison protection: after this many deliveries a job is moved to the DLQ.
+    dlq-stream: async.jobs.dlq
+    max-deliveries: ${ASYNC_MAX_DELIVERIES:5}
+    # Admission rate limit for POST /jobs (per second, global via Redis). 0 disables it.
+    admission-limit-per-sec: ${ASYNC_ADMISSION_LIMIT:0}
+    # Max pooled connections for concurrent blocking BRPOP waits.
+    pool-max-total: ${ASYNC_POOL_MAX_TOTAL:64}
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    details-visible: ANONYMOUS
+  prometheus:
+    enabled: true
+    sensitive: false

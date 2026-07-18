@@ -1,0 +1,40 @@
+{
+  "title": "Feature Decisions (feature-control)",
+  "uid": "feature-decisions",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat", "title": "Decisions /sec", "id": 1,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [ { "expr": "sum(rate(feature_decisions_total[1m]))", "legendFormat": "total" } ]
+    },
+    {
+      "type": "timeseries", "title": "Rollout by variant /sec", "id": 2,
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum by (flag, variant) (rate(feature_decisions_total[1m]))", "legendFormat": "{{flag}}/{{variant}}" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Decisions by reason /sec", "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum by (reason_kind) (rate(feature_decisions_total[1m]))", "legendFormat": "{{reason_kind}}" }
+      ]
+    },
+    {
+      "type": "timeseries", "title": "On vs Off /sec", "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum by (on) (rate(feature_decisions_total[1m]))", "legendFormat": "on={{on}}" }
+      ]
+    }
+  ]
+}

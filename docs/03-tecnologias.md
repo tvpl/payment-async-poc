@@ -268,7 +268,58 @@ Tópicos: `payment.simulation.requested`, `…core.command`, `…core.response`,
 - **O que é**: ferramenta de teste de carga (scripts em JavaScript).
 - **Por que usamos**: validar o comportamento sob **rajada** (200/202, 429, virtual threads).
 - **Como configuramos**: cenário *constant-arrival-rate* configurável por env.
-- **Onde no código**: [`load/k6-simulations.js`](../load/k6-simulations.js).
+- **Onde no código**: [`load/k6-simulations.js`](../load/k6-simulations.js),
+  [`load/k6-async-redis.js`](../load/k6-async-redis.js), [`load/k6-feature.js`](../load/k6-feature.js).
+
+---
+
+## Micronaut Security (JWT / JWKS)
+
+- **O que é**: módulo de autenticação/autorização do Micronaut; valida **JWT** e mapeia claims em `Authentication`.
+- **Por que é importante**: identifica o **usuário e seus grupos** para o controle de features (v0
+  restrito, allowlist, chave por usuário) e protege o admin com `ROLE_ADMIN`. Sem isso, não há como
+  reconhecer "quem" está pedindo — a base dos cenários por usuário.
+- **Como configuramos**: dev com **HS256** (segredo compartilhado) + emissor `/auth/token`; produção com
+  **RS256/JWKS** (rotação de chaves) via `application-prod.yml`; `intercept-url-map` libera rotas de
+  negócio (anônimas) e exige `ROLE_ADMIN` em `/admin/**`.
+- **Onde no código**: `*/config`/`application*.yml`, `.../context/JwtFeatureContextFactory.java`.
+
+## Redis Streams + Consumer Groups
+
+- **O que é**: estrutura de log append-only do Redis (`XADD`/`XREADGROUP`/`XACK`) com grupos de consumo e PEL.
+- **Por que é importante**: é a **fila durável** do exemplo async→sync **sem Kafka** — dá at-least-once,
+  reprocessamento (`XCLAIM`) e dead-letter sem um broker dedicado.
+- **Como configuramos**: stream `async.jobs`, grupo `workers`, trim `MAXLEN ~`, DLQ `async.jobs.dlq`.
+- **Onde no código**: `async-redis-service/.../queue/*`. Ver [17](17-async-sync-redis.md).
+
+## Redis Pub/Sub
+
+- **O que é**: mensageria fire-and-forget do Redis (`PUBLISH`/`SUBSCRIBE`).
+- **Por que é importante**: **propaga flips de feature** em milissegundos (canal `feature:changed`) e
+  acorda waiters entre instâncias — sem ele, a mudança só valeria após o `cache-ttl`.
+- **Onde no código**: `.../store/FlagChange{Notifier,Subscriber}.java`, `.../coordination/ResponseCoordinator.java`.
+
+## Lettuce + commons-pool2 (pool de conexões)
+
+- **O que é**: cliente Redis (Lettuce) com `ConnectionPoolSupport` sobre um pool commons-pool2.
+- **Por que é importante**: comandos **bloqueantes** (BRPOP) monopolizam a conexão; o pool os **bounda e
+  reutiliza** sob concorrência, evitando abrir uma conexão por request.
+- **Onde no código**: `async-redis-service/.../redis/RedisConnections.java`.
+
+## Micrometer (métricas de feature/fila)
+
+- **O que é**: fachada de métricas exportada ao Prometheus.
+- **Por que é importante**: torna o **rollout observável** (`feature_decisions_total`) e o **backlog**
+  do async visível (`async_stream_length`/`async_pending`/latência) — base para decidir promover/reverter.
+- **Onde no código**: `.../metrics/MicrometerDecisionListener.java`, `.../metrics/AsyncMetrics.java`. Ver [10](10-observabilidade.md).
+
+## Gradle maven-publish
+
+- **O que é**: plugin que publica a lib como artefato Maven (jar + sources + javadoc + POM).
+- **Por que é importante**: permite as **30+ apps** consumirem `com.example.platform:feature-control` por
+  **versão** (SemVer), não por código-fonte — governança e evolução controladas.
+- **Onde no código**: [`feature-control/build.gradle`](../feature-control/build.gradle). Ver [16](16-feature-control-lib.md).
 
 ## Ver também
 - [05 API](05-api-service.md) · [06 SBUS](06-sbus-service.md) · [10 Observabilidade](10-observabilidade.md)
+  · [16 Feature Control](16-feature-control-lib.md) · [17 Async→Sync Redis](17-async-sync-redis.md)

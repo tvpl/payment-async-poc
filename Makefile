@@ -38,7 +38,8 @@ INFRA = kafka kafka-init redis postgres apicurio-registry kafka-ui \
         redis-exporter postgres-exporter kafka-exporter
 
 .PHONY: help up up-core up-infra build ps wait demo logs smoke \
-        load load-heavy load-ramp load-poll down clean urls
+        load load-heavy load-ramp load-poll load-async load-feature \
+        demo-features down clean urls
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -94,6 +95,21 @@ load-ramp: ## k6 ramping arrival rate (climb -> hold -> down)
 load-poll: ## k6 async path: POST (202) -> poll GET until terminal
 	$(K6_DOCKER) -e DURATION=$(K6_DURATION) /load/k6-poll.js
 
+load-async: ## k6 for the Kafka-free async->sync service (:8084)
+	docker run --rm --network host -e BASE_URL=http://localhost:8084 \
+	  -e K6_PROMETHEUS_RW_SERVER_URL=$(K6_PROM_URL) -e K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg \
+	  -v "$(PWD)/load:/load" grafana/k6 run $(K6_PROM_OUT) \
+	  -e RATE=$(K6_RATE) -e DURATION=$(K6_DURATION) /load/k6-async-redis.js
+
+load-feature: ## k6 measuring feature-control decision overhead (:8083)
+	docker run --rm --network host -e BASE_URL=http://localhost:8083 \
+	  -e K6_PROMETHEUS_RW_SERVER_URL=$(K6_PROM_URL) -e K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg \
+	  -v "$(PWD)/load:/load" grafana/k6 run $(K6_PROM_OUT) \
+	  -e RATE=$(K6_RATE) -e DURATION=$(K6_DURATION) /load/k6-feature.js
+
+demo-features: ## Guided curl walkthrough of the feature-control scenarios (:8083)
+	./scripts/demo-features.sh
+
 down: ## Stop the stack
 	$(COMPOSE) down
 
@@ -104,6 +120,8 @@ urls: ## Print the useful URLs
 	@echo "API            http://localhost:8080  (OpenAPI: /swagger/payment-simulation-api-1.0.yml)"
 	@echo "SBUS           http://localhost:8081"
 	@echo "core-mock      http://localhost:8082"
+	@echo "feature-demo   http://localhost:8083  (try: make demo-features)"
+	@echo "async-redis    http://localhost:8084  (POST /jobs; make load-async)"
 	@echo "Kafka UI       http://localhost:8088"
 	@echo "Apicurio       http://localhost:8085"
 	@echo "Prometheus     http://localhost:9090"
