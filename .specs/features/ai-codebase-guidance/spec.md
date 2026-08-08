@@ -6,9 +6,9 @@ O repositório tem documentação humana extensa, mas não oferece um ponto de e
 
 ## Goals
 
-- [ ] Dar a agentes de IA um mapa verificável do codebase, das fontes de verdade e dos limites arquiteturais.
-- [ ] Alinhar a documentação de arquitetura e os índices com todos os módulos atuais.
-- [ ] Documentar comandos de validação proporcionais ao tipo de mudança.
+- [x] Dar a agentes de IA um mapa verificável do codebase, das fontes de verdade e dos limites arquiteturais.
+- [x] Alinhar a documentação de arquitetura e os índices com todos os módulos atuais.
+- [x] Documentar comandos de validação proporcionais ao tipo de mudança.
 
 ## Out of Scope
 
@@ -75,18 +75,18 @@ O repositório tem documentação humana extensa, mas não oferece um ponto de e
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AIDOC-01 | P1: Contexto confiável para agentes | Execute | Implementing |
-| AIDOC-02 | P1: Contexto confiável para agentes | Execute | Implementing |
-| AIDOC-03 | P1: Contexto confiável para agentes | Execute | Implementing |
-| AIDOC-04 | P1: Contexto confiável para agentes | Execute | Implementing |
-| AIDOC-05 | P1: Arquitetura e navegação atualizadas | Execute | Implementing |
-| AIDOC-06 | P1: Arquitetura e navegação atualizadas | Execute | Implementing |
-| AIDOC-07 | P1: Arquitetura e navegação atualizadas | Execute | Implementing |
+| AIDOC-01 | P1: Contexto confiável para agentes | Execute | Verified |
+| AIDOC-02 | P1: Contexto confiável para agentes | Execute | Verified |
+| AIDOC-03 | P1: Contexto confiável para agentes | Execute | Verified |
+| AIDOC-04 | P1: Contexto confiável para agentes | Execute | Verified |
+| AIDOC-05 | P1: Arquitetura e navegação atualizadas | Execute | Verified |
+| AIDOC-06 | P1: Arquitetura e navegação atualizadas | Execute | Verified |
+| AIDOC-07 | P1: Arquitetura e navegação atualizadas | Execute | Verified |
 
 **Coverage:** 7 total, 7 mapped to execution steps, 0 unmapped.
 
 ## Success Criteria
 
-- [ ] Um agente consegue identificar os oito módulos e escolher os documentos e gates corretos sem varrer todo o repositório.
-- [ ] A documentação não contradiz `settings.gradle`, `build.gradle`, CI, Compose ou os entrypoints inspecionados.
-- [ ] Todos os links locais alterados resolvem para arquivos existentes.
+- [x] Um agente consegue identificar os oito módulos e escolher os documentos e gates corretos sem varrer todo o repositório.
+- [x] A documentação não contradiz `settings.gradle`, `build.gradle`, CI, Compose ou os entrypoints inspecionados.
+- [x] Todos os links locais alterados resolvem para arquivos existentes.
