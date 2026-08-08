@@ -80,8 +80,8 @@ O repositório tem documentação humana extensa, mas não oferece um ponto de e
 | AIDOC-03 | P1: Contexto confiável para agentes | Execute | Implementing |
 | AIDOC-04 | P1: Contexto confiável para agentes | Execute | Implementing |
 | AIDOC-05 | P1: Arquitetura e navegação atualizadas | Execute | Implementing |
-| AIDOC-06 | P1: Arquitetura e navegação atualizadas | Execute | Pending |
-| AIDOC-07 | P1: Arquitetura e navegação atualizadas | Execute | Pending |
+| AIDOC-06 | P1: Arquitetura e navegação atualizadas | Execute | Implementing |
+| AIDOC-07 | P1: Arquitetura e navegação atualizadas | Execute | Implementing |
 
 **Coverage:** 7 total, 7 mapped to execution steps, 0 unmapped.
 

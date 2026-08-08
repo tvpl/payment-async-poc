@@ -19,6 +19,10 @@ qualquer serviço externo/legado no futuro.
 O diretório [`docs/`](docs/README.md) detalha cada tecnologia/ferramenta e o funcionamento do sistema
 (pt-BR, com diagramas Mermaid). Comece pelo [índice](docs/README.md). Atalhos:
 
+> **Agentes de IA:** antes de alterar o projeto, leia [`AGENTS.md`](AGENTS.md). O guia mapeia os
+> módulos, define as fontes de verdade, registra invariantes arquiteturais e indica os gates de
+> validação proporcionais a cada mudança.
+
 - [01 Visão geral](docs/01-visao-geral.md) · [02 Arquitetura](docs/02-arquitetura.md) · [04 Fluxo ponta a ponta](docs/04-fluxo-ponta-a-ponta.md)
 - [03 Tecnologias e ferramentas](docs/03-tecnologias.md) (o que é / por que / como configuramos / onde no código)
 - [05 API](docs/05-api-service.md) · [06 SBUS](docs/06-sbus-service.md) · [07 Core mock](docs/07-core-mock.md)
