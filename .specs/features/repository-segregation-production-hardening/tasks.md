@@ -1331,6 +1331,35 @@ Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`, Redis real
 **Tests:** integration  
 **Gate:** full  
 **Commit:** `fix(async-redis): preserve pending stream payloads`
+**Status:** Complete
+
+**Gate evidence:** `JobQueue.enqueue` gravava `XADD ... MAXLEN ~` em toda publicação — trim aproximado por contagem bruta, sem qualquer noção de PEL/consumer group, exatamente o que RED-03 proíbe: sob pressão de backlog ele remove entradas que nenhum worker consumiu ainda. Removido sem substituto inline; `JobQueue.java:50-68` (novo comentário) documenta por quê.
+
+Antes de decidir a política de substituição, verifiquei a política `ACKED` citada em `design.md` pela cadeia de conhecimento do skill (não assumida): busca web confirmou que `ACKED` (que só remove entradas confirmadas por todos os consumer groups) e `DELREF` exigem **Redis 8.2+** ([XTRIM docs](https://redis.io/docs/latest/commands/xtrim/)), e que a combinação `MAXLEN ~` (aproximado) com `ACKED` tem um bug reportado onde nada é removido ([redis/redis#14656](https://github.com/redis/redis/issues/14656)) — só o trim exato funciona corretamente com `ACKED`. Inspecionando o jar do Lettuce 6.4.0.RELEASE (`javap io/lettuce/core/XTrimArgs.class`) confirmei que `XTrimArgs` não tem nenhuma opção `ACKED` tipada nesta versão do driver — não há como emitir esse comando com suporte tipado hoje. O Redis do sandbox é 7.0.15, abaixo do mínimo de qualquer forma.
+
+**SPEC_DEVIATION:** o `What` desta tarefa pede "exigir trim ACKED em Redis suportado". A implementação **detecta e reporta** compatibilidade (`StreamRetentionMonitor.ackedTrimSupported`) mas **nunca invoca** trim `ACKED` de fato, em nenhuma versão. **Reason:** (1) o driver fixado (Lettuce 6.4.0.RELEASE) não tem suporte tipado ao `ACKED`, só permitiria comando raw não verificável; (2) não há Redis 8.2+ disponível neste ambiente para testar via integração — implementar um caminho que o gate não consegue exercitar violaria tanto "sem inventar segurança de trim" quanto "Tests: integration"; (3) `design.md` (seção de riscos, `async-redis-service/.../JobQueue.java:1 | XADD MAXLEN ~ pode remover payload no PEL`) já registra o fallback aceito: "fallback seguro é não trimar automaticamente, nunca perder pendentes" — a implementação escolhida é exatamente esse fallback já decidido, tornado permanente e não apenas temporário, com o gate de compatibilidade como sinal operacional para uma futura atualização do driver, documentada no ADR de T45.
+
+Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`, Redis real 7.0.15 em `localhost:6379`) passou **96/96 testes, 0 falhas, 0 skipped**: os 84 de T38–T43 mais 12 novos (`StreamRetentionMonitorUnitTest` 6, `StreamRetentionIT` 6), acima dos ≥6 pedidos (todos os 6 exigidos são de integração contra Redis real, como pedido). Nenhum teste anterior foi removido, pulado ou enfraquecido.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| RED-03: payload pendente sobrevive à pressão de retenção (via enqueue) | `StreamRetentionIT.java:69-70` — `assertEquals(6, conn.sync().xlen(stream), ...)` com `stream-maxlen=3` e 6 entradas nunca consumidas | nenhuma das 6 entradas pendentes é removida mesmo 2x acima do maxlen | ✅ |
+| RED-03: `check()` também nunca remove nada do stream | `StreamRetentionIT.java:88-89` — `assertEquals(5, status.streamLength(), ...)` e `assertEquals(5, conn.sync().xlen(stream), ...)` | o próprio monitor de retenção não trima o backlog | ✅ |
+| RED-03: backlog alerta antes/no orçamento seguro | `StreamRetentionIT.java:104-105` — `assertEquals(5, status.alertThreshold())`, `assertTrue(status.backlogAlert(), ...)` com limite 0.5×10 | alerta liga exatamente ao atingir o orçamento configurado | ✅ |
+| RED-03: sem alerta abaixo do orçamento (controle) | `StreamRetentionIT.java:121-122` — `assertFalse(status.backlogAlert(), ...)` com 4 de um limite de 5 | alerta não dispara cedo demais | ✅ |
+| RED-03: versão do Redis é lida do servidor real, não simulada | `StreamRetentionIT.java:133-136` — `assertEquals(expected, status.serverVersion())` comparado com `INFO server` lido por uma conexão independente | a versão reportada é exatamente a do servidor conectado | ✅ |
+| RED-03: versão incompatível nunca é reportada como capaz de ACKED (falha segura) | `StreamRetentionIT.java:151-152` — `assertFalse(status.ackedTrimSupported(), ...)` contra o Redis 7.0.15 real do sandbox | um servidor abaixo de 8.2.0 nunca habilita a política que ainda não pode usar | ✅ |
+| RED-03: gate de versão sem off-by-one (fronteira exata) | `StreamRetentionMonitorUnitTest.java:22` — `assertEquals(0, StreamRetentionMonitor.compareVersions("8.2.0", "8.2.0"))` | a própria versão mínima já conta como compatível | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `StreamRetentionIT.java:69-70` | RED-03 payload pendente sobrevive (enqueue) | ✅ |
+| `StreamRetentionIT.java:88-89` | RED-03 `check()` nunca trima | ✅ |
+| `StreamRetentionIT.java:104-105,121-122` | RED-03 alerta liga no orçamento, não antes | ✅ |
+| `StreamRetentionIT.java:133-136,151-152` | RED-03 versão real + gate de incompatibilidade | ✅ |
+| `StreamRetentionMonitorUnitTest.java:16-46` (6 testes) | RED-03 fronteira do compare de versão que sustenta o gate acima | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Toda asserção lê estado real do Redis — `XLEN` para backlog/payload, `INFO server` para versão — nunca um mock. `enqueueNeverTrimsSoAllPendingPayloadSurvivesPastMaxlen` é o teste de controle direto do bug original: com o código antigo (`MAXLEN ~` inline), esse teste teria falhado (menos de 6 entradas restando). `checkAlertsOnceTheBacklogReachesTheSafeThreshold`/`checkDoesNotAlertBelowTheSafeThreshold` são um par de fronteira (5 de 5 vs. 4 de 5) porque um teste sozinho não distingue ">=" de ">" no gate de alerta. `theMinimumVersionItselfCompliesExactly` mata especificamente uma implementação que usasse `>` em vez de `>=` no compare de versão (a mesma classe de bug corrigida em T43, aqui em outro predicado). `checkReportsTheRealConnectedRedisServerVersion` compara contra uma leitura independente do `INFO server`, não contra um valor fixo esperado, então continua válido em qualquer versão de Redis que rode o gate. Nenhum teste verifica comportamento do driver Lettuce isoladamente. Liberação atômica é do T42; poison/DLQ é do T43 — nenhum foi tocado aqui. O trim `ACKED` em si (quando um Redis 8.2+ e um Lettuce compatível existirem) fica registrado como trabalho futuro no ADR de T45, não implementado aqui — ver SPEC_DEVIATION acima.
 
 #### T45: Completar pacote produtivo do serviço Redis
 

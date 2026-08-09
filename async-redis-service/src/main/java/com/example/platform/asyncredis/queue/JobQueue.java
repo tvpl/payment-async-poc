@@ -7,7 +7,6 @@ import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.redis.RedisConnections;
 import com.example.platform.asyncredis.result.ResultReleaser;
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.XAddArgs;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -47,7 +46,15 @@ public class JobQueue implements JobEnqueuer {
         this.releaser = releaser;
     }
 
-    /** Publishes the job onto the stream. Returns the stream message id. */
+    /**
+     * Publishes the job onto the stream. Returns the stream message id.
+     *
+     * <p>No inline {@code MAXLEN} trim here (RED-03): approximate trimming deletes entries by raw
+     * count with no regard for whether a consumer group has processed them, so trimming on every
+     * write risks dropping payload that is still pending. Retention is {@link
+     * com.example.platform.asyncredis.retention.StreamRetentionMonitor}'s job, and it never trims
+     * either — see that class for why.
+     */
     @Override
     public String enqueue(String jobId, SubmitJobRequest request) {
         Map<String, String> body = new HashMap<>();
@@ -57,9 +64,7 @@ public class JobQueue implements JobEnqueuer {
         if (request.note() != null) {
             body.put(FIELD_NOTE, request.note());
         }
-        // Approximate MAXLEN trimming bounds the stream's memory without exact-length overhead.
-        XAddArgs args = XAddArgs.Builder.maxlen(props.getStreamMaxlen()).approximateTrimming();
-        return redis.shared().xadd(props.getStream(), args, body);
+        return redis.shared().xadd(props.getStream(), body);
     }
 
     /**
