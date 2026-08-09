@@ -14,7 +14,10 @@ import com.example.payments.common.model.ProcessPaymentSimulationCommandPayload;
 import com.example.payments.common.model.Settlement;
 import com.example.payments.common.model.SimulationResult;
 import io.micronaut.configuration.kafka.annotation.KafkaListener;
+import io.micronaut.configuration.kafka.annotation.ErrorStrategy;
+import io.micronaut.configuration.kafka.annotation.ErrorStrategyValue;
 import io.micronaut.configuration.kafka.annotation.OffsetReset;
+import io.micronaut.configuration.kafka.annotation.OffsetStrategy;
 import io.micronaut.configuration.kafka.annotation.Topic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -31,7 +34,11 @@ import java.time.ZoneOffset;
  * fakes authorization + fee computation (with an occasional decline), and replies on
  * {@code payment.simulation.core.response}. Intentionally minimal.
  */
-@KafkaListener(groupId = "payment-core-mock", offsetReset = OffsetReset.EARLIEST)
+@KafkaListener(
+        groupId = "payment-core-mock",
+        offsetReset = OffsetReset.EARLIEST,
+        offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
+        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.NONE))
 public class CoreSimulationConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreSimulationConsumer.class);

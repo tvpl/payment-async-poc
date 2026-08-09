@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 4 / T21 — redelivery and Core contract failures (not started)
-- **Completed**: T1–T20; deterministic requestId/seed simulation and configuration bounds pass 18 task-specific unit tests
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:410`
-- **Next step**: implement T21 duplicate, poison, dependency-failure and correlation/trace integration coverage with at least five ITs
+- **Phase / Task**: Execute; Phase 4 / T22 — isolated non-root container (not started)
+- **Completed**: T1–T21; six Kafka/Apicurio ITs prove deterministic redelivery, trace propagation and uncommitted poison/dependency failures
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:429`
+- **Next step**: implement T22 multi-stage non-root image and app-only Compose on the external sandbox network
 - **Blockers**: none
 - **Uncommitted files**: none after the atomic T19 commit
 - **Branch**: `feature/optimize-eda`

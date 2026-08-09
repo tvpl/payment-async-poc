@@ -315,10 +315,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-03 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-04 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-05 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-06 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-06 | Fluxo Kafka | Execute | T21 Core duplicate payload equivalence complete; SBUS/API downstream idempotency and crash-window gates pending |
 | PAY-07 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-08 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec and T14 real dependency readiness diagnostics complete; service policies pending |
+| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics and T21 Core uncommitted failure/Registry policy complete; remaining service policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-11 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |

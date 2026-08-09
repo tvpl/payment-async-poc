@@ -409,6 +409,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T21: Provar redelivery e contratos do Core mock
 
+**Status:** Complete
+
 **What:** Testar comando duplicado, resposta determinística, poison e propagação de correlação/trace sem efeitos divergentes.  
 **Where:** `payment-core-mock/src/test`  
 **Depends on:** T20  
@@ -419,6 +421,10 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** integration + contract  
 **Gate:** full  
 **Commit:** `test(core-mock): cover redelivery and contract failures`
+
+**Gate evidence:** O gate full passou 27 testes: 21 unitários/estruturais e seis ITs contra Kafka/Apicurio reais. Os cinco ITs novos provaram payload equivalente em duplicata, decline determinístico, poison Avro, failure profile e Registry outage. O smoke anterior voltou a provar contrato/correlação/trace. O teste de poison falhou primeiro porque o consumer processava o registro posterior; `SYNC_PER_RECORD` e o handler de exceção agora reposicionam o offset falho e impedem avanço silencioso.
+
+**Adequacy review:** Duplicata equivalente está em `CoreRedeliveryIT.java:78-81`; decline e seus campos em `:100-105`; poison, failure e Registry outage mantêm offset `1` e zero resposta em `:126-127`, `:150-151` e `:175-176`, sustentados pela asserção estável de offset em `:193-195`. O contrato de tópico, headers W3C, trace-id, correlação, causação e payload permanece coberto em `CoreContractSmokeIT.java:94-113`. Cada asserção verifica estado/payload observável e mapeia PAY-06, PAY-09 ou aos critérios de T21; não há teste especulativo e as convenções vêm de `AGENTS.md` e da Test Coverage Matrix.
 
 #### T22: Criar imagem e Compose independentes do Core mock
 
