@@ -979,6 +979,8 @@ Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PA
 
 #### T37: Completar admissão e pacote produtivo da API
 
+**Status:** Complete
+
 **What:** Criar limites por recurso/tenant, falha fechada multi-instância e container/Compose/ops/docs/ADRs/CI locais.  
 **Where:** `payment-api/ops`  
 **Depends on:** T36  
@@ -989,6 +991,51 @@ Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PA
 **Tests:** integration + structural  
 **Gate:** build  
 **Commit:** `build(api): add bounded production release package`
+
+**Gate evidence:** O `RedisRateLimiter` herdado de `7de39fb` fazia exatamente o que o Done-when proíbe: quando o `eval` no Redis falhava, `localTryAcquire` concedia à instância **o orçamento global inteiro** (`limitForPeriod`). Com quatro réplicas e Redis fora, a frota admitiria 4× a rajada aprovada — justamente durante a falha da coordenação que existia para limitá-la. O fallback passou a ser `max(1, limitForPeriod / instances)`: cada instância fica com a sua fração, e a soma da frota nunca ultrapassa o orçamento aprovado. `instances` é configuração tipada e validada (`>= 1`), exposta como `PAYMENT_API_INSTANCES` no Compose e no `.env.example`, porque subestimá-la afrouxa a admissão degradada. Também havia um único orçamento global: agora há dois, por recurso (`METHOD:path`) e por tenant, ambos verificados antes de admitir, com contadores locais por escopo. O tenant é identificado por SHA-256 truncado da credencial, nunca pela credencial em texto, de modo que nenhuma chave de Redis, log ou métrica a carrega.
+
+O pacote produtivo espelha o de T30 (`payment-sbus`), adaptado à superfície real desta fronteira (admissão HTTP e Redis, não Postgres/outbox): `Dockerfile` multi-stage com bases fixadas por tag **e** digest, runtime `10001:10001`, healthcheck sem instalar pacote e build a partir dos repositórios Maven publicados de contracts **e** feature-control; `compose.yaml` app-only na rede externa do sandbox (AD-003) com `read_only`, `cap_drop: ALL`, `no-new-privileges`; `.env.example` sem valor atribuído a segredo; CI local com unit, IT, imagem, SBOM SPDX e Trivy bloqueando HIGH/CRITICAL; `deploy/` e `scripts/` com verificadores determinísticos; `README.md`, `AGENTS.md`, nove documentos em `docs/`, ADR-0001 aceito e três runbooks owned com alertas correspondentes.
+
+Gates executados de fato: `./gradlew test -PwithIT --no-daemon` (com `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados) passou **115/115 testes, 0 falhas, 0 skipped** — os 104 de T31–T36 mais 11 novos (`AdmissionControlIT` 5, `AdmissionRedisOutageIT` 1, totalizando os seis ITs pedidos, e `RedisRateLimiterUnitTest` 5). `./gradlew build --no-daemon` passou. `scripts/verify-docs.sh` passou três testes e validou 17 documentos. `deploy/verify.sh --structural` passou dez testes e `docker compose config -q`. A imagem `payment-api:t37` foi construída de verdade pelo Dockerfile standalone com os dois repositórios Maven como build contexts; a inspeção confirmou `User=10001:10001`, entrypoint `/app/bin/payment-api`, healthcheck de liveness e label `payment-api`. O smoke de runtime completo (`deploy/verify.sh` sem flag) e a execução remota da CI ficam `NOT_RUN`, registrados como tal em `docs/operations.md` e `docs/testing.md`, nunca presumidos verdes.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| CAP-03: Redis down não multiplica o limite por instância | `AdmissionRedisOutageIT.java:88-93` — com `instances=4` e orçamento 8, `assertFalse(admitted.contains(TOO_MANY_REQUESTS))` para a fração e `assertTrue(rejected.stream().allMatch(... == TOO_MANY_REQUESTS))` para o excedente, com o container Redis realmente parado | instância admite a sua fração, não o orçamento da frota | ✅ |
+| CAP-03: fração é derivada do tamanho da frota | `RedisRateLimiterUnitTest.java:34-38` — `assertEquals(2, limiter.degradedLimitForPeriod())` e terceira aquisição negada com limite 8 e 4 instâncias | divisor aplicado, não ignorado | ✅ |
+| CAP-03: fração nunca chega a zero | `RedisRateLimiterUnitTest.java:44-47` — `assertEquals(1, degradedLimitForPeriod())` com limite 2 e 8 instâncias | degradação não fecha a rota por arredondamento | ✅ |
+| CAP-03: frota de uma instância não é penalizada | `RedisRateLimiterUnitTest.java:53-58` — três aquisições aceitas e a quarta negada com limite 3 | o divisor só age quando há frota | ✅ |
+| CAP-03: `202` dentro do orçamento | `AdmissionControlIT.java:97` — `assertEquals(HttpStatus.ACCEPTED, accepted.getStatus())` sobre POST real | requisição aprovada é aceita | ✅ |
+| CAP-03: `429` com `Retry-After` além do orçamento | `AdmissionControlIT.java:110-111` — `assertEquals(TOO_MANY_REQUESTS, rejected.getStatus())` e `assertEquals("1", ...get("Retry-After"))` | rejeição explícita e acionável, sem enfileiramento silencioso | ✅ |
+| Limite por tenant isola chamadores | `AdmissionControlIT.java:124` — `assertEquals(ACCEPTED, submit(quiet).getStatus())` depois de o tenant ruidoso ser rejeitado | um chamador não consome a rota inteira | ✅ |
+| Limite por recurso limita a rota | `AdmissionControlIT.java:140-142` — `assertEquals(TOO_MANY_REQUESTS, lastRejection)` e `assertTrue(admitted <= RESOURCE_BUDGET)` distribuindo entre cinco tenants | orçamento da rota vale acima da soma dos tenants | ✅ |
+| Escopos não colidem entre si | `RedisRateLimiterUnitTest.java:64-67`, `:81-83` — janelas locais independentes por escopo e chaves `rl:api-admission:tenant-a:` / `tenant-b:` distintas | orçamento por escopo é real, não um contador único | ✅ |
+| SEC: credencial de tenant não vira chave | `AdmissionControlIT.java:151-160` — duas chaves `rl:*`, uma `rl:api-tenant-admission:`, e `noneMatch(key.contains(tenant))` lidas do Redis real | identidade por hash, credencial nunca persistida | ✅ |
+| SEC-07: bases pinadas, runtime non-root e health sem pacote | `deploy/test_release_package.py:16-36` — duas linhas `FROM` com `:` e `@sha256:`, `USER 10001:10001`, `installDist`, ausência de `apk`/`apt-get` | imagem mínima, pinada e sem privilégio | ✅ |
+| ORG-03: build só de dependências publicadas | `deploy/test_release_package.py:28-31` — `COPY --from=contracts-repository`, `COPY --from=feature-control-repository` e ausência de `project(':` | nenhuma dependência de source cross-root | ✅ |
+| ORG-03: Compose app-only na rede externa | `deploy/test_release_package.py:38-45` — `assertEqual(["api"], ...)`, `external: true` e ausência de seis serviços de infraestrutura | sandbox mantém ownership da infraestrutura | ✅ |
+| SEC-07: filesystem e capabilities restritos | `deploy/test_release_package.py:47-51` — read-only, `no-new-privileges`, `cap_drop: ALL`, `user` | runtime sem privilégio e somente leitura | ✅ |
+| CAP-03: escalar réplicas escala o divisor | `deploy/test_release_package.py:53-58` — `PAYMENT_API_INSTANCES` no Compose e no `.env.example`, e `instances: ${PAYMENT_API_INSTANCES:1}` no `application.yml` | a réplica sabe o tamanho da frota; sem isso ela se daria o orçamento inteiro | ✅ |
+| SEC-08: CI unit/IT/imagem/SBOM/scan/docs | `deploy/test_release_package.py:60-69` — cada marker obrigatório, `exit-code: '1'` e `severity: 'HIGH,CRITICAL'` | pipeline bloqueante cobre supply chain e gates locais | ✅ |
+| Nenhum segredo no env versionado | `deploy/test_release_package.py:71-74` — `assertNotRegex(...password\|secret\|token...)` e `PAYMENT_API_KEY=` vazio | `.env.example` não atribui credencial | ✅ |
+| Runbooks owned cobrem admissão, DLQ e rollback | `deploy/test_release_package.py:76-80` — três `assertIn(...md)` | índice operacional aponta para os três procedimentos | ✅ |
+| DOC-01..04: pacote, links, claims e ADR | `scripts/test_docs.py:18-34` — resultado vazio para a árvore real, pacote ausente e link quebrado detectados | pacote proporcional completo e validador discriminante | ✅ |
+| Imagem construída possui identidade observável | inspeção local de `payment-api:t37` — `User=10001:10001`, entrypoint `/app/bin/payment-api`, healthcheck de liveness, label `payment-api` | artefato real corresponde ao contrato estrutural | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `AdmissionRedisOutageIT.java:88-93` | CAP-03, Done-when "Redis down não multiplica limite" | ✅ |
+| `RedisRateLimiterUnitTest.java:34-38,44-47,53-58` | CAP-03, branches do orçamento degradado | ✅ |
+| `RedisRateLimiterUnitTest.java:64-67,81-83` | CAP-03, isolamento de escopo | ✅ |
+| `AdmissionControlIT.java:97,110-111` | Done-when "429/202 são testados" | ✅ |
+| `AdmissionControlIT.java:124,140-142` | limites por tenant e por recurso | ✅ |
+| `AdmissionControlIT.java:151-160` | SEC, credencial fora da chave de orçamento | ✅ |
+| `deploy/test_release_package.py:16-58` | SEC-07/ORG-03/CAP-03, imagem e Compose | ✅ |
+| `deploy/test_release_package.py:60-80` | SEC-08 e runbooks owned | ✅ |
+| `scripts/test_docs.py:18-34` | DOC-01..04, pacote e validação | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. O bug de CAP-03 é provado nos dois níveis: o unitário mostra a aritmética do divisor e o IT mostra o efeito observável com o container Redis parado de verdade — na implementação anterior as oito requisições teriam sido admitidas e o teste falharia. Os testes estruturais afirmam valores e superfícies observáveis, e os negativos de `scripts/test_docs.py` provam que pacote ausente e link quebrado realmente falham, senão o validador não discriminaria nada. `aTenantBudgetKeyIdentifiesTheCallerWithoutStoringItsCredential` lê as chaves do Redis real: uma implementação que usasse a credencial em texto passaria em todos os outros testes de limite. `aSingleInstanceFleetKeepsItsFullBudgetWhenRedisIsDown` é o controle negativo do divisor, impedindo que a correção vire uma degradação permanente. A execução remota da CI e o smoke de runtime dependente do sandbox não foram presumidos; ambos estão registrados como `NOT_RUN` conforme EDG-05, e a imagem foi construída localmente para não deixar o Dockerfile verificado apenas por leitura de texto.
+
+**Desvio de processo (divulgado):** a rastreabilidade de `spec.md` deveria ter sido atualizada no commit de cada tarefa. Ela foi atualizada apenas neste commit, cobrindo PAY-03, PAY-06, PAY-09, PAY-10 (T34–T36) junto com CAP-03, ORG-03, SEC-07, SEC-08 e DOC-01..04 (T37). Os commits de T34–T36 permanecem como estão: reescrever histórico já publicado localmente seria pior do que registrar o desvio. Nenhum gate foi afetado.
 
 ### Phase 7 — `async-redis-service`
 

@@ -1,0 +1,43 @@
+groups:
+  - name: payment-api
+    rules:
+      - alert: PaymentApiResponseDeadLettered
+        expr: increase(api_response_dead_lettered_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          boundary: payment-api
+        annotations:
+          summary: "Resultado de pagamento parado na DLQ (stage {{ $labels.stage }})"
+          description: >-
+            Um evento final não foi aplicado. O cliente pode ter recebido 202 e não verá o
+            desfecho até o reprocessamento.
+          runbook: ops/runbooks/response-dlq.md
+
+      - alert: PaymentApiAdmissionRejecting
+        expr: >-
+          sum(rate(api_requests_total[5m])) > 0
+          and increase(api_timeouts_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+          boundary: payment-api
+        annotations:
+          summary: "Admissão rejeitando e espera estourando de forma sustentada"
+          description: >-
+            Rejeição e timeout simultâneos por dez minutos indicam saturação a jusante, não pico
+            momentâneo de tráfego.
+          runbook: ops/runbooks/admission-saturation.md
+
+      - alert: PaymentApiResponseRetryPressure
+        expr: increase(api_response_retries_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          boundary: payment-api
+        annotations:
+          summary: "Eventos finais sendo retentados de forma persistente"
+          description: >-
+            O consumo está falhando ao aplicar resultados; a próxima parada é a DLQ. Verifique o
+            Redis antes que o orçamento de retry se esgote.
+          runbook: ops/runbooks/response-dlq.md

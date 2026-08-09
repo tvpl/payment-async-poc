@@ -290,7 +290,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
 | ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts, T19 Core mock, T24 SBUS and T31 API builds standalone complete; remaining application roots pending |
-| ORG-03 | Fronteiras prontas para repositórios | Execute | Core and SBUS standalone build/release packages complete through T30; T31 API standalone build complete, release package pending T37 |
+| ORG-03 | Fronteiras prontas para repositórios | Execute | Core, SBUS and T37 API standalone build/release packages complete (own Dockerfile, app-only Compose, .env.example, README, docs, CI and AGENTS.md); remaining application roots pending |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core, T24 SBUS and T31 API GAV consumption complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
@@ -308,18 +308,18 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SEC-04 | Segurança e operação | Execute | T25 SBUS internal status and T32 API admin/business endpoints require tested identity/role policy; remaining endpoints pending |
 | SEC-05 | Segurança e operação | Execute | T25 SBUS and T32 API expose only liveness/readiness anonymously and protect aggregate health/metrics/unlisted endpoints; remaining apps pending |
 | SEC-06 | Segurança e operação | Execute | T3 complete |
-| SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core and T30 SBUS images are tag+digest pinned with non-root/read-only runtime gates; remaining applications pending |
-| SEC-08 | Segurança e operação | Execute | T30 SBUS CI builds image, generates SPDX SBOM and blocks HIGH/CRITICAL Trivy findings; remaining boundaries pending |
+| SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core, T30 SBUS and T37 API images are tag+digest pinned with non-root/read-only runtime gates; the API image was built and inspected (10001:10001, liveness healthcheck, no runtime package added); remaining applications pending |
+| SEC-08 | Segurança e operação | Execute | T30 SBUS and T37 API CI build the image, generate an SPDX SBOM and block HIGH/CRITICAL Trivy findings; remaining boundaries pending |
 | PAY-01 | Fluxo Kafka | Execute | T33 API atomically associates idempotency key + requestId + canonical fingerprint via a single Redis SET NX |
 | PAY-02 | Fluxo Kafka | Execute | T33 API replays same key+fingerprint, returns deterministic 409 with zero publish on a divergent fingerprint |
-| PAY-03 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-03 | Fluxo Kafka | Execute | T34 records the publish outcome on the idempotency reservation: a failed send marks PUBLISH_FAILED and a retry resumes the same requestId, a lapsed publish lease recovers a crashed attempt, and a replay without a stored status never reports PROCESSING |
 | PAY-04 | Fluxo Kafka | Execute | T26 terminal state+outbox and T27 retry schedule-before-offset atomic persistence are proven |
 | PAY-05 | Fluxo Kafka | Execute | T28 persisted token fences stale updates and a PostgreSQL session advisory lock prevents overlapping broker sends after lease reclaim |
-| PAY-06 | Fluxo Kafka | Execute | T21 Core duplicate equivalence and T28 same-identity republish across the send/mark crash window complete; API gate pending |
+| PAY-06 | Fluxo Kafka | Execute | T21 Core duplicate equivalence, T28 same-identity republish across the send/mark crash window and T36 API terminal-outcome preservation (identical and contradictory repeats leave the chosen result unchanged) complete |
 | PAY-07 | Fluxo Kafka | Execute | T28 keeps broker/exhausted failures recoverable; unconfirmed count/age include active claims and alert continuously until DLQ_PUBLISHED |
 | PAY-08 | Fluxo Kafka | Execute | T27 due-based outbox publishes only when due, deduplicates crash redelivery and removes partition sleep |
-| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics, T21 Core policy and T29 SBUS typed Kafka/PostgreSQL/Redis/Registry budgets and recoverable-state matrix complete; remaining service policies pending |
-| PAY-10 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics, T21 Core policy, T29 SBUS typed budgets, T35 API SBUS-fallback timeout/circuit/service identity and T36 API decode/apply retry-DLQ with no silent ack complete; remaining service policies pending |
+| PAY-10 | Fluxo Kafka | Execute | T35 ends the waiter on result, timeout, interruption and shutdown, clearing MDC and the local registration on every path, including publish failure and post-shutdown registration |
 | PAY-11 | Fluxo Kafka | Execute | T26 V7 conditional transition makes the first terminal sticky; T29 startup guard aligns idempotency, durable state, published outbox, Kafka retention and redelivery windows; T33 API startup guard requires idempotency-ttl >= status-ttl |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |
 | RED-01 | Async Redis | Tasks | In Tasks |
@@ -332,7 +332,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | RED-08 | Async Redis | Tasks | In Tasks |
 | CAP-01 | Capacidade | Execute | T29 types SBUS dependency budgets, retry attempts, readiness requirements and bounded recoverable states; full cross-boundary capacity model pending |
 | CAP-02 | Capacidade | Tasks | In Tasks |
-| CAP-03 | Capacidade | Tasks | In Tasks |
+| CAP-03 | Capacidade | Execute | T37 API admission applies per-resource and per-tenant budgets with tested 202/429 plus Retry-After, and fails closed on a Redis outage onto limit/instances so a fleet never multiplies the approved burst; remaining boundaries pending |
 | CAP-04 | Capacidade | Tasks | In Tasks |
 | CAP-05 | Capacidade | Tasks | In Tasks |
 | CAP-06 | Capacidade | Execute | T20 deterministic Core outcomes/latency complete; bounded admission and slowdown certification pending |
@@ -343,10 +343,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
-| DOC-01 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock and T30 SBUS READMEs complete; other boundaries pending |
-| DOC-02 | Docs, ADRs e IA | Execute | Root, contracts, sandbox, Core mock and T30 SBUS agent guides complete; other boundaries pending |
-| DOC-03 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock and T30 SBUS proportional documentation complete; other boundaries pending |
-| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock and SBUS ADR-0001 accepted; other boundary decisions pending |
+| DOC-01 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS and T37 API READMEs complete; other boundaries pending |
+| DOC-02 | Docs, ADRs e IA | Execute | Root, contracts, sandbox, Core mock, T30 SBUS and T37 API agent guides complete; other boundaries pending |
+| DOC-03 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS and T37 API proportional documentation complete; other boundaries pending |
+| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, SBUS and T37 API ADR-0001 accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |

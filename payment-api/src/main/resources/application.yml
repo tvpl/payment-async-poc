@@ -96,7 +96,11 @@ payment:
     max-attempts: 3
     retry-delay: 500ms
     rate-limit:
+      # Route budget, tenant budget, and the instance count that keeps the Redis-down
+      # fallback from multiplying the approved burst across the fleet.
       limit-for-period: 200
+      tenant-limit-for-period: 50
+      instances: ${PAYMENT_API_INSTANCES:1}
       refresh-period: 1s
   security:
     # API-key auth (PoC). Production: JWT/OAuth2 + mTLS. Override keys via env/secret.
