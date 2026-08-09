@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 2 / T9 — bounded Avro/Apicurio adapter
-- **Completed**: T1–T8; modelo, constantes e schemas Avro pertencem ao `contract-model` e possuem dez testes
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:194`
-- **Next step**: extrair mapper e implementar codec Apicurio limitado, sem `ThreadLocal` por virtual thread
+- **Phase / Task**: Execute; Phase 2 / T10 — Avro manifest and compatibility
+- **Completed**: T1–T9; adapter possui pool fixo, timeout mensurável e cinco round-trips Avro testados
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:211`
+- **Next step**: versionar manifest de eventos e gate determinístico de compatibilidade `FULL_TRANSITIVE`
 - **Blockers**: none
 - **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

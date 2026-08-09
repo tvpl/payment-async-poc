@@ -193,6 +193,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T9: Extrair adapter Avro/Apicurio com codec limitado
 
+**Status:** Complete
+
 **What:** Mover mapper/serde para adapter separado e substituir serializer por thread por codec thread-safe ou pool limitado mensurável.  
 **Where:** `payment-contracts/contract-avro-apicurio`  
 **Depends on:** T8  
@@ -203,6 +205,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + contract  
 **Gate:** full  
 **Commit:** `perf(contracts): bound avro registry codecs`
+
+**Gate evidence:** 21 testes determinísticos passaram com `-PwithIT`: 10 no modelo e 11 no adapter. Integração com Registry externo ficou `NOT_RUN` por indisponibilidade de Docker; pool, timeout, falha e concorrência de virtual threads foram provados com codec injetável sem rede.
 
 #### T10: Implementar manifest e compatibilidade Avro
 
