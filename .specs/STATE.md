@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 4 / T22 — isolated non-root container (not started)
-- **Completed**: T1–T21; six Kafka/Apicurio ITs prove deterministic redelivery, trace propagation and uncommitted poison/dependency failures
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:429`
-- **Next step**: implement T22 multi-stage non-root image and app-only Compose on the external sandbox network
+- **Phase / Task**: Execute; Phase 4 / T23 — NON_PRODUCTION boundary documentation (not started)
+- **Completed**: T1–T22; Core mock now has a healthy multi-stage non-root image and app-only Compose on the external sandbox network
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:449`
+- **Next step**: implement T23 local README/AGENTS/docs/ADR/CI and enforce the NON_PRODUCTION startup classification
 - **Blockers**: none
-- **Uncommitted files**: none after the atomic T19 commit
+- **Uncommitted files**: none after the atomic T22 commit
 - **Branch**: `feature/optimize-eda`

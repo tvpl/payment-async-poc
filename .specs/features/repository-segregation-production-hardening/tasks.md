@@ -428,6 +428,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T22: Criar imagem e Compose independentes do Core mock
 
+**Status:** Complete
+
 **What:** Adicionar build multi-stage non-root e Compose somente da app conectado à rede externa.  
 **Where:** `payment-core-mock/deploy`  
 **Depends on:** T21  
@@ -438,6 +440,10 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural + integration  
 **Gate:** build  
 **Commit:** `build(core-mock): add isolated nonroot container`
+
+**Gate evidence:** Sete checks estruturais e o build standalone com 21 testes passaram. O gate Docker construiu a imagem multi-stage a partir do repositório de contratos como contexto nomeado, iniciou a distribuição Gradle completa, aguardou `/health` saudável e confirmou em runtime UID/GID `10001`, root filesystem read-only, label `NON_PRODUCTION` e vínculo exclusivo à rede externa `payment-sandbox`. O Compose validado contém apenas a aplicação e o cleanup removeu somente o projeto efêmero, sem volumes, imagens ou infraestrutura compartilhada.
+
+**Adequacy review:** O pin por tag+digest das duas bases e a ausência de instalação de pacote de healthcheck são exigidos em `deploy/test_container_package.py:15-23`; a distribuição completa e sem nome de JAR versionado em `:25-29`; o label da imagem em `:31-33`; ownership exclusivo do app e rede externa em `:35-43`; restrições de filesystem/capabilities em `:45-49`; e higiene do `.env.example` em `:51-53`. O gate executável `deploy/verify.sh:13-25` repete esses invariantes no contêiner saudável. As asserções verificam configuração e estado observável e mapeiam ORG-03, SEC-07, SBX-03 e os critérios de T22; o primeiro smoke detectou corretamente o `runnerJar` thin e motivou o uso de `installDist` antes da aprovação final.
 
 #### T23: Classificar e documentar Core mock como não produtivo
 

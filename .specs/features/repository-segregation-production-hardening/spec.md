@@ -290,7 +290,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
 | ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts and T19 Core mock builds standalone complete; remaining application roots pending |
-| ORG-03 | Fronteiras prontas para repositórios | Execute | T19 Core mock standalone build complete; its deploy/docs/CI package and remaining applications pending |
+| ORG-03 | Fronteiras prontas para repositórios | Execute | T19/T22 Core mock standalone build and isolated container package complete; its docs/CI and remaining applications pending |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow and T19 Core mock GAV consumption complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
@@ -298,7 +298,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
 | SBX-01 | Sandbox único | Execute | T13–T18 sandbox boundary complete with Compose/env/Make/smoke/docs/AGENTS |
 | SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
-| SBX-03 | Sandbox único | Execute | T13 named network complete; application Compose adoption pending |
+| SBX-03 | Sandbox único | Execute | T13 named network and T22 Core app-only Compose adoption complete; remaining application Composes pending |
 | SBX-04 | Sandbox único | Execute | T16 four profile combinations, synthetic 8085 collision and missing-variable validation complete |
 | SBX-05 | Sandbox único | Execute | T15 common telemetry profiles and empty versioned application-asset manifest complete; owner assets pending |
 | SBX-06 | Sandbox único | Execute | T14 nine capacity probes, dependency-specific failure and recovery complete; application startup gates pending |
@@ -308,7 +308,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SEC-04 | Segurança e operação | Tasks | In Tasks |
 | SEC-05 | Segurança e operação | Tasks | In Tasks |
 | SEC-06 | Segurança e operação | Execute | T3 complete |
-| SEC-07 | Segurança e operação | Execute | T17 all sandbox images tag+digest pinned; application non-root/image gates pending |
+| SEC-07 | Segurança e operação | Execute | T17 sandbox and T22 Core mock images tag+digest pinned; Core runtime non-root gate complete, remaining applications pending |
 | SEC-08 | Segurança e operação | Tasks | In Tasks |
 | PAY-01 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-02 | Fluxo Kafka | Tasks | In Tasks |
