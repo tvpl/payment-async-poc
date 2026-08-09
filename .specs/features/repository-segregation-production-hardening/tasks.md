@@ -144,6 +144,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T6: Padronizar publicação local e composite opcional
 
+**Status:** Complete
+
 **What:** Criar convenção de repositório Maven temporário e composite explícito, mantendo GAV como declaração produtiva e substitution off no release gate.  
 **Where:** `scripts/artifacts`  
 **Depends on:** T5  

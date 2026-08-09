@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 1 / T1 — baseline equivalence gate
-- **Completed**: Specify, Design e Tasks aprovados; matriz e rastreabilidade 77/77 validadas
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:81`
-- **Next step**: executar T1–T6 sequencialmente com gates e commits atômicos
+- **Phase / Task**: Execute; Phase 2 / T7 — standalone contracts build
+- **Completed**: T1–T6; equivalência, governança, segredos, CI transitório, validação documental e artifact-only flow
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:162`
+- **Next step**: executar T7 após reconciliar este handoff com o Git
 - **Blockers**: none
-- **Uncommitted files**: `.specs/STATE.md`, `.specs/features/repository-segregation-production-hardening/spec.md`, `.specs/features/repository-segregation-production-hardening/context.md`, `.specs/features/repository-segregation-production-hardening/design.md`, `.specs/features/repository-segregation-production-hardening/tasks.md`
+- **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

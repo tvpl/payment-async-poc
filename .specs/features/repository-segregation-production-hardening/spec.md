@@ -292,7 +292,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-02 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-03 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-04 | Fronteiras prontas para repositórios | Tasks | In Tasks |
-| ORG-05 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-05 | Fronteiras prontas para repositórios | Execute | T6 artifact-only flow complete; consumer migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
@@ -358,7 +358,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | MIG-06 | Migração e gates | Execute | T4 policy recorded; coverage and supply-chain closure pending |
 | MIG-07 | Migração e gates | Execute | T5 section destinations complete; removal proof pending |
 | MIG-08 | Migração e gates | Tasks | In Tasks |
-| EDG-01 | Edge cases | Tasks | In Tasks |
+| EDG-01 | Edge cases | Execute | T6 complete |
 | EDG-02 | Edge cases | Tasks | In Tasks |
 | EDG-03 | Edge cases | Tasks | In Tasks |
 | EDG-04 | Edge cases | Execute | T5 dashboard metric validation complete |

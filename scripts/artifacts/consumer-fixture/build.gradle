@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+}
+
+def artifactRepository = providers.gradleProperty('artifactRepository')
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'temporaryArtifacts'
+                url = uri(artifactRepository.get())
+            }
+        }
+        filter {
+            includeGroup 'com.example.platform'
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.example.platform:feature-control:0.1.0'
+}
