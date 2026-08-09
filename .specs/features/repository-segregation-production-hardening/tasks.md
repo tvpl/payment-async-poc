@@ -371,6 +371,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T19: Relocar Core mock para build standalone
 
+**Status:** Complete
+
 **What:** Mover source/config/testes para raiz própria e consumir contratos publicados, preservando tópicos e headers.  
 **Where:** `payment-core-mock`  
 **Depends on:** T18  
@@ -381,6 +383,10 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** contract + integration  
 **Gate:** full  
 **Commit:** `refactor(core-mock): extract standalone application`
+
+**Gate evidence:** O wrapper da nova raiz executou quatro testes com `-PwithIT` contra Kafka e Apicurio reais. O smoke consumiu o comando Avro e validou tópico, chave, headers W3C, correlação, causação e payload da resposta; três checks estruturais provaram build/wrapper próprios, GAVs publicados e ausência de `project(...)`/`common`.
+
+**Adequacy review:** ORG-02/03/05 e os critérios de T19 estão cobertos em `StandaloneBoundaryTest.java:23-42` e `CoreContractSmokeIT.java:94-113`. As asserções verificam os valores observáveis, não apenas chamadas. O gap inicial exigia o `traceparent` inteiro idêntico; com autorização do usuário, o contrato correto passou a exigir formato W3C e trace-id estável, permitindo novo span-id. O gate revelou que a instrumentação substituía também o trace-id; o response topic foi excluído do producer tracing para preservar o header encaminhado. Todos os testes mapeiam aos critérios de T19 e seguem `AGENTS.md` e a Test Coverage Matrix.
 
 #### T20: Tornar simulação determinística e configuração validada
 

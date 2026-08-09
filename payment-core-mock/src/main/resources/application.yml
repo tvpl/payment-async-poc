@@ -1,0 +1,65 @@
+micronaut:
+  application:
+    name: payment-core-mock
+  server:
+    port: 8082
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        step: PT10S
+
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
+  consumers:
+    default:
+      key:
+        deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value:
+        deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+  producers:
+    default:
+      acks: all
+      enable.idempotence: true
+      key:
+        serializer: org.apache.kafka.common.serialization.StringSerializer
+      value:
+        serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+
+apicurio:
+  registry:
+    url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
+
+core:
+  behavior:
+    latency-min-ms: ${CORE_LATENCY_MIN_MS:50}
+    latency-max-ms: ${CORE_LATENCY_MAX_MS:300}
+    decline-pct: ${CORE_DECLINE_PCT:10}
+    fail-pct: ${CORE_FAIL_PCT:0}
+
+otel:
+  service:
+    name: payment-core-mock
+  instrumentation:
+    kafka:
+      # The consumer forwards the incoming W3C header explicitly. Excluding the
+      # response topic prevents a producer-only root span from replacing it.
+      excluded-topics:
+        - payment.simulation.core.response
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: none
+  exporter:
+    otlp:
+      endpoint: http://localhost:4317
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  prometheus:
+    enabled: true
+    sensitive: false

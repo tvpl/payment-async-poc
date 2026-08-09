@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 4 / T19 — standalone payment-core-mock (not started)
-- **Completed**: T1–T18; `payment-contracts` and `sandbox` boundaries complete, with sandbox runtime/profiles/lifecycle/docs gates green
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:371`
-- **Next step**: start T19 only in a new sequential batch; relocate Core mock to a standalone artifact-consuming root
+- **Phase / Task**: Execute; Phase 4 / T20 — deterministic simulation and validated configuration (not started)
+- **Completed**: T1–T19; payment-core-mock standalone build consumes published contracts and its four-test Kafka/Apicurio gate is green
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:393`
+- **Next step**: implement T20 pure requestId/seed decision and configuration bounds with at least ten unit tests
 - **Blockers**: none
-- **Uncommitted files**: T18 README/AGENTS/Make/docs/ADR/docs gate and status updates pending atomic commit; generated Python cache remains untracked
+- **Uncommitted files**: none after the atomic T19 commit
 - **Branch**: `feature/optimize-eda`
