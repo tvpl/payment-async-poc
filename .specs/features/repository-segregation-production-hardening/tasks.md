@@ -691,6 +691,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T30: Completar pacote operacional e release do SBUS
 
+**Status:** Complete
+
 **What:** Criar container/Compose/ops/README/AGENTS/ADRs/CI locais e supply-chain gates aplicáveis.  
 **Where:** `payment-sbus/ops`  
 **Depends on:** T29  
@@ -701,6 +703,29 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural + integration  
 **Gate:** build  
 **Commit:** `build(sbus): add independent production release package`
+
+**Gate evidence:** `./gradlew build --no-daemon` passou 42 testes rápidos e gerou runner JAR/distribuições. O full gate imediatamente anterior da mesma árvore passou 74 testes. `scripts/verify-docs.sh` passou três testes e validou 17 documentos; `deploy/verify.sh --structural` passou oito testes e `docker compose config -q`. A imagem local `payment-sbus:t30` foi construída pelo Dockerfile standalone com o repositório Maven publicado como contexto; inspeção confirmou `10001:10001`, healthcheck de liveness e label `payment-sbus`. O smoke de runtime ficou `NOT_RUN` porque o daemon Docker deixou de estar disponível antes da verificação da rede externa; build e inspeção já haviam concluído com sucesso.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| SEC-07: bases pinadas, runtime non-root e health sem pacote | `deploy/test_release_package.py:14-27` — `assertTrue(...@sha256...)`, `assertIn("USER 10001:10001", ...)`, `assertNotRegex(...apk|apt-get...)` | imagem mínima, pinada e non-root | ✅ |
+| Compose app-only na rede externa | `deploy/test_release_package.py:29-35` — `assertEqual(["sbus"], ...)`, `assertIn("external: true", ...)`, ausência de seis serviços infra | somente SBUS; sandbox mantém ownership da infra | ✅ |
+| Filesystem/capabilities restritos | `deploy/test_release_package.py:37-41` — assertions de read-only, no-new-privileges, `cap_drop` e user | runtime sem privilégio e filesystem somente leitura | ✅ |
+| SEC-08: CI unit/IT/image/SBOM/scan/docs | `deploy/test_release_package.py:43-49` — cada marker obrigatório e threshold HIGH/CRITICAL com exit 1 | pipeline bloqueante cobre supply chain e gates locais | ✅ |
+| Nenhum segredo no env versionado | `deploy/test_release_package.py:51-53` — `assertNotRegex(...password|secret|token...)` | `.env.example` não atribui credencial | ✅ |
+| Retry/DLQ/rollback possuem runbooks owned | `deploy/test_release_package.py:55-59` — três `assertIn(...md)` | índice operacional aponta para os três procedimentos | ✅ |
+| DOC-01..04: pacote, links, claims e ADR | `scripts/test_docs.py:18-34` — resultado vazio, missing package e broken link detectados | pacote proporcional completo e validator discriminante | ✅ |
+| Imagem construída possui identidade observável | inspeção local — `10001:10001`, healthcheck `/health/liveness`, label `payment-sbus` | artefato real corresponde ao contrato estrutural | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `deploy/test_release_package.py:14-27` | SEC-07, Done-when imagem | ✅ |
+| `deploy/test_release_package.py:29-41` | ORG-03/SEC-07, Done-when Compose app-only | ✅ |
+| `deploy/test_release_package.py:43-49` | SEC-08, Done-when CI | ✅ |
+| `deploy/test_release_package.py:51-59` | SEC-07 e Done-when runbooks | ✅ |
+| `scripts/test_docs.py:18-34` | DOC-01..04, pacote e validação | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Os testes estruturais verificam valores e superfícies observáveis, e os testes negativos provam que pacote ausente e link quebrado falham. O build real da imagem complementa a inspeção de texto. A execução remota da CI e o smoke dependente do sandbox não foram presumidos; o último está registrado como `NOT_RUN` conforme EDG-05. Segue `AGENTS.md`, a Test Coverage Matrix e o owner local criado nesta tarefa. Não há SPEC_DEVIATION.
 
 ### Phase 6 — `payment-api`
 

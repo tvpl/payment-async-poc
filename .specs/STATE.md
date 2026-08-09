@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute paused after Phase 5 / T28 — recoverable dead-letter delivery
-- **Completed**: T1–T28; T28 independent verifier PASS and 62/62 full tests cover session-locked send, stale-owner fencing, recoverable DLQ, exact republish data and continuous unconfirmed alerting
-- **In-progress**: none; T28 is complete and atomically committed
-- **Next step**: resume at T29 to type dependency budgets and validate retention coherence plus the Kafka/DB/Redis/Registry failure matrix
+- **Phase / Task**: Execute completed Phase 5 / T30 — SBUS operational and release package
+- **Completed**: T1–T30; T29 committed typed dependency/retention policies with 74/74 full tests; T30 build, docs, Compose, image and supply-chain package gates passed where locally runnable
+- **In-progress**: none; Phase 5 is complete after the atomic T30 commit
+- **Next step**: start Phase 6 at T31 to relocate the API into its standalone boundary
 - **Blockers**: none
-- **Uncommitted files**: none after the atomic T28 commit
+- **Uncommitted files**: none after the atomic T30 commit
 - **Branch**: `feature/optimize-eda`

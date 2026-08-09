@@ -290,7 +290,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
 | ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts, T19 Core mock and T24 SBUS builds standalone complete; remaining application roots pending |
-| ORG-03 | Fronteiras prontas para repositórios | Execute | Core package complete and T24 SBUS standalone build complete; SBUS release package T30 and remaining applications pending |
+| ORG-03 | Fronteiras prontas para repositórios | Execute | Core and SBUS standalone build/release packages complete through T30; remaining applications pending |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core and T24 SBUS GAV consumption complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
@@ -308,8 +308,8 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SEC-04 | Segurança e operação | Execute | T25 SBUS internal status requires tested ROLE_PAYMENT_API service identity; remaining endpoints pending |
 | SEC-05 | Segurança e operação | Execute | T25 SBUS exposes only liveness/readiness anonymously and protects aggregate health/metrics; remaining apps pending |
 | SEC-06 | Segurança e operação | Execute | T3 complete |
-| SEC-07 | Segurança e operação | Execute | T17 sandbox and T22 Core mock images tag+digest pinned; Core runtime non-root gate complete, remaining applications pending |
-| SEC-08 | Segurança e operação | Tasks | In Tasks |
+| SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core and T30 SBUS images are tag+digest pinned with non-root/read-only runtime gates; remaining applications pending |
+| SEC-08 | Segurança e operação | Execute | T30 SBUS CI builds image, generates SPDX SBOM and blocks HIGH/CRITICAL Trivy findings; remaining boundaries pending |
 | PAY-01 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-02 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-03 | Fluxo Kafka | Tasks | In Tasks |
@@ -343,10 +343,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
-| DOC-01 | Docs, ADRs e IA | Execute | T12 contracts, T18 sandbox and T23 Core mock README complete; other boundaries pending |
-| DOC-02 | Docs, ADRs e IA | Execute | T2 root, T12 contracts, T18 sandbox and T23 Core mock agent guides complete; other boundaries pending |
-| DOC-03 | Docs, ADRs e IA | Execute | T12 contracts, T18 sandbox and T23 Core mock proportional documentation complete; other boundaries pending |
-| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox and Core mock ADR-0001 accepted; other boundary decisions pending |
+| DOC-01 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock and T30 SBUS READMEs complete; other boundaries pending |
+| DOC-02 | Docs, ADRs e IA | Execute | Root, contracts, sandbox, Core mock and T30 SBUS agent guides complete; other boundaries pending |
+| DOC-03 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock and T30 SBUS proportional documentation complete; other boundaries pending |
+| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock and SBUS ADR-0001 accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
