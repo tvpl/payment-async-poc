@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "description": "Application-owned dashboards, alerts and scrape targets are assembled here only from versioned owner manifests.",
+  "assets": []
+}

@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 3 / T15 — observability and tools profiles
-- **Completed**: T1–T14; sandbox mínimo healthy e smoke com inicialização idempotente, nove probes, diagnóstico por dependência e recovery comprovado
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:302`
-- **Next step**: separar observabilidade e ferramentas em profiles sem assumir ownership de artefatos de aplicação
+- **Phase / Task**: Execute; Phase 3 / T16 — profile port collision validation
+- **Completed**: T1–T15; profiles opcionais isolados, cinco queries reais e regressão do minimal/nove probes verdes após recuperação do Docker
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:322`
+- **Next step**: implementar detector determinístico de host binds e variáveis ausentes em todas as combinações de profiles
 - **Blockers**: none
-- **Uncommitted files**: T14 initialization, smoke, tests and status updates pending its atomic commit
+- **Uncommitted files**: T15 overlay, observability configs, smoke/tests and status updates pending atomic commit; generated Python cache remains untracked
 - **Branch**: `feature/optimize-eda`

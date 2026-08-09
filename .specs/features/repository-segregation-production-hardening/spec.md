@@ -297,10 +297,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
 | SBX-01 | Sandbox único | Execute | T13 minimal Compose/env/volumes and T14 actionable smoke complete; runner/docs pending |
-| SBX-02 | Sandbox único | Execute | T13 minimal profile contains only four shared dependencies; profiles pending |
+| SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
 | SBX-03 | Sandbox único | Execute | T13 named network complete; application Compose adoption pending |
 | SBX-04 | Sandbox único | Tasks | In Tasks |
-| SBX-05 | Sandbox único | Tasks | In Tasks |
+| SBX-05 | Sandbox único | Execute | T15 common telemetry profiles and empty versioned application-asset manifest complete; owner assets pending |
 | SBX-06 | Sandbox único | Execute | T14 nine capacity probes, dependency-specific failure and recovery complete; application startup gates pending |
 | SEC-01 | Segurança e operação | Execute | T3 config hygiene complete; owner startup guards pending |
 | SEC-02 | Segurança e operação | Tasks | In Tasks |

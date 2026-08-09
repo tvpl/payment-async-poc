@@ -301,6 +301,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T15: Separar profiles de observabilidade e ferramentas
 
+**Status:** Complete
+
 **What:** Mover Jaeger/OTel, Prometheus, Grafana e UIs para profiles, preservando ownership dos artefatos de aplicação.  
 **Where:** `sandbox/observability`  
 **Depends on:** T14  
@@ -311,6 +313,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** integration + structural  
 **Gate:** sandbox  
 **Commit:** `refactor(sandbox): profile observability and tools`
+
+**Gate evidence:** dez testes estruturais, cinco queries reais dos profiles e os nove probes mínimos passaram. O Compose mínimo não interpola secrets opcionais; `observability` materializa somente sete componentes comuns, `tools` somente Kafka UI, e o manifest de assets de aplicação permanece vazio e versionável.
 
 #### T16: Detectar colisões de portas em todos os profiles
 
