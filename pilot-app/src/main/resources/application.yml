@@ -21,7 +21,7 @@ micronaut:
         signatures:
           secret:
             generator:
-              secret: ${JWT_SIGNATURE_SECRET:`dev-feature-control-signing-secret-change-me-32b+`}
+              secret: ${JWT_SIGNATURE_SECRET}
               jws-algorithm: HS256
 
 # For HA, override the whole URI with env REDIS_URI (e.g. redis-sentinel://...); env wins over yml.

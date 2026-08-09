@@ -29,7 +29,7 @@ micronaut:
           secret:
             generator:
               # HS256 shared secret (dev only — >= 256 bits). Prod: RS256/JWKS + secret manager.
-              secret: ${JWT_SIGNATURE_SECRET:`dev-feature-control-signing-secret-change-me-32b+`}
+              secret: ${JWT_SIGNATURE_SECRET}
               jws-algorithm: HS256
 
 redis:

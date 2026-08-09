@@ -302,12 +302,12 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SBX-04 | Sandbox único | Tasks | In Tasks |
 | SBX-05 | Sandbox único | Tasks | In Tasks |
 | SBX-06 | Sandbox único | Tasks | In Tasks |
-| SEC-01 | Segurança e operação | Tasks | In Tasks |
+| SEC-01 | Segurança e operação | Execute | T3 config hygiene complete; owner startup guards pending |
 | SEC-02 | Segurança e operação | Tasks | In Tasks |
 | SEC-03 | Segurança e operação | Tasks | In Tasks |
 | SEC-04 | Segurança e operação | Tasks | In Tasks |
 | SEC-05 | Segurança e operação | Tasks | In Tasks |
-| SEC-06 | Segurança e operação | Tasks | In Tasks |
+| SEC-06 | Segurança e operação | Execute | T3 complete |
 | SEC-07 | Segurança e operação | Tasks | In Tasks |
 | SEC-08 | Segurança e operação | Tasks | In Tasks |
 | PAY-01 | Fluxo Kafka | Tasks | In Tasks |

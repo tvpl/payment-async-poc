@@ -16,7 +16,7 @@
 
 # --- tunables (override on the CLI: make load K6_RATE=300) ---------------------
 BASE_URL      ?= http://localhost:8080
-API_KEY       ?= dev-key-change-me
+API_KEY       ?=
 K6_RATE       ?= 100
 K6_HEAVY_RATE ?= 400
 K6_DURATION   ?= 1m

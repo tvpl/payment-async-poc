@@ -50,7 +50,7 @@ datasources:
   default:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:sbus}?stringtype=unspecified
     username: ${POSTGRES_USER:sbus}
-    password: ${POSTGRES_PASSWORD:sbus}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
     dialect: POSTGRES
     schema-generate: NONE

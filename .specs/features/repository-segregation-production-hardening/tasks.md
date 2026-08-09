@@ -99,6 +99,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T3: Aplicar higiene de ambiente e segredos
 
+**Status:** Complete
+
 **What:** Substituir ambiente versionado real por exemplos seguros, bloquear defaults privilegiados e verificar ausência de segredo no build context.  
 **Where:** `/`  
 **Depends on:** T2  
@@ -108,7 +110,7 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Done when:** `.env` real é ignorado, exemplos não contêm segredo, scan determinístico não encontra credenciais e configuração inválida falha; ≥4 checks passam.  
 **Tests:** structural  
 **Gate:** build  
-**Commit:** `security(config): remove versioned development secrets`
+**Commit:** `fix(config): remove versioned development secrets`
 
 #### T4: Definir quality gates e CI transitório em matriz
 

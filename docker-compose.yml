@@ -68,7 +68,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-sbus}
       POSTGRES_USER: ${POSTGRES_USER:-sbus}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sbus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     volumes:
       - pg-data:/var/lib/postgresql/data
     ports:
@@ -191,7 +191,7 @@ services:
     restart: unless-stopped
     profiles: ["observability"]
     environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-sbus}:${POSTGRES_PASSWORD:-sbus}@postgres:5432/${POSTGRES_DB:-sbus}?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-sbus}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-sbus}?sslmode=disable"
     ports:
       - "9187:9187"
     depends_on:
@@ -229,8 +229,8 @@ services:
       SBUS_BASE_URL: http://sbus-service:8081
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       PAYMENT_SECURITY_ENABLED: ${PAYMENT_SECURITY_ENABLED:-true}
-      PAYMENT_API_KEY: ${API_KEY:-dev-key-change-me}
-      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:-dev-feature-control-signing-secret-change-me-32b+}
+      PAYMENT_API_KEY: ${API_KEY:?set API_KEY in .env}
+      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:?set JWT_SIGNATURE_SECRET in .env}
       FEATURES_REDIS_ENABLED: ${FEATURES_REDIS_ENABLED:-true}
     ports:
       - "8080:8080"
@@ -263,7 +263,7 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-sbus}
       POSTGRES_USER: ${POSTGRES_USER:-sbus}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sbus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       APICURIO_REGISTRY_URL: http://apicurio-registry:8080/apis/registry/v2
@@ -331,7 +331,7 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:-dev-feature-control-signing-secret-change-me-32b+}
+      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:?set JWT_SIGNATURE_SECRET in .env}
       FEATURES_REDIS_ENABLED: ${FEATURES_REDIS_ENABLED:-true}
     ports:
       - "8083:8083"
@@ -383,7 +383,7 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:-dev-feature-control-signing-secret-change-me-32b+}
+      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:?set JWT_SIGNATURE_SECRET in .env}
       FEATURES_REDIS_ENABLED: ${FEATURES_REDIS_ENABLED:-true}
     ports:
       - "8085:8085"
