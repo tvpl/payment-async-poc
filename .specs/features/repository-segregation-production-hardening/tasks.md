@@ -1041,6 +1041,8 @@ Gates executados de fato: `./gradlew test -PwithIT --no-daemon` (com `JWT_SIGNAT
 
 #### T38: Relocar serviço Redis para build standalone
 
+**Status:** Complete
+
 **What:** Mover aplicação e testes para raiz independente sem contratos Kafka/Postgres/common.  
 **Where:** `async-redis-service`  
 **Depends on:** T37  
@@ -1051,6 +1053,31 @@ Gates executados de fato: `./gradlew test -PwithIT --no-daemon` (com `JWT_SIGNAT
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `refactor(async-redis): extract standalone service`
+
+**Gate evidence:** Ao contrário de `payment-api`/`payment-sbus`/`payment-core-mock`, esta fronteira já ocupava o nome definitivo da raiz em AD-001, então a extração foi feita **no lugar**, não por cópia para um diretório novo: `async-redis-service` ganhou `settings.gradle`, `gradle.properties`, wrapper próprio (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`) e um `build.gradle` autossuficiente com toolchain, `repositories` e configuração de `Test` próprios — antes ele herdava tudo isso do `subprojects {}` da raiz do monorepo e não tinha wrapper algum. O `include 'async-redis-service'` da raiz antiga foi **mantido** por MIG-02 (“old location permanece até equivalência ser provada”), seguindo o precedente de T19/T24/T31; ambos os builds foram executados e passam, então a equivalência é observada, não presumida.
+
+O baseline foi medido antes de qualquer alteração com o comando do build raiz (`./gradlew :async-redis-service:test -PwithIT --no-daemon`): **6 testes, 0 falhas** (`AsyncRedisFlowIT` 2, `AsyncBackpressureIT` 1, `AsyncDlqIT` 1, `AsyncRateLimiterUnitTest` 2). Depois da extração, o gate da própria fronteira (`async-redis-service/./gradlew test -PwithIT --no-daemon`) passou **10/10 testes, 0 falhas, 0 skipped**: os 6 métodos baseline preservados byte a byte (nenhum removido, pulado ou enfraquecido) mais 4 novos em `StandaloneBoundaryTest`. O build raiz continua verde com os mesmos 10.
+
+Uma tentativa de trocar a provisão de Redis dos ITs para Testcontainers foi **revertida deliberadamente**. Ela não é exigida pelo `Done when` de T38 e não funciona neste ambiente: `UnixSocketClientProviderStrategy` e `DockerDesktopClientProviderStrategy` falham as duas com `BadRequestException (Status 400)` contra o Docker Desktop 29.3.1 (API 1.54) instalado, embora `payment-api` — mesmas versões de `testcontainers-bom:1.20.4`, `com.redis:testcontainers-redis:2.2.2` e `docker-java 3.4.0` — passe no mesmo host (verificado rodando `RedisStatusStoreIdempotencyIT` com `--rerun-tasks`). Como a divergência não foi explicada e o arranjo anterior funciona, os ITs continuam contra o Redis real em `localhost:6379`, que é exatamente o que AD-003 determina: o sandbox é dono da infraestrutura e as aplicações se conectam a ela. Redis é dependência de **runtime**, não de código nem de build, e portanto não viola ORG-02 — o que `StandaloneBoundaryTest` prova estruturalmente.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| ORG-03: a fronteira possui `settings.gradle`, build, wrapper e `gradle.properties` próprios | `StandaloneBoundaryTest.java:25-31` — `assertTrue(Files.isRegularFile(ROOT.resolve("settings.gradle")))` mais `build.gradle`, `gradle.properties`, `gradlew`, `gradle/wrapper/gradle-wrapper.jar` e `gradle-wrapper.properties` | os seis arquivos existem na própria raiz | ✅ |
+| ORG-02: o build não lê build/fontes de outra raiz | `StandaloneBoundaryTest.java:36-38` — `assertFalse(build.contains("project("))` e `assertFalse(build.contains(".."))` | nenhuma dependência `project()` nem caminho que escape da raiz | ✅ |
+| ORG-07: sem Kafka/Postgres/`common`/contratos nesta fronteira | `StandaloneBoundaryTest.java:44-48` — `assertFalse` para `kafka`, `postgres`, `avro`, `payment-contract` e `com.example.payments` no `build.gradle` | a fronteira é Redis-only, sem maquinaria de contrato | ✅ |
+| ORG-02: as fontes não importam de outra fronteira | `StandaloneBoundaryTest.java:59` — `assertTrue(offenders.isEmpty(), ...)` varrendo todo `src/**.java` por `import` de `com.example.payments` ou `com.example.platform.featurecontrol` | nenhum arquivo importa de outra fronteira | ✅ |
+| Done-when / MIG-02: os seis testes baseline sobrevivem ao build isolado | `AsyncRedisFlowIT.java:43-51` (`assertEquals("COMPLETED", body.status())`, `feeCents()==200`), `AsyncRedisFlowIT.java:63-64`, `AsyncBackpressureIT.java:63` (`throttled >= 1`), `AsyncDlqIT.java:50-51` (`xlen(DLQ) >= 1`), `AsyncRateLimiterUnitTest.java:23,33-36` | os mesmos 6 métodos passam pelo wrapper da fronteira | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `StandaloneBoundaryTest.java:25-31` | ORG-03 arquivos próprios da fronteira | ✅ |
+| `StandaloneBoundaryTest.java:36-38` | ORG-02 sem build cross-root | ✅ |
+| `StandaloneBoundaryTest.java:44-48` | ORG-07 sem concern de outra fronteira | ✅ |
+| `StandaloneBoundaryTest.java:59` | ORG-02 sem fonte cross-root | ✅ |
+| `AsyncRedisFlowIT.java:43-51,63-64` | MIG-02 equivalência funcional (baseline) | ✅ |
+| `AsyncBackpressureIT.java:63`, `AsyncDlqIT.java:50-51`, `AsyncRateLimiterUnitTest.java:23,33-36` | MIG-02 equivalência funcional (baseline) | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária para o escopo estrutural desta tarefa. `StandaloneBoundaryTest` replica o padrão já auditado em `payment-sbus`/`payment-api` para o mesmo problema e cada asserção falharia numa extração incompleta plausível: sem wrapper copiado, `ownsStandaloneBuildAndWrapper` falha; com um `implementation project(':common')` remanescente, `buildDeclaresNoCrossRootDependency` falha; se alguém reintroduzisse Avro/Kafka “só para reaproveitar o codec”, `buildDeclaresNoKafkaPostgresOrSharedCommonDependency` falha. `sourcesImportNothingFromAnotherBoundary` é o controle que fecha o buraco deixado pelos outros três: um `build.gradle` limpo com um `import com.example.payments...` numa classe passaria em todo o resto. Os 6 métodos baseline não foram tocados — a prova de equivalência de MIG-02 exige exatamente as asserções antigas rodando na raiz nova, e reescrevê-las destruiria o valor da comparação. Os gaps de comportamento que uma auditoria contra RED-01..08 já revela nesta implementação (polling devolve `UNKNOWN` para job em processamento, `MAXLEN ~` no `XADD`, consumer name fixo `worker-{i}` sem identidade de instância, `release` não atômico, `deadLetter` que engole exceção antes do ACK, off-by-one em `getRedeliveryCount() > maxDeliveries`) são **deliberadamente não corrigidos aqui**: cada um pertence por `Where` e por requisito a T39–T44 e será tratado tarefa a tarefa, com gate próprio. Não há SPEC_DEVIATION em T38.
 
 #### T39: Persistir status, idempotência e segurança na aceitação
 
