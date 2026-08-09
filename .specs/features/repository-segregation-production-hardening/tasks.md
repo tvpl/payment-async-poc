@@ -318,6 +318,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T16: Detectar colisões de portas em todos os profiles
 
+**Status:** Complete
+
 **What:** Criar validador que materializa combinações de profiles e falha para host bind duplicado ou variável ausente.  
 **Where:** `sandbox/smoke/ports`  
 **Depends on:** T15  
@@ -328,6 +330,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural  
 **Gate:** sandbox  
 **Commit:** `test(sandbox): reject compose port collisions`
+
+**Gate evidence:** treze testes estruturais passaram. O validador materializou quatro combinações reais; a fixture `8085` falhou citando porta e ambos os serviços, e a fixture sem variável obrigatória falhou com diagnóstico nominal.
 
 #### T17: Fixar imagens, retenções e operações destrutivas seguras
 

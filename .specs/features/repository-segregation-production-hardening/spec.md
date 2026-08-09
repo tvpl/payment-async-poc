@@ -299,7 +299,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SBX-01 | Sandbox único | Execute | T13 minimal Compose/env/volumes and T14 actionable smoke complete; runner/docs pending |
 | SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
 | SBX-03 | Sandbox único | Execute | T13 named network complete; application Compose adoption pending |
-| SBX-04 | Sandbox único | Tasks | In Tasks |
+| SBX-04 | Sandbox único | Execute | T16 four profile combinations, synthetic 8085 collision and missing-variable validation complete |
 | SBX-05 | Sandbox único | Execute | T15 common telemetry profiles and empty versioned application-asset manifest complete; owner assets pending |
 | SBX-06 | Sandbox único | Execute | T14 nine capacity probes, dependency-specific failure and recovery complete; application startup gates pending |
 | SEC-01 | Segurança e operação | Execute | T3 config hygiene complete; owner startup guards pending |
@@ -348,7 +348,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | DOC-03 | Docs, ADRs e IA | Execute | T12 contracts documentation set complete; other boundaries pending |
 | DOC-04 | Docs, ADRs e IA | Execute | T12 contracts ADR-0001 accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
-| DOC-06 | Docs, ADRs e IA | Execute | T5 validation gate complete |
+| DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
 | MIG-01 | Migração e gates | Tasks | In Tasks |
 | MIG-02 | Migração e gates | Execute | T1 baseline complete; relocation gates pending |

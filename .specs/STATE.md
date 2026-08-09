@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 3 / T16 — profile port collision validation
-- **Completed**: T1–T15; profiles opcionais isolados, cinco queries reais e regressão do minimal/nove probes verdes após recuperação do Docker
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:322`
-- **Next step**: implementar detector determinístico de host binds e variáveis ausentes em todas as combinações de profiles
+- **Phase / Task**: Execute; Phase 3 / T17 — pinned images and safe data lifecycle
+- **Completed**: T1–T16; quatro combinações de profiles validadas e colisão 8085/variável ausente rejeitadas deterministicamente
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:337`
+- **Next step**: fixar imagens por digest, declarar retenção e separar reset destrutivo com confirmação
 - **Blockers**: none
-- **Uncommitted files**: T15 overlay, observability configs, smoke/tests and status updates pending atomic commit; generated Python cache remains untracked
+- **Uncommitted files**: T16 port validator, fixtures, tests and status updates pending atomic commit; generated Python cache remains untracked
 - **Branch**: `feature/optimize-eda`
