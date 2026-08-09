@@ -321,7 +321,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec complete; service dependency policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-11 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-12 | Fluxo Kafka | Execute | T8 schema and model contract tests complete; compatibility gate pending T10 |
+| PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |
 | RED-01 | Async Redis | Tasks | In Tasks |
 | RED-02 | Async Redis | Tasks | In Tasks |
 | RED-03 | Async Redis | Tasks | In Tasks |
@@ -360,7 +360,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | MIG-08 | Migração e gates | Tasks | In Tasks |
 | EDG-01 | Edge cases | Execute | T6 complete |
 | EDG-02 | Edge cases | Tasks | In Tasks |
-| EDG-03 | Edge cases | Tasks | In Tasks |
+| EDG-03 | Edge cases | Execute | T10 incompatible evolution requires major, new artifact/topic and coexistence |
 | EDG-04 | Edge cases | Execute | T5 dashboard metric validation complete |
 | EDG-05 | Edge cases | Execute | T4 PASS/FAIL/NOT_RUN classification complete |
 | EDG-06 | Edge cases | Execute | T1 complete |

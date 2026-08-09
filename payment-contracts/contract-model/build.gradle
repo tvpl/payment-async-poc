@@ -19,7 +19,9 @@ dependencies {
 }
 
 tasks.named('generateAvroJava') {
-    source(rootProject.file('schemas'))
+    source(rootProject.fileTree(rootProject.file('schemas')) {
+        include '*.avsc'
+    })
 }
 
 avro {

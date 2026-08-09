@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "CoreResponsePayload",
+  "namespace": "com.example.payments.common.avro",
+  "fields": [
+    { "name": "simulationId", "type": "string" },
+    { "name": "status", "type": "string" },
+    { "name": "authorizationCode", "type": ["null", "string"], "default": null },
+    { "name": "amount", "type": "string" },
+    { "name": "currency", "type": "string" },
+    { "name": "installments", "type": "int" },
+    { "name": "fees", "type": ["null", "com.example.payments.common.avro.Fees"], "default": null },
+    { "name": "settlement", "type": ["null", "com.example.payments.common.avro.Settlement"], "default": null },
+    { "name": "errorCode", "type": ["null", "string"], "default": null },
+    { "name": "errorMessage", "type": ["null", "string"], "default": null }
+  ]
+}

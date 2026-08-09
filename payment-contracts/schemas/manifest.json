@@ -1,0 +1,59 @@
+{
+  "contractVersion": "1.0.0",
+  "compatibility": "FULL_TRANSITIVE",
+  "registryGroupId": "payments",
+  "events": [
+    {
+      "eventType": "PaymentSimulationRequested",
+      "eventVersion": "1.0",
+      "artifactId": "PaymentSimulationRequested",
+      "topic": "payment.simulation.requested",
+      "schema": "PaymentSimulationRequested.avsc",
+      "className": "com.example.payments.common.avro.PaymentSimulationRequested"
+    },
+    {
+      "eventType": "ProcessPaymentSimulationCommand",
+      "eventVersion": "1.0",
+      "artifactId": "ProcessPaymentSimulationCommand",
+      "topic": "payment.simulation.core.command",
+      "schema": "ProcessPaymentSimulationCommand.avsc",
+      "className": "com.example.payments.common.avro.ProcessPaymentSimulationCommand"
+    },
+    {
+      "eventType": "CorePaymentSimulationResponse",
+      "eventVersion": "1.0",
+      "artifactId": "CorePaymentSimulationResponse",
+      "topic": "payment.simulation.core.response",
+      "schema": "CorePaymentSimulationResponse.avsc",
+      "className": "com.example.payments.common.avro.CorePaymentSimulationResponse"
+    },
+    {
+      "eventType": "PaymentSimulationCompleted",
+      "eventVersion": "1.0",
+      "artifactId": "PaymentSimulationCompleted",
+      "topic": "payment.simulation.completed",
+      "schema": "PaymentSimulationCompleted.avsc",
+      "className": "com.example.payments.common.avro.PaymentSimulationCompleted"
+    },
+    {
+      "eventType": "PaymentSimulationFailed",
+      "eventVersion": "1.0",
+      "artifactId": "PaymentSimulationFailed",
+      "topic": "payment.simulation.failed",
+      "schema": "PaymentSimulationFailed.avsc",
+      "className": "com.example.payments.common.avro.PaymentSimulationFailed"
+    }
+  ],
+  "headers": [
+    "x-request-id",
+    "x-correlation-id",
+    "x-causation-id",
+    "Idempotency-Key",
+    "x-event-type",
+    "x-event-version",
+    "traceparent",
+    "x-retry-attempt",
+    "x-retry-not-before",
+    "x-orig-topic"
+  ]
+}

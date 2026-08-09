@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 2 / T10 — Avro manifest and compatibility
-- **Completed**: T1–T9; adapter possui pool fixo, timeout mensurável e cinco round-trips Avro testados
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:211`
-- **Next step**: versionar manifest de eventos e gate determinístico de compatibilidade `FULL_TRANSITIVE`
+- **Phase / Task**: Execute; Phase 2 / T11 — published artifact consumer fixture
+- **Completed**: T1–T10; manifest e histórico Avro passam compatibilidade `FULL_TRANSITIVE` em dry run
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:228`
+- **Next step**: provar consumo dos dois GAVs publicados com substitution desabilitada
 - **Blockers**: none
 - **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

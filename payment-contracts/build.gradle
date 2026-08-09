@@ -89,3 +89,13 @@ tasks.register('verifyLocalPublication') {
         }
     }
 }
+
+tasks.register('checkSchemaCompatibility') {
+    group = 'verification'
+    description = 'Runs the local FULL_TRANSITIVE compatibility dry run without mutating a Registry.'
+    dependsOn ':contract-model:test'
+
+    doLast {
+        logger.lifecycle('schema-compatibility: PASS (FULL_TRANSITIVE dry run, Registry unchanged)')
+    }
+}

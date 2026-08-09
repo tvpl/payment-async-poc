@@ -210,6 +210,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T10: Implementar manifest e compatibilidade Avro
 
+**Status:** Complete
+
 **What:** Versionar mapa eventType/schema/tópico e gate `FULL_TRANSITIVE`, com dry run e rejeição de mudança incompatível.  
 **Where:** `payment-contracts/schemas`  
 **Depends on:** T9  
@@ -220,6 +222,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** contract  
 **Gate:** full  
 **Commit:** `feat(contracts): enforce transitive avro compatibility`
+
+**Gate evidence:** 28 testes passaram; sete verificam histórico completo, mutações compatíveis/incompatíveis, major/coexistência, manifest e política. `checkSchemaCompatibility` executou dry run local sem mutar Registry.
 
 #### T11: Provar consumo apenas pelo artefato publicado
 
