@@ -325,8 +325,8 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | RED-01 | Async Redis | Execute | T39 persists a PROCESSING status before the enqueue and polling tells missing/processing/terminal/expired apart, with status-ttl >= result-ttl enforced at startup |
 | RED-02 | Async Redis | Execute | T40 starts the wait budget before the borrow, caps acquisition at min(remaining budget, pool-max-wait), refuses startup on a pool with no capacity or no finite acquisition timeout, and answers a saturated pool with 202 plus X-Backpressure/Retry-After; it also fixed a connection leak from Lettuce ConnectionPoolSupport not wrapping the timed borrowObject overloads |
 | RED-03 | Async Redis | Tasks | In Tasks |
-| RED-04 | Async Redis | Tasks | In Tasks |
-| RED-05 | Async Redis | Tasks | In Tasks |
+| RED-04 | Async Redis | Execute | T41 gives each worker a `<instance-id>-w<index>` consumer name derived per process, so two replicas never share a Redis consumer identity; XINFO CONSUMERS on a live Redis confirms 4 distinct consumers for 2 instances; a single ReclaimCoordinator turn (SET NX + owner-fenced renew/release) keeps only one worker scanning the PEL at a time |
+| RED-05 | Async Redis | Execute | T41 reconnects the worker loop with capped exponential backoff on any connection loss (including startup), and WorkerReadiness/WorkerReadinessIndicator report DOWN until a worker has actually read from the group again, verified against a real Redis outage via a TCP gate |
 | RED-06 | Async Redis | Tasks | In Tasks |
 | RED-07 | Async Redis | Tasks | In Tasks |
 | RED-08 | Async Redis | Execute | T39 adds X-API-Key AuthN on both job routes, SET NX fingerprint idempotency (replay/conflict, nothing enqueued twice) and a prod guard refusing startup without auth, idempotency and admission |
