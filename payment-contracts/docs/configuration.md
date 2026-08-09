@@ -11,15 +11,17 @@
 
 As versões pertencem a [`gradle.properties`](../gradle.properties). O build não lê propriedades do workspace pai.
 
-## Runtime do adapter
+## Convenção para o consumer do adapter
 
-| Propriedade | Default de transição | Regra |
+Estas chaves são uma convenção recomendada para a configuração pertencente à aplicação. A biblioteca não lê configuração nem depende de framework; a factory do consumer converte os valores e chama o construtor Java de `AvroSerde`.
+
+| Chave no consumer | Default de transição | Argumento Java |
 | --- | --- | --- |
-| `payments.avro.registry-url` | fallback para `apicurio.registry.url` | endpoint do Registry |
-| `payments.avro.codec-pool-size` | `8` | deve ser maior que zero |
-| `payments.avro.codec-acquire-timeout` | `250ms` | deve ser positivo |
-| `payments.avro.auto-register` | `true` | consumidores em produção definem `false` |
+| `payments.avro.registry-url` | fallback para `apicurio.registry.url` | `registryUrl` |
+| `payments.avro.codec-pool-size` | `8` | `poolSize`, maior que zero |
+| `payments.avro.codec-acquire-timeout` | `250ms` | `acquireTimeout`, positivo |
+| `payments.avro.auto-register` | `true` | `autoRegister`; produção passa `false` |
 
-O default de auto-registration preserva consumidores legados durante a migração. Ele não é um default produtivo. Produção registra schemas por etapa autorizada e inicia com `payments.avro.auto-register=false`.
+O default de auto-registration pertence à configuração transitória dos consumidores legados, não à biblioteca e não é produtivo. Produção registra schemas por etapa autorizada e sua factory inicia `AvroSerde` com `autoRegister=false`.
 
 O pool falha com `AvroCodecUnavailableException` quando não obtém codec dentro do orçamento. O consumidor decide como traduzir essa falha para retry, backpressure ou indisponibilidade.

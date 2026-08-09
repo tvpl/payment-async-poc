@@ -1,7 +1,5 @@
 package com.example.payments.common.model;
 
-import io.micronaut.serde.annotation.Serdeable;
-
 import java.math.BigDecimal;
 
 /**
@@ -10,7 +8,6 @@ import java.math.BigDecimal;
  *
  * @param status APPROVED / DECLINED / ERROR (business outcome from the Core)
  */
-@Serdeable
 public record SimulationResult(
         String simulationId,
         String requestId,

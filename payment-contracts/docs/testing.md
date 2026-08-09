@@ -6,7 +6,7 @@
 ./gradlew test --no-daemon
 ```
 
-Cobre modelo/JSON, constantes, todos os records e envelopes Avro, cinco round-trips, pool limitado, timeout, falha e virtual threads.
+Cobre modelo/JSON, constantes, todos os records e envelopes Avro, cinco round-trips, pool limitado, timeout, falha e virtual threads. O gate de ownership também varre builds e fontes produtivas e rejeita dependência, import ou anotação de Micronaut/Jakarta.
 
 ## Compatibilidade
 

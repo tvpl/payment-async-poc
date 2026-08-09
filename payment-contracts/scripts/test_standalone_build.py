@@ -20,7 +20,7 @@ class StandaloneContractsBuildTest(unittest.TestCase):
         )
 
     def test_build_does_not_reference_parent_or_legacy_projects(self) -> None:
-        gradle_files = list(BOUNDARY_ROOT.rglob("*.gradle"))
+        gradle_files = [path for path in BOUNDARY_ROOT.rglob("*.gradle") if path.is_file()]
         contents = "\n".join(path.read_text(encoding="utf-8") for path in gradle_files)
 
         for forbidden in ("../", "common", "api-service", "sbus-service", "rootDir.parent"):

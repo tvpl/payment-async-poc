@@ -1,6 +1,6 @@
 # payment-contracts
 
-Owner dos contratos de evento do fluxo de pagamento. Esta fronteira publica o modelo estável e o adapter Avro/Apicurio. Ela não contém controller, rate limiter, persistência, regra de negócio ou processo executável.
+Owner dos contratos de evento do fluxo de pagamento. Esta fronteira publica o modelo estável e o adapter Avro/Apicurio como API Java independente de framework. Ela não contém controller, rate limiter, persistência, regra de negócio ou processo executável.
 
 ## Artefatos
 

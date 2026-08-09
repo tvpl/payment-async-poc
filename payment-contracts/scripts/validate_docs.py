@@ -41,7 +41,7 @@ REQUIRED_CONTENT = {
         "## Ações proibidas",
         "## Gates",
         "FULL_TRANSITIVE",
-        "payments.avro.auto-register=false",
+        "autoRegister=false",
     ),
     "docs/contracts.md": ("## Envelope", "## Eventos e tópicos", "## Headers", "## Evolução", "FULL_TRANSITIVE"),
     "docs/configuration.md": (

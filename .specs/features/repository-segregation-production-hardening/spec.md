@@ -293,7 +293,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-03 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6 flow and T11 two-GAV artifact-only fixture complete; application migrations pending |
-| ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete |
+| ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
 | SBX-01 | Sandbox único | Tasks | In Tasks |

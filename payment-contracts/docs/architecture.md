@@ -16,11 +16,11 @@ consumidores de modelo       produtores/consumidores Kafka
 
 ### payment-contract-model
 
-Publica `EventEnvelope`, payloads, constantes de eventos/tópicos/headers e classes Avro geradas. Anotações de serialização preservam o contrato JSON existente. Não conhece Kafka client, Registry, Redis, banco ou HTTP.
+Publica `EventEnvelope`, payloads, constantes de eventos/tópicos/headers e classes Avro geradas como tipos Java puros. O contrato JSON é provado por testes com um serializer no consumer, sem anotar o modelo com framework. Não conhece Kafka client, Registry, Redis, banco ou HTTP.
 
 ### payment-contract-avro-apicurio
 
-Publica `AvroMapper` e `AvroSerde`. O mapper traduz POJO e records Avro. O serde mantém um número fixo de pares serializer/deserializer não thread-safe, empresta um par por operação e o devolve em `finally`.
+Publica `AvroMapper` e `AvroSerde`. O mapper traduz POJO e records Avro. O serde mantém um número fixo de pares serializer/deserializer não thread-safe, empresta um par por operação e o devolve em `finally`. Construção, configuração e ciclo de vida usam API Java explícita; a aplicação consumidora os integra ao seu framework.
 
 ### consumer-fixture
 
@@ -29,6 +29,7 @@ Publica `AvroMapper` e `AvroSerde`. O mapper traduz POJO e records Avro. O serde
 ## Limites
 
 - Aplicações possuem autenticação, retry, idempotência, persistência e rate limiting.
+- Aplicações possuem também adapters de dependency injection e serialização JSON específicos do framework.
 - O sandbox possui Kafka e Apicurio locais.
 - Esta fronteira define o contrato, não a política de processamento de cada consumidor.
 

@@ -9,7 +9,7 @@ O antigo módulo `common` misturava contratos, integração com Registry e rate 
 
 ## Decisão
 
-Publicaremos dois artefatos: `payment-contract-model` para dados e schemas gerados; `payment-contract-avro-apicurio` para mapper e codec limitado. Schemas atuais ficam em `schemas/`; versões publicadas ficam em histórico append-only.
+Publicaremos dois artefatos: `payment-contract-model` para dados e schemas gerados; `payment-contract-avro-apicurio` para mapper e codec limitado. Ambos expõem API Java sem dependência, import ou anotação de framework. Dependency injection, binding de configuração, serialização JSON e lifecycle adapters pertencem à aplicação consumidora. Schemas atuais ficam em `schemas/`; versões publicadas ficam em histórico append-only.
 
 Toda mudança passa compatibilidade `FULL_TRANSITIVE` local antes da publicação. Produção usa schemas previamente registrados e auto-registration desabilitado. Mudança incompatível cria major, artifact id e tópico novos e coexiste com a versão anterior.
 
@@ -30,6 +30,7 @@ Rejeitada porque consumidores e produtores não migram atomicamente. O fluxo exi
 ## Consequências
 
 - consumidores escolhem explicitamente modelo ou adapter;
+- consumidores integram construtores, serialização e fechamento ao próprio framework;
 - o release publica e testa dois GAVs;
 - histórico ocupa espaço, mas torna o gate reproduzível;
 - evolução incompatível exige infraestrutura e operação paralelas;

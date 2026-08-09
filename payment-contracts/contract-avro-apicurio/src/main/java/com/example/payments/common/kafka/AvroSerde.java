@@ -2,10 +2,6 @@ package com.example.payments.common.kafka;
 
 import io.apicurio.registry.serde.avro.AvroKafkaDeserializer;
 import io.apicurio.registry.serde.avro.AvroKafkaSerializer;
-import io.micronaut.context.annotation.Value;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.apache.avro.specific.SpecificRecord;
 
 import java.time.Duration;
@@ -24,7 +20,6 @@ import java.util.function.Supplier;
  * <p>Each codec pair is borrowed for one operation and always returned. The fixed
  * pool prevents virtual threads from creating one registry client per request.
  */
-@Singleton
 public final class AvroSerde implements AutoCloseable {
 
     static final int DEFAULT_POOL_SIZE = 8;
@@ -38,13 +33,11 @@ public final class AvroSerde implements AutoCloseable {
         this(registryUrl, DEFAULT_POOL_SIZE, DEFAULT_ACQUIRE_TIMEOUT, true);
     }
 
-    @Inject
     public AvroSerde(
-            @Value("${payments.avro.registry-url:${apicurio.registry.url:`http://localhost:8085/apis/registry/v2`}}")
             String registryUrl,
-            @Value("${payments.avro.codec-pool-size:8}") int poolSize,
-            @Value("${payments.avro.codec-acquire-timeout:250ms}") Duration acquireTimeout,
-            @Value("${payments.avro.auto-register:true}") boolean autoRegister) {
+            int poolSize,
+            Duration acquireTimeout,
+            boolean autoRegister) {
         this(poolSize, acquireTimeout, () -> new ApicurioCodec(registryUrl, autoRegister));
     }
 
@@ -108,7 +101,6 @@ public final class AvroSerde implements AutoCloseable {
     }
 
     @Override
-    @PreDestroy
     public void close() {
         Codec codec;
         while ((codec = codecs.poll()) != null) {

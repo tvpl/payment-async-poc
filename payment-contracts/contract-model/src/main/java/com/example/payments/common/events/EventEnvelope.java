@@ -1,7 +1,5 @@
 package com.example.payments.common.events;
 
-import io.micronaut.serde.annotation.Serdeable;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -18,7 +16,6 @@ import java.util.UUID;
  *
  * @param <T> the business payload type
  */
-@Serdeable
 public record EventEnvelope<T>(
         String eventId,
         String eventType,

@@ -27,8 +27,9 @@ Não altere código para reproduzir texto legado. Corrija a fonte obsoleta depoi
 - Preserve packages, event types, tópicos, headers, envelope e representação Avro existente.
 - Mudança compatível passa `FULL_TRANSITIVE` contra todas as versões em `schemas/history/`.
 - Mudança incompatível exige novo major, artifact id, tópico, coexistência e ADR. Não substitua o contrato anterior.
-- Produção usa schema registrado previamente e `payments.avro.auto-register=false`.
+- Produção usa schema registrado previamente; a factory da aplicação passa `autoRegister=false` explicitamente ao `AvroSerde`.
 - Os dois módulos publicados não recebem controller, rate limiter, persistência, regra de aplicação ou dependência por source path externa.
+- Os artefatos são Java puro: dependências, imports e anotações de Micronaut ou Jakarta são proibidos. Integração com DI e serialização pertence ao owner da aplicação consumidora.
 - O pool de codecs mantém capacidade e timeout finitos. Não reintroduza `ThreadLocal` por virtual thread.
 - Consumidores reais usam os GAVs publicados. Composite é opt-in local e nunca integra gate de release.
 

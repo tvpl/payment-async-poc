@@ -191,6 +191,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 **Adequacy review:** O contrato JSON preserva nomes, tipo numérico e valor de `BigDecimal`. A escala lexical (`125.50` versus `125.5`) não é parte do requisito; igualdade numérica foi confirmada pelo usuário após o gate expor esse gap de precisão.
 
+**Correction evidence:** O modelo publicado ficou Java puro, sem Micronaut/Jakarta. O teste de ownership primeiro falhou sobre os builds e sete records acoplados e passou após a remoção; ele varre scripts de build, catálogo e fontes produtivas. Os 17 testes do modelo, inclusive o contrato JSON no consumer do serializer, passaram.
+
 #### T9: Extrair adapter Avro/Apicurio com codec limitado
 
 **Status:** Complete
@@ -207,6 +209,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Commit:** `perf(contracts): bound avro registry codecs`
 
 **Gate evidence:** 21 testes determinísticos passaram com `-PwithIT`: 10 no modelo e 11 no adapter. Integração com Registry externo ficou `NOT_RUN` por indisponibilidade de Docker; pool, timeout, falha e concorrência de virtual threads foram provados com codec injetável sem rede.
+
+**Correction evidence:** `AvroSerde` preserva construtores Java explícitos, capacidade e timeout finitos e `AutoCloseable`, sem DI, configuração ou lifecycle de framework. A aplicação consumidora passa configuração e registra o fechamento. A regressão final passou 17 testes do modelo, 11 do adapter e 1 do fixture publicado (29 Java), além de 14 checks estruturais Python; Registry externo permaneceu `NOT_RUN` sem Docker.
 
 #### T10: Implementar manifest e compatibilidade Avro
 
