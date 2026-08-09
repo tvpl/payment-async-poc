@@ -731,6 +731,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T31: Relocar API para build standalone
 
+**Status:** Complete
+
 **What:** Mover aplicação, load assets e testes para raiz própria consumindo contracts/feature-control publicados.  
 **Where:** `payment-api`  
 **Depends on:** T30  
@@ -740,7 +742,11 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Done when:** build isolado e nove testes anteriores passam sem `project()` ou source cross-root.  
 **Tests:** unit + integration  
 **Gate:** full  
-**Commit:** `refactor(api): extract standalone service`
+**Commit:** `refactor(api): extract standalone service` (`7de39fb`) + `fix(api): wire contract codec and result serde for standalone gate`
+
+**Gate evidence:** A raiz `payment-api` foi criada em `7de39fb` (fora do ciclo atômico desta skill) com build/wrapper próprios consumindo `payment-contract-model`, `payment-contract-avro-apicurio` e `feature-control` publicados localmente. Nesta retomada, `feature-control` foi publicado no repositório local (`./gradlew :feature-control:publishMavenPublicationToLocalBuildRepository`, fora do commit) e o full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados, iguais ao padrão do `ci.yml`) foi executado de fato pela primeira vez contra Kafka/Redis/Apicurio reais via Testcontainers. Três gaps reais e pré-existentes (idênticos na raiz `api-service` original, confirmados rodando `:api-service:test -PwithIT` antes de qualquer alteração) impediam um verde honesto e foram corrigidos: (1) `PaymentResponseConsumer`/`ApiPaymentService` injetavam `AvroSerde` sem nenhum `@Factory` o prover — `payment-api/src/main/java/com/example/payments/api/config/ContractCodecFactory.java` foi adicionado replicando o padrão já usado em `payment-sbus`/`payment-core-mock`; (2) `ApiFlowIT` usava `@MicronautTest` + `TestPropertyProvider`, cujas propriedades não sobrepõem, neste setup, chaves do `application.yml` que já carregam `${ENV_VAR:default}` (confirmado: `kafka.bootstrap.servers` continuava resolvendo para `localhost:9092` mesmo com a propriedade de teste definida) — o teste foi reescrito para o padrão já comprovado em `SbusSecurityIT`/`SbusFlowIT` (`ApplicationContext.run(EmbeddedServer.class, properties())`), e passou a autenticar com `X-API-Key` de fato em vez de depender de um `payment.security.enabled=false` que nunca chegava a desabilitar o filtro; (3) `SimulationResult`/`Fees`/`Settlement` (modelo de `payment-contracts`, deliberadamente livre de framework) não tinham metadata Serde, quebrando a serialização de `StatusResponse`/`StatusEntry`/`SbusStatusResponse` — `@SerdeImport` para os três tipos foi adicionado em `payment-api/src/main/java/com/example/payments/api/Application.java`, sem tocar o artefato publicado. Após as correções, `./gradlew test -PwithIT --no-daemon` passou **10/10 testes** (os nove baseline + `StandaloneBoundaryTest`, nova para esta fronteira), incluindo `ApiFlowIT` fim a fim contra Kafka/Redis/Apicurio reais.
+
+**Adequacy review:** Os três gaps eram pré-existentes e não introduzidos por esta sessão — confirmados reproduzindo a mesma falha na raiz `api-service` do monorepo antes de qualquer mudança local. Nenhuma asserção foi enfraquecida ou removida para o gate passar: `ApiFlowIT` continua verificando o mesmo contrato observável (202 na submissão, `COMPLETED` e `authorizationCode` corretos após o evento Kafka), apenas com um client/contexto que efetivamente aplica a config de teste e com autenticação real via `X-API-Key`. `ContractCodecFactory` e `@SerdeImport` replicam exatamente os padrões já auditados e aprovados em T9/T19/T24 para o mesmo problema estrutural (contratos livres de framework consumidos por apps Micronaut). Escopo T32–T37 (auth produtiva completa, idempotência com fingerprint, recuperação de publish, DLQ de resposta, admissão) permanece explicitamente em aberto: o código já presente em `7de39fb` cobre parcialmente essas áreas de forma não gateada tarefa-a-tarefa, e será auditado/completado tarefa por tarefa a partir daqui, não retroativamente aqui. Não há SPEC_DEVIATION em T31.
 
 #### T32: Fechar autenticação e management produtivos da API
 

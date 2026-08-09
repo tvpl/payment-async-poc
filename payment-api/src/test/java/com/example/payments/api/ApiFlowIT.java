@@ -12,20 +12,21 @@ import com.example.payments.common.model.Fees;
 import com.example.payments.common.model.Settlement;
 import com.example.payments.common.model.SimulationResult;
 import com.redis.testcontainers.RedisContainer;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.micronaut.test.support.TestPropertyProvider;
-import jakarta.inject.Inject;
+import io.micronaut.runtime.server.EmbeddedServer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -46,10 +47,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * API flow against real Kafka + Redis + Apicurio registry (Avro): POST returns 202
  * while processing continues; once a final event is published, the response consumer
  * correlates it and GET reflects COMPLETED. Requires a running Docker daemon.
+ *
+ * <p>Boots the context with {@link ApplicationContext#run(Class, Map)} (the pattern proven
+ * in payment-sbus's ITs) instead of {@code @MicronautTest}/{@code TestPropertyProvider}:
+ * the latter does not reliably override {@code application.yml} keys that already carry a
+ * {@code ${ENV_VAR:default}} placeholder, so containers were silently connected to the
+ * hardcoded localhost defaults instead of the dynamic testcontainer ports.
  */
-@MicronautTest
 @Testcontainers
-class ApiFlowIT implements TestPropertyProvider {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ApiFlowIT {
+
+    private static final String API_KEY = "test-only-api-key";
 
     static final KafkaContainer KAFKA =
             new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
@@ -59,28 +68,35 @@ class ApiFlowIT implements TestPropertyProvider {
             new GenericContainer<>(DockerImageName.parse("apicurio/apicurio-registry-mem:2.6.2.Final"))
                     .withExposedPorts(8080);
 
-    static {
+    private EmbeddedServer server;
+    private HttpClient client;
+
+    @BeforeAll
+    void start() {
         KAFKA.start();
         REDIS.start();
         APICURIO.start();
+        server = ApplicationContext.run(EmbeddedServer.class, properties());
+        client = HttpClient.create(server.getURL());
     }
 
-    @Inject
-    @Client("/")
-    HttpClient client;
+    @AfterAll
+    void stop() {
+        client.close();
+        server.close();
+    }
 
     static String registryUrl() {
         return "http://" + APICURIO.getHost() + ":" + APICURIO.getMappedPort(8080) + "/apis/registry/v2";
     }
 
-    @Override
-    public Map<String, String> getProperties() {
+    private static Map<String, Object> properties() {
         return Map.of(
                 "kafka.bootstrap.servers", KAFKA.getBootstrapServers(),
                 "redis.uri", REDIS.getRedisURI(),
                 "apicurio.registry.url", registryUrl(),
                 "payment.simulation.wait-timeout", "1s",
-                "payment.security.enabled", "false");
+                "payment.security.api-keys", java.util.List.of(API_KEY));
     }
 
     @Test
@@ -89,7 +105,7 @@ class ApiFlowIT implements TestPropertyProvider {
                 "MERCHANT-001", new BigDecimal("125.50"), "BRL", "CREDIT_CARD", "VISA", 3, "AUTHORIZE_AND_CAPTURE");
 
         HttpResponse<StatusResponse> accepted = client.toBlocking().exchange(
-                HttpRequest.POST("/payment-simulations", request), StatusResponse.class);
+                HttpRequest.POST("/payment-simulations", request).header("X-API-Key", API_KEY), StatusResponse.class);
 
         assertEquals(HttpStatus.ACCEPTED, accepted.getStatus());
         StatusResponse body = accepted.body();
@@ -115,7 +131,7 @@ class ApiFlowIT implements TestPropertyProvider {
 
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
             HttpResponse<StatusResponse> status = client.toBlocking().exchange(
-                    HttpRequest.GET("/payment-simulations/" + requestId), StatusResponse.class);
+                    HttpRequest.GET("/payment-simulations/" + requestId).header("X-API-Key", API_KEY), StatusResponse.class);
             assertEquals("COMPLETED", status.body().status().name());
             assertEquals("123456", status.body().result().authorizationCode());
         });

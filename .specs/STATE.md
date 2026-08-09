@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute paused during Phase 6 / T31 — relocate API into standalone boundary
-- **Completed**: T1–T30; T29 committed typed dependency/retention policies with 74/74 full tests; T30 build, docs, Compose, image and supply-chain package gates passed where locally runnable
-- **In-progress**: `payment-api/` — standalone build, copied sources/tests/load assets and structural test created but not gate-verified
-- **Next step**: run `./gradlew test -PwithIT --no-daemon` in `payment-api`; only after a green gate complete adequacy evidence, update tasks/spec and commit T31
-- **Blockers**: Gradle needs the global cache outside the sandbox; privileged execution was rejected because the account usage limit is exhausted until 2026-08-15 20:19, with explicit instruction not to attempt a workaround
-- **Uncommitted files**: `.specs/STATE.md`, `payment-api/` (45 untracked files)
+- **Phase / Task**: Execute in progress — Phase 6 / T31 complete; T32 (production auth/management hardening) next
+- **Completed**: T1–T31. T31's standalone `payment-api` root landed outside this skill's atomic-commit protocol as commit `7de39fb` (one non-atomic commit spanning T31-through-T37 scope); on resume it was reconciled and audited against T31's Done-when only (user decision). `feature-control` was published to the local Maven repo (needed by `payment-api`'s build, not committed — build output). Full gate (`./gradlew test -PwithIT --no-daemon` with `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exported) now passes 10/10 for real against Kafka/Redis/Apicurio Testcontainers, after fixing three pre-existing gaps (confirmed identical in the old `api-service` root, not introduced this session): missing `AvroSerde` DI factory, `ApiFlowIT`'s `TestPropertyProvider` not overriding `application.yml` placeholder defaults, and missing Serde metadata for framework-free `payment-contracts` model types. Details and file:line evidence in `tasks.md` T31.
+- **In-progress**: none
+- **Next step**: T32 — close production auth/management surfaces in `payment-api` (remove dev token issuer from PRD bean graph, require asymmetric JWT + issuer/audience, restrict routes/management; ≥10 new ITs). Note: commit `7de39fb` already contains partial, non-gated groundwork for T32-T37 (auth filter, idempotency store, rate limiting, response consumer) — audit each against its own task's Done-when before trusting it, the same way T31 was audited.
+- **Blockers**: none currently. Docker Desktop and the `/sandbox` shared infra were started this session (sandbox `.env` generated locally with random credentials, gitignored, not committed).
+- **Uncommitted files**: none after this session's commit (see below)
 - **Branch**: `feature/optimize-eda`
