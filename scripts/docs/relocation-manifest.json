@@ -924,7 +924,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/08-eventos-e-contratos.md:7",
@@ -935,7 +935,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/08-eventos-e-contratos.md:28",
@@ -946,7 +946,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/08-eventos-e-contratos.md:49",
@@ -957,7 +957,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/08-eventos-e-contratos.md:60",
@@ -968,7 +968,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/08-eventos-e-contratos.md:68",
@@ -979,7 +979,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/08-eventos-e-contratos.md:74",
@@ -990,7 +990,7 @@
       "owner": "payment-contracts",
       "target": "payment-contracts/docs/contracts.md",
       "action": "MOVE",
-      "status": "PLANNED"
+      "status": "MIGRATED"
     },
     {
       "id": "docs/09-dados-redis-postgres.md:1",

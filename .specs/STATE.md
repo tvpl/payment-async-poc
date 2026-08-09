@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 2 / T12 — contracts ownership and ADR
-- **Completed**: T1–T11; consumer isolado resolve os dois GAVs e executa round-trip sem source substitution
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:245`
-- **Next step**: criar documentação local, AGENTS e ADR de contratos e fechar o gate da fase
+- **Phase / Task**: Execute; Phase 3 / T13 — sandbox minimum infrastructure
+- **Completed**: T1–T12; `payment-contracts` possui build, dois GAVs, compatibilidade, fixture, documentação, AGENTS e ADR locais
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:264`
+- **Next step**: iniciar T13 somente em novo batch, extraindo a infraestrutura mínima para `sandbox`
 - **Blockers**: none
 - **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

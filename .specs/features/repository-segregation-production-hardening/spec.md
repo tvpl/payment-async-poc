@@ -291,7 +291,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
 | ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts build standalone complete; application roots pending |
 | ORG-03 | Fronteiras prontas para repositórios | Tasks | In Tasks |
-| ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication and T11 consumer fixture complete; docs and CI pending |
+| ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6 flow and T11 two-GAV artifact-only fixture complete; application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
@@ -343,10 +343,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
-| DOC-01 | Docs, ADRs e IA | Tasks | In Tasks |
-| DOC-02 | Docs, ADRs e IA | Execute | T2 root governance complete; local guides pending |
-| DOC-03 | Docs, ADRs e IA | Tasks | In Tasks |
-| DOC-04 | Docs, ADRs e IA | Tasks | In Tasks |
+| DOC-01 | Docs, ADRs e IA | Execute | T12 contracts README complete; other boundaries pending |
+| DOC-02 | Docs, ADRs e IA | Execute | T2 root and T12 contracts agent guides complete; other boundaries pending |
+| DOC-03 | Docs, ADRs e IA | Execute | T12 contracts documentation set complete; other boundaries pending |
+| DOC-04 | Docs, ADRs e IA | Execute | T12 contracts ADR-0001 accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
 | DOC-06 | Docs, ADRs e IA | Execute | T5 validation gate complete |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |

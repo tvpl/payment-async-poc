@@ -244,6 +244,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T12: Documentar ownership e decisões de contratos
 
+**Status:** Complete
+
 **What:** Criar README, AGENTS, política de compatibilidade, operação de registry e ADR local.  
 **Where:** `payment-contracts/docs`  
 **Depends on:** T11  
@@ -254,6 +256,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural  
 **Gate:** build  
 **Commit:** `docs(contracts): add local architecture and adr`
+
+**Gate evidence:** seis testes locais validaram 13 documentos, conteúdo mínimo, links, ownership e ADR; os nove testes documentais do workspace também passaram. O gate de equivalência permanece vermelho somente por adições/duplicações transitórias explícitas, sem perda baseline; o manifest não foi atualizado para esconder a divergência.
 
 ### Phase 3 — `/sandbox`
 
