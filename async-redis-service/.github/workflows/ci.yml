@@ -1,0 +1,55 @@
+name: async-redis-service
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  release-gates:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Unit and build
+        run: ./gradlew test --no-daemon && ./gradlew build --no-daemon
+      - name: Integration
+        run: ./gradlew test -PwithIT --no-daemon
+      - name: Documentation, Compose and hygiene
+        run: scripts/verify-docs.sh && deploy/verify.sh --structural && git diff --check
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker buildx build --load --tag async-redis-service:${{ github.sha }} .
+      - uses: anchore/sbom-action@v0
+        with:
+          image: async-redis-service:${{ github.sha }}
+          format: spdx-json
+          output-file: async-redis-service.spdx.json
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: async-redis-service:${{ github.sha }}
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: async-redis-service-sbom
+          path: async-redis-service.spdx.json

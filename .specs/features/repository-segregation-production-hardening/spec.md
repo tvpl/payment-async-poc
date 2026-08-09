@@ -290,7 +290,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
 | ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts, T19 Core mock, T24 SBUS, T31 API and T38 async Redis builds standalone complete; remaining application roots pending |
-| ORG-03 | Fronteiras prontas para repositórios | Execute | Core, SBUS and T37 API standalone build/release packages complete (own Dockerfile, app-only Compose, .env.example, README, docs, CI and AGENTS.md); T38 gave async Redis its own settings/build/wrapper, release package pending in T45 |
+| ORG-03 | Fronteiras prontas para repositórios | Execute | Core, SBUS, T37 API and T45 async Redis standalone build/release packages complete (own Dockerfile, app-only Compose, .env.example, README, docs, CI and AGENTS.md), the latter with no cross-boundary build context; feature-control pending |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core, T24 SBUS and T31 API GAV consumption complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
@@ -302,14 +302,14 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SBX-04 | Sandbox único | Execute | T16 four profile combinations, synthetic 8085 collision and missing-variable validation complete |
 | SBX-05 | Sandbox único | Execute | T15 common telemetry profiles and empty versioned application-asset manifest complete; owner assets pending |
 | SBX-06 | Sandbox único | Execute | T14 nine capacity probes, dependency-specific failure and recovery complete; application startup gates pending |
-| SEC-01 | Segurança e operação | Execute | T3 hygiene, T25 SBUS and T32 API production startup guards complete; remaining owner guards pending |
+| SEC-01 | Segurança e operação | Execute | T3 hygiene, T25 SBUS, T32 API and T39 async Redis (ProductionAcceptanceGuard, RED-08) production startup guards complete; remaining owner guards pending |
 | SEC-02 | Segurança e operação | Execute | T32 API dev token issuer excluded from the prod bean graph/route (`@Requires(notEnv=prod)`, no HS256 secret in prod); remaining demo surfaces pending |
 | SEC-03 | Segurança e operação | Execute | T25 SBUS and T32 API require RSA JWKS, issuer, audience, expiration and strict clock policy; remaining applications pending |
 | SEC-04 | Segurança e operação | Execute | T25 SBUS internal status and T32 API admin/business endpoints require tested identity/role policy; remaining endpoints pending |
 | SEC-05 | Segurança e operação | Execute | T25 SBUS and T32 API expose only liveness/readiness anonymously and protect aggregate health/metrics/unlisted endpoints; remaining apps pending |
 | SEC-06 | Segurança e operação | Execute | T3 complete |
-| SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core, T30 SBUS and T37 API images are tag+digest pinned with non-root/read-only runtime gates; the API image was built and inspected (10001:10001, liveness healthcheck, no runtime package added); remaining applications pending |
-| SEC-08 | Segurança e operação | Execute | T30 SBUS and T37 API CI build the image, generate an SPDX SBOM and block HIGH/CRITICAL Trivy findings; remaining boundaries pending |
+| SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core, T30 SBUS, T37 API and T45 async Redis images are tag+digest pinned with non-root/read-only runtime gates; the API image was built and inspected (10001:10001, liveness healthcheck, no runtime package added); the async Redis image build itself is env-limited here (Docker Hub egress blocked in this sandbox, confirmed with `docker pull hello-world`), structurally verified instead; remaining applications pending |
+| SEC-08 | Segurança e operação | Execute | T30 SBUS, T37 API and T45 async Redis CI build the image, generate an SPDX SBOM and block HIGH/CRITICAL Trivy findings; remaining boundaries pending |
 | PAY-01 | Fluxo Kafka | Execute | T33 API atomically associates idempotency key + requestId + canonical fingerprint via a single Redis SET NX |
 | PAY-02 | Fluxo Kafka | Execute | T33 API replays same key+fingerprint, returns deterministic 409 with zero publish on a divergent fingerprint |
 | PAY-03 | Fluxo Kafka | Execute | T34 records the publish outcome on the idempotency reservation: a failed send marks PUBLISH_FAILED and a retry resumes the same requestId, a lapsed publish lease recovers a crashed attempt, and a replay without a stored status never reports PROCESSING |
@@ -343,10 +343,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
-| DOC-01 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS and T37 API READMEs complete; other boundaries pending |
-| DOC-02 | Docs, ADRs e IA | Execute | Root, contracts, sandbox, Core mock, T30 SBUS and T37 API agent guides complete; other boundaries pending |
-| DOC-03 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS and T37 API proportional documentation complete; other boundaries pending |
-| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, SBUS and T37 API ADR-0001 accepted; other boundary decisions pending |
+| DOC-01 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS, T37 API and T45 async Redis READMEs complete; other boundaries pending |
+| DOC-02 | Docs, ADRs e IA | Execute | Root, contracts, sandbox, Core mock, T30 SBUS, T37 API and T45 async Redis agent guides complete; other boundaries pending |
+| DOC-03 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS, T37 API and T45 async Redis proportional documentation complete; other boundaries pending |
+| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, SBUS, T37 API and T45 async Redis (ADR-0001, stream retention and atomic release) accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |

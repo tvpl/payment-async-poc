@@ -1,0 +1,16 @@
+.git
+.github
+.gradle
+**/build
+.env
+.env.*
+!.env.example
+.specs
+deploy
+docs
+load
+ops
+scripts
+README.md
+AGENTS.md
+compose.yaml

@@ -1,0 +1,41 @@
+name: async-redis-service
+
+services:
+  async-redis:
+    image: async-redis-service:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MICRONAUT_ENVIRONMENTS: ${MICRONAUT_ENVIRONMENTS:-dev}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      ASYNC_LATENCY_MIN_MS: ${ASYNC_LATENCY_MIN_MS:-20}
+      ASYNC_LATENCY_MAX_MS: ${ASYNC_LATENCY_MAX_MS:-150}
+      ASYNC_INSTANCE_ID: ${ASYNC_INSTANCE_ID:-}
+      ASYNC_STREAM_MAXLEN: ${ASYNC_STREAM_MAXLEN:-100000}
+      ASYNC_RETENTION_ALERT_THRESHOLD: ${ASYNC_RETENTION_ALERT_THRESHOLD:-0.8}
+      ASYNC_MAX_DELIVERIES: ${ASYNC_MAX_DELIVERIES:-5}
+      ASYNC_ADMISSION_LIMIT: ${ASYNC_ADMISSION_LIMIT:-0}
+      ASYNC_POOL_MAX_TOTAL: ${ASYNC_POOL_MAX_TOTAL:-64}
+      ASYNC_REDIS_SECURITY_ENABLED: ${ASYNC_REDIS_SECURITY_ENABLED:-true}
+      ASYNC_REDIS_SECURITY_API_KEYS: ${ASYNC_REDIS_SECURITY_API_KEYS:-dev-key-change-me}
+      ASYNC_REDIS_IDEMPOTENCY_REQUIRED: ${ASYNC_REDIS_IDEMPOTENCY_REQUIRED:-false}
+    ports:
+      - "${ASYNC_REDIS_HOST_PORT:-8084}:8084"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    restart: unless-stopped
+    networks:
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: ${SANDBOX_NETWORK:-payment-sandbox}
