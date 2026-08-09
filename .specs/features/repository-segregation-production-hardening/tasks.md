@@ -114,6 +114,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T4: Definir quality gates e CI transitório em matriz
 
+**Status:** Complete
+
 **What:** Criar pipeline raiz que invoca cada build standalone e políticas de lint, análise estática, coverage, dependency updates e resultados não executados.  
 **Where:** `.github/workflows`  
 **Depends on:** T3  
