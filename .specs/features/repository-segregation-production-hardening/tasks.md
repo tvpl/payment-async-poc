@@ -468,6 +468,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T24: Relocar SBUS para build standalone
 
+**Status:** Complete
+
 **What:** Mover aplicação, migrations e testes para raiz própria consumindo contratos publicados sem alterar comportamento.  
 **Where:** `payment-sbus`  
 **Depends on:** T23  
@@ -478,6 +480,24 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `refactor(sbus): extract standalone service`
+
+**Gate evidence:** O build standalone consumiu `payment-contract-model:0.1.0` e `payment-contract-avro-apicurio:0.1.0` do repositório Maven local. O quick gate passou oito testes e o full gate passou nove, incluindo o fluxo real Kafka/PostgreSQL/Redis/Apicurio. O gate SHA-256 preservou byte a byte as migrations V1–V6. `root-governance` e `git diff --check` passaram. O setup antigo do IT não aplicava propriedades dinâmicas antes do DataSource; com autorização explícita, somente o harness passou a iniciar `ApplicationContext` com as propriedades dos containers, sem mudar assertions. O gate também revelou dois gaps de integração da extração: producer Kafka ambíguo e modelos publicados sem introspecção do consumer; ambos foram corrigidos no owner SBUS.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| ORG-02/03/05: build, wrapper e GAVs standalone | `StandaloneBoundaryTest.java:24-35` — `assertTrue(build.contains(...))`, `assertFalse(build.contains("project("))`, `assertTrue(Files.isRegularFile(...))` | build próprio sem source dependency | ✅ |
+| MIG-02: migrations aplicadas imutáveis | `StandaloneBoundaryTest.java:40-53` — `assertEquals(expected, actual)` | checksums V1–V6 idênticos | ✅ |
+| IT Kafka/PostgreSQL/Registry e comportamento anterior | `SbusFlowIT.java:103-125` — `assertTrue(findByRequestId(...).isPresent())`, `assertNotNull(coreCommand)`, `assertNotNull(completed)`, `assertEquals(COMPLETED, ...getStatus())` | requested persiste, outbox publica comando e resposta termina COMPLETED | ✅ |
+| sete testes baseline sem redução | `RetryPublisherUnitTest.java:42-65`, `BackoffCalculatorUnitTest.java:16-24`, `SbusFlowIT.java:103-125` | retry/backoff/fluxo preservados | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `StandaloneBoundaryTest.java:24-35` — GAV/source/build assertions | ORG-02, ORG-03, ORG-05, Done-when T24 | ✅ |
+| `StandaloneBoundaryTest.java:53` — checksum equality | MIG-02, Done-when T24 | ✅ |
+| `SbusFlowIT.java:103-125` — persistência, comando, conclusão e terminal | Done-when T24 e baseline funcional | ✅ |
+| `RetryPublisherUnitTest.java:42-65`, `BackoffCalculatorUnitTest.java:16-24` | sete métodos baseline de T24 | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. As asserções verificam estado, artefato e mensagens observáveis; nenhuma depende apenas de contagem de mocks. Os testes seguem o `AGENTS.md` raiz e a Test Coverage Matrix. Não há SPEC_DEVIATION.
 
 #### T25: Fechar profile produtivo e superfícies do SBUS
 

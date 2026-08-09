@@ -289,12 +289,12 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
-| ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts and T19 Core mock builds standalone complete; remaining application roots pending |
-| ORG-03 | Fronteiras prontas para repositórios | Execute | T19/T22 Core mock standalone build and isolated container package complete; its docs/CI and remaining applications pending |
+| ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts, T19 Core mock and T24 SBUS builds standalone complete; remaining application roots pending |
+| ORG-03 | Fronteiras prontas para repositórios | Execute | Core package complete and T24 SBUS standalone build complete; SBUS release package T30 and remaining applications pending |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
-| ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow and T19 Core mock GAV consumption complete; remaining application migrations pending |
+| ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core and T24 SBUS GAV consumption complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
-| ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-07 | Fronteiras prontas para repositórios | Execute | T24 moved the SBUS rate limiter into its owner; remaining runtime concerns pending |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
 | SBX-01 | Sandbox único | Execute | T13–T18 sandbox boundary complete with Compose/env/Make/smoke/docs/AGENTS |
 | SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
@@ -351,7 +351,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
 | MIG-01 | Migração e gates | Tasks | In Tasks |
-| MIG-02 | Migração e gates | Execute | T1 baseline complete; relocation gates pending |
+| MIG-02 | Migração e gates | Execute | T1 baseline and T24 SBUS destination/checksum/full equivalence complete; old SBUS location retained until final reconciliation |
 | MIG-03 | Migração e gates | Execute | T1 complete |
 | MIG-04 | Migração e gates | Execute | T4 transitional matrix complete; standalone workflows pending |
 | MIG-05 | Migração e gates | Tasks | In Tasks |

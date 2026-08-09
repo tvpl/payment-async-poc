@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 5 / T24 — payment-sbus standalone extraction (not started)
-- **Completed**: T1–T23; Phase 4 Core mock boundary is standalone, deterministic, failure-tested, containerized and explicitly NON_PRODUCTION
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:469`
-- **Next step**: hand off T24 payment-sbus extraction to its owner/executor; do not start it in the Phase 4 task
+- **Phase / Task**: Execute; Phase 5 / T25 — payment-sbus production identity boundaries (not started)
+- **Completed**: T1–T24; payment-sbus builds standalone from published contracts, preserves V1–V6 checksums and passes 8 quick plus 9 full tests with real Kafka/PostgreSQL/Redis/Apicurio
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:519`
+- **Next step**: implement T25 production profile validation, service identity on the internal route and minimal anonymous health surface
 - **Blockers**: none
-- **Uncommitted files**: none after the atomic T23 commit
+- **Uncommitted files**: none after the atomic T24 commit
 - **Branch**: `feature/optimize-eda`
