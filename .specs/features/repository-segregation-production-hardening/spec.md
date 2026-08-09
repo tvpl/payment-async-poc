@@ -296,7 +296,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
-| SBX-01 | Sandbox único | Execute | T13/T14 runtime and T17 pinned lifecycle/reset controls complete; runner/docs pending |
+| SBX-01 | Sandbox único | Execute | T13–T18 sandbox boundary complete with Compose/env/Make/smoke/docs/AGENTS |
 | SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
 | SBX-03 | Sandbox único | Execute | T13 named network complete; application Compose adoption pending |
 | SBX-04 | Sandbox único | Execute | T16 four profile combinations, synthetic 8085 collision and missing-variable validation complete |
@@ -343,10 +343,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
-| DOC-01 | Docs, ADRs e IA | Execute | T12 contracts README complete; other boundaries pending |
-| DOC-02 | Docs, ADRs e IA | Execute | T2 root and T12 contracts agent guides complete; other boundaries pending |
-| DOC-03 | Docs, ADRs e IA | Execute | T12 contracts documentation set complete; other boundaries pending |
-| DOC-04 | Docs, ADRs e IA | Execute | T12 contracts ADR-0001 accepted; other boundary decisions pending |
+| DOC-01 | Docs, ADRs e IA | Execute | T12 contracts and T18 sandbox README complete; other boundaries pending |
+| DOC-02 | Docs, ADRs e IA | Execute | T2 root, T12 contracts and T18 sandbox agent guides complete; other boundaries pending |
+| DOC-03 | Docs, ADRs e IA | Execute | T12 contracts and T18 sandbox proportional documentation complete; other boundaries pending |
+| DOC-04 | Docs, ADRs e IA | Execute | Contracts and sandbox ADR-0001 accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |

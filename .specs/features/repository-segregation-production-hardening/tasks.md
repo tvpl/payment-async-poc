@@ -352,6 +352,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T18: Documentar operação e ADR do sandbox
 
+**Status:** Complete
+
 **What:** Criar quickstart, troubleshooting, profiles, rede, dados, manifest de dashboards, AGENTS e ADR.  
 **Where:** `sandbox/docs`  
 **Depends on:** T17  
@@ -362,6 +364,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural  
 **Gate:** build  
 **Commit:** `docs(sandbox): add operations guide and adr`
+
+**Gate evidence:** `make verify` passou com 20 testes, nove probes mínimos e cinco queries de profiles; o gate local validou 11 documentos, links, comandos, ownership, ADR e manifest. Docs raiz passaram com 251 seções e governança com sete fronteiras. Equivalência permanece vermelha somente por adições/duplicações transitórias explícitas, sem alteração do baseline ou perda histórica.
 
 ### Phase 4 — `payment-core-mock`
 

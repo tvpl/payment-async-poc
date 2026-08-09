@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 3 / T18 — sandbox documentation and ADR
-- **Completed**: T1–T17; doze imagens pinadas, retenções/volumes coerentes e reset destrutivo separado com confirmação obrigatória
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:352`
-- **Next step**: criar quickstart, troubleshooting, docs proporcionais, AGENTS e ADR local do sandbox
+- **Phase / Task**: Execute; Phase 4 / T19 — standalone payment-core-mock (not started)
+- **Completed**: T1–T18; `payment-contracts` and `sandbox` boundaries complete, with sandbox runtime/profiles/lifecycle/docs gates green
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:371`
+- **Next step**: start T19 only in a new sequential batch; relocate Core mock to a standalone artifact-consuming root
 - **Blockers**: none
-- **Uncommitted files**: T17 pins, lifecycle, safe reset, tests and status updates pending atomic commit; generated Python cache remains untracked
+- **Uncommitted files**: T18 README/AGENTS/Make/docs/ADR/docs gate and status updates pending atomic commit; generated Python cache remains untracked
 - **Branch**: `feature/optimize-eda`
