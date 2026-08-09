@@ -25,4 +25,9 @@ public final class JobKeys {
     public static String reservation(String idempotencyKey) {
         return "idem:" + idempotencyKey;
     }
+
+    /** Lease naming the single worker allowed to scan and reclaim pending entries for a group. */
+    public static String reclaimLease(String group) {
+        return "reclaim:" + group + ":owner";
+    }
 }

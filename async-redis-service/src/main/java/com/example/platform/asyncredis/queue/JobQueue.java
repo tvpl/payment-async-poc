@@ -30,10 +30,10 @@ public class JobQueue implements JobEnqueuer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
 
-    static final String FIELD_JOB_ID = "jobId";
-    static final String FIELD_REFERENCE = "reference";
-    static final String FIELD_AMOUNT = "amountCents";
-    static final String FIELD_NOTE = "note";
+    public static final String FIELD_JOB_ID = "jobId";
+    public static final String FIELD_REFERENCE = "reference";
+    public static final String FIELD_AMOUNT = "amountCents";
+    public static final String FIELD_NOTE = "note";
 
     private final RedisConnections redis;
     private final ObjectMapper objectMapper;

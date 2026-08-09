@@ -1,6 +1,7 @@
 package com.example.platform.asyncredis.redis;
 
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -42,6 +43,34 @@ public class RedisConnections {
     public RedisConnections(RedisClient client, AsyncRedisProperties props) {
         this.client = client;
         this.props = props;
+    }
+
+    /**
+     * The client, with this service's connection policy applied once before first use.
+     *
+     * <p>Reconnection is this service's job, not the driver's (RED-05). Lettuce's default is to
+     * reconnect transparently and hold dispatched commands in a buffer until it succeeds, which
+     * hides an outage instead of surfacing it: a worker parked inside a blocking {@code XREADGROUP}
+     * never learns its Redis is gone, so readiness keeps claiming capacity that does not exist and
+     * the reconnect backoff never runs. Failing the command instead lets every caller here — worker
+     * loop, wait lease, shared connection — react on its own terms.
+     *
+     * <p>Applied lazily rather than in the constructor so building this class stays free of side
+     * effects on an injected bean.
+     */
+    private RedisClient client() {
+        if (!policyApplied) {
+            synchronized (this) {
+                if (!policyApplied) {
+                    client.setOptions(ClientOptions.builder()
+                            .autoReconnect(false)
+                            .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                            .build());
+                    policyApplied = true;
+                }
+            }
+        }
+        return client;
     }
 
     /** Shared connection for non-blocking commands. */
@@ -106,6 +135,10 @@ public class RedisConnections {
                     // budget instead of shedding them (RED-02).
                     cfg.setBlockWhenExhausted(true);
                     cfg.setMaxWait(props.getPoolMaxWait());
+                    // With driver-level reconnection off, a connection that died while idle stays
+                    // dead. Validating on borrow spends one isOpen() check to avoid handing a waiter
+                    // a socket that can only fail.
+                    cfg.setTestOnBorrow(true);
                     pool = ConnectionPoolSupport.createGenericObjectPool(client::connect, cfg);
                 }
                 p = pool;

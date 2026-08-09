@@ -44,6 +44,17 @@ public class AsyncRedisProperties {
     private Duration poolMaxWait = Duration.ofSeconds(1);
     /** How often a worker scans pending entries for reclaim/DLQ. */
     private Duration reclaimInterval = Duration.ofSeconds(5);
+    /**
+     * Identity of this process inside the consumer group. Left unset it is derived per process, which
+     * is what keeps two replicas of the same image from sharing a consumer name.
+     */
+    private String instanceId;
+    /** How long a claimed reclaim turn stays owned. A crashed coordinator frees it after this. */
+    private Duration reclaimLease = Duration.ofSeconds(10);
+    /** First delay before a worker retries a lost or refused Redis connection. */
+    private Duration connectBackoffMin = Duration.ofMillis(200);
+    /** Ceiling for the reconnect backoff, and the age at which a connection counts as healthy. */
+    private Duration connectBackoffMax = Duration.ofSeconds(5);
     /** Test hook: when set, the worker fails any job whose reference equals this (drives DLQ tests). */
     private String failOnReference;
 
@@ -105,6 +116,22 @@ public class AsyncRedisProperties {
         if (poolMaxWait.isNegative() || poolMaxWait.isZero()) {
             throw new ConfigurationException(
                     "async.redis.pool-max-wait must be a positive, finite duration");
+        }
+        if (reclaimLease.compareTo(reclaimInterval) <= 0) {
+            throw new ConfigurationException(
+                    "async.redis.reclaim-lease (" + reclaimLease + ") must be greater than"
+                            + " async.redis.reclaim-interval (" + reclaimInterval + "); a lease that"
+                            + " expires within one scan lets a second worker reclaim concurrently");
+        }
+        if (connectBackoffMin.isNegative() || connectBackoffMin.isZero()) {
+            throw new ConfigurationException(
+                    "async.redis.connect-backoff-min must be a positive, finite duration; a worker"
+                            + " that retries with no delay spins against an unreachable Redis");
+        }
+        if (connectBackoffMax.compareTo(connectBackoffMin) < 0) {
+            throw new ConfigurationException(
+                    "async.redis.connect-backoff-max (" + connectBackoffMax + ") must be >="
+                            + " async.redis.connect-backoff-min (" + connectBackoffMin + ")");
         }
     }
 
@@ -210,6 +237,38 @@ public class AsyncRedisProperties {
 
     public void setReclaimInterval(Duration reclaimInterval) {
         this.reclaimInterval = reclaimInterval;
+    }
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
+    public Duration getReclaimLease() {
+        return reclaimLease;
+    }
+
+    public void setReclaimLease(Duration reclaimLease) {
+        this.reclaimLease = reclaimLease;
+    }
+
+    public Duration getConnectBackoffMin() {
+        return connectBackoffMin;
+    }
+
+    public void setConnectBackoffMin(Duration connectBackoffMin) {
+        this.connectBackoffMin = connectBackoffMin;
+    }
+
+    public Duration getConnectBackoffMax() {
+        return connectBackoffMax;
+    }
+
+    public void setConnectBackoffMax(Duration connectBackoffMax) {
+        this.connectBackoffMax = connectBackoffMax;
     }
 
     public String getFailOnReference() {
