@@ -69,6 +69,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T1: Criar manifest e gate de equivalência do baseline
 
+**Status:** Complete
+
 **What:** Registrar inventário, checksums e contagens de fontes, testes, migrations, schemas, tópicos, dashboards, scripts e documentos válidos; criar verificador determinístico.  
 **Where:** `scripts/equivalence`  
 **Depends on:** None  

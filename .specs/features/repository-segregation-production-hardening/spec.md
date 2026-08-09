@@ -295,7 +295,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-05 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-06 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
-| ORG-08 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
 | SBX-01 | Sandbox único | Tasks | In Tasks |
 | SBX-02 | Sandbox único | Tasks | In Tasks |
 | SBX-03 | Sandbox único | Tasks | In Tasks |
@@ -351,19 +351,19 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | DOC-06 | Docs, ADRs e IA | Tasks | In Tasks |
 | DOC-07 | Docs, ADRs e IA | Tasks | In Tasks |
 | MIG-01 | Migração e gates | Tasks | In Tasks |
-| MIG-02 | Migração e gates | Tasks | In Tasks |
-| MIG-03 | Migração e gates | Tasks | In Tasks |
+| MIG-02 | Migração e gates | Execute | T1 baseline complete; relocation gates pending |
+| MIG-03 | Migração e gates | Execute | T1 complete |
 | MIG-04 | Migração e gates | Tasks | In Tasks |
 | MIG-05 | Migração e gates | Tasks | In Tasks |
 | MIG-06 | Migração e gates | Tasks | In Tasks |
-| MIG-07 | Migração e gates | Tasks | In Tasks |
+| MIG-07 | Migração e gates | Execute | T1 inventory complete; documentation move pending |
 | MIG-08 | Migração e gates | Tasks | In Tasks |
 | EDG-01 | Edge cases | Tasks | In Tasks |
 | EDG-02 | Edge cases | Tasks | In Tasks |
 | EDG-03 | Edge cases | Tasks | In Tasks |
 | EDG-04 | Edge cases | Tasks | In Tasks |
 | EDG-05 | Edge cases | Tasks | In Tasks |
-| EDG-06 | Edge cases | Tasks | In Tasks |
+| EDG-06 | Edge cases | Execute | T1 complete |
 | EDG-07 | Edge cases | Tasks | In Tasks |
 
 **Coverage:** 77 requirements total, 77 mapped to tasks, 0 pending design.
