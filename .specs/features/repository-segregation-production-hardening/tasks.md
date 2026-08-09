@@ -1246,6 +1246,36 @@ Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`, Redis real
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(async-redis): atomically release job results`
+**Status:** Complete
+
+**Gate evidence:** `JobQueue.release` fazia quatro round trips separados ao Redis: `PSETEX` do resultado, `JobStatusStore.markCompleted` (outro `SET`), `LPUSH` do wakeup e `PEXPIRE` da lista. Uma conexão perdida entre dois desses passos deixava o job inconsistente — o caso mais visível é um resultado já persistido de forma durável com o status preso em `PROCESSING` para sempre, porque `JobStatusStore.find` confia no status, não no resultado, para saber que um job terminou. Como o worker só dá ACK depois que `release` retorna sem lançar (`JobWorker.handle`), qualquer falha nesse meio deixava a mensagem no PEL para ser redistribuída — o que chama `release` de novo para o mesmo job, e o `LPUSH` incondicional duplicava a entrada de wakeup a cada nova tentativa.
+
+Criado `result/ResultReleaser` com um único script Lua (`EVAL`) cobrindo os quatro efeitos: `SET` do resultado com TTL, `SET XX KEEPTTL` do status (mesma semântica de `JobStatusStore.markCompleted`, nunca ressuscita um job nunca aceito), e um `LPUSH`+`PEXPIRE` do wakeup condicionado a um `SET NX` de uma chave-marcador (`JobKeys.responseSent`) que só é `true` na primeira execução bem-sucedida. Um `EVAL` roda como um passo indivisível no Redis: não há janela em que uma conexão derrubada no meio do cliente observe ou deixe um release parcialmente aplicado. `JobQueue.release` passou a delegar para `ResultReleaser` (a dependência em `JobStatusStore` foi removida de `JobQueue`, que não a usava para mais nada); `JobWaitBudgetIT` e `JobWorker`, os dois outros chamadores de `queue.release(...)`, não precisaram mudar.
+
+Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`, Redis real em `localhost:6379`) passou **76/76 testes, 0 falhas, 0 skipped**: os 68 de T38–T41 mais 8 novos em `ResultReleaserIT`, acima dos ≥8 pedidos. Nenhum teste anterior foi removido, pulado ou enfraquecido.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| RED-06: o resultado é persistido de forma durável | `ResultReleaserIT.java:96-100` — `assertEquals(toJson(result), stored, ...)` lendo `GET` direto da chave de resultado | o conteúdo gravado é exatamente o resultado liberado | ✅ |
+| RED-06: o status vira terminal junto com o resultado | `ResultReleaserIT.java:105-110` — `assertTrue(raw != null && raw.contains("\"COMPLETED\""), ...)` | status observável muda para `COMPLETED` no mesmo release | ✅ |
+| RED-06 (guarda de correção): release nunca ressuscita status de job nunca aceito | `ResultReleaserIT.java:114-122` — `assertNull(conn.sync().get(JobKeys.status(jobId)), ...)` e, na mesma chamada, `assertEquals(toJson(result), ...)` no resultado | resultado ainda é persistido; status permanece ausente (XX) | ✅ |
+| RED-06: wakeup libera o waiter (persistence + wakeup) | `ResultReleaserIT.java:126-133` — `assertEquals(List.of(toJson(result)), entries)` via `LRANGE` real | exatamente uma entrada, com o payload correto, na lista de wakeup | ✅ |
+| RED-06: TTL é coerente | `ResultReleaserIT.java:137-144` — `assertTrue(pttl > 0 && pttl <= props.getResultTtl().toMillis(), ...)` via `PTTL` real | TTL da lista de wakeup é positivo e nunca excede a janela configurada | ✅ |
+| RED-06: redelivery é idempotente (sem duplicar wakeup) | `ResultReleaserIT.java:148-157` — dois `release(result)` seguidos, depois `assertEquals(1, entries.size(), ...)` | uma segunda liberação do mesmo job não duplica a entrada de wakeup | ✅ |
+| RED-06: redelivery é idempotente (resultado e status coerentes) | `ResultReleaserIT.java:161-172` — dois `release(result)`, depois `assertEquals(toJson(result), ...)` e `assertTrue(status.contains("\"COMPLETED\""), ...)` | conteúdo e status permanecem corretos após uma segunda liberação | ✅ |
+| RED-06: falhas em cada etapa não perdem resultado (atomicidade sob concorrência) | `ResultReleaserIT.java:176-198` — 8 releases concorrentes do mesmo job, depois `assertEquals(1, entries.size(), ...)` | o `EVAL` serializa liberações concorrentes em exatamente um wakeup, nunca uma corrida parcial | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `ResultReleaserIT.java:96-100` | RED-06 persistência durável do resultado | ✅ |
+| `ResultReleaserIT.java:105-110` | RED-06 transição de status para terminal | ✅ |
+| `ResultReleaserIT.java:114-122` | RED-06 guarda XX (nunca ressuscita status inexistente) | ✅ |
+| `ResultReleaserIT.java:126-133` | RED-06 wakeup exato, campo a campo | ✅ |
+| `ResultReleaserIT.java:137-144` | RED-06 TTL coerente e limitado | ✅ |
+| `ResultReleaserIT.java:148-157,161-172` | RED-06 redelivery idempotente (wakeup e conteúdo) | ✅ |
+| `ResultReleaserIT.java:176-198` | RED-06 atomicidade sob concorrência | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Toda asserção de payload lê o estado real do Redis — `GET`, `LRANGE`, `PTTL` — nunca apenas que um método foi chamado; nenhuma delegação `JobQueue -> ResultReleaser` foi testada por contagem de chamadas, porque isso provaria só a fiação, não o efeito no Redis que a AC exige (as ITs existentes de `JobQueue`, como `JobWaitBudgetIT.aReleasedResultIsReturnedToTheWaiter`, já exercitam o caminho público sem duplicação). `releaseNeverResurrectsAJobThatWasNeverAccepted` é o teste de controle que mata uma implementação que trocasse `XX` por incondicional: ela passaria em `releaseMarksAnAcceptedJobCompleted` e falharia aqui. `concurrentRedeliveredReleasesStillWakeUpExactlyOnce` mata especificamente uma versão que movesse a checagem do marcador para fora do script (uma corrida entre `EXISTS` e `SET` no lado do cliente duplicaria o wakeup sob concorrência real, o que o teste sequencial de redelivery não detectaria sozinho). `releaseSetsATtlOnTheWakeupList` tem limite inferior e superior porque uma implementação que nunca expirasse a lista, ou que a expirasse imediatamente, passaria num teste com um único lado. Nenhum teste verifica comportamento do driver Lettuce ou do Awaitility isoladamente. Poison/DLQ e off-by-one seguem com T43; retenção PEL-safe com T44 — nenhum deles foi tocado aqui. Sem SPEC_DEVIATION: o script cobre os quatro efeitos que design.md 4.5 descreve ("Resultado, wakeup e TTL usam Lua idempotente"), incluindo o status porque deixá-lo fora do `EVAL` reabriria exatamente a janela de inconsistência que esta tarefa existe para fechar.
 
 #### T43: Corrigir poison, malformed e limite de entregas
 

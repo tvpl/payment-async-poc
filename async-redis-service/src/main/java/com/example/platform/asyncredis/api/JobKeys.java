@@ -21,6 +21,14 @@ public final class JobKeys {
         return "resp:" + jobId;
     }
 
+    /**
+     * One-time gate for the wakeup push (RED-06). Its first {@code SET NX} is what makes a
+     * redelivered result release idempotent: only that caller pushes to {@link #response}.
+     */
+    public static String responseSent(String jobId) {
+        return "resp:" + jobId + ":sent";
+    }
+
     /** Idempotency reservation for a caller-supplied key. */
     public static String reservation(String idempotencyKey) {
         return "idem:" + idempotencyKey;

@@ -1,14 +1,13 @@
 package com.example.platform.asyncredis.queue;
 
 import com.example.platform.asyncredis.api.JobKeys;
-import com.example.platform.asyncredis.api.JobStatusStore;
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
 import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.redis.RedisConnections;
+import com.example.platform.asyncredis.result.ResultReleaser;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.XAddArgs;
-import io.lettuce.core.api.sync.RedisCommands;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -38,14 +37,14 @@ public class JobQueue implements JobEnqueuer {
     private final RedisConnections redis;
     private final ObjectMapper objectMapper;
     private final AsyncRedisProperties props;
-    private final JobStatusStore statusStore;
+    private final ResultReleaser releaser;
 
     public JobQueue(RedisConnections redis, ObjectMapper objectMapper, AsyncRedisProperties props,
-                    JobStatusStore statusStore) {
+                    ResultReleaser releaser) {
         this.redis = redis;
         this.objectMapper = objectMapper;
         this.props = props;
-        this.statusStore = statusStore;
+        this.releaser = releaser;
     }
 
     /** Publishes the job onto the stream. Returns the stream message id. */
@@ -129,22 +128,11 @@ public class JobQueue implements JobEnqueuer {
 
     /**
      * Releases the result: stores it durably (for polling), moves the job's status to terminal, and
-     * pushes it to the per-request list so a blocked BRPOP wakes immediately. Called by the worker
-     * after processing.
+     * pushes it to the per-request list so a blocked BRPOP wakes immediately — atomically and
+     * idempotently (RED-06, see {@link ResultReleaser}). Called by the worker after processing.
      */
     public void release(JobResult result) {
-        try {
-            RedisCommands<String, String> c = redis.shared();
-            String json = objectMapper.writeValueAsString(result);
-            long ttlMs = props.getResultTtl().toMillis();
-            c.psetex(resultKey(result.jobId()), ttlMs, json);
-            statusStore.markCompleted(result.jobId());
-            c.lpush(responseKey(result.jobId()), json);
-            // TTL on the response list so an un-awaited (202) job doesn't leak the key.
-            c.pexpire(responseKey(result.jobId()), ttlMs);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to release result for " + result.jobId(), e);
-        }
+        releaser.release(result);
     }
 
     private String responseKey(String jobId) {

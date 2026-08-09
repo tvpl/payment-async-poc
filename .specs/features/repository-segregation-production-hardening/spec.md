@@ -327,7 +327,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | RED-03 | Async Redis | Tasks | In Tasks |
 | RED-04 | Async Redis | Execute | T41 gives each worker a `<instance-id>-w<index>` consumer name derived per process, so two replicas never share a Redis consumer identity; XINFO CONSUMERS on a live Redis confirms 4 distinct consumers for 2 instances; a single ReclaimCoordinator turn (SET NX + owner-fenced renew/release) keeps only one worker scanning the PEL at a time |
 | RED-05 | Async Redis | Execute | T41 reconnects the worker loop with capped exponential backoff on any connection loss (including startup), and WorkerReadiness/WorkerReadinessIndicator report DOWN until a worker has actually read from the group again, verified against a real Redis outage via a TCP gate |
-| RED-06 | Async Redis | Tasks | In Tasks |
+| RED-06 | Async Redis | Execute | T42 releases result, status and wakeup as one atomic idempotent Lua EVAL (`ResultReleaser`); a redelivered release never duplicates the wakeup and never resurrects the status of a job that was never accepted, verified against a real Redis including under concurrent redeliveries |
 | RED-07 | Async Redis | Tasks | In Tasks |
 | RED-08 | Async Redis | Execute | T39 adds X-API-Key AuthN on both job routes, SET NX fingerprint idempotency (replay/conflict, nothing enqueued twice) and a prod guard refusing startup without auth, idempotency and admission |
 | CAP-01 | Capacidade | Execute | T29 types SBUS dependency budgets, retry attempts, readiness requirements and bounded recoverable states; full cross-boundary capacity model pending |
