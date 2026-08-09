@@ -84,6 +84,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T2: Reduzir governança raiz ao escopo cross-boundary
 
+**Status:** Complete
+
 **What:** Reescrever mapa e instruções raiz para ownership, workflow conjunto e fontes locais, sem duplicar documentação de produto.  
 **Where:** `/`  
 **Depends on:** T1  

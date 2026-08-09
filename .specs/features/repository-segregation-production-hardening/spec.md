@@ -288,7 +288,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ORG-01 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
 | ORG-02 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-03 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-04 | Fronteiras prontas para repositórios | Tasks | In Tasks |
@@ -344,12 +344,12 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
 | DOC-01 | Docs, ADRs e IA | Tasks | In Tasks |
-| DOC-02 | Docs, ADRs e IA | Tasks | In Tasks |
+| DOC-02 | Docs, ADRs e IA | Execute | T2 root governance complete; local guides pending |
 | DOC-03 | Docs, ADRs e IA | Tasks | In Tasks |
 | DOC-04 | Docs, ADRs e IA | Tasks | In Tasks |
 | DOC-05 | Docs, ADRs e IA | Tasks | In Tasks |
 | DOC-06 | Docs, ADRs e IA | Tasks | In Tasks |
-| DOC-07 | Docs, ADRs e IA | Tasks | In Tasks |
+| DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
 | MIG-01 | Migração e gates | Tasks | In Tasks |
 | MIG-02 | Migração e gates | Execute | T1 baseline complete; relocation gates pending |
 | MIG-03 | Migração e gates | Execute | T1 complete |
