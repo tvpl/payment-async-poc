@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 2 / T8 — contract model and schemas
-- **Completed**: T1–T7; `payment-contracts` possui build, wrapper e publicação standalone verificados
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:177`
-- **Next step**: migrar modelo, constantes e schemas para `contract-model`, preservando o baseline
+- **Phase / Task**: Execute; Phase 2 / T9 — bounded Avro/Apicurio adapter
+- **Completed**: T1–T8; modelo, constantes e schemas Avro pertencem ao `contract-model` e possuem dez testes
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:194`
+- **Next step**: extrair mapper e implementar codec Apicurio limitado, sem `ThreadLocal` por virtual thread
 - **Blockers**: none
 - **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

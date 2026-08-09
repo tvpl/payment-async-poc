@@ -1,5 +1,6 @@
 plugins {
     id 'base'
+    id 'com.github.davidmc24.gradle.plugin.avro' apply false
 }
 
 group = 'com.example.payments'

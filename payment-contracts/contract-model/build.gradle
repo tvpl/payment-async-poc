@@ -1,7 +1,28 @@
 description = 'Stable event model and generated Avro contract classes.'
 
+apply plugin: 'com.github.davidmc24.gradle.plugin.avro'
+
 dependencies {
+    annotationProcessor platform("io.micronaut.platform:micronaut-platform:${project.property('micronautVersion')}")
+    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+
+    api platform("io.micronaut.platform:micronaut-platform:${project.property('micronautVersion')}")
+    api 'io.micronaut.serde:micronaut-serde-api'
+    api 'io.micronaut.serde:micronaut-serde-jackson'
+    api "org.apache.avro:avro:${project.property('avroVersion')}"
+
     testImplementation platform('org.junit:junit-bom:5.10.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('generateAvroJava') {
+    source(rootProject.file('schemas'))
+}
+
+avro {
+    stringType = 'String'
+    fieldVisibility = 'PRIVATE'
 }

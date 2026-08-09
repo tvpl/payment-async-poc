@@ -176,6 +176,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T8: Migrar modelo e schemas para o artefato de contrato
 
+**Status:** Complete
+
 **What:** Mover envelope, modelos, constantes, fontes Avro e geração para `payment-contract-model`, preservando contratos byte/JSON.  
 **Where:** `payment-contracts/contract-model`  
 **Depends on:** T7  
@@ -186,6 +188,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + contract  
 **Gate:** quick  
 **Commit:** `refactor(contracts): extract payment contract model`
+
+**Adequacy review:** O contrato JSON preserva nomes, tipo numérico e valor de `BigDecimal`. A escala lexical (`125.50` versus `125.5`) não é parte do requisito; igualdade numérica foi confirmada pelo usuário após o gate expor esse gap de precisão.
 
 #### T9: Extrair adapter Avro/Apicurio com codec limitado
 

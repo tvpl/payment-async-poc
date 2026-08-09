@@ -293,7 +293,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-03 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-04 | Fronteiras prontas para repositórios | Execute | T7 contracts publication build complete; docs and CI pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6 artifact-only flow complete; consumer migrations pending |
-| ORG-06 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-06 | Fronteiras prontas para repositórios | Execute | T8 contract model contains events only; Avro adapter pending T9 |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
 | SBX-01 | Sandbox único | Tasks | In Tasks |
@@ -321,7 +321,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-09 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-11 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-12 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-12 | Fluxo Kafka | Execute | T8 schema and model contract tests complete; compatibility gate pending T10 |
 | RED-01 | Async Redis | Tasks | In Tasks |
 | RED-02 | Async Redis | Tasks | In Tasks |
 | RED-03 | Async Redis | Tasks | In Tasks |
