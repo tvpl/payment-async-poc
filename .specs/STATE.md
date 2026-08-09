@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 5 / T26 — serialize terminal state transitions (not started)
-- **Completed**: T1–T25; SBUS standalone and production identity boundaries pass 14 quick plus 25 full tests, including eight route/JWT cases and invalid-profile startup
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:557`
-- **Next step**: add append-only V7 and conditional terminal transition with one coherent outbox event under concurrency
+- **Phase / Task**: Execute; Phase 5 / T27 — durable due-based Kafka retry (not started)
+- **Completed**: T1–T26; V7 conditional terminal transition passes 30 full tests, including five PostgreSQL concurrency/rollback ITs
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:593`
+- **Next step**: replace partition sleep/direct retry publish with durable raw bytes/headers and next-attempt scheduling before consumer acknowledgement
 - **Blockers**: none
 - **Uncommitted files**: none after the atomic T24 commit
 - **Branch**: `feature/optimize-eda`

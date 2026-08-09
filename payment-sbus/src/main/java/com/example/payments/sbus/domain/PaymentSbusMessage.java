@@ -6,6 +6,7 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.model.DataType;
 
 import java.time.Instant;
@@ -37,6 +38,9 @@ public class PaymentSbusMessage {
     /** Final SimulationResult as JSON, for the API's durable status fallback. */
     @MappedProperty(type = DataType.JSON)
     private String result;
+
+    @Version
+    private long version;
 
     @DateCreated
     private Instant createdAt;
@@ -130,6 +134,14 @@ public class PaymentSbusMessage {
 
     public void setResult(String result) {
         this.result = result;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 
     public Instant getCreatedAt() {

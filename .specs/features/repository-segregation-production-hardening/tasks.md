@@ -535,6 +535,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T26: Serializar finalização concorrente do estado
 
+**Status:** Complete
+
 **What:** Adicionar migration append-only e update otimista/condicional para impedir terminais concorrentes.  
 **Where:** `payment-sbus/src/main/resources/db/migration`  
 **Depends on:** T25  
@@ -545,6 +547,26 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** integration  
 **Gate:** full  
 **Commit:** `fix(sbus): guard terminal state transitions`
+
+**Gate evidence:** A migration append-only V7 adicionou `version` e o constraint de estados sem alterar V1–V6; o manifesto SHA-256 cobre V1–V7. O full gate passou 30 testes. Cinco ITs PostgreSQL executaram finalizações concorrentes reais, duplicata, conflito tardio e rollback. O `UPDATE ... WHERE status='PROCESSING' AND version=?` e a criação da outbox permanecem na mesma transação; somente o vencedor retorna `true` e persiste uma outbox.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| Dois terminais concorrentes escolhem um | `TerminalTransitionIT.java:83-98` — `assertEquals(1, winners)`, status/eventType/topic/payload conjugados | exatamente um vencedor e payload coerente | ✅ |
+| Redelivery concorrente equivalente é idempotente | `TerminalTransitionIT.java:116-121` — um vencedor, `COMPLETED`, uma outbox | resultado terminal não duplica | ✅ |
+| Duplicata sequencial não cria outbox | `TerminalTransitionIT.java:128-130` — `assertTrue(first)`, `assertFalse(second)`, count `1` | terminal sticky | ✅ |
+| Conflito tardio não sobrescreve | `TerminalTransitionIT.java:137-145` — segundo `false`, `FAILED`, bytes originais e count `1` | primeiro terminal vence | ✅ |
+| PAY-04: state + outbox atômicos | `TerminalTransitionIT.java:152-158` — falha de outbox lança, estado `PROCESSING`, count `0` | rollback total | ✅ |
+| EDG-02: migration append-only | `StandaloneBoundaryTest.java:40-53` — `assertEquals(expected, actual)` sobre manifesto V1–V7 | migrations aplicadas imutáveis e V7 presente | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `TerminalTransitionIT.java:83-98,116-121` | PAY-11 e Done-when concorrente | ✅ |
+| `TerminalTransitionIT.java:128-145` | PAY-11, terminal sticky/redelivery | ✅ |
+| `TerminalTransitionIT.java:152-158` | PAY-04, atomicidade state+outbox | ✅ |
+| `StandaloneBoundaryTest.java:53` | EDG-02, migration append-only | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Os testes afirmam winner, estado, tópico, tipo, bytes e cardinalidade, não somente execução de método. O rollback prova o limite transacional. Segue `AGENTS.md`, migrations append-only e a Test Coverage Matrix. Não há SPEC_DEVIATION.
 
 #### T27: Substituir sleep por retry durável due-based
 

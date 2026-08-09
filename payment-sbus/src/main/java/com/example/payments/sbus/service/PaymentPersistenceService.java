@@ -88,18 +88,24 @@ public class PaymentPersistenceService {
     }
 
     @Transactional
-    public void persistFinal(String simulationId, boolean approved, String errorCode,
-                             String errorMessage, String resultJson, String eventType,
-                             String topic, byte[] finalBytes, String headers) {
+    public boolean persistFinal(String simulationId, boolean approved, String errorCode,
+                                String errorMessage, String resultJson, String eventType,
+                                String topic, byte[] finalBytes, String headers) {
         PaymentSbusMessage message = messageRepository.findBySimulationId(simulationId).orElse(null);
         if (message == null || isTerminal(message.getStatus())) {
-            return; // race: another delivery already finalized it
+            return false;
         }
-        message.setStatus(approved ? SbusMessageStatus.COMPLETED : SbusMessageStatus.FAILED);
-        message.setErrorCode(errorCode);
-        message.setErrorMessage(errorMessage);
-        message.setResult(resultJson);
-        messageRepository.update(message);
+
+        SbusMessageStatus terminal = approved
+                ? SbusMessageStatus.COMPLETED
+                : SbusMessageStatus.FAILED;
+        Instant now = Instant.now();
+        int updated = messageRepository.finalizeIfProcessing(
+                simulationId, message.getVersion(), terminal.name(), errorCode,
+                errorMessage, resultJson, now);
+        if (updated == 0) {
+            return false;
+        }
 
         saveOutbox(message.getRequestId(), eventType, topic, message.getRequestId(), finalBytes, headers);
 
@@ -108,6 +114,7 @@ public class PaymentPersistenceService {
         }
         LOG.info("Recorded final event {} requestId={} simulationId={}",
                 eventType, message.getRequestId(), simulationId);
+        return true;
     }
 
     private void saveOutbox(String aggregateId, String eventType, String topic, String key,

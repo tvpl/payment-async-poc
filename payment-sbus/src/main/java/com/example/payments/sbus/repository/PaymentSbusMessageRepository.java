@@ -1,6 +1,7 @@
 package com.example.payments.sbus.repository;
 
 import com.example.payments.sbus.domain.PaymentSbusMessage;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -15,6 +16,22 @@ public interface PaymentSbusMessageRepository extends CrudRepository<PaymentSbus
     Optional<PaymentSbusMessage> findByRequestId(String requestId);
 
     Optional<PaymentSbusMessage> findBySimulationId(String simulationId);
+
+    @Query(value = """
+            UPDATE payment_sbus_message
+            SET status = :status,
+                error_code = :errorCode,
+                error_message = :errorMessage,
+                result = CAST(:resultJson AS jsonb),
+                version = version + 1,
+                updated_at = :updatedAt
+            WHERE simulation_id = :simulationId
+              AND status = 'PROCESSING'
+              AND version = :expectedVersion
+            """, nativeQuery = true)
+    int finalizeIfProcessing(String simulationId, long expectedVersion, String status,
+                             @Nullable String errorCode, @Nullable String errorMessage, String resultJson,
+                             Instant updatedAt);
 
     /** Retention: purge old terminal simulations (the durable fallback only needs recent ones). */
     @Query(value = """

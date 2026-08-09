@@ -313,14 +313,14 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-01 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-02 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-03 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-04 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-04 | Fluxo Kafka | Execute | T26 proves terminal state and outbox commit or roll back atomically; retry scheduling extension pending T27 |
 | PAY-05 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-06 | Fluxo Kafka | Execute | T21 Core duplicate payload equivalence complete; SBUS/API downstream idempotency and crash-window gates pending |
 | PAY-07 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-08 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics and T21 Core uncommitted failure/Registry policy complete; remaining service policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-11 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-11 | Fluxo Kafka | Execute | T26 V7 versioned conditional transition makes the first terminal sticky; retention alignment pending T29 |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |
 | RED-01 | Async Redis | Tasks | In Tasks |
 | RED-02 | Async Redis | Tasks | In Tasks |
@@ -359,7 +359,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | MIG-07 | Migração e gates | Execute | T5 section destinations complete; removal proof pending |
 | MIG-08 | Migração e gates | Tasks | In Tasks |
 | EDG-01 | Edge cases | Execute | T6 complete |
-| EDG-02 | Edge cases | Tasks | In Tasks |
+| EDG-02 | Edge cases | Execute | T26 added append-only V7 and preserved checksum evidence for V1–V7 |
 | EDG-03 | Edge cases | Execute | T10 incompatible evolution requires major, new artifact/topic and coexistence |
 | EDG-04 | Edge cases | Execute | T5 dashboard metric validation complete |
 | EDG-05 | Edge cases | Execute | T4 PASS/FAIL/NOT_RUN classification complete |
