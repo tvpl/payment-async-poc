@@ -51,7 +51,7 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:kafka'
     testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'com.redis:testcontainers-redis:2.2.2'
+    testImplementation 'com.redis:testcontainers-redis:2.2.4'
     testImplementation 'org.awaitility:awaitility:4.2.1'
 }
 
