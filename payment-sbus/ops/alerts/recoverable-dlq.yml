@@ -1,0 +1,12 @@
+groups:
+  - name: payment-sbus-recoverable-dlq
+    rules:
+      - alert: PaymentSbusRecoverableDlqStuck
+        expr: sbus_dlq_unconfirmed > 0 and sbus_dlq_unconfirmed_oldest_age_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+          service: payment-sbus
+        annotations:
+          summary: Payment SBUS has recoverable dead-letter work older than five minutes
+          description: DLQ delivery is not being confirmed; inspect Kafka availability and outbox errors.

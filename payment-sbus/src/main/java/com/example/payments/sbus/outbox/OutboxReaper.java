@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
-/** Returns rows stuck IN_PROGRESS (a publisher crashed after claiming) back to PENDING. */
+/** Reclaims stuck rows to their recoverable PENDING or DLQ_PENDING queue. */
 @Singleton
 public class OutboxReaper {
 
@@ -30,7 +30,7 @@ public class OutboxReaper {
         Instant threshold = Instant.now().minus(properties.getLease());
         int reclaimed = repository.reclaimStuck(threshold);
         if (reclaimed > 0) {
-            LOG.warn("Reclaimed {} stuck IN_PROGRESS outbox row(s) to PENDING", reclaimed);
+            LOG.warn("Reclaimed {} stuck IN_PROGRESS outbox row(s) to a recoverable queue", reclaimed);
         }
     }
 }

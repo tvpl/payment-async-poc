@@ -1,6 +1,7 @@
 package com.example.payments.sbus.outbox;
 
 import com.example.payments.sbus.config.OutboxProperties;
+import com.example.payments.common.events.Topics;
 import com.example.payments.sbus.domain.OutboxEvent;
 import com.example.payments.sbus.domain.OutboxStatus;
 import com.example.payments.sbus.repository.OutboxEventRepository;
@@ -9,6 +10,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Short transactional operations around the outbox. Kept separate from
@@ -34,45 +36,49 @@ public class OutboxClaimService {
         for (OutboxEvent e : batch) {
             e.setStatus(OutboxStatus.IN_PROGRESS);
             e.setClaimedAt(now);
+            e.setClaimToken(UUID.randomUUID());
             repository.update(e);
         }
         return batch;
     }
 
-    /** Marks a batch PUBLISHED in a single statement (happy path). */
+    /** Completes current-owner claims; stale tokens affect zero rows. */
     @Transactional
-    public void markPublishedBatch(java.util.Collection<Long> ids) {
-        if (!ids.isEmpty()) {
-            repository.markPublished(ids, Instant.now());
+    public int markPublishedBatch(java.util.Collection<OutboxEvent> events) {
+        int marked = 0;
+        Instant now = Instant.now();
+        for (OutboxEvent event : events) {
+            marked += repository.markPublished(event.getId(), event.getClaimToken(), now);
         }
+        return marked;
     }
 
-    /** Tx2 (failure): back to PENDING with backoff, or FAILED once attempts are exhausted. */
+    /** Tx2: normal failures retry; exhaustion and every DLQ failure remain DLQ_PENDING. */
     @Transactional
-    public boolean markFailure(OutboxEvent event, String error) {
+    public FailureDisposition markFailure(OutboxEvent event, String error, String dlqHeaders) {
         int attempts = event.getAttempts() + 1;
-        event.setAttempts(attempts);
-        event.setLastError(truncate(error));
-        event.setClaimedAt(null);
-        boolean dead = attempts >= properties.getMaxAttempts();
-        if (dead) {
-            event.setStatus(OutboxStatus.FAILED);
-        } else {
-            event.setStatus(OutboxStatus.PENDING);
-            event.setNextAttemptAt(Instant.now().plus(
-                    BackoffCalculator.backoff(attempts, properties.getBaseBackoff(), properties.getMaxBackoff())));
+        boolean dlq = Topics.DLQ.equals(event.getTopic()) || attempts >= properties.getMaxAttempts();
+        OutboxStatus nextStatus = dlq ? OutboxStatus.DLQ_PENDING : OutboxStatus.PENDING;
+        String nextTopic = dlq ? Topics.DLQ : event.getTopic();
+        String nextHeaders = dlq ? dlqHeaders : event.getHeaders();
+        String lastError = truncate(error);
+        Instant nextAttemptAt = Instant.now().plus(
+                BackoffCalculator.backoff(attempts, properties.getBaseBackoff(), properties.getMaxBackoff()));
+        int updated = repository.markFailedAttempt(event.getId(), event.getClaimToken(),
+                nextStatus.name(), nextTopic, nextHeaders, attempts, nextAttemptAt, lastError);
+        if (updated == 0) {
+            return FailureDisposition.STALE_CLAIM;
         }
-        repository.update(event);
-        return dead;
+        return dlq ? FailureDisposition.DLQ_PENDING : FailureDisposition.RETRY_PENDING;
     }
 
     /** Releases a still-PENDING-after-throttle row (rate limiter denied the Core command). */
     @Transactional
     public void release(OutboxEvent event, Instant nextAttemptAt) {
-        event.setStatus(OutboxStatus.PENDING);
-        event.setClaimedAt(null);
-        event.setNextAttemptAt(nextAttemptAt);
-        repository.update(event);
+        String status = Topics.DLQ.equals(event.getTopic())
+                ? OutboxStatus.DLQ_PENDING.name()
+                : OutboxStatus.PENDING.name();
+        repository.releaseClaim(event.getId(), event.getClaimToken(), status, nextAttemptAt);
     }
 
     private static String truncate(String s) {
@@ -80,5 +86,11 @@ public class OutboxClaimService {
             return null;
         }
         return s.length() > 1000 ? s.substring(0, 1000) : s;
+    }
+
+    public enum FailureDisposition {
+        RETRY_PENDING,
+        DLQ_PENDING,
+        STALE_CLAIM
     }
 }

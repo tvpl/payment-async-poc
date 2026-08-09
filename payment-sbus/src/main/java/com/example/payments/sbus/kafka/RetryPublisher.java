@@ -1,15 +1,11 @@
 package com.example.payments.sbus.kafka;
 
-import com.example.payments.common.events.Topics;
 import com.example.payments.sbus.config.RetryProperties;
-import com.example.payments.sbus.metrics.SbusMetrics;
+import com.example.payments.sbus.retry.DurableDeadLetterScheduler;
 import com.example.payments.sbus.retry.DurableRetryScheduler;
 import jakarta.inject.Singleton;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -18,21 +14,16 @@ import java.util.Map;
 @Singleton
 public class RetryPublisher {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RetryPublisher.class);
-
-    private final KafkaPublisher publisher;
     private final DurableRetryScheduler scheduler;
+    private final DurableDeadLetterScheduler deadLetters;
     private final RetryProperties properties;
-    private final SbusMetrics metrics;
 
-    public RetryPublisher(KafkaPublisher publisher,
-                          DurableRetryScheduler scheduler,
-                          RetryProperties properties,
-                          SbusMetrics metrics) {
-        this.publisher = publisher;
+    public RetryPublisher(DurableRetryScheduler scheduler,
+                          DurableDeadLetterScheduler deadLetters,
+                          RetryProperties properties) {
         this.scheduler = scheduler;
+        this.deadLetters = deadLetters;
         this.properties = properties;
-        this.metrics = metrics;
     }
 
     /** First failure on the main topic → schedule attempt #1 on the retry topic. */
@@ -48,21 +39,15 @@ public class RetryPublisher {
     public boolean scheduleNextOrDlq(String originTopic, ConsumerRecord<String, byte[]> source,
                                      Map<String, String> headers, int currentAttempt, Throwable cause) {
         if (currentAttempt >= properties.getMaxAttempts()) {
-            routeToDlq(originTopic, source.key(), source.value(), headers, cause, "retries-exhausted");
+            routeToDlq(originTopic, source, headers, cause, "retries-exhausted");
             return true;
         }
         scheduler.schedule(originTopic, source, headers, currentAttempt + 1, cause);
         return false;
     }
 
-    public void routeToDlq(String originTopic, String key, byte[] value,
+    public void routeToDlq(String originTopic, ConsumerRecord<String, byte[]> source,
                            Map<String, String> headers, Throwable cause, String stage) {
-        Map<String, String> h = new HashMap<>(headers);
-        h.put("x-dlq-origin-topic", originTopic);
-        h.put("x-dlq-stage", stage);
-        h.put("x-dlq-reason", String.valueOf(cause == null ? stage : cause.getMessage()));
-        publisher.send(Topics.DLQ, key, value, h);
-        metrics.recordDlq();
-        LOG.error("Routed to DLQ origin={} key={} stage={}", originTopic, key, stage, cause);
+        deadLetters.schedule(originTopic, source, headers, cause, stage);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.payments.sbus.kafka;
 
+import com.example.payments.sbus.config.OutboxProperties;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
@@ -30,7 +31,8 @@ public class KafkaProducerFactory {
     @Singleton
     @Named("sbus-outbox")
     public Producer<String, byte[]> kafkaProducer(
-            @Value("${kafka.bootstrap.servers:`localhost:9092`}") String bootstrapServers) {
+            @Value("${kafka.bootstrap.servers:`localhost:9092`}") String bootstrapServers,
+            OutboxProperties outbox) {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -38,6 +40,11 @@ public class KafkaProducerFactory {
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, "sbus-outbox-publisher");
+        long publishTimeoutMillis = outbox.getPublishTimeout().toMillis();
+        props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, Math.toIntExact(publishTimeoutMillis));
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG,
+                Math.toIntExact(Math.min(publishTimeoutMillis, 10_000L)));
+        props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, publishTimeoutMillis);
         return new KafkaProducer<>(props);
     }
 }

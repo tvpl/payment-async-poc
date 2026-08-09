@@ -91,6 +91,7 @@ sbus:
     max-attempts: 8
     base-backoff: 2s
     max-backoff: 5m
+    publish-timeout: 30s
     poll-interval: 200ms
     initial-delay: 3s
   core:

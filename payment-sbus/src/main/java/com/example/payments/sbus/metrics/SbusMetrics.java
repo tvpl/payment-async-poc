@@ -14,6 +14,8 @@ import java.time.Duration;
  * Custom SBUS metrics exposed to Prometheus:
  * <ul>
  *   <li>{@code sbus_outbox_pending} – gauge of unpublished outbox rows (alerting target).</li>
+ *   <li>{@code sbus_dlq_unconfirmed} – recoverable DLQ work, including active claims.</li>
+ *   <li>{@code sbus_dlq_unconfirmed_oldest_age_seconds} – oldest unconfirmed age.</li>
  *   <li>{@code sbus_outbox_published_total} / {@code sbus_outbox_publish_failures_total}.</li>
  *   <li>{@code sbus_dlq_total} – messages routed to the DLQ.</li>
  *   <li>{@code sbus_end_to_end_latency} – occurredAt(request) -&gt; final event.</li>
@@ -39,6 +41,10 @@ public class SbusMetrics {
     void init() {
         registry.gauge("sbus_outbox_pending", this,
                 m -> m.outboxRepository.countByStatus(OutboxStatus.PENDING));
+        registry.gauge("sbus_dlq_unconfirmed", this,
+                m -> m.outboxRepository.countUnconfirmedDeadLetters());
+        registry.gauge("sbus_dlq_unconfirmed_oldest_age_seconds", this,
+                m -> m.outboxRepository.oldestUnconfirmedDeadLetterAgeSeconds());
         this.outboxPublished = registry.counter("sbus_outbox_published_total");
         this.outboxPublishFailures = registry.counter("sbus_outbox_publish_failures_total");
         this.dlq = registry.counter("sbus_dlq_total");

@@ -45,7 +45,7 @@ public class RetryConsumer {
         try {
             handler.handle(originTopic, record.value(), headers);
         } catch (PoisonMessageException poison) {
-            retryPublisher.routeToDlq(originTopic, record.key(), record.value(), headers, poison, "poison");
+            retryPublisher.routeToDlq(originTopic, record, headers, poison, "poison");
         } catch (RuntimeException transientError) {
             boolean dlq = retryPublisher.scheduleNextOrDlq(
                     originTopic, record, headers, attempt, transientError);

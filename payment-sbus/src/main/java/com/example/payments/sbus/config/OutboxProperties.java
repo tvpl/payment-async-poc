@@ -12,6 +12,8 @@ public class OutboxProperties {
     private int maxAttempts = 8;
     private Duration baseBackoff = Duration.ofSeconds(2);
     private Duration maxBackoff = Duration.ofMinutes(5);
+    /** Upper bound for one Kafka delivery attempt while holding the publication lock. */
+    private Duration publishTimeout = Duration.ofSeconds(30);
     /** IN_PROGRESS rows older than this are reclaimed to PENDING (publish crashed). */
     private Duration lease = Duration.ofMinutes(1);
     /** PUBLISHED rows older than this are purged by housekeeping. */
@@ -51,6 +53,14 @@ public class OutboxProperties {
 
     public Duration getLease() {
         return lease;
+    }
+
+    public Duration getPublishTimeout() {
+        return publishTimeout;
+    }
+
+    public void setPublishTimeout(Duration publishTimeout) {
+        this.publishTimeout = publishTimeout;
     }
 
     public void setLease(Duration lease) {

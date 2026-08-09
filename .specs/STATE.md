@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 5 / T28 — recoverable dead-letter delivery (not started)
-- **Completed**: T1–T27; V8 due-based durable retry passes 23 quick and 44 full tests, including crash dedupe, raw payload preservation and no partition sleep
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:636`
-- **Next step**: introduce DLQ_PENDING/DLQ_PUBLISHED with lease/backoff and keep failures recoverable until broker acknowledgement
+- **Phase / Task**: Execute paused after Phase 5 / T28 — recoverable dead-letter delivery
+- **Completed**: T1–T28; T28 independent verifier PASS and 62/62 full tests cover session-locked send, stale-owner fencing, recoverable DLQ, exact republish data and continuous unconfirmed alerting
+- **In-progress**: none; T28 is complete and atomically committed
+- **Next step**: resume at T29 to type dependency budgets and validate retention coherence plus the Kafka/DB/Redis/Registry failure matrix
 - **Blockers**: none
-- **Uncommitted files**: none after the atomic T24 commit
+- **Uncommitted files**: none after the atomic T28 commit
 - **Branch**: `feature/optimize-eda`

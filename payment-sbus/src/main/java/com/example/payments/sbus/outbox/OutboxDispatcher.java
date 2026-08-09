@@ -34,22 +34,25 @@ public class OutboxDispatcher {
     private final SbusMetrics metrics;
     private final Json json;
     private final RedisRateLimiter coreCommandLimiter;
+    private final OutboxPublicationLock publicationLock;
 
     public OutboxDispatcher(OutboxClaimService claimService,
                             KafkaPublisher publisher,
                             SbusMetrics metrics,
                             Json json,
-                            @Named("core-command") RedisRateLimiter coreCommandLimiter) {
+                            @Named("core-command") RedisRateLimiter coreCommandLimiter,
+                            OutboxPublicationLock publicationLock) {
         this.claimService = claimService;
         this.publisher = publisher;
         this.metrics = metrics;
         this.json = json;
         this.coreCommandLimiter = coreCommandLimiter;
+        this.publicationLock = publicationLock;
     }
 
     public int dispatchBatch() {
         List<OutboxEvent> batch = claimService.claimBatch();
-        List<Long> published = new ArrayList<>(batch.size());
+        List<OutboxEvent> published = new ArrayList<>(batch.size());
         for (OutboxEvent event : batch) {
             // Backpressure to the Core: if the limiter denies, release the row (PENDING)
             // and retry on the next poll. Other topics flow freely.
@@ -58,42 +61,47 @@ public class OutboxDispatcher {
                 continue;
             }
             if (publish(event)) {
-                published.add(event.getId());
+                published.add(event);
+                if (Topics.DLQ.equals(event.getTopic())) {
+                    metrics.recordDlq();
+                }
             }
         }
-        claimService.markPublishedBatch(published);
-        if (!published.isEmpty()) {
-            metrics.recordPublished(published.size());
+        int marked = claimService.markPublishedBatch(published);
+        if (marked > 0) {
+            metrics.recordPublished(marked);
         }
-        return published.size();
+        return marked;
     }
 
     private boolean publish(OutboxEvent event) {
         try {
-            publisher.send(event.getTopic(), event.getKey(), event.getPayload(), parseHeaders(event));
+            var result = publicationLock.executeIfAcquired(event.getId(), () -> {
+                publisher.send(event.getTopic(), event.getKey(), event.getPayload(), parseHeaders(event));
+                return Boolean.TRUE;
+            });
+            if (result.isEmpty()) {
+                claimService.release(event, Instant.now().plusMillis(200));
+                LOG.debug("Deferred outbox event {} because its former owner is still publishing", event.getId());
+                return false;
+            }
             return true;
         } catch (Exception e) {
             metrics.recordPublishFailure();
-            boolean dead = claimService.markFailure(event, e.getMessage());
-            if (dead) {
-                routeToDlq(event, e);
-                LOG.error("Outbox event {} exhausted attempts -> DLQ", event.getId(), e);
+            Map<String, String> headers = parseHeaders(event);
+            headers.put("x-dlq-origin-topic",
+                    headers.getOrDefault("x-dlq-origin-topic", event.getTopic()));
+            headers.put("x-dlq-stage", "outbox-publish");
+            headers.put("x-dlq-reason", String.valueOf(e.getMessage()));
+            var disposition = claimService.markFailure(event, e.getMessage(), json.toJson(headers));
+            if (disposition == OutboxClaimService.FailureDisposition.STALE_CLAIM) {
+                LOG.warn("Ignored failure from stale outbox claim event={}", event.getId());
+            } else if (disposition == OutboxClaimService.FailureDisposition.DLQ_PENDING) {
+                LOG.error("Outbox event {} remains recoverable as DLQ_PENDING", event.getId(), e);
             } else {
                 LOG.warn("Outbox publish failed event={} (will retry)", event.getId(), e);
             }
             return false;
-        }
-    }
-
-    private void routeToDlq(OutboxEvent event, Exception e) {
-        try {
-            Map<String, String> headers = parseHeaders(event);
-            headers.put("x-dlq-origin-topic", event.getTopic());
-            headers.put("x-dlq-reason", String.valueOf(e.getMessage()));
-            publisher.send(Topics.DLQ, event.getKey(), event.getPayload(), headers);
-            metrics.recordDlq();
-        } catch (Exception dlqEx) {
-            LOG.error("Failed to route outbox event {} to DLQ", event.getId(), dlqEx);
         }
     }
 

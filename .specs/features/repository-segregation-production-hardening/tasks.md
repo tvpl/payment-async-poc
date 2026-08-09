@@ -607,6 +607,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T28: Tornar DLQ recuperável até confirmação
 
+**Status:** Complete
+
 **What:** Introduzir estados `DLQ_PENDING`/`DLQ_PUBLISHED`, backoff, lease e alerta sem `FAILED` terminal anterior ao ack.  
 **Where:** `payment-sbus/src/main/java/com/example/payments/sbus/outbox`  
 **Depends on:** T27  
@@ -617,6 +619,36 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(sbus): make dead letter delivery recoverable`
+
+**Gate evidence:** A migration append-only V9 adicionou `claim_token`, `dlq_started_at` e o índice parcial da fila `DLQ_PENDING`, preservando V1–V8 e ampliando o manifesto SHA-256 até V9. O full gate passou 62 testes. Nove ITs PostgreSQL reais provaram persistência anterior ao retorno do consumer, falha de broker com backoff, ack como única fronteira terminal, reclaim após crash send/mark com payload/headers exatos, claim concorrente, fencing de updates, exclusão do send com advisory lock de sessão, sinal contínuo entre pending/in-progress e exaustão sem novo `FAILED`. O send Kafka tem timeout total configurado e cancelamento testado. Seis unit tests do scheduler provaram identidade inclusive sem key, headers, bytes, deduplicação e propagação de falha; os testes de métricas/alerta provaram count/oldest age unconfirmed, threshold e severidade de `PaymentSbusRecoverableDlqStuck`. Os validadores de spec/tasks e `check_root_governance.py` passaram sem warnings. O gate de equivalência continua listando explicitamente o conjunto já conhecido de raízes/scripts extraídos e agora V9/código/testes T28 contra o baseline histórico pré-migração; esse baseline não foi alterado para mascarar a divergência intencional.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| DLQ é durável antes do commit do offset | `RecoverableDeadLetterIT.java:101-114` — row `DLQ_PENDING`, tópico, bytes e trace exatos | retorno normal só ocorre após persistência recuperável | ✅ |
+| PAY-07: falha de DLQ continua recuperável e alertável | `RecoverableDeadLetterIT.java:117-133` — publish falha, status permanece `DLQ_PENDING`, attempts/error/backoff e count `1`; `SbusMetricsUnitTest.java:14-26` e `SbusAlertContractTest.java:12-20` — count/age e alerta crítico `>300s` por `5m` | nenhum terminal silencioso e backlog travado gera sinal acionável | ✅ |
+| Ack é a única fronteira terminal | `RecoverableDeadLetterIT.java:136-149` — somente publish bem-sucedido produz `DLQ_PUBLISHED` com mesmos bytes | terminal após confirmação do broker | ✅ |
+| PAY-06: crash send/mark republica mesma identidade | `RecoverableDeadLetterIT.java:152-182` — mesma key, ambos payloads e trace/correlation/causation/stage exatos | janela at-least-once explícita e compatível com dedupe downstream | ✅ |
+| PAY-05: duas instâncias não compartilham claim | `RecoverableDeadLetterIT.java:185-201` — duas transações concorrentes somam uma única row | `FOR UPDATE SKIP LOCKED` impede claim inicial concorrente | ✅ |
+| PAY-05: lease expirada possui ownership/fencing | `RecoverableDeadLetterIT.java:204-222` — token A != B; success A afeta `0`, failure A retorna `STALE_CLAIM`, token/estado B intactos e somente B conclui | owner tardio não sobrescreve owner atual nem terminal | ✅ |
+| PAY-05: publicação não sobrepõe após reclaim | `RecoverableDeadLetterIT.java:225-257` — send A bloqueado; reaper+B claim; B não chama publisher; após A liberar, recovery B publica | advisory lock de sessão cobre todo o I/O fora da transação | ✅ |
+| PAY-07: alerta não zera durante claim | `RecoverableDeadLetterIT.java:260-275` — count permanece `1`, `dlq_started_at` não muda e oldest age não diminui em `IN_PROGRESS` | `for:5m` observa trabalho até ack | ✅ |
+| Publish Kafka é limitado | `KafkaPublisherUnitTest.java:23-37` — get usa `10ms`, timeout propaga e delivery é cancelada | lock é liberado mesmo com broker bloqueado | ✅ |
+| Exaustão não cria `FAILED` terminal | `RecoverableDeadLetterIT.java:278-294` — retry normal, depois `DLQ_PENDING`/DLQ e nunca `FAILED` | trabalho permanece recuperável até ack | ✅ |
+| Identidade, payload e headers são determinísticos | `DurableDeadLetterSchedulerUnitTest.java:41-115` — bytes, coordenadas, stage, trace, reason, duplicate result e fallback sem key | redelivery não duplica schedule nem reconstrói payload | ✅ |
+| Falha do banco impede retorno normal | `DurableDeadLetterSchedulerUnitTest.java:84-91` — exception de storage propaga | consumer não pode confirmar offset sem DLQ durável | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `RecoverableDeadLetterIT.java:101-149` | PAY-07 e fronteira persistência/backoff/ack | ✅ |
+| `RecoverableDeadLetterIT.java:152-257` | PAY-05/06, crash, concorrência, fencing e lock durante send | ✅ |
+| `RecoverableDeadLetterIT.java:260-294` | PAY-07, sinal contínuo e ausência de terminal silencioso | ✅ |
+| `KafkaPublisherUnitTest.java:23-37` | PAY-05, tempo máximo de posse do lock | ✅ |
+| `DurableDeadLetterSchedulerUnitTest.java:41-115` | Done-when T28, dedupe/headers/falha/key ausente | ✅ |
+| `SbusMetricsUnitTest.java:14-26`; `SbusAlertContractTest.java:12-20` | PAY-07, idade e regra de alerta owned | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária após corrigir os findings dos dois ciclos do verifier. Os ITs verificam estado persistido, cardinalidade, token de ownership, fencing de sucesso/falha tardios e exclusão real durante o send: o segundo publisher é observado com zero interações enquanto o primeiro mantém o lock de sessão. O timeout limitado garante liberação mesmo com broker bloqueado. Backoff, bytes e headers completos são afirmados, não apenas chamadas. O cenário de crash assume entrega at-least-once e comprova a republicação com a mesma identidade; a equivalência downstream já é coberta em T21, enquanto o gate da API permanece em sua tarefa proprietária. `dlq_started_at` não é resetado por claim/reaper, e métricas `unconfirmed` incluem `DLQ_PENDING` e `IN_PROGRESS`, sustentando a regra owned até ack. O enum legado `FAILED` continua legível para compatibilidade histórica, mas nenhum caminho T28 o grava. Não há teste especulativo, enfraquecimento de gate ou SPEC_DEVIATION.
+
+**Independent verifier:** PASS após dois ciclos de findings corrigidos. O verifier executou novamente 62/62 testes, validadores spec/tasks, root governance e `git diff --check`; confirmou lock de sessão durante todo o broker I/O, fencing de updates, recovery, dados exatos, sinal contínuo até ack, alerta owned, V1–V8 byte-identical e manifesto V1–V9 válido. Sensor discriminatório `NOT_RUN` conforme regra read-only sobre worktree suja; nenhuma evidência foi inferida desse sensor.
 
 #### T29: Alinhar políticas de dependência e retenção
 

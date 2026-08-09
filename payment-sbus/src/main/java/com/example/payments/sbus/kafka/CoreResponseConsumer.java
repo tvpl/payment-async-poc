@@ -38,7 +38,7 @@ public class CoreResponseConsumer {
         try {
             handler.handle(Topics.CORE_RESPONSE, record.value(), headers);
         } catch (PoisonMessageException poison) {
-            retryPublisher.routeToDlq(Topics.CORE_RESPONSE, record.key(), record.value(), headers, poison, "poison");
+            retryPublisher.routeToDlq(Topics.CORE_RESPONSE, record, headers, poison, "poison");
         } catch (RuntimeException transientError) {
             LOG.warn("Transient failure on core-response key={} -> retry topic", record.key(), transientError);
             retryPublisher.scheduleFirstRetry(Topics.CORE_RESPONSE, record, headers, transientError);

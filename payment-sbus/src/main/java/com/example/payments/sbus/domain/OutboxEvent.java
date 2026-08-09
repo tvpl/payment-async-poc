@@ -8,6 +8,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Transactional outbox row. Written in the same DB transaction as the business
@@ -40,6 +41,8 @@ public class OutboxEvent {
     private int attempts;
     private Instant nextAttemptAt;
     private Instant claimedAt;
+    private UUID claimToken;
+    private Instant dlqStartedAt;
 
     @DateCreated
     private Instant createdAt;
@@ -142,6 +145,22 @@ public class OutboxEvent {
 
     public void setClaimedAt(Instant claimedAt) {
         this.claimedAt = claimedAt;
+    }
+
+    public UUID getClaimToken() {
+        return claimToken;
+    }
+
+    public void setClaimToken(UUID claimToken) {
+        this.claimToken = claimToken;
+    }
+
+    public Instant getDlqStartedAt() {
+        return dlqStartedAt;
+    }
+
+    public void setDlqStartedAt(Instant dlqStartedAt) {
+        this.dlqStartedAt = dlqStartedAt;
     }
 
     public Instant getCreatedAt() {
