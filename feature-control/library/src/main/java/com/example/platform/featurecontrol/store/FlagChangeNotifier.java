@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
  * its cached copy immediately, instead of waiting up to {@code cache-ttl}. Called by
  * {@link com.example.platform.featurecontrol.admin.FlagAdminService} after a write. Best-effort: if
  * the publish fails, the {@code cache-ttl} still guarantees eventual convergence.
+ *
+ * <p>The payload embeds the publish timestamp ({@code <flagName-or-*>|<epochMillis>}) so a receiving
+ * {@link FlagChangeSubscriber} can measure and alert on convergence latency (FTR-03).
  */
 @Singleton
 @Requires(beans = RedisClient.class)
@@ -34,7 +37,7 @@ public class FlagChangeNotifier {
     /** Announce that {@code flagName} changed (or {@code *} to invalidate everything). */
     public void publish(String flagName) {
         try {
-            redis.commands().publish(channel, flagName);
+            redis.commands().publish(channel, flagName + "|" + System.currentTimeMillis());
         } catch (Exception e) {
             LOG.debug("flag-change publish failed for {} ({}); cache-ttl will converge", flagName, e.getMessage());
         }

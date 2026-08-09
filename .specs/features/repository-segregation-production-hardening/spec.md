@@ -339,7 +339,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | CAP-07 | Capacidade | Tasks | In Tasks |
 | FTR-01 | Feature control | Execute | T47 bounds name/percentage/version/salt/labels and rejects invalid VARIANT/ALLOWLIST combinations in `FlagDefinition`'s single construction choke point (YAML, admin write and Redis deserialization all go through it) complete |
 | FTR-02 | Feature control | Execute | T48 bounds last-known-good to `max-stale`, adds a `BASELINE`/`FAIL_CLOSED` fallback, an observable `ageOf` accessor and single-flight+jitter cache refresh in `RedisFlagSource`, verified against real Redis complete |
-| FTR-03 | Feature control | Tasks | In Tasks |
+| FTR-03 | Feature control | Execute | T49 closes partial connections on subscribe failure (no leak), reconnects with capped backoff+jitter (`ReconnectBackoff`), and measures/alerts multi-instance convergence (`ConvergenceTracker`, verified with two real subscriber instances against real Redis) complete |
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |

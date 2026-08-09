@@ -20,6 +20,11 @@ import java.time.Duration;
  *       does once {@code max-stale} is exceeded (or nothing was ever fetched): defer to the YAML
  *       baseline, or force the flag off (FTR-02).</li>
  *   <li>{@code key-prefix} — Redis key namespace for flags ({@code <prefix><flag>}).</li>
+ *   <li>{@code convergence-alert-threshold} — the approved limit for how long a change may take to
+ *       reach an instance after publish before {@code ConvergenceTracker} logs a degradation alert
+ *       (FTR-03).</li>
+ *   <li>{@code pubsub-reconnect-base-delay}/{@code pubsub-reconnect-max-delay} — bounds for the
+ *       jittered backoff {@code FlagChangeSubscriber} uses between reconnect attempts (FTR-03).</li>
  * </ul>
  */
 @ConfigurationProperties("platform.features")
@@ -32,6 +37,9 @@ public class FeatureSettings {
     private StaleFallback staleFallback = StaleFallback.BASELINE;
     private String keyPrefix = "feature:";
     private boolean masterEnabled = true;
+    private Duration convergenceAlertThreshold = Duration.ofSeconds(2);
+    private Duration pubsubReconnectBaseDelay = Duration.ofMillis(200);
+    private Duration pubsubReconnectMaxDelay = Duration.ofSeconds(30);
 
     public boolean isRedisEnabled() {
         return redisEnabled;
@@ -88,5 +96,29 @@ public class FeatureSettings {
 
     public void setKeyPrefix(String keyPrefix) {
         this.keyPrefix = keyPrefix;
+    }
+
+    public Duration getConvergenceAlertThreshold() {
+        return convergenceAlertThreshold;
+    }
+
+    public void setConvergenceAlertThreshold(Duration convergenceAlertThreshold) {
+        this.convergenceAlertThreshold = convergenceAlertThreshold;
+    }
+
+    public Duration getPubsubReconnectBaseDelay() {
+        return pubsubReconnectBaseDelay;
+    }
+
+    public void setPubsubReconnectBaseDelay(Duration pubsubReconnectBaseDelay) {
+        this.pubsubReconnectBaseDelay = pubsubReconnectBaseDelay;
+    }
+
+    public Duration getPubsubReconnectMaxDelay() {
+        return pubsubReconnectMaxDelay;
+    }
+
+    public void setPubsubReconnectMaxDelay(Duration pubsubReconnectMaxDelay) {
+        this.pubsubReconnectMaxDelay = pubsubReconnectMaxDelay;
     }
 }
