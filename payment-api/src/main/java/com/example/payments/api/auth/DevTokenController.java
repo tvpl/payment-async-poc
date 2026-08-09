@@ -1,5 +1,6 @@
 package com.example.payments.api.auth;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
@@ -18,9 +19,13 @@ import java.util.Map;
 /**
  * Dev-only JWT issuer so the v0 route can be exercised with curl (e.g. mint a token in the
  * {@code v0-testers} group). Not for production — real tokens come from your IdP.
+ *
+ * <p>{@code @Requires(notEnv = "prod")} excludes both the bean and its route from the production
+ * bean graph/HTTP surface (SEC-02): the route does not exist in prod, it does not just reject.
  */
 @Controller("/auth")
 @Secured(SecurityRule.IS_ANONYMOUS)
+@Requires(notEnv = "prod")
 public class DevTokenController {
 
     private final TokenGenerator tokenGenerator;

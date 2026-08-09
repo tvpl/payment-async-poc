@@ -302,11 +302,11 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SBX-04 | Sandbox único | Execute | T16 four profile combinations, synthetic 8085 collision and missing-variable validation complete |
 | SBX-05 | Sandbox único | Execute | T15 common telemetry profiles and empty versioned application-asset manifest complete; owner assets pending |
 | SBX-06 | Sandbox único | Execute | T14 nine capacity probes, dependency-specific failure and recovery complete; application startup gates pending |
-| SEC-01 | Segurança e operação | Execute | T3 hygiene and T25 SBUS production startup guard complete; remaining owner guards pending |
-| SEC-02 | Segurança e operação | Tasks | In Tasks |
-| SEC-03 | Segurança e operação | Execute | T25 SBUS requires RSA JWKS, issuer, audience, expiration and strict clock policy; remaining applications pending |
-| SEC-04 | Segurança e operação | Execute | T25 SBUS internal status requires tested ROLE_PAYMENT_API service identity; remaining endpoints pending |
-| SEC-05 | Segurança e operação | Execute | T25 SBUS exposes only liveness/readiness anonymously and protects aggregate health/metrics; remaining apps pending |
+| SEC-01 | Segurança e operação | Execute | T3 hygiene, T25 SBUS and T32 API production startup guards complete; remaining owner guards pending |
+| SEC-02 | Segurança e operação | Execute | T32 API dev token issuer excluded from the prod bean graph/route (`@Requires(notEnv=prod)`, no HS256 secret in prod); remaining demo surfaces pending |
+| SEC-03 | Segurança e operação | Execute | T25 SBUS and T32 API require RSA JWKS, issuer, audience, expiration and strict clock policy; remaining applications pending |
+| SEC-04 | Segurança e operação | Execute | T25 SBUS internal status and T32 API admin/business endpoints require tested identity/role policy; remaining endpoints pending |
+| SEC-05 | Segurança e operação | Execute | T25 SBUS and T32 API expose only liveness/readiness anonymously and protect aggregate health/metrics/unlisted endpoints; remaining apps pending |
 | SEC-06 | Segurança e operação | Execute | T3 complete |
 | SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core and T30 SBUS images are tag+digest pinned with non-root/read-only runtime gates; remaining applications pending |
 | SEC-08 | Segurança e operação | Execute | T30 SBUS CI builds image, generates SPDX SBOM and blocks HIGH/CRITICAL Trivy findings; remaining boundaries pending |

@@ -3,3 +3,16 @@
 otel:
   traces:
     exporter: none
+
+# HS256 shared-secret signing/validation — dev/local only, so DevTokenController can mint tokens
+# for manual v0 testing. Never present in production (see application-prod.yml, which validates
+# asymmetric JWTs against the IdP's JWKS instead).
+micronaut:
+  security:
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_SIGNATURE_SECRET}
+              jws-algorithm: HS256

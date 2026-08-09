@@ -59,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class ApiFlowIT {
 
     private static final String API_KEY = "test-only-api-key";
+    private static final String TEST_JWT_SECRET = "test-only-api-signing-secret-with-at-least-32-bytes";
 
     static final KafkaContainer KAFKA =
             new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
@@ -96,7 +97,9 @@ class ApiFlowIT {
                 "redis.uri", REDIS.getRedisURI(),
                 "apicurio.registry.url", registryUrl(),
                 "payment.simulation.wait-timeout", "1s",
-                "payment.security.api-keys", java.util.List.of(API_KEY));
+                "payment.security.api-keys", java.util.List.of(API_KEY),
+                "micronaut.security.token.jwt.signatures.secret.generator.secret", TEST_JWT_SECRET,
+                "micronaut.security.token.jwt.signatures.secret.generator.jws-algorithm", "HS256");
     }
 
     @Test

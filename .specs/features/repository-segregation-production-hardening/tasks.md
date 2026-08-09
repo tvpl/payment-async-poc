@@ -750,6 +750,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T32: Fechar autenticação e management produtivos da API
 
+**Status:** Complete
+
 **What:** Remover token issuer do bean graph PRD, exigir JWT assimétrico/issuer/audience e restringir rotas/management.  
 **Where:** `payment-api/src/main/java/com/example/payments/api/auth`  
 **Depends on:** T31  
@@ -759,7 +761,29 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Done when:** profile PRD inválido falha; dev route não existe em PRD; auth/role/audience/issuer/management têm ≥10 ITs novos.  
 **Tests:** integration  
 **Gate:** full  
-**Commit:** `security(api): enforce production jwt and route policy`
+**Commit:** `fix(api): enforce production jwt and route policy` (template said `security(...)`, not an allowed Conventional Commit type per `check_commit.py`; `fix` matches T25's precedent for the identical requirement set)
+
+**Gate evidence:** `DevTokenController` ganhou `@Requires(notEnv = "prod")`, excluindo bean e rota do bean graph produtivo (não apenas rejeitando a chamada). O segredo HS256 (`token.jwt.signatures.secret.generator`), antes declarado incondicionalmente no `application.yml` base, foi movido para `application-dev.yml` — produção nunca declara `secret:`, eliminando um validador simétrico paralelo que aceitaria um JWT forjado mesmo com JWKS assimétrico configurado. `application-prod.yml` passou a exigir `jwks` RSA, `issuer`, `audience`, `expiration: true`, `not-before: true` e `payment.security.clock-skew: 0s`. `ProductionSecurityGuard` (novo, `payment-api/src/main/java/com/example/payments/api/config/ProductionSecurityGuard.java`) falha o startup em produção quando JWKS/issuer não são HTTPS válidos, audience está ausente, clock-skew ≠ 0s, `payment.security.enabled` é falso, ou a lista de API keys está vazia/em branco/usa o default de desenvolvimento (`dev-key-change-me`). `intercept-url-map` foi reescrito com padrões explícitos por rota (`/health/liveness`, `/health/readiness`, `/auth/**`, `/admin/**`, `/payment-simulations/**`, `/v0/payment-simulations/**`, catch-all `isAuthenticated()`), e `endpoints.all.enabled` passou de `true`/`sensitive:false` para `false`, com apenas `health` (`details-visible: NEVER`) e `prometheus` (`sensitive: true`) habilitados — mesma política já auditada em T25/SBUS. O full gate (`./gradlew test -PwithIT --no-daemon`, `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados) passou **34/34 testes**: os 10 de T31 mais 24 novos (`ApiSecurityIT` com 12, `ProductionProfileIT` com 3, `ProductionSecurityGuardUnitTest` com 8, uma unidade a mais que o Done-when pede) sem redução de nenhum teste anterior.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| SEC-01: startup produtivo inválido falha | `ProductionProfileIT.java:80-92` — `assertThrows(RuntimeException.class, ...start())` e mensagem `"JWT audience is required in production"` | contexto não inicia com audience inválida | ✅ |
+| SEC-01: defaults de desenvolvimento recusados | `ProductionSecurityGuardUnitTest.java:60-73` — `assertThrows` para API key ausente, vazia, em branco e default `dev-key-change-me` | nenhum default de dev sobrevive ao guard produtivo | ✅ |
+| SEC-02: dev token issuer fora do bean graph/rota em PRD | `ProductionProfileIT.java:96-101` — `assertEquals(HttpStatus.NOT_FOUND, ...)` sobre POST `/auth/token` em contexto `prod` real; `ApiSecurityIT.java:99-103` prova a mesma rota existe (200) fora de produção | rota inexistente em produção, existente fora dela — não apenas bloqueada | ✅ |
+| SEC-03: assimétrico, issuer/audience/exp/nbf e sem secret compartilhado | `ProductionProfileIT.java:62-70` — assertions sobre `application-prod.yml` (`jwks:`, `issuer:`, `audience:`, `expiration: true`, `not-before: true`, ausência de `secret:`) | profile produtivo não aceita HS256 nem claims incompletas | ✅ |
+| SEC-04: admin exige `ROLE_ADMIN`; business endpoint documentado/testado | `ApiSecurityIT.java:64-79` — `401`/`401`/`403`/`204` para anônimo, token malformado, role errada e `ROLE_ADMIN`; `:81-84` — `401` sem `X-API-Key` | matriz de identidade do endpoint admin e do endpoint de negócio provada | ✅ |
+| SEC-05: management mínimo anônimo, resto autenticado | `ApiSecurityIT.java:106-124` — liveness/readiness `200` anônimo, `/health` e `/prometheus` `401`, `/beans` e `/env` `404` (endpoint desabilitado) | apenas probes mínimos são públicos; endpoints não listados nem existem | ✅ |
+| Config tipada/guardada (demais combinações) | `ProductionSecurityGuardUnitTest.java:20-77` — `assertDoesNotThrow` válido e seis `assertThrows(ConfigurationException.class, ...)` para JWKS inseguro, issuer inseguro, clock-skew ≠ 0, auth de API key desabilitada, lista vazia e chave em branco | cada branch do guard tem resultado exato | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `ProductionProfileIT.java:62-92` — texto do profile e falha de startup | SEC-01, SEC-03, Done-when T32 | ✅ |
+| `ProductionProfileIT.java:96-101`; `ApiSecurityIT.java:99-103` — ausência/presença da rota dev | SEC-02, Done-when T32 | ✅ |
+| `ApiSecurityIT.java:64-84` — matriz admin e business endpoint | SEC-04, Done-when T32 | ✅ |
+| `ApiSecurityIT.java:87-91,106-124` — v0 self-enforced e matriz management | SEC-04/SEC-05 | ✅ |
+| `ProductionSecurityGuardUnitTest.java:20-77` — validações puras | SEC-01/03 e edge cases do guard | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Cada rota tem happy/denied/error observável (status HTTP exato, não apenas "não lança exceção"), e cada branch do guard tem resultado exato via `ConfigurationException`. O segredo HS256 nunca é observável em `application-prod.yml` nem ativo num contexto `prod` real — `ProductionProfileIT.devTokenRouteAbsentInProduction` prova isso executando um `EmbeddedServer` produtivo de verdade contra Kafka/Redis/Apicurio reais, não apenas lendo texto. O baseline de T31 (10 testes) foi preservado integralmente; nenhuma asserção anterior foi enfraquecida. `endpoints.all.enabled=false` e `details-visible: NEVER` replicam exatamente a política já aprovada em T25 (SBUS) para o mesmo requisito SEC-05, evitando reinventar uma política divergente entre fronteiras irmãs. Escopo de T33–T37 (idempotência com fingerprint, recuperação de publish, waiter/MDC, consumo failure-safe, admissão e pacote produtivo) permanece explicitamente fora desta tarefa. Não há SPEC_DEVIATION em T32.
 
 #### T33: Implementar reserva idempotente com fingerprint
 
@@ -1036,7 +1060,7 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Done when:** rotas demo/admin não aparecem em PRD, exemplos têm label e documentação/CI/publication gates passam; ≥6 security ITs.  
 **Tests:** integration + structural  
 **Gate:** build  
-**Commit:** `security(feature-control): isolate nonproduction examples`
+**Commit:** `fix(feature-control): isolate nonproduction examples` (not `security(...)` — not an allowed Conventional Commit type per `check_commit.py`; see T32's note)
 
 ### Phase 9 — Integração, capacidade e encerramento da migração
 
