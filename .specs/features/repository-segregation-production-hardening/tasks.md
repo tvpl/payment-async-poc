@@ -877,6 +877,8 @@ Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PA
 
 #### T35: Limitar waiter, MDC e fallback de status
 
+**Status:** Complete
+
 **What:** Garantir cleanup em todos os caminhos, budgets/shutdown e client SBUS com timeout/circuit/service identity.  
 **Where:** `payment-api/src/main/java/com/example/payments/api/coordination`  
 **Depends on:** T34  
@@ -887,6 +889,48 @@ Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PA
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(api): bound response coordination lifecycle`
+
+**Gate evidence:** Auditando o caminho de coordenação herdado de `7de39fb` contra PAY-10 e PAY-09, três lacunas reais foram encontradas. (1) **MDC vazava em toda saída que não fosse o caminho feliz**: `MDC.clear()` estava numa linha solta após `coordinator.await(...)`, então uma `PublishFailedException` (ou qualquer falha de `store.save`/`markPublishState`) devolvia a thread ao pool ainda carregando `requestId`/`correlationId`/`traceId` do request anterior — logs da requisição seguinte herdariam a identidade errada. O bloco passou a ser `try { ... } finally { MDC.clear(); }`, cobrindo resultado, timeout, interrupção, shutdown e falha de publicação. (2) **Shutdown não removia o registro local**: `close()` completava os futures excepcionalmente mas nunca esvaziava o mapa `waiters`; PAY-10 exige remover MDC **e registro local** em todos os caminhos, e shutdown é um deles — foi adicionado `waiters.clear()`. (3) **`register()` durante o shutdown criava um waiter órfão**: uma requisição que chegasse depois do `@PreDestroy` entrava no mapa recém-esvaziado e estacionava pelo budget inteiro contra uma API que está morrendo; `register` passou a devolver um future já liberado, sem registrar nada.
+
+Para PAY-09, o fallback de status durável não tinha nenhum limite: `@Client("${sbus.base-url}")` usava o timeout default do cliente HTTP e `fromSbus` engolia a exceção, de modo que um SBUS lento esticava toda consulta de status e cada requisição pagava esse custo indefinidamente. O client passou a ser declarado por service id (`@Client(id = "sbus")`), com `connect-timeout`/`read-timeout` explícitos em `micronaut.http.services.sbus`, e cada chamada carrega o header `X-Service-Name` com a identidade do chamador. `SbusStatusGateway` (novo, no pacote `coordination` desta tarefa) acrescenta a política de falha: o timeout HTTP limita **uma** chamada, o circuito limita o custo **repetido**, com `failure-threshold`/`open-duration` tipados e validados no startup por `SbusFallbackProperties`. O fallback continua best-effort por design: um SBUS indisponível degrada para "nenhuma informação adicional", nunca para um erro ao cliente.
+
+Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados) passou **94/94 testes, 0 falhas, 0 skipped**: os 73 de T31–T34 mais 21 novos (`ResponseCoordinatorUnitTest` 8, `SbusStatusGatewayUnitTest` 7, `SbusFallbackBudgetIT` 2 contra um SBUS stub genuinamente lento, `ApiPaymentServiceUnitTest` +4 de MDC). Nenhum teste anterior foi removido, pulado ou enfraquecido.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| PAY-10: waiter termina por resultado e o registro é removido | `ResponseCoordinatorUnitTest.java:54-55` — `assertEquals(Optional.of(terminal), result)` e `assertEquals(0, coordinator.pendingCount())` | resultado devolvido e registro local zerado | ✅ |
+| PAY-10: waiter termina por timeout dentro do budget | `ResponseCoordinatorUnitTest.java:67-70` — `Optional.empty()`, `pendingCount()==0`, `elapsed >= WAIT_TIMEOUT` e `elapsed < WAIT_TIMEOUT×10` | espera termina no orçamento, nem antes nem indefinidamente | ✅ |
+| PAY-10: waiter termina por interrupção, com flag preservada | `ResponseCoordinatorUnitTest.java:93-96` — retorno em ≤2s, `Optional.empty()`, `assertTrue(interruptFlagRestored.get())`, `pendingCount()==0` | interrupção encerra a espera sem engolir o sinal | ✅ |
+| PAY-10: waiter termina por shutdown e o registro é limpo | `ResponseCoordinatorUnitTest.java:107` — `assertEquals(0, coordinator.pendingCount())` após `close()` com três waiters | shutdown é caminho de terminação como os demais | ✅ |
+| PAY-10: shutdown não queima o budget restante | `ResponseCoordinatorUnitTest.java:131-133` — espera de 30s liberada em ≤5s, `Optional.empty()`, `pendingCount()==0` | shutdown libera conexões em vez de segurá-las | ✅ |
+| PAY-10: registro tardio não fica órfão | `ResponseCoordinatorUnitTest.java:142-144` — `assertTrue(future.isDone())`, `await` vazio, `pendingCount()==0` | request pós-shutdown não estaciona nem registra | ✅ |
+| PAY-10: status não terminal não é resultado | `ResponseCoordinatorUnitTest.java:156-157` — `pendingCount()==1` e `assertFalse(...isDone())` com `PENDING` no store | só estado terminal libera o waiter | ✅ |
+| PAY-10: registro duplicado não multiplica waiter | `ResponseCoordinatorUnitTest.java:165-166` — `assertSame(first, second)` e `pendingCount()==1` | registro local é idempotente | ✅ |
+| PAY-10: MDC removido no caminho de resultado | `ApiPaymentServiceUnitTest.java:209-211` — `assertNull(MDC.get("requestId"/"correlationId"/"traceId"))` | thread devolvida limpa | ✅ |
+| PAY-10: MDC removido no timeout | `ApiPaymentServiceUnitTest.java:221-223` — as mesmas três assertions após submit com timeout | idem | ✅ |
+| PAY-10: MDC removido quando o publish falha | `ApiPaymentServiceUnitTest.java:233-235` — as mesmas três assertions após `PublishFailedException` | caminho de exceção não vaza identidade | ✅ |
+| PAY-10: MDC removido quando o shutdown libera o waiter | `ApiPaymentServiceUnitTest.java:245-247` — as mesmas três assertions após `IllegalStateException("API shutting down")` | quarto caminho de terminação coberto | ✅ |
+| PAY-09: fallback identifica o serviço chamador | `SbusStatusGatewayUnitTest.java:52-53` — `assertEquals(Optional.of(response), result)` e `verify(client).getStatus("req-1", SERVICE_NAME)` | identidade de serviço viaja em toda chamada | ✅ |
+| PAY-09: SBUS indisponível degrada, não falha | `SbusStatusGatewayUnitTest.java:60` — `assertEquals(Optional.empty(), gateway.getStatus("req-1"))` | fallback é best-effort, nunca erro ao cliente | ✅ |
+| PAY-09: circuito abre e para de gastar o timeout | `SbusStatusGatewayUnitTest.java:70-73` — `assertTrue(gateway.circuitOpen())` e `verify(client, never()).getStatus(eq("req-after-open"), ...)` | custo repetido limitado, não só o custo unitário | ✅ |
+| PAY-09: circuito fecha após a janela | `SbusStatusGatewayUnitTest.java:85-87` — `assertFalse(circuitOpen())` e `verify(client).getStatus(eq("req-recheck"), ...)` | indisponibilidade não é permanente | ✅ |
+| PAY-09: falhas isoladas não abrem o circuito | `SbusStatusGatewayUnitTest.java:102-103` — `assertFalse(circuitOpen())` e `verify(client, times(2))` após sucesso intercalado | só falha consecutiva conta | ✅ |
+| PAY-09: política de falha inválida falha no startup | `SbusStatusGatewayUnitTest.java:111,119` — `assertThrows(ConfigurationException.class, invalid::validate)` para `open-duration` zero e threshold < 1 | circuito sem limite não passa da configuração | ✅ |
+| Done-when: fallback não excede budget (fim a fim) | `SbusFallbackBudgetIT.java:113-115` — `assertEquals(HttpStatus.NOT_FOUND, ...)` e `assertTrue(elapsed < SBUS_DELAY)` contra um SBUS stub que dorme 5s | consulta não herda a lentidão real do SBUS | ✅ |
+| Done-when: budget repetido também limitado (fim a fim) | `SbusFallbackBudgetIT.java:129-132` — `assertEquals(callsBeforeOpen, SBUS_CALLS.get())` e `assertTrue(elapsed < READ_BUDGET)` | circuito aberto não chama o SBUS nem paga o read budget | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `ResponseCoordinatorUnitTest.java:54-55,67-70,93-96` | PAY-10 result/timeout/interruption | ✅ |
+| `ResponseCoordinatorUnitTest.java:107,131-133,142-144` | PAY-10 shutdown e registro tardio | ✅ |
+| `ResponseCoordinatorUnitTest.java:156-157,165-166` | PAY-10 integridade do registro local | ✅ |
+| `ApiPaymentServiceUnitTest.java:209-247` | PAY-10 MDC nos quatro caminhos | ✅ |
+| `SbusStatusGatewayUnitTest.java:52-53,60` | PAY-09 identidade e degradação | ✅ |
+| `SbusStatusGatewayUnitTest.java:70-73,85-87,102-103` | PAY-09 circuito (abre/fecha/discrimina) | ✅ |
+| `SbusStatusGatewayUnitTest.java:111,119` | PAY-09 validação da política | ✅ |
+| `SbusFallbackBudgetIT.java:113-115,129-132` | Done-when "fallback não excede budget" | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Os quatro caminhos de terminação nomeados por PAY-10 (resultado, timeout, interrupção, shutdown) têm cada um um teste com **duas** asserções distintas — o desfecho da espera e `pendingCount()==0` — e o MDC é verificado por chave nomeada, não por "não lançou exceção". Os três bugs pré-existentes têm teste que falharia antes: `leavesNoMdcBehindWhenThePublishFails` (o `MDC.clear()` era inalcançável na exceção), `shutdownReleasesEveryWaiterAndClearsTheLocalRegistry` (o mapa nunca era esvaziado) e `registeringAfterShutdownLeavesNoWaiterBehind` (o waiter tardio entrava no mapa). O budget do fallback é provado nos dois níveis que importam: o unitário mostra o mecanismo (zero chamadas com o circuito aberto) e o IT mostra o efeito observável contra um servidor HTTP que realmente dorme 5 segundos, com asserção sobre tempo decorrido e sobre a contagem real de chamadas recebidas pelo stub. `anInterveningSuccessKeepsTheCircuitClosed` é o controle negativo: sem ele, um circuito que contasse falhas totais em vez de consecutivas passaria em todo o resto. Limites de admissão por recurso/tenant e falha fechada sob Redis indisponível continuam explicitamente com T37 (CAP-03), que os possui por `Where` e por requisito; esta tarefa não tocou `ratelimit`/`filter`. Não há SPEC_DEVIATION em T35.
 
 #### T36: Tornar consumo de respostas failure-safe
 

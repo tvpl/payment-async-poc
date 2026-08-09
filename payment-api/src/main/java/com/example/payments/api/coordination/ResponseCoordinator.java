@@ -87,8 +87,17 @@ public class ResponseCoordinator {
         }
     }
 
-    /** Registers a waiter for the given request. Idempotent. */
+    /**
+     * Registers a waiter for the given request. Idempotent.
+     *
+     * <p>Once shutdown has started the waiter is returned already released and is never put in
+     * the registry: a late request must not park for its full budget against an API that is
+     * going away, nor leave a registration nobody will drain (PAY-10).
+     */
     public CompletableFuture<StatusEntry> register(String requestId) {
+        if (shuttingDown) {
+            return CompletableFuture.failedFuture(new IllegalStateException("API shutting down"));
+        }
         return waiters.computeIfAbsent(requestId, k -> new CompletableFuture<>());
     }
 
@@ -143,9 +152,11 @@ public class ResponseCoordinator {
     @PreDestroy
     void close() {
         shuttingDown = true;
-        // Release blocked requests so they return 202 instead of hanging the connection.
+        // Release blocked requests so they return 202 instead of hanging the connection, and drop
+        // the registrations: shutdown is a termination path like any other (PAY-10).
         waiters.values().forEach(f ->
                 f.completeExceptionally(new IllegalStateException("API shutting down")));
+        waiters.clear();
         scheduler.shutdownNow();
         if (pubSub != null) {
             pubSub.close();

@@ -17,6 +17,14 @@ micronaut:
         descriptions: true
   # The BLOCKING executor is backed by virtual threads on JDK 21+, so the POST
   # handler can park cheaply while waiting for the async result.
+  http:
+    services:
+      # Durable status fallback. Best-effort by design, so its budget is explicit and small:
+      # the GET path must not inherit an unbounded wait from a slow SBUS (PAY-09).
+      sbus:
+        url: ${SBUS_BASE_URL:`http://localhost:8081`}
+        connect-timeout: 500ms
+        read-timeout: 800ms
   security:
     # JWT is used only to identify the caller for feature/v0 gating. The business endpoint stays
     # anonymous at this layer (guarded instead by the X-API-Key filter) and v0 self-enforces from
@@ -90,9 +98,11 @@ payment:
     enabled: ${PAYMENT_SECURITY_ENABLED:true}
     api-keys:
       - ${PAYMENT_API_KEY}
-
-sbus:
-  base-url: ${SBUS_BASE_URL:`http://localhost:8081`}
+  sbus:
+    # Circuit for the durable status fallback: stop paying the read-timeout on every request
+    # once the SBUS is consistently failing.
+    failure-threshold: 5
+    open-duration: 30s
 
 redis:
   uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}

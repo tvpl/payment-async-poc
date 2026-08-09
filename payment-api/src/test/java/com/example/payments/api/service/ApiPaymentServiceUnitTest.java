@@ -1,7 +1,7 @@
 package com.example.payments.api.service;
 
-import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.coordination.ResponseCoordinator;
+import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.IdempotencyConflictException;
@@ -17,6 +17,7 @@ import com.example.payments.common.model.SimulationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.MDC;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,7 +45,7 @@ class ApiPaymentServiceUnitTest {
     private PaymentRequestProducer producer;
     private AvroSerde avroSerde;
     private ApiMetrics metrics;
-    private SbusStatusClient sbusStatusClient;
+    private SbusStatusGateway sbusStatusGateway;
     private ApiPaymentService service;
 
     private static final PaymentSimulationRequest REQUEST = new PaymentSimulationRequest(
@@ -56,8 +58,8 @@ class ApiPaymentServiceUnitTest {
         producer = mock(PaymentRequestProducer.class);
         avroSerde = mock(AvroSerde.class);
         metrics = mock(ApiMetrics.class);
-        sbusStatusClient = mock(SbusStatusClient.class);
-        service = new ApiPaymentService(store, coordinator, producer, avroSerde, metrics, sbusStatusClient);
+        sbusStatusGateway = mock(SbusStatusGateway.class);
+        service = new ApiPaymentService(store, coordinator, producer, avroSerde, metrics, sbusStatusGateway);
 
         when(avroSerde.serialize(anyString(), any())).thenReturn(new byte[]{1});
         when(coordinator.register(anyString())).thenReturn(new CompletableFuture<>());
@@ -195,6 +197,54 @@ class ApiPaymentServiceUnitTest {
         assertEquals(published.getValue(), result.entry().requestId());
         assertEquals(SimulationStatus.SENT_TO_SBUS, result.entry().status());
         assertTrue(result.timedOut());
+    }
+
+    @Test
+    void leavesNoMdcBehindWhenTheResultArrives() {
+        when(coordinator.await(anyString(), any()))
+                .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
+
+        service.submit(REQUEST, "the-key");
+
+        assertNull(MDC.get("requestId"));
+        assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("traceId"));
+    }
+
+    @Test
+    void leavesNoMdcBehindWhenTheWaitTimesOut() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+
+        service.submit(REQUEST, "the-key");
+
+        assertNull(MDC.get("requestId"));
+        assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("traceId"));
+    }
+
+    @Test
+    void leavesNoMdcBehindWhenThePublishFails() {
+        doThrow(new RuntimeException("broker down"))
+                .when(producer).send(anyString(), anyString(), anyString(), any(), any());
+
+        assertThrows(PublishFailedException.class, () -> service.submit(REQUEST, "the-key"));
+
+        assertNull(MDC.get("requestId"));
+        assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("traceId"));
+    }
+
+    @Test
+    void leavesNoMdcBehindWhenTheWaiterIsReleasedByShutdown() {
+        when(coordinator.await(anyString(), any()))
+                .thenThrow(new IllegalStateException("API shutting down"));
+
+        assertThrows(IllegalStateException.class, () -> service.submit(REQUEST, "the-key"));
+
+        assertNull(MDC.get("requestId"));
+        assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("traceId"));
     }
 
     @Test

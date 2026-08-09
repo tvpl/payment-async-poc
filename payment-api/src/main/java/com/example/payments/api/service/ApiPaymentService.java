@@ -3,8 +3,8 @@ package com.example.payments.api.service;
 import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
-import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.client.SbusStatusResponse;
+import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
 import com.example.payments.api.idempotency.IdempotencyFingerprint;
@@ -47,20 +47,20 @@ public class ApiPaymentService {
     private final PaymentRequestProducer producer;
     private final AvroSerde avroSerde;
     private final ApiMetrics metrics;
-    private final SbusStatusClient sbusStatusClient;
+    private final SbusStatusGateway sbusStatusGateway;
 
     public ApiPaymentService(RedisStatusStore store,
                              ResponseCoordinator coordinator,
                              PaymentRequestProducer producer,
                              AvroSerde avroSerde,
                              ApiMetrics metrics,
-                             SbusStatusClient sbusStatusClient) {
+                             SbusStatusGateway sbusStatusGateway) {
         this.store = store;
         this.coordinator = coordinator;
         this.producer = producer;
         this.avroSerde = avroSerde;
         this.metrics = metrics;
-        this.sbusStatusClient = sbusStatusClient;
+        this.sbusStatusGateway = sbusStatusGateway;
     }
 
     /** Outcome of a submit: the current entry, whether we timed out, whether it was a replay. */
@@ -113,7 +113,21 @@ public class ApiPaymentService {
         MDC.put("requestId", requestId);
         MDC.put("correlationId", correlationId);
         MDC.put("traceId", traceId);
+        // Every exit from here on — result, timeout, interruption, shutdown or publish failure —
+        // leaves the thread's MDC clean; a request thread is reused (PAY-10).
+        try {
+            return publishAndAwaitLogged(request, idempotencyKey, fingerprint, requestId, correlationId, traceId);
+        } finally {
+            MDC.clear();
+        }
+    }
 
+    private SubmitResult publishAndAwaitLogged(PaymentSimulationRequest request,
+                                               String idempotencyKey,
+                                               String fingerprint,
+                                               String requestId,
+                                               String correlationId,
+                                               String traceId) {
         store.save(new StatusEntry(requestId, SimulationStatus.PENDING, null));
         CompletableFuture<StatusEntry> future = coordinator.register(requestId);
 
@@ -145,7 +159,6 @@ public class ApiPaymentService {
         long start = System.nanoTime();
         Optional<StatusEntry> result = coordinator.await(requestId, future);
         metrics.recordWait(Duration.ofNanos(System.nanoTime() - start));
-        MDC.clear();
 
         if (result.isPresent()) {
             return new SubmitResult(result.get(), false, false);
@@ -174,12 +187,7 @@ public class ApiPaymentService {
     }
 
     private Optional<StatusEntry> fromSbus(String requestId) {
-        try {
-            return sbusStatusClient.getStatus(requestId).map(this::toEntry);
-        } catch (Exception e) {
-            LOG.debug("SBUS status fallback unavailable for {}: {}", requestId, e.getMessage());
-            return Optional.empty();
-        }
+        return sbusStatusGateway.getStatus(requestId).map(this::toEntry);
     }
 
     private StatusEntry toEntry(SbusStatusResponse r) {
