@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 2 / T11 — published artifact consumer fixture
-- **Completed**: T1–T10; manifest e histórico Avro passam compatibilidade `FULL_TRANSITIVE` em dry run
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:228`
-- **Next step**: provar consumo dos dois GAVs publicados com substitution desabilitada
+- **Phase / Task**: Execute; Phase 2 / T12 — contracts ownership and ADR
+- **Completed**: T1–T11; consumer isolado resolve os dois GAVs e executa round-trip sem source substitution
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:245`
+- **Next step**: criar documentação local, AGENTS e ADR de contratos e fechar o gate da fase
 - **Blockers**: none
 - **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

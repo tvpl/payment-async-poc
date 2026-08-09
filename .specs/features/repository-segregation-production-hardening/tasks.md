@@ -227,6 +227,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T11: Provar consumo apenas pelo artefato publicado
 
+**Status:** Complete
+
 **What:** Criar consumer fixture que resolve os dois GAVs do repositório temporário com composite substitution desabilitada.  
 **Where:** `payment-contracts/consumer-fixture`  
 **Depends on:** T10  
@@ -237,6 +239,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** contract + structural  
 **Gate:** build  
 **Commit:** `test(contracts): add published artifact consumer fixture`
+
+**Gate evidence:** quatro testes estruturais e um round-trip binário passaram. O fixture resolveu os dois GAVs publicados; POM divergente e repositório ausente falharam deterministicamente.
 
 #### T12: Documentar ownership e decisões de contratos
 

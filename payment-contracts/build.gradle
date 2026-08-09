@@ -41,6 +41,7 @@ subprojects {
     publishing {
         publications {
             maven(MavenPublication) {
+                artifactId = "payment-${project.name}"
                 from components.java
             }
         }
@@ -71,11 +72,12 @@ tasks.register('verifyLocalPublication') {
     doLast {
         def repository = layout.buildDirectory.dir('repository').get().asFile
         subprojects.each { contractProject ->
+            def artifactId = "payment-${contractProject.name}"
             def artifactDirectory = new File(
                 repository,
-                "com/example/payments/${contractProject.name}/${project.version}"
+                "com/example/payments/${artifactId}/${project.version}"
             )
-            def prefix = "${contractProject.name}-${project.version}"
+            def prefix = "${artifactId}-${project.version}"
             [
                 "${prefix}.pom",
                 "${prefix}.jar",
