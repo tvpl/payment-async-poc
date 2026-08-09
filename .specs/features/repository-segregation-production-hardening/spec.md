@@ -347,8 +347,8 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | DOC-02 | Docs, ADRs e IA | Execute | T2 root governance complete; local guides pending |
 | DOC-03 | Docs, ADRs e IA | Tasks | In Tasks |
 | DOC-04 | Docs, ADRs e IA | Tasks | In Tasks |
-| DOC-05 | Docs, ADRs e IA | Tasks | In Tasks |
-| DOC-06 | Docs, ADRs e IA | Tasks | In Tasks |
+| DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
+| DOC-06 | Docs, ADRs e IA | Execute | T5 validation gate complete |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
 | MIG-01 | Migração e gates | Tasks | In Tasks |
 | MIG-02 | Migração e gates | Execute | T1 baseline complete; relocation gates pending |
@@ -356,12 +356,12 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | MIG-04 | Migração e gates | Execute | T4 transitional matrix complete; standalone workflows pending |
 | MIG-05 | Migração e gates | Tasks | In Tasks |
 | MIG-06 | Migração e gates | Execute | T4 policy recorded; coverage and supply-chain closure pending |
-| MIG-07 | Migração e gates | Execute | T1 inventory complete; documentation move pending |
+| MIG-07 | Migração e gates | Execute | T5 section destinations complete; removal proof pending |
 | MIG-08 | Migração e gates | Tasks | In Tasks |
 | EDG-01 | Edge cases | Tasks | In Tasks |
 | EDG-02 | Edge cases | Tasks | In Tasks |
 | EDG-03 | Edge cases | Tasks | In Tasks |
-| EDG-04 | Edge cases | Tasks | In Tasks |
+| EDG-04 | Edge cases | Execute | T5 dashboard metric validation complete |
 | EDG-05 | Edge cases | Execute | T4 PASS/FAIL/NOT_RUN classification complete |
 | EDG-06 | Edge cases | Execute | T1 complete |
 | EDG-07 | Edge cases | Tasks | In Tasks |

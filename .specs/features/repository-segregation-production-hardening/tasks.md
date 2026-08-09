@@ -129,6 +129,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T5: Criar manifest de realocação e validação documental
 
+**Status:** Complete
+
 **What:** Mapear seção antiga para novo owner/path/action e criar validação de links, comandos, portas, variáveis, métricas e claims.  
 **Where:** `scripts/docs`  
 **Depends on:** T4  
