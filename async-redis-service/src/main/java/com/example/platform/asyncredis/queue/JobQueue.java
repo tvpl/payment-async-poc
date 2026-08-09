@@ -1,5 +1,7 @@
 package com.example.platform.asyncredis.queue;
 
+import com.example.platform.asyncredis.api.JobKeys;
+import com.example.platform.asyncredis.api.JobStatusStore;
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
 import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.dto.SubmitJobRequest;
@@ -24,7 +26,7 @@ import java.util.Optional;
  * and fall back to a durable result key for polling.
  */
 @Singleton
-public class JobQueue {
+public class JobQueue implements JobEnqueuer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
 
@@ -36,14 +38,18 @@ public class JobQueue {
     private final RedisConnections redis;
     private final ObjectMapper objectMapper;
     private final AsyncRedisProperties props;
+    private final JobStatusStore statusStore;
 
-    public JobQueue(RedisConnections redis, ObjectMapper objectMapper, AsyncRedisProperties props) {
+    public JobQueue(RedisConnections redis, ObjectMapper objectMapper, AsyncRedisProperties props,
+                    JobStatusStore statusStore) {
         this.redis = redis;
         this.objectMapper = objectMapper;
         this.props = props;
+        this.statusStore = statusStore;
     }
 
     /** Publishes the job onto the stream. Returns the stream message id. */
+    @Override
     public String enqueue(String jobId, SubmitJobRequest request) {
         Map<String, String> body = new HashMap<>();
         body.put(FIELD_JOB_ID, jobId);
@@ -89,8 +95,9 @@ public class JobQueue {
     }
 
     /**
-     * Releases the result: stores it durably (for polling) and pushes it to the per-request list so a
-     * blocked BRPOP wakes immediately. Called by the worker after processing.
+     * Releases the result: stores it durably (for polling), moves the job's status to terminal, and
+     * pushes it to the per-request list so a blocked BRPOP wakes immediately. Called by the worker
+     * after processing.
      */
     public void release(JobResult result) {
         try {
@@ -98,6 +105,7 @@ public class JobQueue {
             String json = objectMapper.writeValueAsString(result);
             long ttlMs = props.getResultTtl().toMillis();
             c.psetex(resultKey(result.jobId()), ttlMs, json);
+            statusStore.markCompleted(result.jobId());
             c.lpush(responseKey(result.jobId()), json);
             // TTL on the response list so an un-awaited (202) job doesn't leak the key.
             c.pexpire(responseKey(result.jobId()), ttlMs);
@@ -107,10 +115,10 @@ public class JobQueue {
     }
 
     private String responseKey(String jobId) {
-        return "resp:" + jobId;
+        return JobKeys.response(jobId);
     }
 
     private String resultKey(String jobId) {
-        return "job:" + jobId + ":result";
+        return JobKeys.result(jobId);
     }
 }

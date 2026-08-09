@@ -1081,6 +1081,8 @@ Uma tentativa de trocar a provisão de Redis dos ITs para Testcontainers foi **r
 
 #### T39: Persistir status, idempotência e segurança na aceitação
 
+**Status:** Complete
+
 **What:** Criar `PROCESSING` antes do enqueue, polling coerente, fingerprint/replay/conflict e AuthN obrigatória em PRD.  
 **Where:** `async-redis-service/src/main/java/com/example/platform/asyncredis/api`  
 **Depends on:** T38  
@@ -1091,6 +1093,46 @@ Uma tentativa de trocar a provisão de Redis dos ITs para Testcontainers foi **r
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(async-redis): secure idempotent job acceptance`
+
+**Gate evidence:** A aceitação herdada não persistia estado nenhum. `AsyncJobController.submit` gerava um `jobId`, chamava `queue.enqueue` e ia direto para o BRPOP; o único vestígio de um job era a chave de resultado, escrita **depois** do processamento. Isso produzia quatro lacunas reais contra RED-01/RED-08, todas confirmadas lendo o código de `7de39fb` antes de qualquer alteração. (1) **Polling mentia sobre trabalho aceito**: `GET /jobs/{id}` respondia `404 UNKNOWN` para um job aceito e ainda em processamento — indistinguível de um `jobId` que nunca existiu; um cliente que recebeu `202` e seguiu o `statusUrl` era informado de que seu trabalho não existe. (2) **Nada era gravado antes do enqueue**: mesmo que houvesse status, a ordem estava invertida, e RED-01 exige “persistir status consultável **antes** de enfileirar”. (3) **Não havia idempotência alguma**: um retry de cliente enfileirava um segundo job para o mesmo trabalho, e não existia `Idempotency-Key`, fingerprint, replay nem conflito. (4) **Não havia autenticação**: `POST /jobs` e `GET /jobs/{id}` eram anônimos, e não existia guarda que impedisse subir em produção nesse estado — exatamente o “claim intermediário” que RED-08 proíbe.
+
+O pacote `api` novo fecha os quatro. `JobStatusStore.createProcessing` grava `job:<id>:status` e `JobAcceptanceService.accept` o faz **antes** de `enqueuer.enqueue`, com a ordem provada por um seam (`JobEnqueuer`) em vez de inferida. O layout de chaves separa deliberadamente `status` (TTL 24h) de `result` (TTL 15m): é a janela entre os dois que torna “terminou e o payload expirou” um fato respondível em vez de virar `UNKNOWN`, e `AsyncRedisProperties.validateRetention` recusa startup quando `status-ttl < result-ttl`, porque essa configuração destrói o estado `EXPIRED` silenciosamente. `markCompleted` usa `XX` + `KEEPTTL` — um job terminal não ressuscita uma aceitação já expirada nem estende a própria retenção. Idempotência replica o padrão auditado em T33 (`RedisStatusStore.reserve`): identidade e fingerprint entram como **um** valor sob um único `SET NX PX`, com o retry de duas tentativas para a corrida entre `NX` e `GET`; mesmo key + mesmo payload devolve o job original sem enfileirar nada, key diferente do payload é `409` determinístico. `JobFingerprint` delimita os campos com `|` e marca ausência com `\0`, porque sem delimitador `("ORDER-1", 10, "0")` e `("ORDER-1", 100, "")` concatenam para a mesma string e dois jobs de valores diferentes colidiriam. `ApiKeyFilter` fecha as duas rotas com `X-API-Key`, habilitado por padrão (mesmo default seguro de `payment-api`/T32), e `ProductionAcceptanceGuard` recusa `prod` sem AuthN, sem key, com a key default de desenvolvimento, sem idempotência obrigatória ou com admissão desligada.
+
+Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`) passou **39/39 testes, 0 falhas, 0 skipped**: os 10 de T38 mais 29 novos (`JobFingerprintUnitTest` 5, `JobAcceptanceServiceUnitTest` 2, `ProductionAcceptanceGuardUnitTest` 7, `JobPollingIT` 4, `JobIdempotencyIT` 6, `JobAcceptanceGatesIT` 5) — bem acima dos ≥12 pedidos. O build raiz roda os mesmos 39 verdes. Nenhum teste anterior foi removido, pulado ou enfraquecido; os três ITs baseline receberam apenas `@Property("async.redis.security.enabled"="false")`, porque testam fluxo e não autenticação, e todas as suas asserções seguem idênticas.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| RED-01: status é persistido **antes** do enqueue | `JobAcceptanceServiceUnitTest.java:78` — `assertEquals(new JobStatusView.Processing(), enqueuer.statusAtEnqueue.get(0))` observado dentro de `enqueue` | no instante do enqueue o job já é consultável | ✅ |
+| RED-01: polling distingue *missing* | `JobPollingIT.java:53-54` — `assertEquals(HttpStatus.NOT_FOUND, ...)` e `status() == "UNKNOWN"` | job nunca aceito é 404 UNKNOWN | ✅ |
+| RED-01: polling distingue *processing* | `JobPollingIT.java:67-69` — `assertEquals(HttpStatus.ACCEPTED, ...)`, `status() == "PROCESSING"`, `assertNull(result())` contra worker de 600ms e wait de 200ms | job em voo é 202 PROCESSING, sem resultado inventado | ✅ |
+| RED-01: polling distingue *terminal* | `JobPollingIT.java:79-84` — `HttpStatus.OK`, `"COMPLETED"`, `reference()=="POLL-COMPLETED"`, `amountCents()==10_000`, `feeCents()==200` | terminal devolve o resultado real, campo a campo | ✅ |
+| RED-01: polling distingue *expired* | `JobPollingIT.java:96-99` — `assertEquals(HttpStatus.GONE, ...)` e `status() == "EXPIRED"` com `result-ttl=1s` e `status-ttl=30s` | resultado expirado é 410 EXPIRED, não 404 UNKNOWN | ✅ |
+| RED-08: replay devolve o job original (happy) | `JobIdempotencyIT.java:57` — `assertEquals(first, second)` para mesma key e mesmo payload | retry não cria identidade nova | ✅ |
+| RED-08: replay não enfileira segundo job | `JobIdempotencyIT.java:70` — `assertEquals(1L, after - before)` sobre `XLEN` real do stream | idempotência é sobre efeito, não só sobre resposta | ✅ |
+| RED-08: mesma key com payload diferente é conflito (error) | `JobIdempotencyIT.java:84-87` — `HttpStatus.CONFLICT`, `status()=="CONFLICT"` e `jobId()` igual ao original | conflito determinístico que nomeia o dono da key | ✅ |
+| RED-08: conflito não enfileira nada | `JobIdempotencyIT.java:98-99` — `assertEquals(afterOriginal, conn.sync().xlen(STREAM))` | submissão rejeitada não chega ao stream | ✅ |
+| RED-08: keys distintas não se confundem (edge) | `JobIdempotencyIT.java:110` — `assertNotEquals(first, second)` com payload idêntico | dedup é por key, não por payload | ✅ |
+| RED-08: fingerprint é estável e discriminante | `JobFingerprintUnitTest.java:22,31,40,47,58` — `assertEquals` para payloads idênticos; `assertNotEquals` para valor, referência, nota ausente vs vazia e deslocamento entre campos adjacentes | mesma submissão = mesmo hash; qualquer diferença de negócio = hash diferente | ✅ |
+| RED-08: AuthN obrigatória — sem credencial | `JobAcceptanceGatesIT.java:49` — `assertEquals(HttpStatus.UNAUTHORIZED, rejected.getStatus())` | POST anônimo é recusado | ✅ |
+| RED-08: AuthN obrigatória — credencial inválida | `JobAcceptanceGatesIT.java:59` — `assertEquals(HttpStatus.UNAUTHORIZED, ...)` | key desconhecida não passa | ✅ |
+| RED-08: AuthN cobre também o polling | `JobAcceptanceGatesIT.java:68` — `assertEquals(HttpStatus.UNAUTHORIZED, ...)` no `GET` | consulta de estado não é rota aberta | ✅ |
+| RED-08: credencial válida é aceita (happy) | `JobAcceptanceGatesIT.java:79-80` — `assertEquals("PROCESSING", accepted.status())` e `assertNotNull(accepted.jobId())` | o gate autentica, não bloqueia tudo | ✅ |
+| RED-08: idempotência obrigatória no profile gateado | `JobAcceptanceGatesIT.java:90-92` — `HttpStatus.BAD_REQUEST` e `status()=="IDEMPOTENCY_KEY_REQUIRED"` | com o gate ligado, submissão sem key é recusada com motivo | ✅ |
+| RED-08: produção sem AuthN não sobe | `ProductionAcceptanceGuardUnitTest.java:26-28` — `assertThrows(ConfigurationException.class, ...)` e mensagem citando `async.redis.security.enabled` | gate ausente para o startup, não degrada | ✅ |
+| RED-08: produção recusa key default/ausente/em branco | `ProductionAcceptanceGuardUnitTest.java:33,40-42,47` — `assertThrows` para lista vazia, key de desenvolvimento (mensagem contém `development default`) e key em branco | credencial de exemplo não vira credencial de produção | ✅ |
+| RED-08: produção exige idempotência e admissão | `ProductionAcceptanceGuardUnitTest.java:54-56,62-64` — `assertThrows` com mensagens citando `idempotency-required` e `admission-limit-per-sec` | os três gates de RED-08 são exigidos juntos | ✅ |
+| RED-08: configuração completa sobe | `ProductionAcceptanceGuardUnitTest.java:69` — `assertDoesNotThrow(...)` | a guarda discrimina, não recusa tudo | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `JobAcceptanceServiceUnitTest.java:78,88-90` | RED-01 ordem status→enqueue e identidade por submissão sem key | ✅ |
+| `JobPollingIT.java:53-54,67-69,79-84,96-99` | RED-01 quatro estados de polling | ✅ |
+| `JobIdempotencyIT.java:57,70,84-87,98-99,110,119` | RED-08 replay, conflito e efeito no stream | ✅ |
+| `JobFingerprintUnitTest.java:22,31,40,47,58` | RED-08 identidade de payload | ✅ |
+| `JobAcceptanceGatesIT.java:49,59,68,79-80,90-92` | RED-08 AuthN e idempotência obrigatória fim a fim | ✅ |
+| `ProductionAcceptanceGuardUnitTest.java:26-69` | RED-08 “produção ou exemplo, sem meio-termo” | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Cada asserção de payload verifica valor ou estado observável — o status HTTP, o `status()` do corpo, os campos do `JobResult` e o `XLEN` real do stream — nunca apenas que um método foi chamado. Os quatro estados de polling são testados **separadamente** porque a AC os nomeia separadamente e é justamente o colapso entre dois deles que existia antes: uma implementação que devolvesse `UNKNOWN` para job em voo passa em `aJobThatWasNeverAcceptedIsUnknown` e falha em `anAcceptedJobIsProcessingWhileItIsStillInFlight`; uma que devolvesse `UNKNOWN` para resultado expirado passa nos três primeiros e falha em `aFinishedJobWhoseResultAgedOutIsExpiredNotUnknown`. `aReplayQueuesNoSecondJob` e `aConflictQueuesNothing` são os controles que impedem uma idempotência “de fachada”: uma implementação que devolvesse o `jobId` original mas enfileirasse mesmo assim passaria em `sameKeyAndPayloadReturnsTheOriginalJob` e falharia aqui. `adjacentFieldsCannotBeShiftedIntoTheSameFingerprint` usa uma colisão real (`"ORDER-1"+"100"` por dois caminhos), não hipotética. `aFullyGatedProductionConfigurationStarts` é o controle negativo da guarda: sem ele, uma guarda que lançasse sempre passaria em todos os outros seis. `distinctKeysGetDistinctJobs` fecha o buraco simétrico — uma implementação que ignorasse a key e sempre replayasse passaria em quase todo o resto. O `JobResponse.jobId`/`statusUrl` passaram a `@Nullable` porque a rejeição por key ausente não tem job para nomear; inventar um id nesse corpo seria pior. Pool de espera, `maxWait`/`maxTotal` e o contrato 429/202 sob saturação seguem explicitamente com T40 (RED-02/CAP-03), que os possui por `Where` e por requisito; esta tarefa não alterou `RedisConnections` nem o limiter. Não há SPEC_DEVIATION em T39.
 
 #### T40: Limitar pool de espera e admissão
 

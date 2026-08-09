@@ -1,15 +1,22 @@
 package com.example.platform.asyncredis.controller;
 
+import com.example.platform.asyncredis.api.AcceptOutcome;
+import com.example.platform.asyncredis.api.JobAcceptanceService;
+import com.example.platform.asyncredis.api.JobStatusStore;
+import com.example.platform.asyncredis.api.JobStatusView;
+import com.example.platform.asyncredis.config.AsyncRedisProperties;
 import com.example.platform.asyncredis.dto.JobResponse;
 import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.queue.JobQueue;
 import com.example.platform.asyncredis.ratelimit.AsyncRateLimiter;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
@@ -17,51 +24,101 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import jakarta.validation.Valid;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * HTTP entry point for the Kafka-free async->sync example.
  *
- * <p>{@code POST /jobs} enqueues the work on a Redis Stream and then <strong>blocks on a virtual
- * thread</strong> (via {@code @ExecuteOn(BLOCKING)}) doing a BRPOP on the per-request response list —
- * i.e. it monitors Redis until the worker releases the answer. If it arrives within the timeout the
- * client gets {@code 200 COMPLETED}; otherwise {@code 202 PROCESSING} with a {@code statusUrl} to poll.
- * The mechanic mirrors the Kafka-based flow's UX with Redis as the only moving part.
+ * <p>{@code POST /jobs} persists a queryable {@code PROCESSING} status, enqueues the work on a Redis
+ * Stream, and then <strong>blocks on a virtual thread</strong> (via {@code @ExecuteOn(BLOCKING)})
+ * doing a BRPOP on the per-request response list. If the answer arrives within the timeout the
+ * client gets {@code 200 COMPLETED}; otherwise {@code 202 PROCESSING} with a {@code statusUrl}.
+ *
+ * <p>Polling reports four distinct outcomes (RED-01): {@code 404 UNKNOWN} for a job that was never
+ * accepted, {@code 202 PROCESSING} while it is in flight, {@code 200 COMPLETED} with the result, and
+ * {@code 410 EXPIRED} once a finished job's result has aged out.
  */
 @Controller("/jobs")
 public class AsyncJobController {
 
-    private final JobQueue queue;
-    private final AsyncRateLimiter rateLimiter;
+    static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
-    public AsyncJobController(JobQueue queue, AsyncRateLimiter rateLimiter) {
+    private final JobQueue queue;
+    private final JobAcceptanceService acceptance;
+    private final JobStatusStore store;
+    private final AsyncRateLimiter rateLimiter;
+    private final AsyncRedisProperties props;
+
+    public AsyncJobController(JobQueue queue,
+                              JobAcceptanceService acceptance,
+                              JobStatusStore store,
+                              AsyncRateLimiter rateLimiter,
+                              AsyncRedisProperties props) {
         this.queue = queue;
+        this.acceptance = acceptance;
+        this.store = store;
         this.rateLimiter = rateLimiter;
+        this.props = props;
     }
 
     @Post
     @ExecuteOn(TaskExecutors.BLOCKING)
-    public HttpResponse<JobResponse> submit(@Valid @Body SubmitJobRequest request) {
+    public HttpResponse<JobResponse> submit(
+            @Nullable @Header(IDEMPOTENCY_HEADER) String idempotencyKey,
+            @Valid @Body SubmitJobRequest request) {
+
         if (!rateLimiter.tryAcquire()) {
             // Backpressure: shed load before it piles onto the workers.
-            return HttpResponse.<JobResponse>status(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "1");
+            return HttpResponse.<JobResponse>status(HttpStatus.TOO_MANY_REQUESTS)
+                    .header("Retry-After", "1");
         }
-        String jobId = UUID.randomUUID().toString();
-        queue.enqueue(jobId, request);
+        boolean keyMissing = idempotencyKey == null || idempotencyKey.isBlank();
+        if (props.isIdempotencyRequired() && keyMissing) {
+            return HttpResponse.<JobResponse>status(HttpStatus.BAD_REQUEST)
+                    .body(new JobResponse(null, "IDEMPOTENCY_KEY_REQUIRED", null, null));
+        }
 
+        AcceptOutcome outcome = acceptance.accept(idempotencyKey, request);
+        if (outcome instanceof AcceptOutcome.Conflict conflict) {
+            return HttpResponse.<JobResponse>status(HttpStatus.CONFLICT)
+                    .body(new JobResponse(conflict.jobId(), "CONFLICT", statusUrl(conflict.jobId()), null));
+        }
+        if (outcome instanceof AcceptOutcome.Replay replay) {
+            // The key already owns a job; report where that one stands instead of waiting on a
+            // wakeup that belongs to the original caller.
+            return statusResponse(replay.jobId());
+        }
+
+        String jobId = ((AcceptOutcome.Accepted) outcome).jobId();
         Optional<JobResult> result = queue.awaitResult(jobId);
-        String statusUrl = "/jobs/" + jobId;
         return result
-                .map(r -> HttpResponse.ok(new JobResponse(jobId, "COMPLETED", statusUrl, r)))
-                .orElseGet(() -> HttpResponse.accepted()
-                        .body(new JobResponse(jobId, "PROCESSING", statusUrl, null)));
+                .map(r -> HttpResponse.ok(new JobResponse(jobId, "COMPLETED", statusUrl(jobId), r)))
+                .orElseGet(() -> HttpResponse.<JobResponse>accepted()
+                        .body(new JobResponse(jobId, "PROCESSING", statusUrl(jobId), null)));
     }
 
     @Get("/{jobId}")
     public HttpResponse<JobResponse> get(@PathVariable String jobId) {
-        return queue.findResult(jobId)
-                .map(r -> HttpResponse.ok(new JobResponse(jobId, "COMPLETED", "/jobs/" + jobId, r)))
-                .orElseGet(() -> HttpResponse.<JobResponse>notFound()
-                        .body(new JobResponse(jobId, "UNKNOWN", "/jobs/" + jobId, null)));
+        return statusResponse(jobId);
+    }
+
+    private HttpResponse<JobResponse> statusResponse(String jobId) {
+        String url = statusUrl(jobId);
+        return switch (store.find(jobId)) {
+            case JobStatusView.Completed completed ->
+                    HttpResponse.ok(new JobResponse(jobId, "COMPLETED", url, completed.result()));
+            case JobStatusView.Processing ignored ->
+                    HttpResponse.<JobResponse>accepted()
+                            .body(new JobResponse(jobId, "PROCESSING", url, null));
+            case JobStatusView.Expired ignored ->
+                    HttpResponse.<JobResponse>status(HttpStatus.GONE)
+                            .body(new JobResponse(jobId, "EXPIRED", url, null));
+            case JobStatusView.Unknown ignored ->
+                    HttpResponse.<JobResponse>notFound()
+                            .body(new JobResponse(jobId, "UNKNOWN", url, null));
+        };
+    }
+
+    private static String statusUrl(String jobId) {
+        return "/jobs/" + jobId;
     }
 }

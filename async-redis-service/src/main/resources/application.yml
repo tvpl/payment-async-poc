@@ -20,6 +20,19 @@ async:
     wait-timeout: 3s
     # TTL of the durable result and the per-request response list (avoids key leaks).
     result-ttl: 15m
+    # How long an accepted job stays answerable. The window between this and result-ttl is what
+    # makes an expired result distinguishable from a job that never existed. Must be >= result-ttl.
+    status-ttl: 24h
+    # How long an Idempotency-Key stays bound to its job.
+    idempotency-ttl: 24h
+    # Whether POST /jobs rejects a submission with no Idempotency-Key. Required in production.
+    idempotency-required: false
+    # X-API-Key authentication for the job endpoints. Production refuses the development default.
+    # Override per environment with ASYNC_REDIS_SECURITY_ENABLED / ASYNC_REDIS_SECURITY_API_KEYS.
+    security:
+      enabled: true
+      api-keys:
+        - dev-key-change-me
     # Number of worker consumers pulling from the stream (each holds one blocking connection).
     worker-concurrency: 2
     # Stream + consumer group names.

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Redis at {@code localhost:6379} (the default, and where CI's Redis service listens).
  */
 @MicronautTest
+@Property(name = "async.redis.security.enabled", value = "false")
 @Property(name = "async.redis.wait-timeout", value = "500ms")
 @Property(name = "async.redis.fail-on-reference", value = "POISON")
 @Property(name = "async.redis.max-deliveries", value = "1")

@@ -322,14 +322,14 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-10 | Fluxo Kafka | Execute | T35 ends the waiter on result, timeout, interruption and shutdown, clearing MDC and the local registration on every path, including publish failure and post-shutdown registration |
 | PAY-11 | Fluxo Kafka | Execute | T26 V7 conditional transition makes the first terminal sticky; T29 startup guard aligns idempotency, durable state, published outbox, Kafka retention and redelivery windows; T33 API startup guard requires idempotency-ttl >= status-ttl |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |
-| RED-01 | Async Redis | Tasks | In Tasks |
+| RED-01 | Async Redis | Execute | T39 persists a PROCESSING status before the enqueue and polling tells missing/processing/terminal/expired apart, with status-ttl >= result-ttl enforced at startup |
 | RED-02 | Async Redis | Tasks | In Tasks |
 | RED-03 | Async Redis | Tasks | In Tasks |
 | RED-04 | Async Redis | Tasks | In Tasks |
 | RED-05 | Async Redis | Tasks | In Tasks |
 | RED-06 | Async Redis | Tasks | In Tasks |
 | RED-07 | Async Redis | Tasks | In Tasks |
-| RED-08 | Async Redis | Tasks | In Tasks |
+| RED-08 | Async Redis | Execute | T39 adds X-API-Key AuthN on both job routes, SET NX fingerprint idempotency (replay/conflict, nothing enqueued twice) and a prod guard refusing startup without auth, idempotency and admission |
 | CAP-01 | Capacidade | Execute | T29 types SBUS dependency budgets, retry attempts, readiness requirements and bounded recoverable states; full cross-boundary capacity model pending |
 | CAP-02 | Capacidade | Tasks | In Tasks |
 | CAP-03 | Capacidade | Execute | T37 API admission applies per-resource and per-tenant budgets with tested 202/429 plus Retry-After, and fails closed on a Redis outage onto limit/instances so a fleet never multiplies the approved burst; remaining boundaries pending |

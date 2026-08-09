@@ -1,6 +1,8 @@
 package com.example.platform.asyncredis.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.exceptions.ConfigurationException;
+import jakarta.annotation.PostConstruct;
 
 import java.time.Duration;
 
@@ -10,6 +12,15 @@ public class AsyncRedisProperties {
 
     private Duration waitTimeout = Duration.ofSeconds(3);
     private Duration resultTtl = Duration.ofMinutes(15);
+    /**
+     * How long an accepted job stays answerable. Must be at least {@code result-ttl}: the window
+     * between the two is exactly what makes an expired result distinguishable from an unknown job.
+     */
+    private Duration statusTtl = Duration.ofHours(24);
+    /** How long an idempotency key stays bound to its job. */
+    private Duration idempotencyTtl = Duration.ofHours(24);
+    /** Whether {@code POST /jobs} rejects a submission with no {@code Idempotency-Key}. */
+    private boolean idempotencyRequired = false;
     private int workerConcurrency = 2;
     private String stream = "async.jobs";
     private String group = "workers";
@@ -45,6 +56,42 @@ public class AsyncRedisProperties {
 
     public void setResultTtl(Duration resultTtl) {
         this.resultTtl = resultTtl;
+    }
+
+    public Duration getStatusTtl() {
+        return statusTtl;
+    }
+
+    public void setStatusTtl(Duration statusTtl) {
+        this.statusTtl = statusTtl;
+    }
+
+    public Duration getIdempotencyTtl() {
+        return idempotencyTtl;
+    }
+
+    public void setIdempotencyTtl(Duration idempotencyTtl) {
+        this.idempotencyTtl = idempotencyTtl;
+    }
+
+    public boolean isIdempotencyRequired() {
+        return idempotencyRequired;
+    }
+
+    public void setIdempotencyRequired(boolean idempotencyRequired) {
+        this.idempotencyRequired = idempotencyRequired;
+    }
+
+    /**
+     * Fails startup on a retention layout that cannot express its own states: a status that expires
+     * before its result turns every finished job into "unknown" the moment the status lapses.
+     */
+    @PostConstruct
+    void validateRetention() {
+        if (statusTtl.compareTo(resultTtl) < 0) {
+            throw new ConfigurationException(
+                    "async.redis.status-ttl (" + statusTtl + ") must be >= result-ttl (" + resultTtl + ")");
+        }
     }
 
     public int getWorkerConcurrency() {
