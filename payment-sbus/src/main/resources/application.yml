@@ -3,6 +3,22 @@ micronaut:
     name: payment-sbus
   server:
     port: 8081
+  security:
+    authentication: bearer
+    reject-not-found: false
+    intercept-url-map:
+      - pattern: /health/liveness
+        access:
+          - isAnonymous()
+      - pattern: /health/readiness
+        access:
+          - isAnonymous()
+      - pattern: /internal/**
+        access:
+          - ROLE_PAYMENT_API
+      - pattern: /**
+        access:
+          - isAuthenticated()
   metrics:
     enabled: true
     binders:
@@ -41,6 +57,13 @@ kafka:
 apicurio:
   registry:
     url: ${APICURIO_REGISTRY_URL:`http://localhost:8085/apis/registry/v2`}
+
+payments:
+  avro:
+    registry-url: ${apicurio.registry.url}
+    codec-pool-size: 8
+    codec-acquire-timeout: 250ms
+    auto-register: true
 
 # Redis is used only for the distributed (global) core-command rate limiter.
 redis:
@@ -100,11 +123,11 @@ otel:
 
 endpoints:
   all:
-    enabled: true
-    sensitive: false
+    enabled: false
   health:
     enabled: true
-    details-visible: ANONYMOUS
+    sensitive: false
+    details-visible: NEVER
   prometheus:
     enabled: true
-    sensitive: false
+    sensitive: true

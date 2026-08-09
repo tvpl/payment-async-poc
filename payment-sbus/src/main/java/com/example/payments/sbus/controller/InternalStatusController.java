@@ -9,6 +9,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.security.annotation.Secured;
 
 /**
  * Internal (service-to-service) durable status lookup. The API calls this as a
@@ -16,6 +17,7 @@ import io.micronaut.http.annotation.PathVariable;
  * never lost just because Redis expired or an instance missed the final event.
  */
 @Controller("/internal/payment-simulations")
+@Secured("ROLE_PAYMENT_API")
 public class InternalStatusController {
 
     private final PaymentSbusMessageRepository repository;

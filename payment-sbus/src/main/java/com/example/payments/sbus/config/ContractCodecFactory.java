@@ -6,6 +6,8 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
+
 @Factory
 final class ContractCodecFactory {
 
@@ -13,7 +15,10 @@ final class ContractCodecFactory {
     @Singleton
     AvroSerde avroSerde(
             @Value("${apicurio.registry.url:`http://localhost:8085/apis/registry/v2`}")
-            String registryUrl) {
-        return new AvroSerde(registryUrl);
+            String registryUrl,
+            @Value("${payments.avro.codec-pool-size:8}") int poolSize,
+            @Value("${payments.avro.codec-acquire-timeout:250ms}") Duration acquireTimeout,
+            @Value("${payments.avro.auto-register:true}") boolean autoRegister) {
+        return new AvroSerde(registryUrl, poolSize, acquireTimeout, autoRegister);
     }
 }

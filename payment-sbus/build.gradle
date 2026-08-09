@@ -61,6 +61,7 @@ dependencies {
     annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
     annotationProcessor 'io.micronaut.data:micronaut-data-processor'
     annotationProcessor 'io.micronaut:micronaut-http-validation'
+    annotationProcessor 'io.micronaut.security:micronaut-security-annotations'
 
     implementation "com.example.payments:payment-contract-model:${contractsVersion}"
     implementation "com.example.payments:payment-contract-avro-apicurio:${contractsVersion}"
@@ -70,6 +71,7 @@ dependencies {
     implementation 'io.micronaut.sql:micronaut-jdbc-hikari'
     implementation 'io.micronaut.flyway:micronaut-flyway'
     implementation 'io.micronaut.redis:micronaut-redis-lettuce'
+    implementation 'io.micronaut.security:micronaut-security-jwt'
     implementation 'io.micronaut:micronaut-management'
     implementation 'io.micronaut.micrometer:micronaut-micrometer-registry-prometheus'
     implementation 'io.micronaut.tracing:micronaut-tracing-opentelemetry-http'
@@ -84,6 +86,7 @@ dependencies {
     runtimeOnly 'org.yaml:snakeyaml'
 
     testImplementation 'io.micronaut.test:micronaut-test-junit5'
+    testImplementation 'io.micronaut:micronaut-http-client'
     testImplementation 'org.mockito:mockito-core:5.14.2'
     testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
     testImplementation 'org.testcontainers:testcontainers'

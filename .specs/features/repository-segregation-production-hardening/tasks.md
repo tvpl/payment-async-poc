@@ -501,6 +501,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T25: Fechar profile produtivo e superfícies do SBUS
 
+**Status:** Complete
+
 **What:** Separar profiles, validar config, proteger endpoint interno e limitar management a health mínimo.  
 **Where:** `payment-sbus/src/main`  
 **Depends on:** T24  
@@ -510,7 +512,26 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Done when:** startup inválido falha; rota interna exige identidade de serviço; matriz de rotas/profile tem ≥8 ITs novos.  
 **Tests:** integration  
 **Gate:** full  
-**Commit:** `security(sbus): enforce production identity boundaries`
+**Commit:** `fix(sbus): enforce production identity boundaries`
+
+**Gate evidence:** O quick gate passou 14 testes. O full gate passou 25 testes, incluindo oito cenários HTTP/JWT com PostgreSQL, Kafka, Redis e Apicurio reais, dois ITs do profile produtivo e a regressão do fluxo. Produção exige JWKS RSA por HTTPS, issuer, audience, expiração, `not-before`, clock skew estrito de `0s`, endpoints obrigatórios e auto-registration Avro desabilitado. A configuração inválida falhou durante startup com causa específica. Somente liveness/readiness são anônimos; status interno exige `ROLE_PAYMENT_API`; health agregado e Prometheus exigem autenticação.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| SEC-01: startup produtivo inválido falha | `ProductionProfileIT.java:31-49` — `assertThrows(RuntimeException.class, ...start())` e `assertTrue(messages(...).contains("JWT audience is required in production"))` | contexto não inicia com audience inválida | ✅ |
+| SEC-03: assimétrico, issuer/audience/exp/nbf e sem secret | `ProductionProfileIT.java:21-26` — assertions de JWKS/claims e `assertFalse(production.contains("secret:"))` | profile produtivo não aceita shared secret | ✅ |
+| SEC-04: endpoint interno usa identidade de serviço | `SbusSecurityIT.java:65-83` — `401`, `401`, `403`, `404` para anônimo, malformed, role errada e `ROLE_PAYMENT_API` | somente identidade de serviço atravessa AuthN/AuthZ | ✅ |
+| SEC-05: management mínimo anônimo | `SbusSecurityIT.java:88-103` — liveness/readiness `200`, health agregado/Prometheus `401` | apenas probes mínimos são públicos | ✅ |
+| Config tipada/guardada | `ProductionSecurityGuardUnitTest.java:15-52` — `assertDoesNotThrow` válido e `assertThrows(ConfigurationException.class, ...)` para cinco inválidos | defaults e combinações inseguras são rejeitados | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `ProductionProfileIT.java:21-26,31-49` — profile e startup | SEC-01, SEC-03, Done-when T25 | ✅ |
+| `SbusSecurityIT.java:65-83` — matriz de identidade | SEC-04, Done-when T25 | ✅ |
+| `SbusSecurityIT.java:88-103` — matriz management | SEC-05, Done-when T25 | ✅ |
+| `ProductionSecurityGuardUnitTest.java:15-52` — validações puras | SEC-01/03 e edge cases de configuração | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Cada rota modificada possui happy/denied/error observável, e cada branch do guard possui resultado exato. O HS256 aparece somente no harness test-only; o profile produtivo prova ausência de shared secret. Os testes seguem `AGENTS.md` e a Test Coverage Matrix. Não há SPEC_DEVIATION.
 
 #### T26: Serializar finalização concorrente do estado
 
