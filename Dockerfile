@@ -33,7 +33,7 @@ EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 FROM runtime-base AS feature-demo
-COPY --from=build /workspace/feature-demo/build/libs/feature-demo-0.1.0-runner.jar app.jar
+COPY --from=build /workspace/feature-control/examples/feature-demo/build/libs/feature-demo-0.1.0-runner.jar app.jar
 EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
@@ -43,6 +43,6 @@ EXPOSE 8084
 ENTRYPOINT ["java", "-XX:+UseZGC", "-jar", "/app/app.jar"]
 
 FROM runtime-base AS pilot
-COPY --from=build /workspace/pilot-app/build/libs/pilot-app-0.1.0-runner.jar app.jar
+COPY --from=build /workspace/feature-control/examples/pilot-app/build/libs/pilot-app-0.1.0-runner.jar app.jar
 EXPOSE 8085
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

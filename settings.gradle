@@ -13,10 +13,17 @@ pluginManagement {
 rootProject.name = 'payment-async-poc'
 
 include 'common'
-include 'feature-control'
 include 'api-service'
 include 'sbus-service'
 include 'core-mock'
-include 'feature-demo'
 include 'async-redis-service'
+
+// feature-control was regrouped into its own standalone root (T46, MIG-02): the workspace
+// aggregator keeps these project paths so `./gradlew :feature-control:...` etc. still work
+// unchanged, but their content now lives under feature-control/{library,examples/...}.
+include 'feature-control'
+project(':feature-control').projectDir = file('feature-control/library')
+include 'feature-demo'
+project(':feature-demo').projectDir = file('feature-control/examples/feature-demo')
 include 'pilot-app'
+project(':pilot-app').projectDir = file('feature-control/examples/pilot-app')

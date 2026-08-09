@@ -289,10 +289,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
-| ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts, T19 Core mock, T24 SBUS, T31 API and T38 async Redis builds standalone complete; remaining application roots pending |
+| ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts, T19 Core mock, T24 SBUS, T31 API, T38 async Redis and T46 feature-control (library + feature-demo + pilot-app) builds standalone complete; remaining application roots pending |
 | ORG-03 | Fronteiras prontas para repositórios | Execute | Core, SBUS, T37 API and T45 async Redis standalone build/release packages complete (own Dockerfile, app-only Compose, .env.example, README, docs, CI and AGENTS.md), the latter with no cross-boundary build context; feature-control pending |
-| ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture and T12 contracts docs complete; CI extraction pending |
-| ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core, T24 SBUS and T31 API GAV consumption complete; remaining application migrations pending |
+| ORG-04 | Fronteiras prontas para repositórios | Execute | T7 publication, T11 fixture, T12 contracts docs and T46 feature-control standalone `maven-publish` complete; CI extraction pending |
+| ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core, T24 SBUS, T31 API GAV consumption and T46 feature-control (no cross-boundary `project()`; examples depend only on the boundary-local library) complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
 | ORG-07 | Fronteiras prontas para repositórios | Execute | T24 moved the SBUS rate limiter into its owner and T38 proved async Redis carries no Kafka/Postgres/common/contract dependency; remaining runtime concerns pending |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
@@ -351,7 +351,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
 | MIG-01 | Migração e gates | Tasks | In Tasks |
-| MIG-02 | Migração e gates | Execute | T1 baseline, T24 SBUS destination/checksum/full equivalence, T31 API destination/full-gate equivalence and T38 async Redis in-place extraction (6 baseline tests preserved under both roots) complete; old locations retained until final reconciliation |
+| MIG-02 | Migração e gates | Execute | T1 baseline, T24 SBUS destination/checksum/full equivalence, T31 API destination/full-gate equivalence, T38 async Redis in-place extraction (6 baseline tests preserved under both roots) and T46 feature-control regroup (31 baseline tests preserved, both the transitional workspace root and the new standalone root build and test the same files) complete; old locations retained until final reconciliation |
 | MIG-03 | Migração e gates | Execute | T1 complete |
 | MIG-04 | Migração e gates | Execute | T4 transitional matrix complete; standalone workflows pending |
 | MIG-05 | Migração e gates | Tasks | In Tasks |
