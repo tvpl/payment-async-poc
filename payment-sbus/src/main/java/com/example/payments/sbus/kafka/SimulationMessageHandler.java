@@ -5,6 +5,7 @@ import com.example.payments.common.avro.PaymentSimulationRequested;
 import com.example.payments.common.events.EventEnvelope;
 import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Topics;
+import com.example.payments.common.kafka.AvroCodecUnavailableException;
 import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.mapping.AvroMapper;
 import com.example.payments.common.model.CorePaymentSimulationResponsePayload;
@@ -50,6 +51,8 @@ public class SimulationMessageHandler {
                     || env.payload().currency() == null) {
                 throw new IllegalArgumentException("missing required fields");
             }
+        } catch (AvroCodecUnavailableException unavailable) {
+            throw unavailable;
         } catch (Exception e) {
             throw new PoisonMessageException("Invalid PaymentSimulationRequested", e);
         }
@@ -65,6 +68,8 @@ public class SimulationMessageHandler {
             if (env.payload() == null || env.payload().simulationId() == null) {
                 throw new IllegalArgumentException("missing simulationId");
             }
+        } catch (AvroCodecUnavailableException unavailable) {
+            throw unavailable;
         } catch (Exception e) {
             throw new PoisonMessageException("Invalid CorePaymentSimulationResponse", e);
         }

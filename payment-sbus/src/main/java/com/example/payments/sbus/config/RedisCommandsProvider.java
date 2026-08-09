@@ -15,9 +15,11 @@ public class RedisCommandsProvider {
 
     private final RedisClient client;
     private volatile StatefulRedisConnection<String, String> connection;
+    private final java.time.Duration timeout;
 
-    public RedisCommandsProvider(RedisClient client) {
+    public RedisCommandsProvider(RedisClient client, DependencyPolicies policies) {
         this.client = client;
+        this.timeout = policies.budget(DependencyPolicies.Dependency.REDIS).timeout();
     }
 
     public RedisCommands<String, String> commands() {
@@ -26,6 +28,7 @@ public class RedisCommandsProvider {
             synchronized (this) {
                 if (connection == null || !connection.isOpen()) {
                     connection = client.connect();
+                    connection.setTimeout(timeout);
                 }
             }
         }

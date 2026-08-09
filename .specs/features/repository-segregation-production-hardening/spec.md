@@ -318,9 +318,9 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-06 | Fluxo Kafka | Execute | T21 Core duplicate equivalence and T28 same-identity republish across the send/mark crash window complete; API gate pending |
 | PAY-07 | Fluxo Kafka | Execute | T28 keeps broker/exhausted failures recoverable; unconfirmed count/age include active claims and alert continuously until DLQ_PUBLISHED |
 | PAY-08 | Fluxo Kafka | Execute | T27 due-based outbox publishes only when due, deduplicates crash redelivery and removes partition sleep |
-| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics and T21 Core uncommitted failure/Registry policy complete; remaining service policies pending |
+| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics, T21 Core policy and T29 SBUS typed Kafka/PostgreSQL/Redis/Registry budgets and recoverable-state matrix complete; remaining service policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-11 | Fluxo Kafka | Execute | T26 V7 versioned conditional transition makes the first terminal sticky; retention alignment pending T29 |
+| PAY-11 | Fluxo Kafka | Execute | T26 V7 conditional transition makes the first terminal sticky; T29 startup guard aligns idempotency, durable state, published outbox, Kafka retention and redelivery windows |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |
 | RED-01 | Async Redis | Tasks | In Tasks |
 | RED-02 | Async Redis | Tasks | In Tasks |
@@ -330,7 +330,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | RED-06 | Async Redis | Tasks | In Tasks |
 | RED-07 | Async Redis | Tasks | In Tasks |
 | RED-08 | Async Redis | Tasks | In Tasks |
-| CAP-01 | Capacidade | Tasks | In Tasks |
+| CAP-01 | Capacidade | Execute | T29 types SBUS dependency budgets, retry attempts, readiness requirements and bounded recoverable states; full cross-boundary capacity model pending |
 | CAP-02 | Capacidade | Tasks | In Tasks |
 | CAP-03 | Capacidade | Tasks | In Tasks |
 | CAP-04 | Capacidade | Tasks | In Tasks |

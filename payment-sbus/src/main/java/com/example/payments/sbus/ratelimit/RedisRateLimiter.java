@@ -3,7 +3,6 @@ package com.example.payments.sbus.ratelimit;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /** Distributed fixed-window guard for SBUS core-command publication. */
@@ -19,9 +18,6 @@ public final class RedisRateLimiter {
     private final String name;
     private final int limitForPeriod;
     private final long windowMillis;
-    private final Object localLock = new Object();
-    private long localWindow = -1;
-    private final AtomicInteger localCount = new AtomicInteger();
 
     public RedisRateLimiter(Supplier<RedisCommands<String, String>> commands,
                             String name, int limitForPeriod, long windowMillis) {
@@ -34,22 +30,8 @@ public final class RedisRateLimiter {
     public boolean tryAcquire() {
         long window = System.currentTimeMillis() / windowMillis;
         String key = "rl:" + name + ":" + window;
-        try {
-            Long allowed = commands.get().eval(LUA, ScriptOutputType.INTEGER,
-                    new String[]{key}, String.valueOf(windowMillis), String.valueOf(limitForPeriod));
-            return allowed != null && allowed == 1L;
-        } catch (Exception exception) {
-            return localTryAcquire(window);
-        }
-    }
-
-    private boolean localTryAcquire(long window) {
-        synchronized (localLock) {
-            if (window != localWindow) {
-                localWindow = window;
-                localCount.set(0);
-            }
-            return localCount.incrementAndGet() <= limitForPeriod;
-        }
+        Long allowed = commands.get().eval(LUA, ScriptOutputType.INTEGER,
+                new String[]{key}, String.valueOf(windowMillis), String.valueOf(limitForPeriod));
+        return allowed != null && allowed == 1L;
     }
 }

@@ -8,7 +8,8 @@ import jakarta.inject.Singleton;
 /**
  * Builds the distributed {@link RedisRateLimiter} that throttles publication of
  * {@code core.command} — a <strong>global</strong> guard (across SBUS instances) that
- * protects a slower Core from bursts. Falls back to a local window if Redis is down.
+ * protects a slower Core from bursts. Redis failure is fail-closed so capacity cannot
+ * multiply with the number of SBUS instances.
  */
 @Factory
 public class RateLimiterFactory {

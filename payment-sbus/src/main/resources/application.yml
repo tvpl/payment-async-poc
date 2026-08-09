@@ -94,6 +94,8 @@ sbus:
     publish-timeout: 30s
     poll-interval: 200ms
     initial-delay: 3s
+    lease: 1m
+    retention: 3d
   core:
     # Throughput guard protecting the (slower) Core from request bursts.
     limit-for-period: 50
@@ -107,6 +109,26 @@ sbus:
     message-retention: 30d
     batch-size: 500
     interval: 1h
+  retention:
+    kafka-topic: 7d
+    max-redelivery-window: 1d
+  dependencies:
+    kafka:
+      timeout: 30s
+      max-attempts: 8
+      readiness-required: true
+    postgresql:
+      timeout: 3s
+      max-attempts: 3
+      readiness-required: true
+    redis:
+      timeout: 2s
+      max-attempts: 1
+      readiness-required: true
+    registry:
+      timeout: 3s
+      max-attempts: 3
+      readiness-required: true
 
 otel:
   service:

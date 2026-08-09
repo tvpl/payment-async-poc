@@ -652,6 +652,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T29: Alinhar políticas de dependência e retenção
 
+**Status:** Complete
+
 **What:** Tipar timeouts/retries/readiness e validar retenções de inbox, idempotência, estado, outbox e tópicos.  
 **Where:** `payment-sbus/src/main/java/com/example/payments/sbus/config`  
 **Depends on:** T28  
@@ -661,7 +663,31 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Done when:** configurações incoerentes falham; matriz Kafka/DB/Redis/Registry prova estado recuperável; ≥6 testes passam.  
 **Tests:** unit + integration  
 **Gate:** full  
-**Commit:** `reliability(sbus): enforce dependency and retention budgets`
+**Commit:** `fix(sbus): enforce dependency and retention budgets`
+
+**Gate evidence:** O full gate standalone passou 74 testes. A configuração tipada define timeout, tentativas, readiness obrigatória e estado recuperável para Kafka, PostgreSQL, Redis e Schema Registry. Kafka usa o budget no producer; Redis usa timeout finito e falha fechada, sem multiplicar o limite por instância. Falha de capacidade do codec continua retryable no registro Kafka. O guard de startup impede idempotência menor que a janela de replay, estado menor que a deduplicação e outbox publicada menor que a janela máxima de redelivery.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| PAY-09: matriz Kafka/DB/Redis/Registry com readiness | `DependencyPoliciesUnitTest.java:25-29` — quatro `assertEquals(...)` e `assertTrue(...requiredForReadiness)` | cada falha mantém `CLAIMED_OUTBOX` ou `KAFKA_RECORD` e derruba readiness | ✅ |
+| Budgets inválidos falham | `DependencyPoliciesUnitTest.java:37,45,53` — `assertThrows(ConfigurationException.class, ...)` | timeout não positivo, zero tentativa ou readiness opcional são recusados | ✅ |
+| PAY-11: retenção cobre replay | `RetentionPolicyGuardUnitTest.java:15-34` — `assertDoesNotThrow(...)` válido e três `assertThrows(...)` incoerentes | dedup, estado e outbox não expiram antes de suas garantias | ✅ |
+| Config incoerente impede startup | `DependencyPolicyIT.java:32-36` — `assertThrows(RuntimeException.class, ...)` e mensagem exata | contexto não inicia com dedup menor que retenção Kafka | ✅ |
+| Redis indisponível falha fechado | `RedisRateLimiterUnitTest.java:19` — `assertThrows(IllegalStateException.class, limiter::tryAcquire)` | nenhuma capacidade local multiplicável por instância | ✅ |
+| Registry indisponível permanece retryable | `SimulationMessageHandlerUnitTest.java:26-29` — `assertThrows(...)` e `assertSame(unavailable, actual)` | registro Kafka permanece sem confirmação para retry | ✅ |
+| Kafka/DLQ indisponível mantém estado recuperável | `RecoverableDeadLetterIT.java:101-149` — estado `DLQ_PENDING`, tentativas/idade e ausência de terminal silencioso | outbox permanece recuperável até ack | ✅ |
+| PostgreSQL indisponível impede confirmação | `DurableRetrySchedulerUnitTest.java:135-139` — exception de persistência exata propaga | consumer não retorna normalmente nem confirma offset | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `DependencyPoliciesUnitTest.java:25-29,37,45,53` | PAY-09 e Done-when T29 | ✅ |
+| `RetentionPolicyGuardUnitTest.java:15-34` | PAY-11 e Done-when T29 | ✅ |
+| `DependencyPolicyIT.java:19-26,32-36` | PAY-09/PAY-11, binding e startup | ✅ |
+| `RedisRateLimiterUnitTest.java:19` | PAY-09/CAP-01, falha fechada sob Redis outage | ✅ |
+| `SimulationMessageHandlerUnitTest.java:26-29` | PAY-09, Registry retryable | ✅ |
+| `RecoverableDeadLetterIT.java:101-149`; `DurableRetrySchedulerUnitTest.java:135-139` | PAY-09, estados recuperáveis Kafka/DB | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. A matriz combina políticas tipadas com outcomes reais já preservados nos gates de Kafka e PostgreSQL; os novos testes fecham Redis fail-closed, Registry retryable e todas as relações de retenção. As asserções verificam exceção, estado e valor observáveis, não contagens de mocks. O teste especulativo de `lease > publish-timeout` foi removido porque T28 usa lock de sessão para exclusão e permite lease curto para recovery. Segue `AGENTS.md` e a Test Coverage Matrix. Não há SPEC_DEVIATION.
 
 #### T30: Completar pacote operacional e release do SBUS
 
