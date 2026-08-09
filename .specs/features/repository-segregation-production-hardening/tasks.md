@@ -390,6 +390,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T20: Tornar simulação determinística e configuração validada
 
+**Status:** Complete
+
 **What:** Extrair decisão pura por requestId/seed e validar percentuais, latência e combinações.  
 **Where:** `payment-core-mock/src/main`  
 **Depends on:** T19  
@@ -400,6 +402,10 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit  
 **Gate:** quick  
 **Commit:** `fix(core-mock): make simulation deterministic`
+
+**Gate evidence:** O gate unitário passou 21 testes, 18 deles derivados de T20. Sete cobrem determinismo, três outcomes, autorização e latência inclusiva; onze cobrem defaults, limites negativos/superiores, ordem min/max, soma percentual e o `@PostConstruct` que recusa a configuração no bean startup.
+
+**Adequacy review:** A decisão repetível está provada em `CoreSimulationDecisionEngineTest.java:19-22`; branches e payload de decisão em `:27-45`; limites/valor fixo de latência em `:52-62`; autorização determinística em `:69-73`. Bounds e combinações são rejeitados em `CoreBehaviorPropertiesTest.java:31-89`, enquanto `:94-96` prova que a mesma validação está ligada ao lifecycle. Asserções verificam outcome/valor/exceção observável; todos os 18 testes mapeiam a CAP-06, EDG-07 ou aos critérios de T20 e seguem `AGENTS.md` e a Test Coverage Matrix.
 
 #### T21: Provar redelivery e contratos do Core mock
 

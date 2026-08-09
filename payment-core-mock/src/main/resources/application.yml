@@ -38,6 +38,7 @@ core:
     latency-max-ms: ${CORE_LATENCY_MAX_MS:300}
     decline-pct: ${CORE_DECLINE_PCT:10}
     fail-pct: ${CORE_FAIL_PCT:0}
+    seed: ${CORE_SEED:20260808}
 
 otel:
   service:

@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 4 / T20 — deterministic simulation and validated configuration (not started)
-- **Completed**: T1–T19; payment-core-mock standalone build consumes published contracts and its four-test Kafka/Apicurio gate is green
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:393`
-- **Next step**: implement T20 pure requestId/seed decision and configuration bounds with at least ten unit tests
+- **Phase / Task**: Execute; Phase 4 / T21 — redelivery and Core contract failures (not started)
+- **Completed**: T1–T20; deterministic requestId/seed simulation and configuration bounds pass 18 task-specific unit tests
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:410`
+- **Next step**: implement T21 duplicate, poison, dependency-failure and correlation/trace integration coverage with at least five ITs
 - **Blockers**: none
 - **Uncommitted files**: none after the atomic T19 commit
 - **Branch**: `feature/optimize-eda`

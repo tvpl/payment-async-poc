@@ -24,7 +24,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.concurrent.ThreadLocalRandom;
+import java.time.ZoneOffset;
 
 /**
  * Simulated external Core. Consumes {@code ProcessPaymentSimulationCommand} (Avro),
@@ -42,12 +42,15 @@ public class CoreSimulationConsumer {
     private final AvroSerde avroSerde;
     private final CoreResponseProducer producer;
     private final CoreBehaviorProperties behavior;
+    private final CoreSimulationDecisionEngine decisionEngine;
 
     public CoreSimulationConsumer(AvroSerde avroSerde, CoreResponseProducer producer,
-                                  CoreBehaviorProperties behavior) {
+                                  CoreBehaviorProperties behavior,
+                                  CoreSimulationDecisionEngine decisionEngine) {
         this.avroSerde = avroSerde;
         this.producer = producer;
         this.behavior = behavior;
+        this.decisionEngine = decisionEngine;
     }
 
     @Topic(Topics.CORE_COMMAND)
@@ -56,17 +59,18 @@ public class CoreSimulationConsumer {
         EventEnvelope<ProcessPaymentSimulationCommandPayload> env = AvroMapper.fromAvro(avro);
         ProcessPaymentSimulationCommandPayload cmd = env.payload();
 
-        int min = behavior.getLatencyMinMs();
-        int max = Math.max(min + 1, behavior.getLatencyMaxMs());
-        Thread.sleep(ThreadLocalRandom.current().nextLong(min, max));
+        CoreSimulationDecisionEngine.Decision decision =
+                decisionEngine.decide(env.requestId(), behavior.snapshot());
+        Thread.sleep(decision.latencyMs());
 
-        if (behavior.getFailPct() > 0 && ThreadLocalRandom.current().nextInt(100) < behavior.getFailPct()) {
+        if (decision.outcome() == CoreSimulationDecisionEngine.Outcome.TRANSIENT_FAILURE) {
             LOG.warn("Core simulating transient failure requestId={} simulationId={}",
                     env.requestId(), cmd.simulationId());
             throw new RuntimeException("Simulated transient Core failure");
         }
 
-        CorePaymentSimulationResponsePayload response = process(cmd);
+        LocalDate commandDate = env.occurredAt().atZone(ZoneOffset.UTC).toLocalDate();
+        CorePaymentSimulationResponsePayload response = process(cmd, decision, commandDate);
 
         EventEnvelope<CorePaymentSimulationResponsePayload> out =
                 env.deriveAs(EventTypes.CORE_PAYMENT_SIMULATION_RESPONSE, Sources.CORE, response);
@@ -78,10 +82,12 @@ public class CoreSimulationConsumer {
                 response.status(), env.requestId(), cmd.simulationId());
     }
 
-    private CorePaymentSimulationResponsePayload process(ProcessPaymentSimulationCommandPayload cmd) {
+    private CorePaymentSimulationResponsePayload process(
+            ProcessPaymentSimulationCommandPayload cmd,
+            CoreSimulationDecisionEngine.Decision decision,
+            LocalDate commandDate) {
         BigDecimal amount = cmd.request().amount();
-        boolean declined = ThreadLocalRandom.current().nextInt(100) < behavior.getDeclinePct();
-        if (declined) {
+        if (decision.outcome() == CoreSimulationDecisionEngine.Outcome.DECLINED) {
             return new CorePaymentSimulationResponsePayload(
                     cmd.simulationId(), SimulationResult.DECLINED, null,
                     amount, cmd.request().currency(), cmd.request().installments(),
@@ -95,12 +101,11 @@ public class CoreSimulationConsumer {
 
         int installments = cmd.request().installments() == null ? 1 : cmd.request().installments();
         Settlement settlement = new Settlement(
-                LocalDate.now().plusDays(1),
+                commandDate.plusDays(1),
                 installments > 1 ? "D+" + installments : "D+1");
 
-        String authCode = String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000));
         return new CorePaymentSimulationResponsePayload(
-                cmd.simulationId(), SimulationResult.APPROVED, authCode,
+                cmd.simulationId(), SimulationResult.APPROVED, decision.authorizationCode(),
                 amount, cmd.request().currency(), installments,
                 fees, settlement, null, null);
     }

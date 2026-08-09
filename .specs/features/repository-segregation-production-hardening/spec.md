@@ -335,7 +335,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | CAP-03 | Capacidade | Tasks | In Tasks |
 | CAP-04 | Capacidade | Tasks | In Tasks |
 | CAP-05 | Capacidade | Tasks | In Tasks |
-| CAP-06 | Capacidade | Tasks | In Tasks |
+| CAP-06 | Capacidade | Execute | T20 deterministic Core outcomes/latency complete; bounded admission and slowdown certification pending |
 | CAP-07 | Capacidade | Tasks | In Tasks |
 | FTR-01 | Feature control | Tasks | In Tasks |
 | FTR-02 | Feature control | Tasks | In Tasks |
@@ -364,7 +364,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | EDG-04 | Edge cases | Execute | T5 dashboard metric validation complete |
 | EDG-05 | Edge cases | Execute | T4 PASS/FAIL/NOT_RUN classification complete |
 | EDG-06 | Edge cases | Execute | T1 complete |
-| EDG-07 | Edge cases | Tasks | In Tasks |
+| EDG-07 | Edge cases | Execute | T20 deterministic requestId/seed behavior and validated profiles complete; NON_PRODUCTION docs and performance evidence pending |
 
 **Coverage:** 77 requirements total, 77 mapped to tasks, 0 pending design.
 
