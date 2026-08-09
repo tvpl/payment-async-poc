@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 4 / T23 — NON_PRODUCTION boundary documentation (not started)
-- **Completed**: T1–T22; Core mock now has a healthy multi-stage non-root image and app-only Compose on the external sandbox network
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:449`
-- **Next step**: implement T23 local README/AGENTS/docs/ADR/CI and enforce the NON_PRODUCTION startup classification
+- **Phase / Task**: Execute; Phase 5 / T24 — payment-sbus standalone extraction (not started)
+- **Completed**: T1–T23; Phase 4 Core mock boundary is standalone, deterministic, failure-tested, containerized and explicitly NON_PRODUCTION
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:469`
+- **Next step**: hand off T24 payment-sbus extraction to its owner/executor; do not start it in the Phase 4 task
 - **Blockers**: none
-- **Uncommitted files**: none after the atomic T22 commit
+- **Uncommitted files**: none after the atomic T23 commit
 - **Branch**: `feature/optimize-eda`

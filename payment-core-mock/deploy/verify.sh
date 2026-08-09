@@ -23,5 +23,6 @@ test "$(docker inspect --format '{{.Config.User}}' "$container_id")" = "10001:10
 test "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "$container_id")" = "true"
 test "$(docker inspect --format '{{index .Config.Labels "com.example.lifecycle"}}' "$container_id")" = "NON_PRODUCTION"
 docker inspect --format '{{json .NetworkSettings.Networks}}' "$container_id" | grep -q 'payment-sandbox'
+docker logs "$container_id" 2>&1 | grep -q 'boundary.classification=NON_PRODUCTION'
 
 echo "container-package: PASS"

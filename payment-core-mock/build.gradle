@@ -8,6 +8,10 @@ version = '0.1.0'
 def contractsRepository = providers.gradleProperty('contractsRepository')
         .orElse(providers.environmentVariable('PAYMENT_CONTRACTS_REPOSITORY'))
         .orElse(layout.projectDirectory.dir('../payment-contracts/build/repository').asFile.toURI().toString())
+def contractsRepositoryUsername = providers.gradleProperty('contractsRepositoryUsername')
+        .orElse(providers.environmentVariable('PAYMENT_CONTRACTS_REPOSITORY_USERNAME'))
+def contractsRepositoryPassword = providers.gradleProperty('contractsRepositoryPassword')
+        .orElse(providers.environmentVariable('PAYMENT_CONTRACTS_REPOSITORY_PASSWORD'))
 def contractsVersion = providers.gradleProperty('contractsVersion').get()
 
 java {
@@ -24,6 +28,12 @@ repositories {
             maven {
                 name = 'paymentContracts'
                 url = uri(contractsRepository.get())
+                if (contractsRepositoryUsername.isPresent() && contractsRepositoryPassword.isPresent()) {
+                    credentials {
+                        username = contractsRepositoryUsername.get()
+                        password = contractsRepositoryPassword.get()
+                    }
+                }
                 metadataSources {
                     mavenPom()
                     artifact()

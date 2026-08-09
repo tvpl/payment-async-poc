@@ -343,10 +343,10 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-04 | Feature control | Tasks | In Tasks |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
-| DOC-01 | Docs, ADRs e IA | Execute | T12 contracts and T18 sandbox README complete; other boundaries pending |
-| DOC-02 | Docs, ADRs e IA | Execute | T2 root, T12 contracts and T18 sandbox agent guides complete; other boundaries pending |
-| DOC-03 | Docs, ADRs e IA | Execute | T12 contracts and T18 sandbox proportional documentation complete; other boundaries pending |
-| DOC-04 | Docs, ADRs e IA | Execute | Contracts and sandbox ADR-0001 accepted; other boundary decisions pending |
+| DOC-01 | Docs, ADRs e IA | Execute | T12 contracts, T18 sandbox and T23 Core mock README complete; other boundaries pending |
+| DOC-02 | Docs, ADRs e IA | Execute | T2 root, T12 contracts, T18 sandbox and T23 Core mock agent guides complete; other boundaries pending |
+| DOC-03 | Docs, ADRs e IA | Execute | T12 contracts, T18 sandbox and T23 Core mock proportional documentation complete; other boundaries pending |
+| DOC-04 | Docs, ADRs e IA | Execute | Contracts, sandbox and Core mock ADR-0001 accepted; other boundary decisions pending |
 | DOC-05 | Docs, ADRs e IA | Execute | T5 manifest complete; relocation pending |
 | DOC-06 | Docs, ADRs e IA | Execute | T5 docs validation and T16 ports/variables validation complete; final relocation links pending |
 | DOC-07 | Docs, ADRs e IA | Execute | T2 root scope complete; legacy relocation pending |
@@ -364,7 +364,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | EDG-04 | Edge cases | Execute | T5 dashboard metric validation complete |
 | EDG-05 | Edge cases | Execute | T4 PASS/FAIL/NOT_RUN classification complete |
 | EDG-06 | Edge cases | Execute | T1 complete |
-| EDG-07 | Edge cases | Execute | T20 deterministic requestId/seed behavior and validated profiles complete; NON_PRODUCTION docs and performance evidence pending |
+| EDG-07 | Edge cases | Execute | T20 deterministic requestId/seed behavior and T23 NON_PRODUCTION profiles/performance limits complete |
 
 **Coverage:** 77 requirements total, 77 mapped to tasks, 0 pending design.
 

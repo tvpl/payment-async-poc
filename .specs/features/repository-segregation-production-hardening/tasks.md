@@ -447,6 +447,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T23: Classificar e documentar Core mock como não produtivo
 
+**Status:** Complete
+
 **What:** Criar README/AGENTS/docs/ADR/CI locais com label `NON_PRODUCTION`, limites e perfis determinísticos.  
 **Where:** `payment-core-mock/docs`  
 **Depends on:** T22  
@@ -457,6 +459,10 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural  
 **Gate:** build  
 **Commit:** `docs(core-mock): declare deterministic nonproduction scope`
+
+**Gate evidence:** O gate estrutural passou oito testes e validou 13 documentos, links, ownership, conteúdo obrigatório, ADR e classificação. O build standalone passou 21 testes e o gate full passou 27, incluindo os seis ITs Kafka/Apicurio. O smoke reconstruiu a imagem, iniciou saudável e confirmou o log `boundary.classification=NON_PRODUCTION`; sete checks de container e o Compose renderizado também passaram. Os gates centrais reportaram `root-governance: PASS` e `docs: PASS (251 sections)`. A equivalência permaneceu vermelha pelas relocações T1–T23 já explicitadas, inclusive a nova raiz Core; o baseline histórico não foi alterado para esconder a divergência.
+
+**Adequacy review:** `scripts/validate_docs.py:12-25` exige o pacote documental proporcional; `:28-34` rejeita claims produtivas e dependência obsoleta; `:42-74` fixa conteúdo de propósito, contratos, configuração, operação, testes e performance; `:81-116` valida links, claims e ADR; `:119-130` exige `NON_PRODUCTION` em README, startup, imagem e CI. O sensor é provado por oito testes em `scripts/test_docs.py:20-56`. A garantia executável está no reporter imutável `NonProductionStartupReporter.java:11-20` e é observada pelo smoke em `deploy/verify.sh:21-26`; o workflow rotulado e artifact-only está em `.github/workflows/ci.yml:1-39`. As asserções verificam ausência/presença e estado runtime observável, mapeiam DOC-01/02/03/04, EDG-07 e cada critério de T23, sem promover o simulador nem inventar garantia de capacidade.
 
 ### Phase 5 — `payment-sbus`
 
