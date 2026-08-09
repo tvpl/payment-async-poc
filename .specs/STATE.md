@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 3 / T17 — pinned images and safe data lifecycle
-- **Completed**: T1–T16; quatro combinações de profiles validadas e colisão 8085/variável ausente rejeitadas deterministicamente
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:337`
-- **Next step**: fixar imagens por digest, declarar retenção e separar reset destrutivo com confirmação
+- **Phase / Task**: Execute; Phase 3 / T18 — sandbox documentation and ADR
+- **Completed**: T1–T17; doze imagens pinadas, retenções/volumes coerentes e reset destrutivo separado com confirmação obrigatória
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:352`
+- **Next step**: criar quickstart, troubleshooting, docs proporcionais, AGENTS e ADR local do sandbox
 - **Blockers**: none
-- **Uncommitted files**: T16 port validator, fixtures, tests and status updates pending atomic commit; generated Python cache remains untracked
+- **Uncommitted files**: T17 pins, lifecycle, safe reset, tests and status updates pending atomic commit; generated Python cache remains untracked
 - **Branch**: `feature/optimize-eda`

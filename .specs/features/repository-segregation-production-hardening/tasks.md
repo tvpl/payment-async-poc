@@ -335,6 +335,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T17: Fixar imagens, retenções e operações destrutivas seguras
 
+**Status:** Complete
+
 **What:** Pin de versões/digests, configuração de volumes/retention e comandos de reset separados com confirmação.  
 **Where:** `sandbox/config`  
 **Depends on:** T16  
@@ -345,6 +347,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural  
 **Gate:** sandbox  
 **Commit:** `chore(sandbox): pin images and safe data lifecycle`
+
+**Gate evidence:** dezessete testes passaram; doze imagens usam tag+digest, cinco volumes e retenções Kafka/Redis/Prometheus estão declarados e coerentes. Fixtures sem pin/retenção válida falharam, reset sem confirmação retornou exit 2 antes de Docker e nenhum smoke referencia reset destrutivo. Cinco queries e nove probes runtime continuaram verdes.
 
 #### T18: Documentar operação e ADR do sandbox
 

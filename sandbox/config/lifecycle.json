@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "retention": {
+    "kafka": {
+      "hours": 72,
+      "bytesPerPartition": 2147483648
+    },
+    "redis": {
+      "appendOnly": true,
+      "appendFsync": "everysec"
+    },
+    "postgres": {
+      "persistent": true
+    },
+    "registry": {
+      "persistent": false,
+      "classification": "ephemeral-local-registry"
+    },
+    "prometheus": {
+      "days": 7,
+      "sizeGB": 2
+    },
+    "grafana": {
+      "persistent": true
+    }
+  },
+  "volumes": [
+    "payment-sandbox-kafka",
+    "payment-sandbox-redis",
+    "payment-sandbox-postgres",
+    "payment-sandbox-prometheus",
+    "payment-sandbox-grafana"
+  ]
+}

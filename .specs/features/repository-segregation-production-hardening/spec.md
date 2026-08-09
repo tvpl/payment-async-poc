@@ -296,7 +296,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
-| SBX-01 | Sandbox único | Execute | T13 minimal Compose/env/volumes and T14 actionable smoke complete; runner/docs pending |
+| SBX-01 | Sandbox único | Execute | T13/T14 runtime and T17 pinned lifecycle/reset controls complete; runner/docs pending |
 | SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
 | SBX-03 | Sandbox único | Execute | T13 named network complete; application Compose adoption pending |
 | SBX-04 | Sandbox único | Execute | T16 four profile combinations, synthetic 8085 collision and missing-variable validation complete |
@@ -308,7 +308,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SEC-04 | Segurança e operação | Tasks | In Tasks |
 | SEC-05 | Segurança e operação | Tasks | In Tasks |
 | SEC-06 | Segurança e operação | Execute | T3 complete |
-| SEC-07 | Segurança e operação | Tasks | In Tasks |
+| SEC-07 | Segurança e operação | Execute | T17 all sandbox images tag+digest pinned; application non-root/image gates pending |
 | SEC-08 | Segurança e operação | Tasks | In Tasks |
 | PAY-01 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-02 | Fluxo Kafka | Tasks | In Tasks |

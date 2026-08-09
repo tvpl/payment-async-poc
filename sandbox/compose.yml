@@ -2,7 +2,7 @@ name: payment-sandbox
 
 services:
   kafka:
-    image: apache/kafka:3.9.2
+    image: apache/kafka:3.9.2@sha256:05b4616e0702ef2729327705d54ad6b50ea70b271c4b730fabd2320789fb7b02
     restart: unless-stopped
     ports:
       - "${KAFKA_HOST_PORT:-29092}:29092"
@@ -19,6 +19,8 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_LOG_RETENTION_HOURS: "72"
+      KAFKA_LOG_RETENTION_BYTES: "2147483648"
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
@@ -29,11 +31,11 @@ services:
     networks: [sandbox]
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     restart: unless-stopped
     ports:
       - "${REDIS_HOST_PORT:-6379}:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
     volumes:
       - redis-data:/data
     healthcheck:
@@ -44,7 +46,7 @@ services:
     networks: [sandbox]
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     restart: unless-stopped
     ports:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
@@ -62,7 +64,7 @@ services:
     networks: [sandbox]
 
   registry:
-    image: apicurio/apicurio-registry-mem:2.6.2.Final
+    image: apicurio/apicurio-registry-mem:2.6.2.Final@sha256:560dd5b58f433d73152b36b30fa78c2ca89a09349ce144b1dbc45c88073c61ca
     restart: unless-stopped
     ports:
       - "${REGISTRY_HOST_PORT:-8085}:8080"

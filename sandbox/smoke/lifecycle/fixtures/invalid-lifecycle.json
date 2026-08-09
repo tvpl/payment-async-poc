@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "retention": {
+    "kafka": {"hours": 0, "bytesPerPartition": 0},
+    "registry": {"persistent": false, "classification": "ephemeral"},
+    "prometheus": {"days": 0, "sizeGB": 0}
+  },
+  "volumes": []
+}
