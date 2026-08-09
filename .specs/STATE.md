@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 2 / T7 — standalone contracts build
-- **Completed**: T1–T6; equivalência, governança, segredos, CI transitório, validação documental e artifact-only flow
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:162`
-- **Next step**: executar T7 após reconciliar este handoff com o Git
+- **Phase / Task**: Execute; Phase 2 / T8 — contract model and schemas
+- **Completed**: T1–T7; `payment-contracts` possui build, wrapper e publicação standalone verificados
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:177`
+- **Next step**: migrar modelo, constantes e schemas para `contract-model`, preservando o baseline
 - **Blockers**: none
 - **Uncommitted files**: none after the T6 commit
 - **Branch**: `feature/optimize-eda`

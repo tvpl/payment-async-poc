@@ -289,9 +289,9 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | ORG-01 | Fronteiras prontas para repositórios | Execute | T2 ownership map complete; physical roots pending |
-| ORG-02 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-02 | Fronteiras prontas para repositórios | Execute | T7 contracts build standalone complete; application roots pending |
 | ORG-03 | Fronteiras prontas para repositórios | Tasks | In Tasks |
-| ORG-04 | Fronteiras prontas para repositórios | Tasks | In Tasks |
+| ORG-04 | Fronteiras prontas para repositórios | Execute | T7 contracts publication build complete; docs and CI pending |
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6 artifact-only flow complete; consumer migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |

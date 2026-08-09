@@ -1,0 +1,14 @@
+pluginManagement {
+    plugins {
+        id 'com.github.davidmc24.gradle.plugin.avro' version '1.9.1'
+    }
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'payment-contracts'
+
+include 'contract-model'
+include 'contract-avro-apicurio'

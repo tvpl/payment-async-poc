@@ -161,6 +161,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T7: Criar build standalone publicável de contratos
 
+**Status:** Complete
+
 **What:** Criar raiz Gradle independente com wrapper Java 21, módulos e publicação local sem ler o build raiz.  
 **Where:** `payment-contracts`  
 **Depends on:** T6  
