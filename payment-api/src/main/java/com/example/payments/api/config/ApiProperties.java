@@ -1,6 +1,8 @@
 package com.example.payments.api.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.exceptions.ConfigurationException;
+import jakarta.annotation.PostConstruct;
 
 import java.time.Duration;
 
@@ -47,5 +49,29 @@ public class ApiProperties {
 
     public void setResponseChannel(String responseChannel) {
         this.responseChannel = responseChannel;
+    }
+
+    /**
+     * The idempotency reservation must outlive the status entry it guards (PAY-11): otherwise
+     * the dedup key could expire while the original request is still visible/in-flight,
+     * letting a retried submission slip through as if it were new.
+     */
+    @PostConstruct
+    public void validate() {
+        if (waitTimeout == null || waitTimeout.isNegative() || waitTimeout.isZero()) {
+            throw new ConfigurationException("payment.simulation.wait-timeout must be positive");
+        }
+        if (statusTtl == null || statusTtl.isNegative() || statusTtl.isZero()) {
+            throw new ConfigurationException("payment.simulation.status-ttl must be positive");
+        }
+        if (idempotencyTtl == null || idempotencyTtl.isNegative() || idempotencyTtl.isZero()) {
+            throw new ConfigurationException("payment.simulation.idempotency-ttl must be positive");
+        }
+        if (idempotencyTtl.compareTo(statusTtl) < 0) {
+            throw new ConfigurationException(
+                    "payment.simulation.idempotency-ttl must be >= status-ttl, "
+                            + "otherwise a duplicate can slip through after the reservation expires "
+                            + "while the original status is still visible");
+        }
     }
 }

@@ -4,6 +4,8 @@ import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
+import com.example.payments.api.error.IdempotencyConflictException;
+import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.kafka.PaymentRequestProducer;
 import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
@@ -18,10 +20,12 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +54,8 @@ class ApiPaymentServiceUnitTest {
 
         when(avroSerde.serialize(anyString(), any())).thenReturn(new byte[]{1});
         when(coordinator.register(anyString())).thenReturn(new CompletableFuture<>());
-        when(store.reserveIdempotency(anyString(), anyString())).thenReturn(Optional.empty());
+        when(store.reserve(anyString(), anyString(), anyString()))
+                .thenReturn(new IdempotencyOutcome.Reserved());
     }
 
     @Test
@@ -95,8 +100,8 @@ class ApiPaymentServiceUnitTest {
 
     @Test
     void replaysOnDuplicateIdempotencyKey() {
-        when(store.reserveIdempotency(anyString(), anyString()))
-                .thenReturn(Optional.of("original-request-id"));
+        when(store.reserve(anyString(), anyString(), anyString()))
+                .thenReturn(new IdempotencyOutcome.Replay("original-request-id"));
         when(store.get("original-request-id"))
                 .thenReturn(Optional.of(new StatusEntry(
                         "original-request-id", SimulationStatus.COMPLETED, null)));
@@ -106,5 +111,18 @@ class ApiPaymentServiceUnitTest {
         assertTrue(result.duplicate());
         assertFalse(result.timedOut());
         assertEquals("original-request-id", result.entry().requestId());
+    }
+
+    @Test
+    void rejectsDivergentPayloadOnSameIdempotencyKeyWithoutPublishing() {
+        when(store.reserve(anyString(), anyString(), anyString()))
+                .thenReturn(new IdempotencyOutcome.Conflict("original-request-id"));
+
+        IdempotencyConflictException exception = assertThrows(IdempotencyConflictException.class,
+                () -> service.submit(REQUEST, "the-key"));
+
+        assertEquals("the-key", exception.idempotencyKey());
+        assertEquals("original-request-id", exception.originalRequestId());
+        verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any());
     }
 }

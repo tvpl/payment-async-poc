@@ -5,7 +5,10 @@ import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.client.SbusStatusResponse;
+import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
+import com.example.payments.api.idempotency.IdempotencyFingerprint;
+import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.kafka.PaymentRequestProducer;
 import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
@@ -71,15 +74,20 @@ public class ApiPaymentService {
                 : idempotencyKeyHeader;
         String requestId = UUID.randomUUID().toString();
 
-        // Idempotency: first writer wins the key; later identical requests replay it.
-        Optional<String> owner = store.reserveIdempotency(idempotencyKey, requestId);
-        if (owner.isPresent() && !owner.get().equals(requestId)) {
-            String originalId = owner.get();
-            StatusEntry entry = store.get(originalId)
-                    .orElse(new StatusEntry(originalId, SimulationStatus.PROCESSING, null));
+        // Idempotency: first writer wins the key + canonical fingerprint atomically; a later
+        // request with the same key replays it only if the payload also matches (PAY-01/PAY-02).
+        String fingerprint = IdempotencyFingerprint.of(request);
+        IdempotencyOutcome outcome = store.reserve(idempotencyKey, requestId, fingerprint);
+        if (outcome instanceof IdempotencyOutcome.Replay replay) {
+            StatusEntry entry = store.get(replay.requestId())
+                    .orElse(new StatusEntry(replay.requestId(), SimulationStatus.PROCESSING, null));
             LOG.info("Idempotent replay key={} -> requestId={} status={}",
-                    idempotencyKey, originalId, entry.status());
+                    idempotencyKey, replay.requestId(), entry.status());
             return new SubmitResult(entry, !isTerminal(entry.status()), true);
+        }
+        if (outcome instanceof IdempotencyOutcome.Conflict conflict) {
+            LOG.info("Idempotency conflict key={} originalRequestId={}", idempotencyKey, conflict.requestId());
+            throw new IdempotencyConflictException(idempotencyKey, conflict.requestId());
         }
 
         String correlationId = UUID.randomUUID().toString();

@@ -787,6 +787,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T33: Implementar reserva idempotente com fingerprint
 
+**Status:** Complete
+
 **What:** Associar atomicamente chave, requestId, fingerprint canônico e state machine, retornando replay ou conflito determinístico.  
 **Where:** `payment-api/src/main/java/com/example/payments/api/idempotency`  
 **Depends on:** T32  
@@ -797,6 +799,27 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(api): fingerprint idempotent submissions`
+
+**Gate evidence:** O `RedisStatusStore.reserveIdempotency(key, requestId)` herdado de `7de39fb` associava a chave apenas ao `requestId`, sem nenhum fingerprint do payload — uma chave reutilizada com payload divergente simplesmente reproduzia (silenciosamente) o resultado original, violando PAY-02. `RedisStatusStore.reserve(key, requestId, fingerprint)` (novo) grava `{requestId, fingerprint}` como um único valor JSON via `SET NX` — chave e fingerprint ficam atomicamente associados numa única ida ao Redis, sem janela em que a chave exista sem o fingerprint. `IdempotencyFingerprint` (novo, `payment-api/src/main/java/com/example/payments/api/idempotency/`) calcula SHA-256 sobre os campos de negócio delimitados por `|`, normalizando a escala do `BigDecimal` (`stripTrailingZeros`) para que `125.50` e `125.5` sejam o mesmo fingerprint, preservando a equivalência numérica já estabelecida em T8. `ApiPaymentService.submit` agora trata `IdempotencyOutcome.Replay` (mesma chave+fingerprint) devolvendo a identidade original, e `IdempotencyOutcome.Conflict` (mesma chave, fingerprint diferente) lançando `IdempotencyConflictException` **antes** de qualquer serialização/publicação Kafka — `producer.send` nunca é chamado no caminho de conflito, provado por `verify(producer, never())` em unit test. Um novo `IdempotencyConflictExceptionHandler` mapeia o conflito para `409 problem+json`. TTL coerente é agora um invariante de startup: `ApiProperties.validate()` (`@PostConstruct`) rejeita `wait-timeout`/`status-ttl`/`idempotency-ttl` não positivos e exige `idempotency-ttl >= status-ttl` — caso contrário a reserva poderia expirar enquanto o status original ainda está visível, permitindo que uma resubmissão escape à deduplicação. O full gate (`./gradlew test -PwithIT --no-daemon`, `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados) passou **55/55**: os 34 de T31+T32 mais 21 novos (`IdempotencyFingerprintUnitTest` 6, `RedisStatusStoreIdempotencyIT` 6 contra Redis real incluindo expiração de TTL, `ApiPropertiesUnitTest` 6, `IdempotencyIT` 2 fim a fim via HTTP real, `ApiPaymentServiceUnitTest` +1) sem redução de nenhum teste anterior.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| PAY-01: chave+requestId+fingerprint associados atomicamente | `RedisStatusStoreIdempotencyIT.java:60-64` — `assertInstanceOf(Reserved.class, ...)` sobre `SET NX` real | primeira reserva grava identidade completa numa única operação | ✅ |
+| PAY-02: mesma chave/payload repete identidade | `RedisStatusStoreIdempotencyIT.java:68-76`; `IdempotencyIT.java:66-73` — mesmo `requestId` no segundo `reserve`/segunda submissão HTTP | replay determinístico, não uma nova identidade | ✅ |
+| PAY-02: payload divergente retorna conflito e zero publish | `RedisStatusStoreIdempotencyIT.java:80-88` — `assertInstanceOf(Conflict.class, ...)` preserva o `requestId` original; `ApiPaymentServiceUnitTest.java:117-126` — `assertThrows(IdempotencyConflictException.class, ...)` e `verify(producer, never())...`; `IdempotencyIT.java:76-96` — HTTP `409` real e status do `requestId` original intacto após a tentativa rejeitada | conflito determinístico sem publicação nem sobrescrita do dono original | ✅ |
+| Conflitos repetidos não sobrescrevem o dono | `RedisStatusStoreIdempotencyIT.java:92-101` — três tentativas divergentes, `requestId` original preservado em todas | `SET NX` nunca perde para uma tentativa posterior | ✅ |
+| TTL coerente | `ApiPropertiesUnitTest.java:32-37` — `assertThrows(ConfigurationException.class, ...)` para `idempotency-ttl < status-ttl`; `RedisStatusStoreIdempotencyIT.java:105-113` — reserva expira e libera a chave após o TTL configurado | reserva nunca expira antes do status permanecer visível; expiração real observada | ✅ |
+| Fingerprint determinístico e sem colisão de fronteira | `IdempotencyFingerprintUnitTest.java` — mesmo payload/escala numérica equivalente geram o mesmo fingerprint; merchantId, installments, valor e concatenação de campos adjacentes (`"AB"+"1"` vs `"A"+"B1"`) geram fingerprints diferentes | fingerprint reflete identidade de negócio, não formatação textual | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `RedisStatusStoreIdempotencyIT.java:60-113` | PAY-01/02, Done-when T33 (Redis real) | ✅ |
+| `IdempotencyIT.java:66-96` | PAY-02, fim a fim via HTTP real | ✅ |
+| `ApiPaymentServiceUnitTest.java:117-126` | PAY-02, zero publish no conflito | ✅ |
+| `ApiPropertiesUnitTest.java:20-56` | PAY-11, TTL coerente | ✅ |
+| `IdempotencyFingerprintUnitTest.java` | PAY-01/02, identidade de negócio do fingerprint | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. As asserções verificam o `requestId` observável (não apenas ausência de exceção), o status HTTP e corpo `problem+json` reais, a expiração real do TTL contra Redis via Testcontainers, e a ausência de chamada ao producer no caminho de conflito. O gap de T31/T32 que o `7de39fb` deixou (nenhum fingerprint, replay cego) foi corrigido sem reduzir nenhuma asserção anterior — `replaysOnDuplicateIdempotencyKey` continua verde, apenas com o mock adaptado à nova assinatura `reserve(key, requestId, fingerprint)`. `PAY-11` é parcialmente coberto aqui (retenção coerente com idempotência); a parte de "consulta protegida por índice e autorização" já está coberta por T32 (`X-API-Key`/JWT no endpoint de negócio) e pela query por `requestId` existente — nenhuma nova superfície de consulta foi introduzida nesta tarefa. Não há SPEC_DEVIATION em T33.
 
 #### T34: Recuperar atomicamente falha de publicação inicial
 

@@ -310,8 +310,8 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | SEC-06 | Segurança e operação | Execute | T3 complete |
 | SEC-07 | Segurança e operação | Execute | T17 sandbox plus T22 Core and T30 SBUS images are tag+digest pinned with non-root/read-only runtime gates; remaining applications pending |
 | SEC-08 | Segurança e operação | Execute | T30 SBUS CI builds image, generates SPDX SBOM and blocks HIGH/CRITICAL Trivy findings; remaining boundaries pending |
-| PAY-01 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-02 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-01 | Fluxo Kafka | Execute | T33 API atomically associates idempotency key + requestId + canonical fingerprint via a single Redis SET NX |
+| PAY-02 | Fluxo Kafka | Execute | T33 API replays same key+fingerprint, returns deterministic 409 with zero publish on a divergent fingerprint |
 | PAY-03 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-04 | Fluxo Kafka | Execute | T26 terminal state+outbox and T27 retry schedule-before-offset atomic persistence are proven |
 | PAY-05 | Fluxo Kafka | Execute | T28 persisted token fences stale updates and a PostgreSQL session advisory lock prevents overlapping broker sends after lease reclaim |
@@ -320,7 +320,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-08 | Fluxo Kafka | Execute | T27 due-based outbox publishes only when due, deduplicates crash redelivery and removes partition sleep |
 | PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics, T21 Core policy and T29 SBUS typed Kafka/PostgreSQL/Redis/Registry budgets and recoverable-state matrix complete; remaining service policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-11 | Fluxo Kafka | Execute | T26 V7 conditional transition makes the first terminal sticky; T29 startup guard aligns idempotency, durable state, published outbox, Kafka retention and redelivery windows |
+| PAY-11 | Fluxo Kafka | Execute | T26 V7 conditional transition makes the first terminal sticky; T29 startup guard aligns idempotency, durable state, published outbox, Kafka retention and redelivery windows; T33 API startup guard requires idempotency-ttl >= status-ttl |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |
 | RED-01 | Async Redis | Tasks | In Tasks |
 | RED-02 | Async Redis | Tasks | In Tasks |

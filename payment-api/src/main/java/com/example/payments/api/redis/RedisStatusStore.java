@@ -2,6 +2,8 @@ package com.example.payments.api.redis;
 
 import com.example.payments.api.config.ApiProperties;
 import com.example.payments.api.dto.StatusEntry;
+import com.example.payments.api.idempotency.IdempotencyOutcome;
+import com.example.payments.api.idempotency.IdempotencyReservation;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -80,18 +82,51 @@ public class RedisStatusStore {
     }
 
     /**
-     * Reserves an idempotency key for this requestId.
+     * Atomically reserves an idempotency key for this requestId + payload fingerprint
+     * (PAY-01). Key and fingerprint are stored together in a single {@code SET NX} so no
+     * request can observe a key associated with only half the identity.
      *
-     * @return empty if reserved by us now; otherwise the requestId that already owns it.
+     * <p>Same key + same fingerprint replays the original identity (PAY-02); same key with
+     * a different fingerprint is a deterministic conflict, never a silent replay.
      */
-    public Optional<String> reserveIdempotency(String idempotencyKey, String requestId) {
+    public IdempotencyOutcome reserve(String idempotencyKey, String requestId, String fingerprint) {
         String key = IDEM_PREFIX + idempotencyKey;
-        String result = commands().set(key, requestId,
-                SetArgs.Builder.nx().px(properties.getIdempotencyTtl().toMillis()));
-        if ("OK".equals(result)) {
-            return Optional.empty();
+        String value = writeReservation(new IdempotencyReservation(requestId, fingerprint));
+        long ttlMillis = properties.getIdempotencyTtl().toMillis();
+        // Two attempts: a SET NX can lose the race to a reservation that expires between the
+        // failed NX and the follow-up GET; retrying once claims the now-free key deterministically
+        // instead of surfacing a spurious failure for an astronomically narrow window.
+        for (int attempt = 0; attempt < 2; attempt++) {
+            String result = commands().set(key, value, SetArgs.Builder.nx().px(ttlMillis));
+            if ("OK".equals(result)) {
+                return new IdempotencyOutcome.Reserved();
+            }
+            String existingValue = commands().get(key);
+            if (existingValue == null) {
+                continue;
+            }
+            IdempotencyReservation existing = readReservation(existingValue);
+            return fingerprint.equals(existing.fingerprint())
+                    ? new IdempotencyOutcome.Replay(existing.requestId())
+                    : new IdempotencyOutcome.Conflict(existing.requestId());
         }
-        return Optional.ofNullable(commands().get(key));
+        throw new IllegalStateException("Failed to reserve idempotency key: " + idempotencyKey);
+    }
+
+    private String writeReservation(IdempotencyReservation reservation) {
+        try {
+            return objectMapper.writeValueAsString(reservation);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to encode idempotency reservation", e);
+        }
+    }
+
+    private IdempotencyReservation readReservation(String json) {
+        try {
+            return objectMapper.readValue(json, IdempotencyReservation.class);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to decode idempotency reservation", e);
+        }
     }
 
     public void publishResponse(String requestId) {
