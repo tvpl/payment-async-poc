@@ -1,0 +1,55 @@
+name: payment-sbus
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  PAYMENT_CONTRACTS_REPOSITORY: ${{ vars.PAYMENT_CONTRACTS_REPOSITORY }}
+  PAYMENT_CONTRACTS_REPOSITORY_CONTEXT: ${{ vars.PAYMENT_CONTRACTS_REPOSITORY_CONTEXT }}
+
+jobs:
+  release-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Require published contracts
+        run: test -n "$PAYMENT_CONTRACTS_REPOSITORY" && test -n "$PAYMENT_CONTRACTS_REPOSITORY_CONTEXT"
+      - name: Unit and build
+        run: ./gradlew test --no-daemon && ./gradlew build --no-daemon
+      - name: Integration
+        run: ./gradlew test -PwithIT --no-daemon
+      - name: Documentation, Compose and hygiene
+        run: scripts/verify-docs.sh && deploy/verify.sh --structural && git diff --check
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: >-
+          docker buildx build --load
+          --build-context contracts-repository="$PAYMENT_CONTRACTS_REPOSITORY_CONTEXT"
+          --tag payment-sbus:${{ github.sha }} .
+      - uses: anchore/sbom-action@v0
+        with:
+          image: payment-sbus:${{ github.sha }}
+          format: spdx-json
+          output-file: payment-sbus.spdx.json
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: payment-sbus:${{ github.sha }}
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payment-sbus-sbom
+          path: payment-sbus.spdx.json

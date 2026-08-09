@@ -20,6 +20,19 @@ async:
     wait-timeout: 3s
     # TTL of the durable result and the per-request response list (avoids key leaks).
     result-ttl: 15m
+    # How long an accepted job stays answerable. The window between this and result-ttl is what
+    # makes an expired result distinguishable from a job that never existed. Must be >= result-ttl.
+    status-ttl: 24h
+    # How long an Idempotency-Key stays bound to its job.
+    idempotency-ttl: 24h
+    # Whether POST /jobs rejects a submission with no Idempotency-Key. Required in production.
+    idempotency-required: false
+    # X-API-Key authentication for the job endpoints. Production refuses the development default.
+    # Override per environment with ASYNC_REDIS_SECURITY_ENABLED / ASYNC_REDIS_SECURITY_API_KEYS.
+    security:
+      enabled: true
+      api-keys:
+        - dev-key-change-me
     # Number of worker consumers pulling from the stream (each holds one blocking connection).
     worker-concurrency: 2
     # Stream + consumer group names.
@@ -28,10 +41,20 @@ async:
     # Simulated processing time so the demo/benchmark exercises real waiting.
     process-latency-min-ms: ${ASYNC_LATENCY_MIN_MS:20}
     process-latency-max-ms: ${ASYNC_LATENCY_MAX_MS:150}
+    # Identity of this process inside the consumer group. Derived per process when unset, which is
+    # what keeps two replicas of the same image from sharing a consumer name (and its PEL).
+    instance-id: ${ASYNC_INSTANCE_ID:}
     # Reclaim messages idle longer than this from crashed consumers.
     reclaim-idle: 30s
     # How often each worker scans pending entries for reclaim/DLQ.
     reclaim-interval: 5s
+    # How long the single reclaim turn stays owned. Must exceed reclaim-interval so the owner can
+    # renew before it lapses; a crashed owner frees the turn when it expires.
+    reclaim-lease: 10s
+    # Reconnect backoff for a worker whose Redis is unreachable at startup or lost mid-loop.
+    # A connection that survives longer than the ceiling resets the delay back to the floor.
+    connect-backoff-min: 200ms
+    connect-backoff-max: 5s
     # Approximate cap on the stream length (XADD MAXLEN ~) to bound memory.
     stream-maxlen: ${ASYNC_STREAM_MAXLEN:100000}
     # Poison protection: after this many deliveries a job is moved to the DLQ.

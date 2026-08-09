@@ -2,8 +2,23 @@ plugins {
     id 'io.micronaut.application'
 }
 
+group = 'com.example.platform'
+version = '0.1.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(
+                providers.gradleProperty('javaLanguageVersion').get().toInteger()
+        )
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
 micronaut {
-    version = project.property('micronautVersion')
+    version = providers.gradleProperty('micronautVersion').get()
     runtime 'netty'
     testRuntime 'junit5'
     processing {
@@ -23,7 +38,7 @@ dependencies {
     // Connection pool for the blocking BRPOP waits (Lettuce ConnectionPoolSupport).
     implementation 'org.apache.commons:commons-pool2:2.12.0'
 
-    // Observability parity with the other services (Prometheus scrape + /health).
+    // Observability parity with the other boundaries (Prometheus scrape + /health).
     implementation 'io.micronaut:micronaut-management'
     implementation 'io.micronaut.micrometer:micronaut-micrometer-registry-prometheus'
     implementation 'jakarta.annotation:jakarta.annotation-api'
@@ -34,10 +49,33 @@ dependencies {
 
     testImplementation 'io.micronaut.test:micronaut-test-junit5'
     testImplementation 'io.micronaut:micronaut-http-client'
-    // ITs run against a real Redis at localhost:6379 (local or CI service) — no Docker/Testcontainers.
+    // ITs run against a real Redis at localhost:6379 (the sandbox root owns it per AD-003, and CI's
+    // Redis service listens on the same address) — no Docker/Testcontainers.
     testImplementation 'org.awaitility:awaitility:4.2.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 application {
     mainClass = 'com.example.platform.asyncredis.Application'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.add('-parameters')
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    filter {
+        // Integration tests (*IT) need a running Redis and are excluded by default so the normal
+        // `./gradlew test` is fast and dependency-free. Include them with -PwithIT.
+        setFailOnNoMatchingTests(false)
+        if (!project.hasProperty('withIT')) {
+            excludeTestsMatching '*IT'
+        }
+    }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
 }

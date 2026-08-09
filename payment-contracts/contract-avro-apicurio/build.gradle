@@ -1,0 +1,14 @@
+description = 'Avro mapping and bounded Apicurio Registry codec adapter.'
+
+dependencies {
+    api project(':contract-model')
+    api("io.apicurio:apicurio-registry-serdes-avro-serde:${project.property('apicurioVersion')}") {
+        exclude group: 'org.apache.kafka', module: 'kafka-clients'
+    }
+    compileOnly "org.apache.kafka:kafka-clients:${project.property('kafkaVersion')}"
+
+    testImplementation platform('org.junit:junit-bom:5.10.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "org.apache.kafka:kafka-clients:${project.property('kafkaVersion')}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

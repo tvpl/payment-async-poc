@@ -9,8 +9,8 @@ import io.micronaut.serde.annotation.Serdeable;
  */
 @Serdeable
 public record JobResponse(
-        String jobId,
+        @Nullable String jobId,
         String status,
-        String statusUrl,
+        @Nullable String statusUrl,
         @Nullable JobResult result) {
 }

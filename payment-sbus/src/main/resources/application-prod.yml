@@ -1,0 +1,45 @@
+micronaut:
+  security:
+    token:
+      jwt:
+        signatures:
+          jwks:
+            idp:
+              url: ${SBUS_JWT_JWKS_URL}
+              key-type: RSA
+        claims-validators:
+          issuer: ${SBUS_JWT_ISSUER}
+          audience: ${SBUS_JWT_AUDIENCE}
+          expiration: true
+          not-before: true
+
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+redis:
+  uri: ${REDIS_URI}
+
+datasources:
+  default:
+    url: ${POSTGRES_JDBC_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+apicurio:
+  registry:
+    url: ${APICURIO_REGISTRY_URL}
+
+payments:
+  avro:
+    registry-url: ${APICURIO_REGISTRY_URL}
+    auto-register: false
+
+sbus:
+  security:
+    clock-skew: 0s
+
+otel:
+  exporter:
+    otlp:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}

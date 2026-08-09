@@ -1,0 +1,6 @@
+.gradle/
+build/
+**/build/
+scripts/__pycache__/
+consumer-fixture/.gradle/
+consumer-fixture/build/

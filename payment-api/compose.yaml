@@ -1,0 +1,42 @@
+name: payment-api
+
+services:
+  api:
+    image: payment-api:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      additional_contexts:
+        contracts-repository: ${PAYMENT_CONTRACTS_REPOSITORY_CONTEXT:-../payment-contracts/build/repository}
+        feature-control-repository: ${FEATURE_CONTROL_REPOSITORY_CONTEXT:-../feature-control/build/repo}
+    environment:
+      MICRONAUT_ENVIRONMENTS: ${MICRONAUT_ENVIRONMENTS:-dev}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      APICURIO_REGISTRY_URL: ${APICURIO_REGISTRY_URL:-http://registry:8080/apis/registry/v2}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      SBUS_BASE_URL: ${SBUS_BASE_URL:-http://sbus:8081}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      PAYMENT_API_INSTANCES: ${PAYMENT_API_INSTANCES:-1}
+      PAYMENT_API_KEY: ${PAYMENT_API_KEY:-}
+      JWT_JWKS_URL: ${JWT_JWKS_URL:-}
+      JWT_ISSUER: ${JWT_ISSUER:-}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-}
+    ports:
+      - "${API_HOST_PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    restart: unless-stopped
+    networks:
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: ${SANDBOX_NETWORK:-payment-sandbox}

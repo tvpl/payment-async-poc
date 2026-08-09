@@ -1,0 +1,111 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.57@sha256:8f165334f418ca53691ce358c19b4244226ed35c5d18408c5acf305af2065fb9
+    restart: unless-stopped
+    profiles: [observability]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${JAEGER_HOST_PORT:-16686}:16686"
+    networks: [sandbox]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.1@sha256:0d928e02b0ef5abbba775da205eb102f58b29aa75ea623465ec42445dfc5c443
+    restart: unless-stopped
+    profiles: [observability]
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro
+    depends_on: [jaeger]
+    networks: [sandbox]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0@sha256:075b1ba2c4ebb04bc3a6ab86c06ec8d8099f8fda1c96ef6d104d9bb1def1d8bc
+    restart: unless-stopped
+    profiles: [observability]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+    ports:
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/application-targets.json:/etc/prometheus/application-targets.json:ro
+      - prometheus-data:/prometheus
+    networks: [sandbox]
+
+  grafana:
+    image: grafana/grafana:11.1.0@sha256:079600c9517b678c10cda6006b4487d3174512fd4c6cface37df7822756ed7a5
+    restart: unless-stopped
+    profiles: [observability]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in sandbox/.env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_HOST_PORT:-3000}:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on: [prometheus, jaeger]
+    networks: [sandbox]
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0@sha256:c5a968ba5f30bab5e12181cceb89c4ed37cb4fe4d85490b5b66c7cfe4750b5e8
+    restart: unless-stopped
+    profiles: [observability]
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [sandbox]
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0@sha256:386b12d19eab2a37d7cd8ca8b4c7491cc7a830d9581f49af6c98a393da9605e6
+    restart: unless-stopped
+    profiles: [observability]
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-sbus}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in sandbox/.env}@postgres:5432/${POSTGRES_DB:-sbus}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [sandbox]
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0@sha256:e90b7ba06d97717224d67774fc7f208c26d1c4dafd4c8011185b0d45b5b38ace
+    restart: unless-stopped
+    profiles: [observability]
+    command: ["--kafka.server=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks: [sandbox]
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818
+    restart: unless-stopped
+    profiles: [tools]
+    ports:
+      - "${KAFKA_UI_HOST_PORT:-8088}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://registry:8080/apis/ccompat/v6
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    networks: [sandbox]
+
+volumes:
+  prometheus-data:
+    name: ${PROMETHEUS_VOLUME:-payment-sandbox-prometheus}
+  grafana-data:
+    name: ${GRAFANA_VOLUME:-payment-sandbox-grafana}

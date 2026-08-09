@@ -1,0 +1,15 @@
+# Dev profile: no OTLP collector required locally (avoids periodic export errors).
+# Activate with: MICRONAUT_ENVIRONMENTS=dev
+otel:
+  traces:
+    exporter: none
+
+micronaut:
+  security:
+    token:
+      jwt:
+        signatures:
+          secret:
+            dev:
+              secret: ${SBUS_DEV_JWT_SECRET}
+              jws-algorithm: HS256

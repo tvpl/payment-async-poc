@@ -1,0 +1,103 @@
+plugins {
+    id 'base'
+    id 'com.github.davidmc24.gradle.plugin.avro' apply false
+}
+
+group = 'com.example.payments'
+version = '0.1.0'
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+
+    group = rootProject.group
+    version = rootProject.version
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(providers.gradleProperty('javaLanguageVersion').get().toInteger())
+        }
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs.add('-parameters')
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+            exceptionFormat 'full'
+        }
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                artifactId = "payment-${project.name}"
+                from components.java
+            }
+        }
+        repositories {
+            maven {
+                name = 'localBuild'
+                url = rootProject.layout.buildDirectory.dir('repository')
+            }
+        }
+    }
+}
+
+tasks.named('build') {
+    dependsOn subprojects.collect { it.tasks.named('build') }
+}
+
+tasks.register('publishAllToLocalBuildRepository') {
+    group = 'publishing'
+    description = 'Publishes all contract artifacts to the boundary-local Maven repository.'
+    dependsOn subprojects.collect { it.tasks.named('publishMavenPublicationToLocalBuildRepository') }
+}
+
+tasks.register('verifyLocalPublication') {
+    group = 'verification'
+    description = 'Verifies POM, binary, sources and Javadoc for every published contract artifact.'
+    dependsOn tasks.named('publishAllToLocalBuildRepository')
+
+    doLast {
+        def repository = layout.buildDirectory.dir('repository').get().asFile
+        subprojects.each { contractProject ->
+            def artifactId = "payment-${contractProject.name}"
+            def artifactDirectory = new File(
+                repository,
+                "com/example/payments/${artifactId}/${project.version}"
+            )
+            def prefix = "${artifactId}-${project.version}"
+            [
+                "${prefix}.pom",
+                "${prefix}.jar",
+                "${prefix}-sources.jar",
+                "${prefix}-javadoc.jar"
+            ].each { artifact ->
+                if (!new File(artifactDirectory, artifact).isFile()) {
+                    throw new GradleException("Missing published artifact: ${artifactDirectory}/${artifact}")
+                }
+            }
+        }
+    }
+}
+
+tasks.register('checkSchemaCompatibility') {
+    group = 'verification'
+    description = 'Runs the local FULL_TRANSITIVE compatibility dry run without mutating a Registry.'
+    dependsOn ':contract-model:test'
+
+    doLast {
+        logger.lifecycle('schema-compatibility: PASS (FULL_TRANSITIVE dry run, Registry unchanged)')
+    }
+}

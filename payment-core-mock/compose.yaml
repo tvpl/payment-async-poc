@@ -1,0 +1,38 @@
+name: payment-core-mock
+
+services:
+  core-mock:
+    image: payment-core-mock:${IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      additional_contexts:
+        contracts-repository: ${PAYMENT_CONTRACTS_REPOSITORY_CONTEXT:-../payment-contracts/build/repository}
+    environment:
+      MICRONAUT_ENVIRONMENTS: ${MICRONAUT_ENVIRONMENTS:-dev}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      APICURIO_REGISTRY_URL: ${APICURIO_REGISTRY_URL:-http://registry:8080/apis/registry/v2}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      CORE_LATENCY_MIN_MS: ${CORE_LATENCY_MIN_MS:-50}
+      CORE_LATENCY_MAX_MS: ${CORE_LATENCY_MAX_MS:-300}
+      CORE_DECLINE_PCT: ${CORE_DECLINE_PCT:-10}
+      CORE_FAIL_PCT: ${CORE_FAIL_PCT:-0}
+      CORE_SEED: ${CORE_SEED:-20260808}
+    ports:
+      - "${CORE_MOCK_HOST_PORT:-8082}:8082"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    restart: unless-stopped
+    networks:
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: ${SANDBOX_NETWORK:-payment-sandbox}

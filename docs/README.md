@@ -7,11 +7,15 @@ funciona** ponta a ponta.
 
 > Visão rápida do produto e instruções mínimas estão no [`README.md`](../README.md) na raiz.
 > Esta pasta aprofunda cada parte.
+>
+> Agentes de IA devem começar pelo [`AGENTS.md`](../AGENTS.md). Ele define o mapa do codebase,
+> as fontes de verdade, os invariantes que não podem ser quebrados e os gates de validação.
 
 ## Mapa de leitura por perfil
 
 | Perfil | Comece por |
 |---|---|
+| **Sou um agente de IA** | [`AGENTS.md`](../AGENTS.md) → documento do módulo abaixo → [13 Testes](13-testes.md) |
 | **Quero entender o problema/arquitetura** | [01 Visão geral](01-visao-geral.md) → [02 Arquitetura](02-arquitetura.md) → [04 Fluxo ponta a ponta](04-fluxo-ponta-a-ponta.md) |
 | **Vou mexer no código** | [03 Tecnologias](03-tecnologias.md) → [05 API](05-api-service.md) / [06 SBUS](06-sbus-service.md) → [08 Eventos e contratos](08-eventos-e-contratos.md) |
 | **Vou operar/rodar** | [12 Execução e operação](12-execucao-e-operacao.md) → [10 Observabilidade](10-observabilidade.md) → [11 Resiliência e trade-offs](11-resiliencia-e-tradeoffs.md) |
@@ -19,6 +23,8 @@ funciona** ponta a ponta.
 | **Vou levar para produção** | [15 Prontidão para produção](15-prontidao-producao.md) → [11 Resiliência](11-resiliencia-e-tradeoffs.md) → [12 Execução](12-execucao-e-operacao.md) |
 
 ## Índice
+
+Guia transversal: [`AGENTS.md`](../AGENTS.md), orientação canônica para alterações assistidas por IA.
 
 | # | Documento | Conteúdo |
 |---|---|---|

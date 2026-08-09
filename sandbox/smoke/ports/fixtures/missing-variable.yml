@@ -1,0 +1,6 @@
+services:
+  synthetic-missing-variable:
+    image: busybox:1.36
+    environment:
+      REQUIRED_VALUE: ${SANDBOX_REQUIRED_TEST:?SANDBOX_REQUIRED_TEST is required}
+    networks: [sandbox]

@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * also where CI's Redis service listens — so no Docker daemon is needed.
  */
 @MicronautTest
+@Property(name = "async.redis.security.enabled", value = "false")
 @Property(name = "async.redis.wait-timeout", value = "5s")
 @Property(name = "async.redis.process-latency-min-ms", value = "5")
 @Property(name = "async.redis.process-latency-max-ms", value = "20")

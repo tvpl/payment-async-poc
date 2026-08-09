@@ -1,0 +1,6 @@
+services:
+  synthetic-port-collision:
+    image: busybox:1.36
+    ports:
+      - "8085:80"
+    networks: [sandbox]

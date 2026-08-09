@@ -1,0 +1,14 @@
+{
+  "captured_at": "2026-08-08",
+  "checks": [
+    {
+      "command": "./gradlew test --no-daemon",
+      "status": "PASS"
+    },
+    {
+      "command": "docker compose config -q",
+      "status": "PASS"
+    }
+  ],
+  "preexisting_failures": []
+}

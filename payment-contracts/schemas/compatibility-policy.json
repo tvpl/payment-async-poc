@@ -1,0 +1,12 @@
+{
+  "mode": "FULL_TRANSITIVE",
+  "dryRun": true,
+  "productionAutoRegister": false,
+  "breakingChange": {
+    "requiresHigherMajor": true,
+    "requiresNewArtifactId": true,
+    "requiresNewTopic": true,
+    "requiresCoexistence": true,
+    "requiresAdr": true
+  }
+}

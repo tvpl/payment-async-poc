@@ -1,0 +1,96 @@
+package com.example.payments.sbus.outbox;
+
+import com.example.payments.sbus.config.OutboxProperties;
+import com.example.payments.common.events.Topics;
+import com.example.payments.sbus.domain.OutboxEvent;
+import com.example.payments.sbus.domain.OutboxStatus;
+import com.example.payments.sbus.repository.OutboxEventRepository;
+import jakarta.inject.Singleton;
+import jakarta.transaction.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Short transactional operations around the outbox. Kept separate from
+ * {@link OutboxDispatcher} so the {@code @Transactional} proxy applies and so the
+ * slow Kafka publish happens <em>outside</em> any DB transaction (no long-held locks).
+ */
+@Singleton
+public class OutboxClaimService {
+
+    private final OutboxEventRepository repository;
+    private final OutboxProperties properties;
+
+    public OutboxClaimService(OutboxEventRepository repository, OutboxProperties properties) {
+        this.repository = repository;
+        this.properties = properties;
+    }
+
+    /** Tx1: lock a due batch and flip it to IN_PROGRESS, returning the claimed rows. */
+    @Transactional
+    public List<OutboxEvent> claimBatch() {
+        Instant now = Instant.now();
+        List<OutboxEvent> batch = repository.lockPendingBatch(now, properties.getBatchSize());
+        for (OutboxEvent e : batch) {
+            e.setStatus(OutboxStatus.IN_PROGRESS);
+            e.setClaimedAt(now);
+            e.setClaimToken(UUID.randomUUID());
+            repository.update(e);
+        }
+        return batch;
+    }
+
+    /** Completes current-owner claims; stale tokens affect zero rows. */
+    @Transactional
+    public int markPublishedBatch(java.util.Collection<OutboxEvent> events) {
+        int marked = 0;
+        Instant now = Instant.now();
+        for (OutboxEvent event : events) {
+            marked += repository.markPublished(event.getId(), event.getClaimToken(), now);
+        }
+        return marked;
+    }
+
+    /** Tx2: normal failures retry; exhaustion and every DLQ failure remain DLQ_PENDING. */
+    @Transactional
+    public FailureDisposition markFailure(OutboxEvent event, String error, String dlqHeaders) {
+        int attempts = event.getAttempts() + 1;
+        boolean dlq = Topics.DLQ.equals(event.getTopic()) || attempts >= properties.getMaxAttempts();
+        OutboxStatus nextStatus = dlq ? OutboxStatus.DLQ_PENDING : OutboxStatus.PENDING;
+        String nextTopic = dlq ? Topics.DLQ : event.getTopic();
+        String nextHeaders = dlq ? dlqHeaders : event.getHeaders();
+        String lastError = truncate(error);
+        Instant nextAttemptAt = Instant.now().plus(
+                BackoffCalculator.backoff(attempts, properties.getBaseBackoff(), properties.getMaxBackoff()));
+        int updated = repository.markFailedAttempt(event.getId(), event.getClaimToken(),
+                nextStatus.name(), nextTopic, nextHeaders, attempts, nextAttemptAt, lastError);
+        if (updated == 0) {
+            return FailureDisposition.STALE_CLAIM;
+        }
+        return dlq ? FailureDisposition.DLQ_PENDING : FailureDisposition.RETRY_PENDING;
+    }
+
+    /** Releases a still-PENDING-after-throttle row (rate limiter denied the Core command). */
+    @Transactional
+    public void release(OutboxEvent event, Instant nextAttemptAt) {
+        String status = Topics.DLQ.equals(event.getTopic())
+                ? OutboxStatus.DLQ_PENDING.name()
+                : OutboxStatus.PENDING.name();
+        repository.releaseClaim(event.getId(), event.getClaimToken(), status, nextAttemptAt);
+    }
+
+    private static String truncate(String s) {
+        if (s == null) {
+            return null;
+        }
+        return s.length() > 1000 ? s.substring(0, 1000) : s;
+    }
+
+    public enum FailureDisposition {
+        RETRY_PENDING,
+        DLQ_PENDING,
+        STALE_CLAIM
+    }
+}

@@ -1,0 +1,11 @@
+package com.example.payments.sbus.domain;
+
+/** Publication state of an outbox row. */
+public enum OutboxStatus {
+    PENDING,
+    IN_PROGRESS,
+    PUBLISHED,
+    DLQ_PENDING,
+    DLQ_PUBLISHED,
+    FAILED
+}
