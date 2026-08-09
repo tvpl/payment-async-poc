@@ -90,6 +90,11 @@ payment:
     status-ttl: 15m
     idempotency-ttl: 15m
     response-channel: payment-sim-responses
+  response-consumer:
+    # Bounded budget before a final event is dead-lettered. This blocks the partition on
+    # purpose: ordering per requestId matters more than draining ahead of a stuck Redis.
+    max-attempts: 3
+    retry-delay: 500ms
     rate-limit:
       limit-for-period: 200
       refresh-period: 1s

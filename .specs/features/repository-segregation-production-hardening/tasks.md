@@ -934,6 +934,8 @@ Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PA
 
 #### T36: Tornar consumo de respostas failure-safe
 
+**Status:** Complete
+
 **What:** Aplicar codec limitado e retry/DLQ para decode/Redis failures sem confirmação silenciosa.  
 **Where:** `payment-api/src/main/java/com/example/payments/api/kafka`  
 **Depends on:** T35  
@@ -944,6 +946,36 @@ Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PA
 **Tests:** integration + contract  
 **Gate:** full  
 **Commit:** `fix(api): make response consumption recoverable`
+
+**Gate evidence:** O `PaymentResponseConsumer` herdado de `7de39fb` confirmava silenciosamente tudo o que não conseguia processar. Uma falha de decode caía em `LOG.error(...); return;` — sem `offsetStrategy` declarado, o auto-commit do cliente Kafka avançava o offset e o evento final desaparecia para sempre, sem DLQ, sem alerta e sem nenhum vestígio dos bytes originais. Um tipo de evento inesperado no tópico terminal tinha o mesmo destino. Uma falha de Redis (`store.save`) escapava do método sem retry nem roteamento, deixando o desfecho do pagamento à mercê do comportamento default do framework. E um evento terminal repetido **sobrescrevia** o resultado já escolhido: um `FAILED` atrasado ou reentregue depois de um `COMPLETED` gravado trocava o desfecho do pagamento, violando PAY-06 justamente no cenário que PAY-06 nomeia (republicação após crash entre o ack do Kafka e a marcação da outbox, garantida por T28).
+
+O consumer passou a `offsetStrategy = SYNC_PER_RECORD` com `errorStrategy = RETRY_ON_ERROR` (mesma configuração já auditada em `PaymentRequestedConsumer` do SBUS/T27 para o mesmo problema), de modo que o offset só avança após retorno normal. As falhas passaram a ser **classificadas**, não agrupadas: conteúdo que nunca será legível vai para `Topics.DLQ` com os bytes originais e headers `x-dlq-origin-topic`/`x-dlq-stage`/`x-dlq-reason` (`ResponseDeadLetters`, novo); falha de aplicação (Redis indisponível) é retentada dentro de um orçamento tipado (`ResponseConsumerProperties`, `max-attempts`/`retry-delay`, validados no startup) e só então vai para a DLQ com stage `apply`; e `AvroCodecUnavailableException` — capacidade, não conteúdo — é **relançada** para reentrega, porque tratá-la como poison queimaria um resultado de pagamento perfeitamente válido só porque o pool estava momentaneamente cheio. A publicação na DLQ é síncrona com `acks=ALL` e sua falha não é engolida: propaga, o offset não commita, nada é confirmado sem estar em lugar recuperável. Para PAY-06, `apply` lê o estado atual antes de gravar e, se já for terminal, preserva-o: ainda acorda o waiter e publica no canal, mas nunca reescreve o desfecho. O codec continua o `AvroSerde` limitado de T9, agora com a capacidade configurada verificada como invariante observável.
+
+Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados) passou **104/104 testes, 0 falhas, 0 skipped**: os 94 de T31–T35 mais 10 novos (`ResponseConsumerFailureIT` 6 e `ResponseConsumerRedisOutageIT` 1 — sete ITs, conforme o Done-when — e `PaymentResponseConsumerUnitTest` 3). Nenhum teste anterior foi removido, pulado ou enfraquecido.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| PAY-09: poison vai para DLQ, não é confirmado silenciosamente | `ResponseConsumerFailureIT.java:123-126` — `assertArrayEquals(garbage, dead.value())`, `x-dlq-origin-topic` = tópico de origem, `x-dlq-stage` = `decode`, reason não nulo | mensagem ilegível reaparece na DLQ com bytes originais e motivo | ✅ |
+| PAY-09: tipo de evento inesperado é DLQ, não status inventado | `ResponseConsumerFailureIT.java:143-144` — `assertEquals("decode", header(...))` e `assertTrue(store.get(requestId).isEmpty())` | evento fora do contrato não vira estado de negócio | ✅ |
+| PAY-09: poison não bloqueia o resultado válido seguinte | `ResponseConsumerFailureIT.java:158-160` — entrada presente, `COMPLETED` e `authorizationCode` `654321` | DLQ desobstrui a partição em vez de travá-la | ✅ |
+| PAY-09: Redis indisponível é retry/DLQ observável | `ResponseConsumerRedisOutageIT.java:113-115` — `assertEquals("apply", ...stage)`, tópico de origem e `assertArrayEquals(payload, dead.value())` com o container Redis realmente parado | resultado sobrevive à queda do Redis como trabalho recuperável | ✅ |
+| PAY-09: falta de capacidade do codec é reentrega, não DLQ | `PaymentResponseConsumerUnitTest.java:68-71` — `assertThrows(AvroCodecUnavailableException.class, ...)`, mensagem exata e `verify(deadLetters, never()).route(...)` | transiente não é confundido com poison | ✅ |
+| PAY-09: DLQ que não confirma nunca vira ack | `PaymentResponseConsumerUnitTest.java:80` — `assertThrows(IllegalStateException.class, () -> consumer.receive(record()))` quando o envio à DLQ falha | offset não avança sem destino confirmado | ✅ |
+| PAY-09: poison é classificado no stage correto | `PaymentResponseConsumerUnitTest.java:59` — `verify(deadLetters).route(any(), eq(STAGE_DECODE), any())` | roteamento nomeia onde a falha ocorreu | ✅ |
+| PAY-06: duplicata terminal idêntica é idempotente | `ResponseConsumerFailureIT.java:173-174` — `COMPLETED` e `authorizationCode` `111111` inalterados após reentrega | repetição não altera o resultado | ✅ |
+| PAY-06: repetição contraditória não reescreve o desfecho | `ResponseConsumerFailureIT.java:186-187` — segue `COMPLETED` com `222222` após um `FAILED` posterior para o mesmo `requestId` | o desfecho já escolhido é final | ✅ |
+| Done-when: serializer é bounded | `ResponseConsumerFailureIT.java:196-197` — `assertEquals(CODEC_POOL_SIZE, snapshot.capacity())` e `capacity == available + borrowed` | capacidade do codec é a configurada, não ilimitada | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `ResponseConsumerFailureIT.java:123-126,143-144` | PAY-09 poison e tipo inesperado → DLQ | ✅ |
+| `ResponseConsumerFailureIT.java:158-160` | PAY-09 partição não trava | ✅ |
+| `ResponseConsumerFailureIT.java:173-174,186-187` | PAY-06 duplicata idêntica e contraditória | ✅ |
+| `ResponseConsumerFailureIT.java:196-197` | Done-when codec limitado | ✅ |
+| `ResponseConsumerRedisOutageIT.java:113-115` | PAY-09 Redis outage → retry/DLQ | ✅ |
+| `PaymentResponseConsumerUnitTest.java:59,68-71,80` | PAY-09 classificação de falhas e ack honesto | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Toda asserção de DLQ verifica os **bytes originais** e os headers de proveniência, não apenas que "algo chegou": um roteamento que enviasse um placeholder ou perdesse o payload falharia. As duas duplicatas de PAY-06 são testadas separadamente porque testam coisas diferentes — a idêntica prova idempotência, e a contraditória (`COMPLETED` seguido de `FAILED`) prova que o desfecho é imutável, que é o que a AC realmente exige; um `save` incondicional passaria na primeira e falharia na segunda. `aCodecCapacityShortageIsRedeliveredInsteadOfDeadLettered` é o controle negativo da classificação: sem ele, um `catch (Exception) → DLQ` genérico passaria em todos os outros testes de poison enquanto destruía resultados válidos sob saturação. O IT de Redis vive em classe própria porque para o container de verdade; o `awaitConsumerAssignment` existe porque o listener usa `offsetReset = LATEST` e um registro produzido antes da atribuição simplesmente nunca seria visto — sem essa prova de vivacidade, um teste verde não significaria nada. Admissão, limites por recurso/tenant e pacote produtivo seguem com T37. Não há SPEC_DEVIATION em T36.
 
 #### T37: Completar admissão e pacote produtivo da API
 
