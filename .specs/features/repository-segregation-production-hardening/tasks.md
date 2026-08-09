@@ -823,6 +823,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T34: Recuperar atomicamente falha de publicação inicial
 
+**Status:** Complete
+
 **What:** Coordenar reservation e Kafka ack, marcando `PUBLISHED` ou `PUBLISH_FAILED` retry-safe sem identidade órfã.  
 **Where:** `payment-api/src/main/java/com/example/payments/api/service`  
 **Depends on:** T33  
@@ -833,6 +835,45 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(api): recover initial publish failures`
+
+**Gate evidence:** O caminho de publicação herdado de `7de39fb` violava PAY-03 de duas formas independentes, ambas confirmadas lendo o código antes de qualquer alteração. (1) Quando `producer.send` falhava, `ApiPaymentService` desfazia apenas o waiter local e lançava `PublishFailedException`: a reserva `idem:<key>` continuava apontando para um `requestId` cujo status ficara em `PENDING`, e qualquer retry com a mesma chave caía no ramo `Replay`, recebendo `202` "ainda processando" até o TTL de 15 minutos expirar — exatamente a "reserva órfã que simula processamento" que a AC proíbe. (2) O replay usava `store.get(requestId).orElse(new StatusEntry(requestId, PROCESSING, null))`, **fabricando** `PROCESSING` (documentado no contrato como "SBUS acknowledged / Core is working") para uma identidade sobre a qual a API não tinha nenhuma informação — uma afirmação sobre o downstream que a API não pode fazer.
+
+O estado de publicação passou a viver na própria reserva, não no status: `IdempotencyReservation` ganhou `publishState` (`PENDING_PUBLISH`/`PUBLISHED`/`PUBLISH_FAILED`) e `publishLeaseExpiresAt`. Essa é a única sede correta porque a reserva tem TTL garantidamente maior ou igual ao do status (invariante de startup criada em T33), então um retry sempre distingue "nunca publicado" de "publicado, status já expirado". Nenhum valor foi acrescentado a `SimulationStatus`: o enum pertence ao artefato publicado `payment-contracts` (AD-002, coordenadas Maven), e T31 já estabeleceu o precedente de não tocar o artefato de outra fronteira. `RedisStatusStore.markPublishState` grava com `SET XX KEEPTTL` — `XX` impede ressuscitar uma reserva já expirada e `KEEPTTL` impede que a marcação estenda a janela de deduplicação. `ApiPaymentService.publishAndAwait` marca `PUBLISHED` imediatamente após o ack (`acks=ALL`) e `PUBLISH_FAILED` no `catch`, e o ramo `ResumePublish` republica sob o **mesmo** `requestId`. O lease (`payment.simulation.publish-lease`, default 30s, espelhando `OutboxProperties.lease` do SBUS/T27) resolve o conflito entre as duas metades da AC: sem ele, toda submissão concorrente duplicada republicaria a mesma identidade; com ele, uma tentativa genuinamente em voo é `Replay` e só uma tentativa morta (lease vencido) ou uma falha reportada é `ResumePublish`. A janela entre o ack e a marcação republica a mesma identidade num retry, o que PAY-06 exige explicitamente que o downstream absorva; está anotado no código como trade-off documentado, não como lacuna.
+
+Full gate (`./gradlew test -PwithIT --no-daemon`, com `JWT_SIGNATURE_SECRET`/`PAYMENT_API_KEY` exportados) passou **73/73 testes, 0 falhas, 0 skipped**, contra Kafka/Redis/Apicurio reais via Testcontainers: os 55 de T31–T33 mais 18 novos (`PublishFailureIT` 5 fim a fim com broker derrubado, `PublishStateReservationIT` 7 contra Redis real, `ApiPaymentServiceUnitTest` +5, `ApiPropertiesUnitTest` +1). Nenhum teste anterior foi removido, pulado ou enfraquecido.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| PAY-03: falha de publicação deixa estado recuperável, não trabalho aceito | `PublishFailureIT.java:97-100` — `assertEquals(HttpStatus.SERVICE_UNAVAILABLE, failure.getStatus())`, content-type `problem+json` e corpo `"status":503` | `503` honesto contra broker real derrubado, nunca `202` | ✅ |
+| PAY-03: reserva marcada como não publicada | `PublishFailureIT.java:110-111` — `assertEquals(PublishState.PUBLISH_FAILED, reservation.publishState())` sobre o valor realmente lido do Redis | estado de publicação persistido e observável | ✅ |
+| PAY-03: nenhuma reserva órfã simulando processamento | `PublishFailureIT.java:122` — `assertEquals("PENDING", entry.status().name())`; `ApiPaymentServiceUnitTest.java:152` — `assertTrue(...noneMatch(status == SENT_TO_SBUS \|\| status == PROCESSING))` | status jamais afirma progresso downstream após falhar o publish | ✅ |
+| PAY-03: replay sem status conhecido não fabrica `PROCESSING` | `ApiPaymentServiceUnitTest.java:182` — `assertEquals(SimulationStatus.TIMEOUT, result.entry().status())` | ausência de informação vira `TIMEOUT`, não uma afirmação sobre o Core | ✅ |
+| Done-when: janela de retry preserva o mesmo `requestId` | `PublishFailureIT.java:135` — `assertEquals(firstRequestId, secondRequestId)` após duas submissões HTTP reais falhadas; `ApiPaymentServiceUnitTest.java:166-169` — `assertEquals("original-request-id", result.entry().requestId())` e `verify(producer).send(eq("original-request-id"), ...)` | retry recupera a identidade original, não cria uma nova | ✅ |
+| Done-when: janela de crash (owner morreu sem publicar) | `PublishStateReservationIT.java:98-99` — `assertInstanceOf(ResumePublish.class, ...)` e `assertEquals(owner, ...requestId())` após o lease vencer, contra Redis real | identidade órfã é recuperada, não esperada até o TTL | ✅ |
+| Done-when: janela de send failure é retomável de imediato | `PublishStateReservationIT.java:111-112` — `ResumePublish` com o `requestId` original logo após `PUBLISH_FAILED`, sem aguardar o lease | falha reportada não custa uma espera de lease ao cliente | ✅ |
+| Done-when: janela de timeout preserva o mesmo `requestId` | `ApiPaymentServiceUnitTest.java:194-197` — `assertEquals(published.getValue(), result.entry().requestId())`, `assertEquals(SENT_TO_SBUS, ...status())`, `assertTrue(result.timedOut())` | timeout mantém a identidade publicada e o status factual | ✅ |
+| Ack confirmado marca `PUBLISHED` e só então `SENT_TO_SBUS` | `ApiPaymentServiceUnitTest.java:132,136` — `assertEquals(PublishState.PUBLISHED, state.getValue())` e `assertEquals(SENT_TO_SBUS, saved.getAllValues().getLast().status())` | marcação segue o ack do broker, não a intenção de enviar | ✅ |
+| Publicação confirmada nunca vira republicação | `PublishStateReservationIT.java:125-126` — `Replay` mesmo após o lease vencer | `PUBLISHED` é terminal para fins de retry | ✅ |
+| Tentativa em voo não é republicada por duplicata concorrente | `PublishStateReservationIT.java:84-85` — `Replay` com lease vigente | lease evita publicação dupla da mesma identidade | ✅ |
+| PAY-02 preservado sobre os novos ramos | `PublishStateReservationIT.java:138-139` — `Conflict` com o `requestId` original mesmo em `PUBLISH_FAILED` | payload divergente continua conflito determinístico | ✅ |
+| PAY-11: recuperação não estende a janela de deduplicação | `PublishStateReservationIT.java:152-153` — `assertTrue(remaining > 0)` e `assertTrue(remaining <= IDEMPOTENCY_TTL_MILLIS - 1_400)` via `PTTL` real | `KEEPTTL` preserva o vencimento original | ✅ |
+| Marcação não ressuscita reserva expirada | `PublishStateReservationIT.java:163` — `assertEquals(0L, inspector.sync().exists("idem:" + key))` | `XX` não recria identidade sem reserva viva | ✅ |
+| Recuperação é por chave, não global | `PublishFailureIT.java:146` — `assertNotEquals(reservation(firstKey).requestId(), reservation(secondKey).requestId())` | chaves distintas mantêm identidades distintas mesmo no caminho de falha | ✅ |
+| Lease inválido falha no startup | `ApiPropertiesUnitTest.java:63` — `assertThrows(ConfigurationException.class, properties::validate)` | lease não positivo tornaria toda reserva imediatamente retomável | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `PublishFailureIT.java:97-100` | PAY-03, Done-when send failure (contrato HTTP) | ✅ |
+| `PublishFailureIT.java:110-111,122` | PAY-03, Done-when "não simulam processamento" | ✅ |
+| `PublishFailureIT.java:135,146` | Done-when retry preserva `requestId`; PAY-01 por chave | ✅ |
+| `PublishStateReservationIT.java:84-85,98-99,111-112,125-126` | Done-when crash/send-failure/retry windows | ✅ |
+| `PublishStateReservationIT.java:138-139` | PAY-02 sob os novos estados | ✅ |
+| `PublishStateReservationIT.java:152-153,163` | PAY-11 TTL coerente; recuperação sem ressurreição | ✅ |
+| `ApiPaymentServiceUnitTest.java:131-136,147-152` | PAY-03 coordenação reservation/ack nos dois desfechos | ✅ |
+| `ApiPaymentServiceUnitTest.java:166-169,181-183,194-197` | Done-when resume/replay/timeout | ✅ |
+| `ApiPropertiesUnitTest.java:63` | branch de validação do lease | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Toda asserção de payload verifica valor ou estado observável — o `publishState` lido do Redis real, o `requestId` devolvido, o status HTTP e o `PTTL` efetivo — e não apenas que um método foi chamado; onde há `verify`, ele acompanha (nunca substitui) uma asserção sobre o resultado. Os dois bugs pré-existentes têm teste que falharia na implementação anterior: `retryingAfterAFailedPublishKeepsTheSameRequestId` porque antes o retry recebia `202` de replay, e `replayWithoutAStoredStatusNeverReportsDownstreamProcessing` porque antes o valor asserido era literalmente `PROCESSING`. `aDifferentKeyAfterAFailedPublishGetsItsOwnIdentity` é o controle negativo do novo ramo `ResumePublish` (uma implementação que resolvesse identidade fora da chave passaria em todo o resto). MDC e cleanup de waiter em todos os caminhos permanecem explicitamente com T35, que os possui por `Where` e por requisito (PAY-10); esta tarefa não os alterou. Não há SPEC_DEVIATION em T34.
 
 #### T35: Limitar waiter, MDC e fallback de status
 

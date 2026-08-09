@@ -9,6 +9,7 @@ import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
 import com.example.payments.api.idempotency.IdempotencyFingerprint;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
+import com.example.payments.api.idempotency.PublishState;
 import com.example.payments.api.kafka.PaymentRequestProducer;
 import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
@@ -72,24 +73,41 @@ public class ApiPaymentService {
         String idempotencyKey = (idempotencyKeyHeader == null || idempotencyKeyHeader.isBlank())
                 ? UUID.randomUUID().toString()
                 : idempotencyKeyHeader;
-        String requestId = UUID.randomUUID().toString();
-
         // Idempotency: first writer wins the key + canonical fingerprint atomically; a later
         // request with the same key replays it only if the payload also matches (PAY-01/PAY-02).
         String fingerprint = IdempotencyFingerprint.of(request);
+        String requestId = UUID.randomUUID().toString();
         IdempotencyOutcome outcome = store.reserve(idempotencyKey, requestId, fingerprint);
-        if (outcome instanceof IdempotencyOutcome.Replay replay) {
-            StatusEntry entry = store.get(replay.requestId())
-                    .orElse(new StatusEntry(replay.requestId(), SimulationStatus.PROCESSING, null));
-            LOG.info("Idempotent replay key={} -> requestId={} status={}",
-                    idempotencyKey, replay.requestId(), entry.status());
-            return new SubmitResult(entry, !isTerminal(entry.status()), true);
-        }
+
         if (outcome instanceof IdempotencyOutcome.Conflict conflict) {
             LOG.info("Idempotency conflict key={} originalRequestId={}", idempotencyKey, conflict.requestId());
             throw new IdempotencyConflictException(idempotencyKey, conflict.requestId());
         }
+        if (outcome instanceof IdempotencyOutcome.Replay replay) {
+            return replay(idempotencyKey, replay.requestId());
+        }
+        if (outcome instanceof IdempotencyOutcome.ResumePublish resume) {
+            // A previous attempt on this key never confirmed its publish. Recover it under the
+            // same identity rather than reporting progress that never happened (PAY-03).
+            requestId = resume.requestId();
+            LOG.info("Resuming unpublished request key={} requestId={}", idempotencyKey, requestId);
+        }
+        return publishAndAwait(request, idempotencyKey, fingerprint, requestId);
+    }
 
+    /** Replays a confirmed identity. A status we do not have is never reported as progress. */
+    private SubmitResult replay(String idempotencyKey, String requestId) {
+        StatusEntry entry = store.get(requestId)
+                .orElseGet(() -> new StatusEntry(requestId, SimulationStatus.TIMEOUT, null));
+        LOG.info("Idempotent replay key={} -> requestId={} status={}",
+                idempotencyKey, requestId, entry.status());
+        return new SubmitResult(entry, !isTerminal(entry.status()), true);
+    }
+
+    private SubmitResult publishAndAwait(PaymentSimulationRequest request,
+                                         String idempotencyKey,
+                                         String fingerprint,
+                                         String requestId) {
         String correlationId = UUID.randomUUID().toString();
         String traceId = currentTraceId();
         MDC.put("requestId", requestId);
@@ -108,9 +126,15 @@ public class ApiPaymentService {
             byte[] bytes = avroSerde.serialize(Topics.REQUESTED, AvroMapper.toAvroRequested(envelope));
             producer.send(requestId, requestId, correlationId, idempotencyKey, bytes);
         } catch (Exception e) {
+            // Keep the identity, mark it unpublished: the caller gets an honest failure and a
+            // retry with the same key resumes this requestId instead of waiting out an orphan.
+            store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISH_FAILED);
             coordinator.unregister(requestId);
             throw new PublishFailedException("Failed to publish PaymentSimulationRequested", e);
         }
+        // Broker acknowledged. A crash in this window republishes the same requestId on retry,
+        // which downstream consumers absorb without changing a chosen outcome (PAY-06).
+        store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISHED);
         store.save(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
         LOG.info("Published PaymentSimulationRequested requestId={}", requestId);
 

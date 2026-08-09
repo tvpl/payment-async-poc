@@ -18,6 +18,8 @@ public class ApiProperties {
     private Duration idempotencyTtl = Duration.ofMinutes(15);
     /** Redis pub/sub channel used to wake waiters across instances. */
     private String responseChannel = "payment-sim-responses";
+    /** How long a publish attempt is considered in flight before a retry may resume it. */
+    private Duration publishLease = Duration.ofSeconds(30);
 
     public Duration getWaitTimeout() {
         return waitTimeout;
@@ -51,6 +53,14 @@ public class ApiProperties {
         this.responseChannel = responseChannel;
     }
 
+    public Duration getPublishLease() {
+        return publishLease;
+    }
+
+    public void setPublishLease(Duration publishLease) {
+        this.publishLease = publishLease;
+    }
+
     /**
      * The idempotency reservation must outlive the status entry it guards (PAY-11): otherwise
      * the dedup key could expire while the original request is still visible/in-flight,
@@ -66,6 +76,9 @@ public class ApiProperties {
         }
         if (idempotencyTtl == null || idempotencyTtl.isNegative() || idempotencyTtl.isZero()) {
             throw new ConfigurationException("payment.simulation.idempotency-ttl must be positive");
+        }
+        if (publishLease == null || publishLease.isNegative() || publishLease.isZero()) {
+            throw new ConfigurationException("payment.simulation.publish-lease must be positive");
         }
         if (idempotencyTtl.compareTo(statusTtl) < 0) {
             throw new ConfigurationException(

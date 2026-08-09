@@ -53,4 +53,13 @@ class ApiPropertiesUnitTest {
         assertThrows(ConfigurationException.class, () -> properties(
                 Duration.ZERO, Duration.ofMinutes(15), Duration.ofMinutes(15)).validate());
     }
+
+    @Test
+    void rejectsNonPositivePublishLease() {
+        ApiProperties properties = properties(
+                Duration.ofSeconds(3), Duration.ofMinutes(15), Duration.ofMinutes(15));
+        properties.setPublishLease(Duration.ZERO);
+
+        assertThrows(ConfigurationException.class, properties::validate);
+    }
 }

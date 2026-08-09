@@ -4,6 +4,7 @@ import com.example.payments.api.config.ApiProperties;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.idempotency.IdempotencyReservation;
+import com.example.payments.api.idempotency.PublishState;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -83,15 +84,21 @@ public class RedisStatusStore {
 
     /**
      * Atomically reserves an idempotency key for this requestId + payload fingerprint
-     * (PAY-01). Key and fingerprint are stored together in a single {@code SET NX} so no
-     * request can observe a key associated with only half the identity.
+     * (PAY-01). Identity, fingerprint and publish state are stored together in a single
+     * {@code SET NX} so no request can observe a key associated with only half the identity.
      *
      * <p>Same key + same fingerprint replays the original identity (PAY-02); same key with
      * a different fingerprint is a deterministic conflict, never a silent replay.
+     *
+     * <p>A matching key whose publish was never confirmed is returned as
+     * {@link IdempotencyOutcome.ResumePublish} once its lease has lapsed, so a crashed or
+     * failed attempt is recovered under the same requestId instead of leaving a reservation
+     * that simulates processing until it expires (PAY-03).
      */
     public IdempotencyOutcome reserve(String idempotencyKey, String requestId, String fingerprint) {
         String key = IDEM_PREFIX + idempotencyKey;
-        String value = writeReservation(new IdempotencyReservation(requestId, fingerprint));
+        String value = writeReservation(new IdempotencyReservation(
+                requestId, fingerprint, PublishState.PENDING_PUBLISH, leaseDeadline()));
         long ttlMillis = properties.getIdempotencyTtl().toMillis();
         // Two attempts: a SET NX can lose the race to a reservation that expires between the
         // failed NX and the follow-up GET; retrying once claims the now-free key deterministically
@@ -106,11 +113,47 @@ public class RedisStatusStore {
                 continue;
             }
             IdempotencyReservation existing = readReservation(existingValue);
-            return fingerprint.equals(existing.fingerprint())
-                    ? new IdempotencyOutcome.Replay(existing.requestId())
-                    : new IdempotencyOutcome.Conflict(existing.requestId());
+            if (!fingerprint.equals(existing.fingerprint())) {
+                return new IdempotencyOutcome.Conflict(existing.requestId());
+            }
+            return isResumable(existing)
+                    ? new IdempotencyOutcome.ResumePublish(existing.requestId())
+                    : new IdempotencyOutcome.Replay(existing.requestId());
         }
         throw new IllegalStateException("Failed to reserve idempotency key: " + idempotencyKey);
+    }
+
+    /**
+     * Records the outcome of the Kafka publish on an existing reservation, keeping the
+     * original expiry ({@code KEEPTTL}) so recovery never extends the dedup window.
+     *
+     * <p>{@code XX} means an already-expired reservation is not resurrected: there is no
+     * identity left to recover.
+     */
+    public void markPublishState(String idempotencyKey,
+                                 String requestId,
+                                 String fingerprint,
+                                 PublishState publishState) {
+        String value = writeReservation(
+                new IdempotencyReservation(requestId, fingerprint, publishState, leaseDeadline()));
+        commands().set(IDEM_PREFIX + idempotencyKey, value, SetArgs.Builder.xx().keepttl());
+    }
+
+    /**
+     * An unconfirmed publish is recoverable once nobody is working on it: either the owner
+     * reported the failure, or its lease lapsed (the process died mid-attempt). While the
+     * lease holds, a concurrent duplicate replays instead of publishing the identity twice.
+     */
+    private boolean isResumable(IdempotencyReservation reservation) {
+        if (reservation.publishState() == PublishState.PUBLISHED) {
+            return false;
+        }
+        return reservation.publishState() == PublishState.PUBLISH_FAILED
+                || reservation.publishLeaseExpiresAt() <= System.currentTimeMillis();
+    }
+
+    private long leaseDeadline() {
+        return System.currentTimeMillis() + properties.getPublishLease().toMillis();
     }
 
     private String writeReservation(IdempotencyReservation reservation) {

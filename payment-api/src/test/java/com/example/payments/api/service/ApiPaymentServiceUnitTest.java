@@ -5,7 +5,10 @@ import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.IdempotencyConflictException;
+import com.example.payments.api.error.PublishFailedException;
+import com.example.payments.api.idempotency.IdempotencyFingerprint;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
+import com.example.payments.api.idempotency.PublishState;
 import com.example.payments.api.kafka.PaymentRequestProducer;
 import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
@@ -13,6 +16,7 @@ import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.model.SimulationStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -24,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -111,6 +118,83 @@ class ApiPaymentServiceUnitTest {
         assertTrue(result.duplicate());
         assertFalse(result.timedOut());
         assertEquals("original-request-id", result.entry().requestId());
+    }
+
+    @Test
+    void marksTheReservationPublishedOnlyAfterTheBrokerAcknowledges() {
+        when(coordinator.await(anyString(), any()))
+                .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
+
+        service.submit(REQUEST, "the-key");
+
+        ArgumentCaptor<PublishState> state = ArgumentCaptor.forClass(PublishState.class);
+        verify(store).markPublishState(eq("the-key"), anyString(), anyString(), state.capture());
+        assertEquals(PublishState.PUBLISHED, state.getValue());
+
+        ArgumentCaptor<StatusEntry> saved = ArgumentCaptor.forClass(StatusEntry.class);
+        verify(store, atLeastOnce()).save(saved.capture());
+        assertEquals(SimulationStatus.SENT_TO_SBUS, saved.getAllValues().getLast().status());
+    }
+
+    @Test
+    void marksTheReservationPublishFailedWhenTheBrokerRejectsTheSend() {
+        doThrow(new RuntimeException("broker down"))
+                .when(producer).send(anyString(), anyString(), anyString(), any(), any());
+
+        assertThrows(PublishFailedException.class, () -> service.submit(REQUEST, "the-key"));
+
+        ArgumentCaptor<PublishState> state = ArgumentCaptor.forClass(PublishState.class);
+        verify(store).markPublishState(eq("the-key"), anyString(), anyString(), state.capture());
+        assertEquals(PublishState.PUBLISH_FAILED, state.getValue());
+
+        ArgumentCaptor<StatusEntry> saved = ArgumentCaptor.forClass(StatusEntry.class);
+        verify(store, atLeastOnce()).save(saved.capture());
+        assertTrue(saved.getAllValues().stream()
+                .noneMatch(entry -> entry.status() == SimulationStatus.SENT_TO_SBUS
+                        || entry.status() == SimulationStatus.PROCESSING));
+    }
+
+    @Test
+    void resumesAnUnpublishedReservationUnderTheSameRequestId() {
+        when(store.reserve(anyString(), anyString(), anyString()))
+                .thenReturn(new IdempotencyOutcome.ResumePublish("original-request-id"));
+        when(coordinator.await(anyString(), any()))
+                .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
+
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+
+        assertEquals("original-request-id", result.entry().requestId());
+        verify(producer).send(eq("original-request-id"), eq("original-request-id"),
+                anyString(), eq("the-key"), any());
+        verify(store).markPublishState("the-key", "original-request-id",
+                IdempotencyFingerprint.of(REQUEST), PublishState.PUBLISHED);
+    }
+
+    @Test
+    void replayWithoutAStoredStatusNeverReportsDownstreamProcessing() {
+        when(store.reserve(anyString(), anyString(), anyString()))
+                .thenReturn(new IdempotencyOutcome.Replay("original-request-id"));
+        when(store.get("original-request-id")).thenReturn(Optional.empty());
+
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+
+        assertEquals("original-request-id", result.entry().requestId());
+        assertEquals(SimulationStatus.TIMEOUT, result.entry().status());
+        verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    void timeoutAfterAConfirmedPublishKeepsTheSameRequestId() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+
+        ArgumentCaptor<String> published = ArgumentCaptor.forClass(String.class);
+        verify(producer).send(published.capture(), anyString(), anyString(), any(), any());
+        assertEquals(published.getValue(), result.entry().requestId());
+        assertEquals(SimulationStatus.SENT_TO_SBUS, result.entry().status());
+        assertTrue(result.timedOut());
     }
 
     @Test
