@@ -313,11 +313,11 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-01 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-02 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-03 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-04 | Fluxo Kafka | Execute | T26 proves terminal state and outbox commit or roll back atomically; retry scheduling extension pending T27 |
+| PAY-04 | Fluxo Kafka | Execute | T26 terminal state+outbox and T27 retry schedule-before-offset atomic persistence are proven |
 | PAY-05 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-06 | Fluxo Kafka | Execute | T21 Core duplicate payload equivalence complete; SBUS/API downstream idempotency and crash-window gates pending |
 | PAY-07 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-08 | Fluxo Kafka | Tasks | In Tasks |
+| PAY-08 | Fluxo Kafka | Execute | T27 due-based outbox publishes only when due, deduplicates crash redelivery and removes partition sleep |
 | PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec, T14 readiness diagnostics and T21 Core uncommitted failure/Registry policy complete; remaining service policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-11 | Fluxo Kafka | Execute | T26 V7 versioned conditional transition makes the first terminal sticky; retention alignment pending T29 |

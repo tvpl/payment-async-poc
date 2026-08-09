@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 5 / T27 — durable due-based Kafka retry (not started)
-- **Completed**: T1–T26; V7 conditional terminal transition passes 30 full tests, including five PostgreSQL concurrency/rollback ITs
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:593`
-- **Next step**: replace partition sleep/direct retry publish with durable raw bytes/headers and next-attempt scheduling before consumer acknowledgement
+- **Phase / Task**: Execute; Phase 5 / T28 — recoverable dead-letter delivery (not started)
+- **Completed**: T1–T27; V8 due-based durable retry passes 23 quick and 44 full tests, including crash dedupe, raw payload preservation and no partition sleep
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:636`
+- **Next step**: introduce DLQ_PENDING/DLQ_PUBLISHED with lease/backoff and keep failures recoverable until broker acknowledgement
 - **Blockers**: none
 - **Uncommitted files**: none after the atomic T24 commit
 - **Branch**: `feature/optimize-eda`

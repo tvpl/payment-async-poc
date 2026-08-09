@@ -570,6 +570,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T27: Substituir sleep por retry durável due-based
 
+**Status:** Complete
+
 **What:** Persistir bytes/headers/`next_attempt_at` antes de confirmar consumo e publicar somente quando due.  
 **Where:** `payment-sbus/src/main/java/com/example/payments/sbus/retry`  
 **Depends on:** T26  
@@ -580,6 +582,28 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(sbus): schedule kafka retries durably`
+
+**Gate evidence:** A migration append-only V8 adicionou identidade de deduplicação única à outbox; V1–V8 estão no manifesto SHA-256. O quick gate passou 23 testes e o full gate passou 44. Nove testes unitários do scheduler e cinco ITs PostgreSQL novos provaram cálculo due, tópico dedicado, bytes/chave/headers, falha de persistência, dedupe após crash/redelivery, claim somente quando due e ausência de `Thread.sleep`. Consumers principais retornam somente depois do commit da linha de retry; falha do banco propaga e impede o commit do offset.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| PAY-08: futuro nunca processa cedo | `DurableRetryIT.java:75-79` — row count `1`, due futuro e ausência no claim | retry permanece PENDING até due | ✅ |
+| Bytes/key/headers e tentativa preservados | `DurableRetryIT.java:94-99` — key, retry topic, raw bytes, traceparent e attempt exatos | republicação não reconstrói payload | ✅ |
+| Crash após schedule é recuperável | `DurableRetryIT.java:111-114` — first inserted, redelivery false, mesma identidade e count `1` | agendamento idempotente antes do offset | ✅ |
+| Retry futuro não bloqueia tráfego vivo | `DurableRetryIT.java:127-129` — due claimed, future absent e `PENDING`; `:137-138` sem sleep | sem head-of-line blocking | ✅ |
+| Backoff/due determinístico | `DurableRetrySchedulerUnitTest.java:60-65,153-157` — attempt/due base e cap máximo | `next_attempt_at` segue política | ✅ |
+| Tópicos por origem | `DurableRetrySchedulerUnitTest.java:73-74` — core response retry topic | fluxo não mistura origens | ✅ |
+| PAY-04: falha de persistência impede ack | `DurableRetrySchedulerUnitTest.java:135-139` — exception do PostgreSQL propaga | consumidor não retorna normalmente | ✅ |
+| Headers e dedupe completos | `DurableRetrySchedulerUnitTest.java:101-107,112-126` — valores e coordenadas exatas | trace/reason/not-before e identidade preservados | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `DurableRetryIT.java:75-79,127-138` | PAY-08, future due e no-HOL | ✅ |
+| `DurableRetryIT.java:94-114` | PAY-04/08, raw payload e crash recovery | ✅ |
+| `DurableRetrySchedulerUnitTest.java:60-157` | Done-when T27 e edge cases listados | ✅ |
+| `RetryPublisherUnitTest.java:44-64` | facade schedule/exhaustion preservada | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Os testes verificam dados persistidos, tempo, estado e claim reais; mocks ficam restritos ao cálculo/facade e afirmam argumentos completos. O teste de persistência falha explicitamente para provar que o offset não pode ser confirmado. Segue `AGENTS.md`, payload Avro imutável e a Test Coverage Matrix. Não há SPEC_DEVIATION.
 
 #### T28: Tornar DLQ recuperável até confirmação
 

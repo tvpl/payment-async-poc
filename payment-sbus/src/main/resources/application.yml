@@ -101,7 +101,6 @@ sbus:
     max-attempts: 5
     base-delay: 1s
     max-delay: 30s
-    max-wait: 5s
   housekeeping:
     idempotency-retention: 7d
     message-retention: 30d

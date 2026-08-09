@@ -2,7 +2,6 @@ package com.example.payments.sbus.kafka;
 
 import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Topics;
-import com.example.payments.sbus.config.RetryProperties;
 import com.example.payments.sbus.support.KafkaHeaders;
 import io.micronaut.configuration.kafka.annotation.ErrorStrategy;
 import io.micronaut.configuration.kafka.annotation.ErrorStrategyValue;
@@ -17,10 +16,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * Reprocesses records from the dedicated retry topics. Honors {@code x-retry-not-before}
- * (bounded wait), re-dispatches via the shared handler, and either succeeds, schedules the
- * next attempt, or routes to the DLQ once attempts are exhausted. Runs in its own
- * consumer thread so retries never block the live (main-topic) partitions.
+ * Reprocesses records published by the durable scheduler only after they are due.
+ * The consumer never sleeps on a partition; another failure is durably rescheduled.
  */
 @KafkaListener(
         groupId = "payment-sbus-retry",
@@ -33,14 +30,10 @@ public class RetryConsumer {
 
     private final SimulationMessageHandler handler;
     private final RetryPublisher retryPublisher;
-    private final RetryProperties properties;
-
     public RetryConsumer(SimulationMessageHandler handler,
-                         RetryPublisher retryPublisher,
-                         RetryProperties properties) {
+                         RetryPublisher retryPublisher) {
         this.handler = handler;
         this.retryPublisher = retryPublisher;
-        this.properties = properties;
     }
 
     @Topic({Topics.REQUESTED_RETRY, Topics.CORE_RESPONSE_RETRY})
@@ -49,32 +42,16 @@ public class RetryConsumer {
         String originTopic = headers.getOrDefault(Headers.ORIGIN_TOPIC, Topics.REQUESTED);
         int attempt = parseInt(headers.get(Headers.RETRY_ATTEMPT), 1);
 
-        waitUntilNotBefore(headers.get(Headers.RETRY_NOT_BEFORE));
-
         try {
             handler.handle(originTopic, record.value(), headers);
         } catch (PoisonMessageException poison) {
             retryPublisher.routeToDlq(originTopic, record.key(), record.value(), headers, poison, "poison");
         } catch (RuntimeException transientError) {
             boolean dlq = retryPublisher.scheduleNextOrDlq(
-                    originTopic, record.key(), record.value(), headers, attempt, transientError);
+                    originTopic, record, headers, attempt, transientError);
             if (dlq) {
                 LOG.error("Retry exhausted (attempt={}) origin={} key={} -> DLQ",
                         attempt, originTopic, record.key(), transientError);
-            }
-        }
-    }
-
-    /** Bounded wait so a record isn't reprocessed before its scheduled time. */
-    private void waitUntilNotBefore(String notBeforeHeader) {
-        long notBefore = parseLong(notBeforeHeader, 0L);
-        long remaining = notBefore - System.currentTimeMillis();
-        long capped = Math.min(remaining, properties.getMaxWait().toMillis());
-        if (capped > 0) {
-            try {
-                Thread.sleep(capped);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             }
         }
     }
@@ -87,11 +64,4 @@ public class RetryConsumer {
         }
     }
 
-    private static long parseLong(String s, long def) {
-        try {
-            return s == null ? def : Long.parseLong(s);
-        } catch (NumberFormatException e) {
-            return def;
-        }
-    }
 }

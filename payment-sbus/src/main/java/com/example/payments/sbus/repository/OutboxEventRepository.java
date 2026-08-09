@@ -51,4 +51,17 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
     int deletePublishedBefore(Instant threshold);
 
     long countByStatus(OutboxStatus status);
+
+    @Query(value = """
+            INSERT INTO outbox_event (
+                aggregate_type, aggregate_id, event_type, topic, message_key,
+                payload, headers, status, attempts, next_attempt_at, deduplication_key)
+            VALUES (
+                'KafkaRetry', :aggregateId, 'KafkaRetryScheduled', :topic, :messageKey,
+                :payload, CAST(:headers AS jsonb), 'PENDING', 0, :nextAttemptAt, :deduplicationKey)
+            ON CONFLICT (deduplication_key) WHERE deduplication_key IS NOT NULL DO NOTHING
+            """, nativeQuery = true)
+    int insertDurableRetry(String aggregateId, String topic, String messageKey,
+                           byte[] payload, String headers, Instant nextAttemptAt,
+                           String deduplicationKey);
 }

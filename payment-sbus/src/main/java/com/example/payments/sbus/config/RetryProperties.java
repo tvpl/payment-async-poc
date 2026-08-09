@@ -11,8 +11,6 @@ public class RetryProperties {
     private int maxAttempts = 5;
     private Duration baseDelay = Duration.ofSeconds(1);
     private Duration maxDelay = Duration.ofSeconds(30);
-    /** Cap on how long the retry consumer blocks waiting for a record's not-before. */
-    private Duration maxWait = Duration.ofSeconds(5);
 
     public int getMaxAttempts() {
         return maxAttempts;
@@ -38,11 +36,4 @@ public class RetryProperties {
         this.maxDelay = maxDelay;
     }
 
-    public Duration getMaxWait() {
-        return maxWait;
-    }
-
-    public void setMaxWait(Duration maxWait) {
-        this.maxWait = maxWait;
-    }
 }

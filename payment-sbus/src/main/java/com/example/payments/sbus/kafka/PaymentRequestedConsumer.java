@@ -46,7 +46,7 @@ public class PaymentRequestedConsumer {
             retryPublisher.routeToDlq(Topics.REQUESTED, record.key(), record.value(), headers, poison, "poison");
         } catch (RuntimeException transientError) {
             LOG.warn("Transient failure on requested key={} -> retry topic", record.key(), transientError);
-            retryPublisher.scheduleFirstRetry(Topics.REQUESTED, record.key(), record.value(), headers, transientError);
+            retryPublisher.scheduleFirstRetry(Topics.REQUESTED, record, headers, transientError);
         }
     }
 }

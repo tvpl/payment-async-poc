@@ -46,6 +46,7 @@ public class OutboxEvent {
 
     private Instant publishedAt;
     private String lastError;
+    private String deduplicationKey;
 
     public Long getId() {
         return id;
@@ -165,5 +166,13 @@ public class OutboxEvent {
 
     public void setLastError(String lastError) {
         this.lastError = lastError;
+    }
+
+    public String getDeduplicationKey() {
+        return deduplicationKey;
+    }
+
+    public void setDeduplicationKey(String deduplicationKey) {
+        this.deduplicationKey = deduplicationKey;
     }
 }
