@@ -1,5 +1,6 @@
 package com.example.platform.featurecontrol.store;
 
+import com.example.platform.featurecontrol.source.FlagKeyReader;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -15,7 +16,7 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(beans = RedisClient.class)
-public class FeatureRedisCommandsProvider {
+public class FeatureRedisCommandsProvider implements FlagKeyReader {
 
     private final RedisClient client;
     private volatile StatefulRedisConnection<String, String> connection;
@@ -34,6 +35,12 @@ public class FeatureRedisCommandsProvider {
             }
         }
         return connection.sync();
+    }
+
+    /** {@link FlagKeyReader} adapter — the single command {@code RedisFlagSource} actually needs. */
+    @Override
+    public String get(String key) {
+        return commands().get(key);
     }
 
     @PreDestroy
