@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 3 / T13 — sandbox minimum infrastructure
-- **Completed**: T1–T12; `payment-contracts` possui build, dois GAVs Java puros, compatibilidade, fixture, gate contra acoplamento de framework, documentação, AGENTS e ADR locais
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:268`
-- **Next step**: iniciar T13 somente em novo batch, extraindo a infraestrutura mínima para `sandbox`
+- **Phase / Task**: Execute; Phase 3 / T14 — actionable initialization and smoke
+- **Completed**: T1–T13; `sandbox` possui Compose mínimo com quatro dependências healthy, rede e volumes nomeados, sem build ou fonte de aplicação
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:287`
+- **Next step**: implementar inicialização idempotente e smoke por dependência em T14
 - **Blockers**: none
-- **Uncommitted files**: none after the Phase 2 framework-coupling correction commit
+- **Uncommitted files**: T13 files and status updates pending its atomic commit
 - **Branch**: `feature/optimize-eda`

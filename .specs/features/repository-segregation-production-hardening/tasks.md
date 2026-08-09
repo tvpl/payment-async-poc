@@ -267,6 +267,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T13: Extrair infraestrutura mínima e rede externa
 
+**Status:** Complete
+
 **What:** Criar Compose do sandbox somente com Kafka, Redis, PostgreSQL e Registry, rede nomeada e volumes, sem fonte/build de aplicação.  
 **Where:** `sandbox`  
 **Depends on:** T12  
@@ -277,6 +279,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** structural + integration  
 **Gate:** sandbox  
 **Commit:** `refactor(sandbox): extract shared infrastructure compose`
+
+**Gate evidence:** quatro testes estruturais passaram; o Compose materializou somente Kafka, Redis, PostgreSQL e Registry na rede nomeada `payment-sandbox`, sem build ou `container_name`. `docker compose up -d --wait` criou os três volumes nomeados e confirmou os quatro serviços healthy. A imagem Kafka legada inexistente foi substituída pela distribuição oficial Apache 3.9.2.
 
 #### T14: Criar inicialização e smoke acionáveis
 
