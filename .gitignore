@@ -6,6 +6,8 @@ build/
 *.iml
 .vscode/
 *.log
+__pycache__/
+*.py[cod]
 .DS_Store
 .env
 .env.*
