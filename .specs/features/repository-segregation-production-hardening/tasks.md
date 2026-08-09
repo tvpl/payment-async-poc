@@ -284,6 +284,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 
 #### T14: Criar inicialização e smoke acionáveis
 
+**Status:** Complete
+
 **What:** Inicializar tópicos, regras/schemas e bancos idempotentemente e verificar capacidade real de cada dependência.  
 **Where:** `sandbox/smoke`  
 **Depends on:** T13  
@@ -294,6 +296,8 @@ Phase 9: T54 -> T55 -> T56 -> T57 -> T58 -> T59 -> T60
 **Tests:** integration  
 **Gate:** sandbox  
 **Commit:** `test(sandbox): add dependency readiness smoke`
+
+**Gate evidence:** seis testes estruturais e nove probes de capacidade passaram. A inicialização repetida preservou tópicos, regra de compatibilidade, schema sintético e schema PostgreSQL; ao parar Redis, o smoke falhou nominalmente com dois diagnósticos e exit 1, depois passou após `start --wait`, sem remover volumes.
 
 #### T15: Separar profiles de observabilidade e ferramentas
 

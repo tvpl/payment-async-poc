@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute; Phase 3 / T14 — actionable initialization and smoke
-- **Completed**: T1–T13; `sandbox` possui Compose mínimo com quatro dependências healthy, rede e volumes nomeados, sem build ou fonte de aplicação
-- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:287`
-- **Next step**: implementar inicialização idempotente e smoke por dependência em T14
+- **Phase / Task**: Execute; Phase 3 / T15 — observability and tools profiles
+- **Completed**: T1–T14; sandbox mínimo healthy e smoke com inicialização idempotente, nove probes, diagnóstico por dependência e recovery comprovado
+- **In-progress** (file:line): `.specs/features/repository-segregation-production-hardening/tasks.md:302`
+- **Next step**: separar observabilidade e ferramentas em profiles sem assumir ownership de artefatos de aplicação
 - **Blockers**: none
-- **Uncommitted files**: T13 files and status updates pending its atomic commit
+- **Uncommitted files**: T14 initialization, smoke, tests and status updates pending its atomic commit
 - **Branch**: `feature/optimize-eda`

@@ -296,12 +296,12 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
 | ORG-07 | Fronteiras prontas para repositórios | Tasks | In Tasks |
 | ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
-| SBX-01 | Sandbox único | Execute | T13 minimal Compose, env and named volumes complete; runner/smoke/docs pending |
+| SBX-01 | Sandbox único | Execute | T13 minimal Compose/env/volumes and T14 actionable smoke complete; runner/docs pending |
 | SBX-02 | Sandbox único | Execute | T13 minimal profile contains only four shared dependencies; profiles pending |
 | SBX-03 | Sandbox único | Execute | T13 named network complete; application Compose adoption pending |
 | SBX-04 | Sandbox único | Tasks | In Tasks |
 | SBX-05 | Sandbox único | Tasks | In Tasks |
-| SBX-06 | Sandbox único | Tasks | In Tasks |
+| SBX-06 | Sandbox único | Execute | T14 nine capacity probes, dependency-specific failure and recovery complete; application startup gates pending |
 | SEC-01 | Segurança e operação | Execute | T3 config hygiene complete; owner startup guards pending |
 | SEC-02 | Segurança e operação | Tasks | In Tasks |
 | SEC-03 | Segurança e operação | Tasks | In Tasks |
@@ -318,7 +318,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | PAY-06 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-07 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-08 | Fluxo Kafka | Tasks | In Tasks |
-| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec complete; service dependency policies pending |
+| PAY-09 | Fluxo Kafka | Execute | T9 bounded Registry codec and T14 real dependency readiness diagnostics complete; service policies pending |
 | PAY-10 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-11 | Fluxo Kafka | Tasks | In Tasks |
 | PAY-12 | Fluxo Kafka | Execute | T8 model and T10 FULL_TRANSITIVE compatibility gate complete |

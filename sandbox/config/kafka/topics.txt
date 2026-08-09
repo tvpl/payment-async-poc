@@ -1,0 +1,9 @@
+# Local development resources. Canonical names remain owned by payment-contracts.
+payment.simulation.requested
+payment.simulation.core.command
+payment.simulation.core.response
+payment.simulation.completed
+payment.simulation.failed
+payment.simulation.dlq
+payment.simulation.requested.retry
+payment.simulation.core.response.retry

@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "SandboxSmoke",
+  "namespace": "com.example.sandbox",
+  "fields": [
+    {"name": "probe", "type": "string"}
+  ]
+}
