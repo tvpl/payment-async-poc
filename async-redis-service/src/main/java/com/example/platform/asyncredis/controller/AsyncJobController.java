@@ -6,9 +6,9 @@ import com.example.platform.asyncredis.api.JobStatusStore;
 import com.example.platform.asyncredis.api.JobStatusView;
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
 import com.example.platform.asyncredis.dto.JobResponse;
-import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.queue.JobQueue;
+import com.example.platform.asyncredis.queue.WaitOutcome;
 import com.example.platform.asyncredis.ratelimit.AsyncRateLimiter;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -22,8 +22,6 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import jakarta.validation.Valid;
-
-import java.util.Optional;
 
 /**
  * HTTP entry point for the Kafka-free async->sync example.
@@ -41,6 +39,7 @@ import java.util.Optional;
 public class AsyncJobController {
 
     static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
+    static final String BACKPRESSURE_HEADER = "X-Backpressure";
 
     private final JobQueue queue;
     private final JobAcceptanceService acceptance;
@@ -89,11 +88,21 @@ public class AsyncJobController {
         }
 
         String jobId = ((AcceptOutcome.Accepted) outcome).jobId();
-        Optional<JobResult> result = queue.awaitResult(jobId);
-        return result
-                .map(r -> HttpResponse.ok(new JobResponse(jobId, "COMPLETED", statusUrl(jobId), r)))
-                .orElseGet(() -> HttpResponse.<JobResponse>accepted()
-                        .body(new JobResponse(jobId, "PROCESSING", statusUrl(jobId), null)));
+        JobResponse processing = new JobResponse(jobId, "PROCESSING", statusUrl(jobId), null);
+        return switch (queue.awaitResult(jobId)) {
+            case WaitOutcome.Released released ->
+                    HttpResponse.ok(new JobResponse(
+                            jobId, "COMPLETED", statusUrl(jobId), released.result()));
+            case WaitOutcome.TimedOut ignored ->
+                    HttpResponse.<JobResponse>accepted().body(processing);
+            // The job is queued and will be processed; what ran out was the capacity to wait for it.
+            // Saying so explicitly is what separates saturation from an ordinary slow worker.
+            case WaitOutcome.NoCapacity ignored ->
+                    HttpResponse.<JobResponse>accepted()
+                            .header(BACKPRESSURE_HEADER, "wait-pool-exhausted")
+                            .header("Retry-After", "1")
+                            .body(processing);
+        };
     }
 
     @Get("/{jobId}")

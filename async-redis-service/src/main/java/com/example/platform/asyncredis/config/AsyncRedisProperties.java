@@ -37,6 +37,11 @@ public class AsyncRedisProperties {
     private int admissionLimitPerSec = 0;
     /** Max pooled connections for concurrent blocking BRPOP waits. */
     private int poolMaxTotal = 64;
+    /**
+     * Default ceiling on how long acquiring a wait connection may block. A request passes what is
+     * left of its own budget instead; this is the backstop that keeps any other borrow finite.
+     */
+    private Duration poolMaxWait = Duration.ofSeconds(1);
     /** How often a worker scans pending entries for reclaim/DLQ. */
     private Duration reclaimInterval = Duration.ofSeconds(5);
     /** Test hook: when set, the worker fails any job whose reference equals this (drives DLQ tests). */
@@ -91,6 +96,15 @@ public class AsyncRedisProperties {
         if (statusTtl.compareTo(resultTtl) < 0) {
             throw new ConfigurationException(
                     "async.redis.status-ttl (" + statusTtl + ") must be >= result-ttl (" + resultTtl + ")");
+        }
+        if (poolMaxTotal <= 0) {
+            throw new ConfigurationException(
+                    "async.redis.pool-max-total must be greater than zero; an unbounded wait pool has"
+                            + " no backpressure to apply");
+        }
+        if (poolMaxWait.isNegative() || poolMaxWait.isZero()) {
+            throw new ConfigurationException(
+                    "async.redis.pool-max-wait must be a positive, finite duration");
         }
     }
 
@@ -180,6 +194,14 @@ public class AsyncRedisProperties {
 
     public void setPoolMaxTotal(int poolMaxTotal) {
         this.poolMaxTotal = poolMaxTotal;
+    }
+
+    public Duration getPoolMaxWait() {
+        return poolMaxWait;
+    }
+
+    public void setPoolMaxWait(Duration poolMaxWait) {
+        this.poolMaxWait = poolMaxWait;
     }
 
     public Duration getReclaimInterval() {

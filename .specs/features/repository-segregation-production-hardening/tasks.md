@@ -1136,6 +1136,8 @@ Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`) passou **3
 
 #### T40: Limitar pool de espera e admissão
 
+**Status:** Complete
+
 **What:** Iniciar budget antes do borrow, configurar `maxWait/maxTotal` e retornar backpressure quando capacidade de BRPOP se esgotar.  
 **Where:** `async-redis-service/src/main/java/com/example/platform/asyncredis/queue`  
 **Depends on:** T39  
@@ -1146,6 +1148,42 @@ Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`) passou **3
 **Tests:** unit + integration  
 **Gate:** full  
 **Commit:** `fix(async-redis): bound waiter pool and admission`
+
+**Gate evidence:** A espera herdada tinha três defeitos contra RED-02, todos confirmados lendo o código antes de alterar. (1) **O orçamento começava depois do borrow**: `awaitResult` chamava `redis.borrowBlocking()` e só então media `wait-timeout` no BRPOP, de modo que um pool saturado permitia gastar o timeout inteiro adquirindo a conexão e o timeout inteiro de novo no pop — o dobro do que o cliente foi prometido. (2) **A aquisição não tinha timeout algum**: `pool().borrowObject()` sem `maxWait` configurado bloqueia para sempre quando o pool está esgotado, que é exatamente o "bloquear além do orçamento HTTP" que a AC proíbe. (3) **Saturação era indistinguível de lentidão**: `awaitResult` devolvia `Optional.empty()` tanto para "sem resultado ainda" quanto para "sem capacidade de esperar", e ambos viravam um `202` idêntico, escondendo do operador o único sinal que diferencia um worker lento de um serviço saturado.
+
+Corrigir (1) e (2) expôs um quarto defeito, **este introduzido pela própria correção** e encontrado com o gate vermelho, não por inspeção. Passar um deadline para o pool exige uma sobrecarga temporizada de `borrowObject`, e `ConnectionPoolSupport` do Lettuce 6.4.0 sobrescreve **apenas** o `borrowObject()` sem argumentos para embrulhar a conexão (verificado no bytecode: `ConnectionPoolSupport$1` declara só `borrowObject()`, e o `createGenericObjectPool` de 2 argumentos passa `wrapConnections=true` via `iconst_1`). As sobrecargas `borrowObject(long)` e `borrowObject(Duration)` devolvem a conexão **crua**, cujo `close()` fecha o socket em vez de devolvê-lo ao pool. O diagnóstico foi direto: `active-after-borrow=1`, `close()`, `active-after-close=1` — capacidade perdida de forma permanente, uma vaga por espera, até o pool não servir mais nada. Com `pool-max-total=1` os cinco testes do budget falharam com `NoCapacity`; num pool default de 64 o mesmo vazamento passaria despercebido em teste e mataria o serviço em produção. A correção é `RedisConnections.WaitLease`: a devolução passou a ser explícita (`returnObject`), nunca por `close()` da conexão, e uma espera que falhou no meio do protocolo marca `invalidate()` para destruir o socket em vez de reciclá-lo para o próximo waiter. O `finally` que fecha o lease é obrigatório porque try-with-resources fecha **antes** do `catch`, o que tornaria o `invalidate()` inócuo.
+
+`pool-max-wait` ganhou semântica própria em vez de virar configuração morta: a aquisição é limitada a `min(orçamento restante, pool-max-wait)`, para que um pool saturado não consuma o orçamento inteiro na fila por conexão e deixe zero tempo para o pop que o cliente está pagando. `validateRetention` recusa startup com `pool-max-total <= 0` ou `pool-max-wait` não positivo — um pool sem capacidade ou sem timeout finito não tem backpressure para aplicar. O contrato HTTP separa as duas recusas: `429` é admissão negada (nada foi enfileirado, já coberto por `AsyncBackpressureIT`) e `202` + `X-Backpressure: wait-pool-exhausted` + `Retry-After` é trabalho aceito cuja espera foi descartada. Devolver `429` no segundo caso seria mentir sobre uma submissão que já está no stream.
+
+Full gate (`async-redis-service/./gradlew test -PwithIT --no-daemon`, Redis real em `localhost:6379`) passou **52/52 testes, 0 falhas, 0 skipped**: os 39 de T38–T39 mais 13 novos (`JobWaitBudgetIT` 6, `AsyncRedisPropertiesUnitTest` 4, `JobBackpressureContractIT` 2, `JobWaitAcquisitionCapIT` 1), acima dos ≥8 pedidos. Nenhum teste anterior foi removido, pulado ou enfraquecido.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| RED-02: espera termina dentro do próprio orçamento | `JobWaitBudgetIT.java:88-90` — `assertInstanceOf(TimedOut.class, ...)`, `elapsed >= BUDGET_MS*0.8` e `elapsed < BUDGET_MS*2` | a espera gasta o orçamento, nem menos nem mais | ✅ |
+| RED-02: o orçamento cobre aquisição, não só o BRPOP | `JobWaitBudgetIT.java:121-123` — `assertInstanceOf(TimedOut.class, ...)` e `elapsed < BUDGET_MS*1.4` com a única conexão presa por 600ms | 600ms de fila + pop ≈ 1 orçamento, não 1,6 | ✅ |
+| RED-02: pool saturado descarta em vez de enfileirar | `JobWaitBudgetIT.java:104-105` — `assertInstanceOf(NoCapacity.class, ...)` e `elapsed < BUDGET_MS*1.5` com a conexão presa por 3s | saturação vira recusa no orçamento, não bloqueio | ✅ |
+| RED-02: timeout de aquisição é finito e próprio | `JobWaitAcquisitionCapIT.java:62-66` — `NoCapacity`, `elapsed >= 100ms` e `elapsed < 1500ms` com `pool-max-wait=200ms` e `wait-timeout=3s` | a aquisição para em `pool-max-wait`, não no orçamento inteiro | ✅ |
+| Done-when: não cresce ilimitado (capacidade nunca excedida) | `JobWaitBudgetIT.java:150-152` — `highWaterMark <= capacity` amostrado sob 6 esperas concorrentes e `assertEquals(0, redis.borrowedConnections())` | concorrência nunca ultrapassa `pool-max-total` | ✅ |
+| Done-when: não cresce ilimitado (capacidade é devolvida) | `JobWaitBudgetIT.java:66-67,73-79` — `borrowedConnections()==0` após cada uma de 3 esperas e `Released` com `reference()=="REUSE-1"`, `amountCents()==4_000`, `feeCents()==80` na quarta | capacidade sobrevive ao uso repetido | ✅ |
+| RED-02: configuração sem capacidade não sobe | `AsyncRedisPropertiesUnitTest.java:31-32,42-43` — `assertThrows(ConfigurationException.class, props::validateRetention)` e mensagem contendo `async.redis.pool-max-total`, para `0` e `-1` | pool sem capacidade é recusado no startup | ✅ |
+| RED-02: configuração sem timeout finito não sobe | `AsyncRedisPropertiesUnitTest.java:53-54,64-65` — `assertThrows(...)` e mensagem contendo `async.redis.pool-max-wait`, para `ZERO` e `-1ms` | aquisição sem timeout positivo é recusada no startup | ✅ |
+| CAP-03: saturação responde `202` com backpressure explícito | `JobBackpressureContractIT.java:62-71` — `HttpStatus.ACCEPTED`, `header("X-Backpressure")=="wait-pool-exhausted"`, `header("Retry-After")=="1"`, `status()=="PROCESSING"`, `statusUrl()=="/jobs/"+jobId` e `assertNull(result())` | contrato de backpressure completo, campo a campo | ✅ |
+| CAP-03: backpressure descarta a espera, nunca o trabalho | `JobBackpressureContractIT.java:93-100` — `HttpStatus.OK`, `"COMPLETED"`, `reference()=="BP-2"`, `amountCents()==5_000`, `feeCents()==100`, `status()=="PROCESSED"` no polling | o `202` é honesto: o job enfileirado termina | ✅ |
+| CAP-03: admissão excedida responde `429` | `AsyncBackpressureIT.java:64-66` (pré-existente) — `assertTrue(throttled.get() >= 1)` sob limite de 1/s | recusa de admissão é `429`, não `202` | ✅ |
+| Done-when: resultado liberado chega ao waiter (controle) | `JobWaitBudgetIT.java:51-56` — `Released` com `jobId`, `reference()=="BUDGET-1"`, `amountCents()==10_000`, `feeCents()==200`, `status()=="PROCESSED"` | o pool limitado continua entregando resultados | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `JobWaitBudgetIT.java:51-56` | Done-when controle: espera limitada ainda entrega | ✅ |
+| `JobWaitBudgetIT.java:66-67,73-79` | Done-when "não cresce ilimitado" (devolução de capacidade) | ✅ |
+| `JobWaitBudgetIT.java:88-90,121-123` | RED-02 orçamento único cobrindo aquisição + pop | ✅ |
+| `JobWaitBudgetIT.java:104-105` | RED-02 descarte sob saturação | ✅ |
+| `JobWaitBudgetIT.java:150-152` | Done-when capacidade nunca excedida sob concorrência | ✅ |
+| `JobWaitAcquisitionCapIT.java:62-66` | RED-02 `maxWait` como timeout de aquisição próprio | ✅ |
+| `JobBackpressureContractIT.java:62-71,93-100` | CAP-03 contrato `202` + backpressure e durabilidade do job | ✅ |
+| `AsyncRedisPropertiesUnitTest.java:31-32,42-43,53-54,64-65` | RED-02 `maxTotal`/`maxWait` como invariante de startup | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Toda asserção de payload verifica valor ou estado observável — status HTTP, headers nomeados, campos do `JobResult` e a contagem real de conexões do pool (`getNumActive()`) — nunca apenas que um método foi chamado. Os três testes de tempo são deliberadamente distintos porque falham por motivos diferentes: `aWaitWithNoResultEndsInsideItsOwnBudget` tem limite inferior **e** superior, então uma implementação que devolvesse `TimedOut` imediatamente falharia nele e passaria nos outros; `theBudgetCoversAcquisitionAndNotOnlyTheBrpop` é o único que mata a versão antiga, em que aquisição e pop tinham orçamentos separados; e `acquisitionIsCappedByPoolMaxWaitAndNotByTheWholeBudget` mata uma implementação que ignorasse `pool-max-wait` e usasse sempre o orçamento restante — sem ele, `pool-max-wait` seria configuração decorativa. `everyWaitReturnsItsConnectionSoCapacitySurvivesRepeatedUse` é o teste que encontrou o vazamento do `borrowObject` não embrulhado: com o código anterior, a espera 1 já falhava com `NoCapacity`. `aJobShedByWaitCapacityIsStillProcessedToCompletion` é o controle que impede um backpressure "de fachada": uma implementação que respondesse `202` e descartasse o job passaria em `anExhaustedWaitPoolAnswers202WithExplicitBackpressure` e falharia aqui. Os quatro testes de configuração cobrem os dois limites de cada propriedade (zero e negativo) porque `isNegative()` e `isZero()` são checagens separadas e uma sozinha deixaria metade do buraco aberto. `AsyncBackpressureIT` cobre o `429` de admissão e não foi duplicado. O happy path HTTP `200 COMPLETED` já é coberto por `AsyncRedisFlowIT.java:44-52` e também não foi duplicado. Identidade única de consumidor, reconexão com backoff e readiness seguem com T41 (RED-04/RED-05); release atômico com T42; DLQ e off-by-one com T43; e retenção PEL-safe com T44 — nenhum deles foi tocado aqui. Não há SPEC_DEVIATION em T40.
 
 #### T41: Tornar workers únicos e reconectáveis
 

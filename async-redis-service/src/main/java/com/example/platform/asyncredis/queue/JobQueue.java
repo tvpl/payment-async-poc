@@ -8,7 +8,6 @@ import com.example.platform.asyncredis.dto.SubmitJobRequest;
 import com.example.platform.asyncredis.redis.RedisConnections;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.XAddArgs;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
@@ -17,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -65,22 +65,55 @@ public class JobQueue implements JobEnqueuer {
 
     /**
      * Blocks (on the calling virtual thread) up to {@code wait-timeout} for the worker to release the
-     * result via BRPOP on the per-request list. Uses a dedicated connection because BRPOP holds it.
+     * result via BRPOP on the per-request list. Uses a pooled connection because BRPOP holds it.
      *
-     * @return the result if released in time, otherwise empty (caller returns 202).
+     * <p>The budget starts <strong>before</strong> the connection is acquired, not after (RED-02).
+     * Acquiring is itself a queue: measuring only the BRPOP lets a request spend the full wait
+     * timeout getting a connection and then the full wait timeout again on the pop, so a saturated
+     * pool silently doubles the time the caller was promised. Acquisition is additionally capped at
+     * {@code pool-max-wait} so a saturated pool cannot consume the entire budget queueing for a
+     * connection and leave no time to actually wait for the result.
      */
-    public Optional<JobResult> awaitResult(String jobId) {
-        double timeoutSeconds = props.getWaitTimeout().toMillis() / 1000.0;
-        try (StatefulRedisConnection<String, String> conn = redis.borrowBlocking()) {
-            KeyValue<String, String> popped = conn.sync().brpop(timeoutSeconds, responseKey(jobId));
-            if (popped == null || !popped.hasValue()) {
-                return Optional.empty();
-            }
-            return Optional.of(objectMapper.readValue(popped.getValue(), JobResult.class));
+    public WaitOutcome awaitResult(String jobId) {
+        long deadlineNanos = System.nanoTime() + props.getWaitTimeout().toNanos();
+        long acquireBudget = Math.min(remainingMillis(deadlineNanos), props.getPoolMaxWait().toMillis());
+
+        RedisConnections.WaitLease lease;
+        try {
+            lease = redis.acquireWait(acquireBudget);
+        } catch (NoSuchElementException e) {
+            // The pool stayed saturated for the whole acquisition window: shed instead of queueing.
+            LOG.debug("no wait capacity for {}: {}", jobId, e.getMessage());
+            return new WaitOutcome.NoCapacity();
         } catch (Exception e) {
-            LOG.debug("await failed for {}: {}", jobId, e.getMessage());
-            return Optional.empty();
+            LOG.warn("could not acquire a wait connection for {}: {}", jobId, e.toString());
+            return new WaitOutcome.NoCapacity();
         }
+
+        try {
+            long remaining = remainingMillis(deadlineNanos);
+            if (remaining <= 0) {
+                return new WaitOutcome.TimedOut();
+            }
+            KeyValue<String, String> popped =
+                    lease.sync().brpop(remaining / 1000.0, responseKey(jobId));
+            if (popped == null || !popped.hasValue()) {
+                return new WaitOutcome.TimedOut();
+            }
+            return new WaitOutcome.Released(objectMapper.readValue(popped.getValue(), JobResult.class));
+        } catch (Exception e) {
+            // The socket may be mid-protocol; drop it rather than hand a broken one to the next waiter.
+            lease.invalidate();
+            LOG.debug("await failed for {}: {}", jobId, e.getMessage());
+            return new WaitOutcome.TimedOut();
+        } finally {
+            // Always before the catch's return value escapes: capacity is released either way.
+            lease.close();
+        }
+    }
+
+    private static long remainingMillis(long deadlineNanos) {
+        return Math.max(0, (deadlineNanos - System.nanoTime()) / 1_000_000L);
     }
 
     /** Durable lookup of a finished result (polling fallback for the 202 path). */
