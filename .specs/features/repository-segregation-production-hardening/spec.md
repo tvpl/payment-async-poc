@@ -337,7 +337,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | CAP-05 | Capacidade | Tasks | In Tasks |
 | CAP-06 | Capacidade | Execute | T20 deterministic Core outcomes/latency complete; bounded admission and slowdown certification pending |
 | CAP-07 | Capacidade | Tasks | In Tasks |
-| FTR-01 | Feature control | Tasks | In Tasks |
+| FTR-01 | Feature control | Execute | T47 bounds name/percentage/version/salt/labels and rejects invalid VARIANT/ALLOWLIST combinations in `FlagDefinition`'s single construction choke point (YAML, admin write and Redis deserialization all go through it) complete |
 | FTR-02 | Feature control | Tasks | In Tasks |
 | FTR-03 | Feature control | Tasks | In Tasks |
 | FTR-04 | Feature control | Tasks | In Tasks |

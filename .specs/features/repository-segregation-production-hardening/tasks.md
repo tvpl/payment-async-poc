@@ -1468,6 +1468,36 @@ Baseline (31 methods: `feature-control` 20, `feature-demo` 9, `pilot-app` 2) ful
 **Tests:** unit  
 **Gate:** quick  
 **Commit:** `fix(feature-control): validate flag definitions`
+**Status:** Complete
+
+**Gate evidence:** `FlagDefinition`'s compact constructor (the single construction choke point used by YAML binding, the admin write path and Redis deserialization alike) only checked non-blank name, `percentage` in `[0,100]` and `version >= 0`. Nothing bounded name length/charset, variant weights/names/count, allowlist membership, or label/salt length, and nothing rejected `variants` on a non-VARIANT flag — exactly the "combinações inválidas" FTR-01 requires catching before persist/activate.
+
+Extended the compact constructor with: a name length bound (100) and charset (`[A-Za-z0-9_][A-Za-z0-9_.-]*`, chosen to keep the reserved `__kill_switch__` name and every existing YAML flag name valid, while rejecting whitespace and `:` — the latter would collide with the Redis `key-prefix` separator); label length bounds (100) on `onVariant`/`offVariant`/each variant name and on `bucketingSalt` (200); for `VARIANT` flags, a non-empty variant list, no duplicate variant names, and at least one variant with weight > 0 (an all-zero-weight VARIANT can never differentiate — `Bucketer.select` already special-cased this by always returning the first variant, which is exactly the silent-misconfiguration case FTR-01 asks to catch instead); `variants` rejected on any non-VARIANT flag; and, for an *enabled* `ALLOWLIST` flag, at least one allowed user or group (a disabled placeholder is still accepted, since `FeatureResolver` never reaches the allowlist branch for a disabled flag).
+
+Quick gate (`feature-control/gradlew test --no-daemon`) passed **54/54 unit tests, 0 failures, 0 skipped**: the 24 pre-existing (20 baseline + 4 T46 structural) plus 30 new in `FlagDefinitionValidationUnitTest`, above the ≥15 requested. Re-ran the full gate (`-PwithIT`, real Redis) to confirm the stricter validation does not reject any existing baseline flag definition: `FeatureDemoFlowIT` (9) and `PilotIT` (2) both still pass unchanged — every flag name/combination in `feature-demo`/`pilot-app`'s `application.yml` was already a valid combination under the new rules. No test removed, skipped or weakened.
+
+| Critério / requisito | Evidência `file:line` e assertion | Resultado definido | Coberto? |
+| --- | --- | --- | --- |
+| FTR-01: nomes têm bounds (tamanho e charset) | `FlagDefinitionValidationUnitTest.java:44-58` — `assertThrows(IllegalArgumentException.class, ...)` para nome vazio, nulo, >100 chars, com espaço e com `:` | construção rejeita determinísticamente cada nome inválido | ✅ |
+| FTR-01: nome válido no limite e caso reservado continuam construíveis | `FlagDefinitionValidationUnitTest.java:60-70` — `assertDoesNotThrow(...)` para nome de 1 char, `__kill_switch__` e nome com 100 chars | nenhuma regressão no `MasterSwitch.KILL_FLAG` nem em nomes de produção existentes | ✅ |
+| FTR-01: percentuais têm bounds | `FlagDefinitionValidationUnitTest.java:75-96` — `assertThrows` para -1 e 101, `assertDoesNotThrow` para 0 e 100 | `[0,100]` é a fronteira exata, testada nos dois lados | ✅ |
+| FTR-01: versões têm bounds | `FlagDefinitionValidationUnitTest.java:101-111` — `assertThrows` para versão -1, `assertDoesNotThrow` para 0 | versão negativa nunca persiste | ✅ |
+| FTR-01: pesos/variantes têm combinação válida | `FlagDefinitionValidationUnitTest.java:116-155` — `assertThrows` para lista vazia, nomes duplicados, todos os pesos zero e variantes fora de tipo VARIANT; `assertDoesNotThrow` para ao menos um peso positivo | toda combinação inválida de VARIANT é rejeitada antes de persistir | ✅ |
+| FTR-01: combinações de ALLOWLIST são válidas | `FlagDefinitionValidationUnitTest.java:160-183` — `assertThrows` para ALLOWLIST habilitada sem usuários/grupos; `assertDoesNotThrow` para desabilitada sem membros, e habilitada só com grupo ou só com usuário | um ALLOWLIST habilitado sem alvo nunca é aceito; um placeholder desabilitado continua permitido | ✅ |
+| FTR-01: salts e labels têm bounds | `FlagDefinitionValidationUnitTest.java:188-215` — `assertThrows`/`assertDoesNotThrow` na fronteira exata de `bucketingSalt` (200) e `onVariant`/`offVariant` (100) | nenhum campo de texto livre é ilimitado | ✅ |
+| Done-when: combinações válidas/inválidas têm resultado determinístico | todas as 30 asserções acima, mais `FeatureDemoFlowIT`/`PilotIT` inalterados sob a validação mais estrita | mesma entrada sempre produz o mesmo resultado (aceita ou rejeita) | ✅ |
+
+| Assertion | Mapeia para | Keep? |
+| --- | --- | --- |
+| `FlagDefinitionValidationUnitTest.java:44-70` | FTR-01 bounds/charset de nome | ✅ |
+| `FlagDefinitionValidationUnitTest.java:75-96` | FTR-01 bounds de percentual | ✅ |
+| `FlagDefinitionValidationUnitTest.java:101-111` | FTR-01 bounds de versão | ✅ |
+| `FlagDefinitionValidationUnitTest.java:116-155` | FTR-01 combinação de pesos/variantes | ✅ |
+| `FlagDefinitionValidationUnitTest.java:160-183` | FTR-01 combinação de ALLOWLIST | ✅ |
+| `FlagDefinitionValidationUnitTest.java:188-215` | FTR-01 bounds de salt/labels | ✅ |
+| `FlagDefinitionValidationUnitTest.java:219-224` | comportamento pré-existente (type null -> BOOLEAN) preservado, não uma nova AC | ✅ |
+
+**Adequacy review:** cobertura suficiente e necessária. Cada teste de rejeição tem seu par de aceitação na fronteira exata (percentual 0/100, salt/label no limite exato, versão 0), o que mata tanto uma implementação frouxa (`>=` vs `>`) quanto uma excessivamente restritiva. `rejectsVariantFlagWithAllZeroWeights` é o teste de controle mais específico: sem ele, uma implementação que só verificasse "lista não vazia" passaria por um VARIANT inútil (todos os pesos zero) — o teste força a leitura da soma dos pesos, não só do tamanho da lista. `acceptsDisabledAllowlistWithNoUsersOrGroups` existe para não quebrar o padrão de placeholder já implícito no `FeatureResolver` (que checa `enabled()` antes do branch ALLOWLIST); sem esse teste, a regra ficaria mais restritiva do que o próprio resolver exige. Nenhum teste usa apenas contagem de chamada; todos constroem o objeto real e verificam a exceção (ou a ausência dela) e, no caso de `nullTypeDefaultsToBoolean`, o valor do campo resultante. Nenhum teste verifica biblioteca/framework isoladamente. Reverse-mapping (Check C): toda asserção nova mapeia diretamente para uma dimensão nomeada em FTR-01 (nomes, pesos, versões, limites, combinações); nenhuma é especulativa. Nenhum teste anterior foi removido, pulado ou enfraquecido; a suíte de exemplos (`FeatureDemoFlowIT`/`PilotIT`) foi reexecutada como controle negativo de regressão e permanece verde. Sem SPEC_DEVIATION: a única decisão de engenharia não ditada literalmente pela spec foi tratar "todos os pesos zero" e "ALLOWLIST habilitado sem alvo" como combinações inválidas — ambas documentadas acima como leitura razoável de "combinações inválidas" per FTR-01, e nenhuma quebra o baseline.
 
 #### T48: Limitar stale e stampede do cache
 

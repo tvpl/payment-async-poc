@@ -3,8 +3,10 @@ package com.example.platform.featurecontrol.model;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * The definition of a single feature flag — the shape that lives in YAML (baseline) and in
@@ -44,9 +46,30 @@ public record FlagDefinition(
         long version,
         @Nullable String bucketingSalt) {
 
+    /** Bound so a name is a safe, human-scannable Redis-key/log/metric-tag suffix (FTR-01). */
+    static final int MAX_NAME_LENGTH = 100;
+    /** Bound for free-text labels ({@code onVariant}/{@code offVariant}/variant names) (FTR-01). */
+    static final int MAX_LABEL_LENGTH = 100;
+    /** Bound for the bucketing salt (FTR-01). */
+    static final int MAX_SALT_LENGTH = 200;
+    /**
+     * A flag name is a Redis-key suffix, a log field and a metric tag value: letters, digits,
+     * {@code _.-} only, starting with a letter/digit/underscore (the reserved
+     * {@link com.example.platform.featurecontrol.resolver.MasterSwitch#KILL_FLAG} starts with
+     * {@code _}). No whitespace, no {@code :} (would collide with the {@code key-prefix} separator).
+     */
+    static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9_.-]*");
+
     public FlagDefinition {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("flag name is required");
+        }
+        if (name.length() > MAX_NAME_LENGTH) {
+            throw new IllegalArgumentException("flag name must be at most " + MAX_NAME_LENGTH + " characters");
+        }
+        if (!NAME_PATTERN.matcher(name).matches()) {
+            throw new IllegalArgumentException(
+                    "flag name must match " + NAME_PATTERN.pattern() + " (no whitespace or ':')");
         }
         if (type == null) {
             type = FlagType.BOOLEAN;
@@ -57,9 +80,48 @@ public record FlagDefinition(
         if (version < 0) {
             throw new IllegalArgumentException("version must be >= 0");
         }
+        if (bucketingSalt != null && bucketingSalt.length() > MAX_SALT_LENGTH) {
+            throw new IllegalArgumentException("bucketingSalt must be at most " + MAX_SALT_LENGTH + " characters");
+        }
+        if (onVariant != null && onVariant.length() > MAX_LABEL_LENGTH) {
+            throw new IllegalArgumentException("onVariant must be at most " + MAX_LABEL_LENGTH + " characters");
+        }
+        if (offVariant != null && offVariant.length() > MAX_LABEL_LENGTH) {
+            throw new IllegalArgumentException("offVariant must be at most " + MAX_LABEL_LENGTH + " characters");
+        }
         allowedUsers = allowedUsers == null ? Set.of() : Set.copyOf(allowedUsers);
         allowedGroups = allowedGroups == null ? Set.of() : Set.copyOf(allowedGroups);
         variants = variants == null ? List.of() : List.copyOf(variants);
+
+        if (type == FlagType.VARIANT) {
+            if (variants.isEmpty()) {
+                throw new IllegalArgumentException("VARIANT flag '" + name + "' requires at least one variant");
+            }
+            Set<String> seenNames = new HashSet<>();
+            long totalWeight = 0;
+            for (Variant candidate : variants) {
+                if (candidate.name().length() > MAX_LABEL_LENGTH) {
+                    throw new IllegalArgumentException(
+                            "variant name must be at most " + MAX_LABEL_LENGTH + " characters");
+                }
+                if (!seenNames.add(candidate.name())) {
+                    throw new IllegalArgumentException(
+                            "VARIANT flag '" + name + "' has duplicate variant name '" + candidate.name() + "'");
+                }
+                totalWeight += candidate.weight();
+            }
+            if (totalWeight <= 0) {
+                throw new IllegalArgumentException(
+                        "VARIANT flag '" + name + "' requires at least one variant with weight > 0");
+            }
+        } else if (!variants.isEmpty()) {
+            throw new IllegalArgumentException("variants are only allowed for VARIANT flags, not " + type);
+        }
+
+        if (type == FlagType.ALLOWLIST && enabled && allowedUsers.isEmpty() && allowedGroups.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "enabled ALLOWLIST flag '" + name + "' requires at least one allowed user or group");
+        }
     }
 
     /** Backward-compatible constructor (version=0, salt=flag name) used by existing call sites. */
