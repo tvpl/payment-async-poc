@@ -47,10 +47,10 @@
 ## Handoff
 
 - **Feature**: `repository-segregation-production-hardening`
-- **Phase / Task**: Execute completed Phase 5 / T30 — SBUS operational and release package
+- **Phase / Task**: Execute paused during Phase 6 / T31 — relocate API into standalone boundary
 - **Completed**: T1–T30; T29 committed typed dependency/retention policies with 74/74 full tests; T30 build, docs, Compose, image and supply-chain package gates passed where locally runnable
-- **In-progress**: none; Phase 5 is complete after the atomic T30 commit
-- **Next step**: start Phase 6 at T31 to relocate the API into its standalone boundary
-- **Blockers**: none
-- **Uncommitted files**: none after the atomic T30 commit
+- **In-progress**: `payment-api/` — standalone build, copied sources/tests/load assets and structural test created but not gate-verified
+- **Next step**: run `./gradlew test -PwithIT --no-daemon` in `payment-api`; only after a green gate complete adequacy evidence, update tasks/spec and commit T31
+- **Blockers**: Gradle needs the global cache outside the sandbox; privileged execution was rejected because the account usage limit is exhausted until 2026-08-15 20:19, with explicit instruction not to attempt a workaround
+- **Uncommitted files**: `.specs/STATE.md`, `payment-api/` (45 untracked files)
 - **Branch**: `feature/optimize-eda`
