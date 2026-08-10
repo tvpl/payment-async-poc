@@ -295,7 +295,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | ORG-05 | Fronteiras prontas para repositórios | Execute | T6/T11 artifact-only flow plus T19 Core, T24 SBUS, T31 API GAV consumption, T46 feature-control (no cross-boundary `project()`; examples depend only on the boundary-local library) and T52 feature-control consumer fixture (same artifact-only guarantee, verified end to end) complete; remaining application migrations pending |
 | ORG-06 | Fronteiras prontas para repositórios | Execute | T8 model and T9 bounded Avro adapter complete and framework-agnostic gate verified |
 | ORG-07 | Fronteiras prontas para repositórios | Execute | T24 moved the SBUS rate limiter into its owner and T38 proved async Redis carries no Kafka/Postgres/common/contract dependency; remaining runtime concerns pending |
-| ORG-08 | Fronteiras prontas para repositórios | Execute | T1 complete; final equivalence pending |
+| ORG-08 | Fronteiras prontas para repositórios | Execute | T1 baseline and T54 reconciliation complete: `scripts/equivalence/equivalence.py verify` passes against the current tree (389 entries), with legacy transitional roots (superseded by a standalone root) excluded from the live scan rather than double-counted |
 | SBX-01 | Sandbox único | Execute | T13–T18 sandbox boundary complete with Compose/env/Make/smoke/docs/AGENTS |
 | SBX-02 | Sandbox único | Execute | T13 minimal and T15 isolated observability/tools overlay complete; final app relocation pending |
 | SBX-03 | Sandbox único | Execute | T13 named network and T22 Core app-only Compose adoption complete; remaining application Composes pending |
@@ -353,8 +353,8 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | MIG-01 | Migração e gates | Tasks | In Tasks |
 | MIG-02 | Migração e gates | Execute | T1 baseline, T24 SBUS destination/checksum/full equivalence, T31 API destination/full-gate equivalence, T38 async Redis in-place extraction (6 baseline tests preserved under both roots) and T46 feature-control regroup (31 baseline tests preserved, both the transitional workspace root and the new standalone root build and test the same files) complete; old locations retained until final reconciliation |
 | MIG-03 | Migração e gates | Execute | T1 complete |
-| MIG-04 | Migração e gates | Execute | T4 transitional matrix complete; standalone workflows pending |
-| MIG-05 | Migração e gates | Tasks | In Tasks |
+| MIG-04 | Migração e gates | Execute | T4 transitional matrix and T54 real build/packaging/Compose gates for all 4 consumer boundaries (`payment-api`, `payment-sbus`, `payment-core-mock`, `async-redis-service`, each built and run standalone against published artifacts) complete; per-boundary GitHub Actions extraction into separate repositories pending a later initiative (AD-004) |
+| MIG-05 | Migração e gates | Execute | T54 complete: `scripts/e2e/check_no_composite_build.py` proves no consumer boundary uses `includeBuild`/`project(...)`/sibling source (structural, against the real 4 boundaries), `scripts/artifacts/verify-artifact-only.sh` proves the GAV-resolution mechanism (published resolves, missing fails), and two real end-to-end smokes (`scripts/smoke.sh`, `scripts/e2e/async_redis_smoke.sh`) pass against Docker images built from published local Maven repositories, composed independently on the sandbox network |
 | MIG-06 | Migração e gates | Execute | T4 policy recorded; coverage and supply-chain closure pending |
 | MIG-07 | Migração e gates | Execute | T5 section destinations complete; removal proof pending |
 | MIG-08 | Migração e gates | Tasks | In Tasks |

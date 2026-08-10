@@ -13,10 +13,19 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
       APICURIO_REGISTRY_URL: ${APICURIO_REGISTRY_URL:-http://registry:8080/apis/registry/v2}
       REDIS_URI: ${REDIS_URI:-redis://redis:6379}
+      # POSTGRES_JDBC_URL only applies under MICRONAUT_ENVIRONMENTS=prod (application-prod.yml);
+      # the dev profile that runs by default here reads the HOST/PORT/DB triple below instead
+      # (application.yml's `localhost` default doesn't resolve inside the container).
       POSTGRES_JDBC_URL: ${POSTGRES_JDBC_URL:-jdbc:postgresql://postgres:5432/sbus}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-sbus}
       POSTGRES_USER: ${POSTGRES_USER:-sbus}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      # application-dev.yml's HS256 dev-token signer has no default (dev/test only, never used
+      # in application-prod.yml, which validates asymmetric JWTs via SBUS_JWT_JWKS_URL instead).
+      SBUS_DEV_JWT_SECRET: ${SBUS_DEV_JWT_SECRET:-dev-jwt-signature-secret-change-me-please-32-bytes}
       SBUS_JWT_JWKS_URL: ${SBUS_JWT_JWKS_URL:-}
       SBUS_JWT_ISSUER: ${SBUS_JWT_ISSUER:-}
       SBUS_JWT_AUDIENCE: ${SBUS_JWT_AUDIENCE:-}
