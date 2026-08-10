@@ -86,5 +86,8 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'io.lettuce:lettuce-core'
+    // Exercise the two compileOnly optional integrations (metrics, logging) directly in tests.
+    testImplementation 'io.micrometer:micrometer-core'
+    testImplementation 'ch.qos.logback:logback-classic'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

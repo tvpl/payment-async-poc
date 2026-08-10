@@ -25,6 +25,9 @@ import java.time.Duration;
  *       (FTR-03).</li>
  *   <li>{@code pubsub-reconnect-base-delay}/{@code pubsub-reconnect-max-delay} — bounds for the
  *       jittered backoff {@code FlagChangeSubscriber} uses between reconnect attempts (FTR-03).</li>
+ *   <li>{@code metric-cardinality-limit} — the most distinct flag or variant names decision metrics
+ *       and exposure logs will ever track per dimension before collapsing further values to
+ *       {@code "other"} (FTR-05).</li>
  * </ul>
  */
 @ConfigurationProperties("platform.features")
@@ -40,6 +43,7 @@ public class FeatureSettings {
     private Duration convergenceAlertThreshold = Duration.ofSeconds(2);
     private Duration pubsubReconnectBaseDelay = Duration.ofMillis(200);
     private Duration pubsubReconnectMaxDelay = Duration.ofSeconds(30);
+    private int metricCardinalityLimit = 200;
 
     public boolean isRedisEnabled() {
         return redisEnabled;
@@ -120,5 +124,13 @@ public class FeatureSettings {
 
     public void setPubsubReconnectMaxDelay(Duration pubsubReconnectMaxDelay) {
         this.pubsubReconnectMaxDelay = pubsubReconnectMaxDelay;
+    }
+
+    public int getMetricCardinalityLimit() {
+        return metricCardinalityLimit;
+    }
+
+    public void setMetricCardinalityLimit(int metricCardinalityLimit) {
+        this.metricCardinalityLimit = metricCardinalityLimit;
     }
 }

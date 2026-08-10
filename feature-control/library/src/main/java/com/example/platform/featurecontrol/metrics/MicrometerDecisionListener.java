@@ -1,5 +1,6 @@
 package com.example.platform.featurecontrol.metrics;
 
+import com.example.platform.featurecontrol.config.FeatureSettings;
 import com.example.platform.featurecontrol.context.FeatureContext;
 import com.example.platform.featurecontrol.model.FeatureDecision;
 import com.example.platform.featurecontrol.spi.DecisionListener;
@@ -14,22 +15,30 @@ import jakarta.inject.Singleton;
  *
  * <p>The {@code reason} is reduced to its <em>kind</em> (the part before {@code :}) to keep tag
  * cardinality bounded — {@code percentage:bucket=37<40->on} would otherwise explode the label space.
+ * {@code flag}/{@code variant} are normally admin-controlled and few, but nothing enforces that; each
+ * is independently bounded by a {@link CardinalityGuard} (FTR-05) so a misconfigured or malicious
+ * source minting many distinct names can never grow the metric series count without limit. The
+ * bucketing key (PII) never becomes a tag here — this listener does not read it at all.
  */
 @Singleton
 @Requires(beans = MeterRegistry.class)
 public class MicrometerDecisionListener implements DecisionListener {
 
     private final MeterRegistry registry;
+    private final CardinalityGuard flagGuard;
+    private final CardinalityGuard variantGuard;
 
-    public MicrometerDecisionListener(MeterRegistry registry) {
+    public MicrometerDecisionListener(MeterRegistry registry, FeatureSettings settings) {
         this.registry = registry;
+        this.flagGuard = new CardinalityGuard(settings.getMetricCardinalityLimit());
+        this.variantGuard = new CardinalityGuard(settings.getMetricCardinalityLimit());
     }
 
     @Override
     public void onDecision(String flag, FeatureDecision decision, FeatureContext context) {
         registry.counter("feature_decisions_total",
-                "flag", flag,
-                "variant", decision.variant(),
+                "flag", flagGuard.admit(flag),
+                "variant", variantGuard.admit(decision.variant()),
                 "on", Boolean.toString(decision.isOn()),
                 "reason_kind", reasonKind(decision.reason())).increment();
     }
