@@ -1,59 +1,46 @@
 package com.example.platform.featurecontrol.admin;
 
-import com.example.platform.featurecontrol.config.FeatureSettings;
 import com.example.platform.featurecontrol.model.FlagDefinition;
-import com.example.platform.featurecontrol.store.FeatureRedisCommandsProvider;
 import com.example.platform.featurecontrol.store.FlagChangeNotifier;
 import com.example.platform.featurecontrol.store.RedisFlagSource;
+import com.example.platform.featurecontrol.store.VersionedFlagStore;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.ScriptOutputType;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Singleton;
 
 /**
- * Write path for runtime flag control, with <strong>optimistic concurrency</strong>. Persists a
- * {@link FlagDefinition} to Redis at {@code <key-prefix><name>} only if the caller's
- * {@link FlagDefinition#version()} still matches the stored one (compare-and-set in a Lua script,
- * atomic on the Redis server) — so two admins editing the same flag can't silently overwrite each
- * other; the loser gets a {@link FlagConflictException} (HTTP 409) and re-reads.
+ * Write path for runtime flag control, with <strong>optimistic concurrency on both create/update and
+ * delete</strong> (FTR-04). Every mutation goes through {@link VersionedFlagStore}, whose Lua script
+ * performs the compare-and-set and writes the audit entry (before/after/actor/version/timestamp/result)
+ * to a Redis Stream in the same atomic step — so a mutation without a matching audit entry cannot
+ * happen. The loser of a concurrent write gets a {@link FlagConflictException} (HTTP 409) and re-reads.
  *
- * <p>On success the stored copy carries {@code version+1}, the local cache is invalidated, and a
- * change signal is published so every instance drops its cache within milliseconds (see
+ * <p>Every mutation requires a non-blank {@code actor} — an unauthenticated/anonymous caller cannot
+ * mutate a flag through this service, regardless of what HTTP-layer authorization a consuming app
+ * configures on top of it.
+ *
+ * <p>On success the stored copy carries the new version, the local cache is invalidated, and a change
+ * signal is published so every instance drops its cache within milliseconds (see
  * {@link FlagChangeNotifier}). Only wired when Redis is available.
  */
 @Singleton
 @Requires(beans = RedisClient.class)
 public class FlagAdminService {
 
-    // CAS on the version embedded in the stored JSON (Redis ships cjson). Returns the new version,
-    // or -1 on a version mismatch. ARGV: [expectedVersion, newJson-with-version=expected+1].
-    private static final String CAS_LUA = """
-            local cur = redis.call('GET', KEYS[1])
-            local curVer = 0
-            if cur then curVer = tonumber(cjson.decode(cur).version) or 0 end
-            local expected = tonumber(ARGV[1])
-            if expected ~= curVer then return -1 end
-            redis.call('SET', KEYS[1], ARGV[2])
-            return curVer + 1
-            """;
-
-    private final FeatureRedisCommandsProvider redis;
+    private final VersionedFlagStore store;
     private final ObjectMapper objectMapper;
-    private final FeatureSettings settings;
     private final FlagChangeNotifier notifier;
     @Nullable
     private final RedisFlagSource dynamicSource;
 
-    public FlagAdminService(FeatureRedisCommandsProvider redis,
+    public FlagAdminService(VersionedFlagStore store,
                             ObjectMapper objectMapper,
-                            FeatureSettings settings,
                             FlagChangeNotifier notifier,
                             @Nullable RedisFlagSource dynamicSource) {
-        this.redis = redis;
+        this.store = store;
         this.objectMapper = objectMapper;
-        this.settings = settings;
         this.notifier = notifier;
         this.dynamicSource = dynamicSource;
     }
@@ -63,18 +50,18 @@ public class FlagAdminService {
      * to update, send the version you last read. On success the returned definition carries the new
      * version.
      *
-     * @throws FlagConflictException if another writer bumped the version first (HTTP 409).
+     * @throws FlagConflictException   if another writer bumped the version first (HTTP 409).
+     * @throws IllegalArgumentException if {@code actor} is null or blank.
      */
-    public FlagDefinition put(FlagDefinition definition) {
+    public FlagDefinition put(FlagDefinition definition, String actor) {
+        requireActor(actor);
         long expected = definition.version();
         FlagDefinition next = definition.withVersion(expected + 1);
         try {
             String json = objectMapper.writeValueAsString(next);
-            Long result = redis.commands().eval(CAS_LUA, ScriptOutputType.INTEGER,
-                    new String[]{key(definition.name())},
-                    Long.toString(expected), json);
-            if (result != null && result == -1L) {
-                throw new FlagConflictException(definition.name(), expected, currentVersion(definition.name()));
+            long result = store.put(definition.name(), expected, json, actor);
+            if (result == -1L) {
+                throw new FlagConflictException(definition.name(), expected, store.currentVersion(definition.name()));
             }
         } catch (FlagConflictException e) {
             throw e;
@@ -86,19 +73,38 @@ public class FlagAdminService {
         return next;
     }
 
-    /** Removes the dynamic override so the YAML baseline applies again. */
-    public void delete(String name) {
-        redis.commands().del(key(name));
+    /**
+     * Removes the dynamic override (so the YAML baseline applies again) using compare-and-set on
+     * {@code expectedVersion} — the version the caller last read, or {@code 0} for a flag it never
+     * saw created.
+     *
+     * @throws FlagConflictException    if the stored version no longer matches {@code expectedVersion}
+     *                                   (HTTP 409) — someone else changed or deleted it first.
+     * @throws IllegalArgumentException if {@code actor} is null or blank.
+     */
+    public void delete(String name, long expectedVersion, String actor) {
+        requireActor(actor);
+        long result = store.delete(name, expectedVersion, actor);
+        if (result == -1L) {
+            throw new FlagConflictException(name, expectedVersion, store.currentVersion(name));
+        }
         invalidate(name);
         notifier.publish(name);
     }
 
-    private long currentVersion(String name) {
-        try {
-            String json = redis.commands().get(key(name));
-            return json == null ? 0 : objectMapper.readValue(json, FlagDefinition.class).version();
-        } catch (Exception e) {
-            return 0;
+    /**
+     * The version currently stored in Redis, read straight from the source of truth — never from the
+     * cached {@link com.example.platform.featurecontrol.spi.FlagSource} resolver, whose LKG cache (T48)
+     * can lag the store by up to {@code cache-ttl} and would hand a caller a stale CAS baseline for
+     * {@link #delete}. {@code 0} means absent.
+     */
+    public long currentVersion(String name) {
+        return store.currentVersion(name);
+    }
+
+    private static void requireActor(String actor) {
+        if (actor == null || actor.isBlank()) {
+            throw new IllegalArgumentException("admin mutation requires a non-blank authenticated actor");
         }
     }
 
@@ -106,9 +112,5 @@ public class FlagAdminService {
         if (dynamicSource != null) {
             dynamicSource.invalidate(name);
         }
-    }
-
-    private String key(String name) {
-        return settings.getKeyPrefix() + name;
     }
 }

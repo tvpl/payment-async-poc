@@ -340,7 +340,7 @@ Toda ambiguidade está resolvida por padrão proposto ou registrada aqui para co
 | FTR-01 | Feature control | Execute | T47 bounds name/percentage/version/salt/labels and rejects invalid VARIANT/ALLOWLIST combinations in `FlagDefinition`'s single construction choke point (YAML, admin write and Redis deserialization all go through it) complete |
 | FTR-02 | Feature control | Execute | T48 bounds last-known-good to `max-stale`, adds a `BASELINE`/`FAIL_CLOSED` fallback, an observable `ageOf` accessor and single-flight+jitter cache refresh in `RedisFlagSource`, verified against real Redis complete |
 | FTR-03 | Feature control | Execute | T49 closes partial connections on subscribe failure (no leak), reconnects with capped backoff+jitter (`ReconnectBackoff`), and measures/alerts multi-instance convergence (`ConvergenceTracker`, verified with two real subscriber instances against real Redis) complete |
-| FTR-04 | Feature control | Tasks | In Tasks |
+| FTR-04 | Feature control | Execute | T50 makes create/update/delete compare-and-set with the audit write in one Lua `EVAL` (`VersionedFlagStore`), requires a non-blank authenticated actor before any Redis call, and reads the version-less delete's CAS baseline from the authoritative store instead of the cached resolver (a real bug found and fixed during this task's own gate check) complete |
 | FTR-05 | Feature control | Tasks | In Tasks |
 | FTR-06 | Feature control | Tasks | In Tasks |
 | DOC-01 | Docs, ADRs e IA | Execute | Contracts, sandbox, Core mock, T30 SBUS, T37 API and T45 async Redis READMEs complete; other boundaries pending |

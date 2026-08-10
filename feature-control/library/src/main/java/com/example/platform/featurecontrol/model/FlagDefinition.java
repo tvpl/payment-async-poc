@@ -1,5 +1,6 @@
 package com.example.platform.featurecontrol.model;
 
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
@@ -60,6 +61,7 @@ public record FlagDefinition(
      */
     static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z0-9_][A-Za-z0-9_.-]*");
 
+    @Creator
     public FlagDefinition {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("flag name is required");
