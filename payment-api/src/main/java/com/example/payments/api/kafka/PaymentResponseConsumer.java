@@ -145,6 +145,7 @@ public class PaymentResponseConsumer {
         try {
             MDC.put("requestId", env.requestId());
             MDC.put("correlationId", env.correlationId());
+            MDC.put("causationId", env.causationId());
             MDC.put("traceId", env.traceId());
             MDC.put("eventType", env.eventType());
             MDC.put("status", status.name());

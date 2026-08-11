@@ -34,13 +34,14 @@ public class CoreResponseConsumer {
 
     @Topic(Topics.CORE_RESPONSE)
     public void receive(ConsumerRecord<String, byte[]> record) {
-        Map<String, String> headers = KafkaHeaders.toMap(record);
         try {
-            handler.handle(Topics.CORE_RESPONSE, record.value(), headers);
+            handler.handle(Topics.CORE_RESPONSE, record);
         } catch (PoisonMessageException poison) {
+            Map<String, String> headers = KafkaHeaders.toMap(record);
             retryPublisher.routeToDlq(Topics.CORE_RESPONSE, record, headers, poison, "poison");
         } catch (RuntimeException transientError) {
             LOG.warn("Transient failure on core-response key={} -> retry topic", record.key(), transientError);
+            Map<String, String> headers = KafkaHeaders.toMap(record);
             retryPublisher.scheduleFirstRetry(Topics.CORE_RESPONSE, record, headers, transientError);
         }
     }

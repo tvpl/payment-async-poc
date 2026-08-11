@@ -39,13 +39,14 @@ public class PaymentRequestedConsumer {
 
     @Topic(Topics.REQUESTED)
     public void receive(ConsumerRecord<String, byte[]> record) {
-        Map<String, String> headers = KafkaHeaders.toMap(record);
         try {
-            handler.handle(Topics.REQUESTED, record.value(), headers);
+            handler.handle(Topics.REQUESTED, record);
         } catch (PoisonMessageException poison) {
+            Map<String, String> headers = KafkaHeaders.toMap(record);
             retryPublisher.routeToDlq(Topics.REQUESTED, record, headers, poison, "poison");
         } catch (RuntimeException transientError) {
             LOG.warn("Transient failure on requested key={} -> retry topic", record.key(), transientError);
+            Map<String, String> headers = KafkaHeaders.toMap(record);
             retryPublisher.scheduleFirstRetry(Topics.REQUESTED, record, headers, transientError);
         }
     }

@@ -43,7 +43,7 @@ public class RetryConsumer {
         int attempt = parseInt(headers.get(Headers.RETRY_ATTEMPT), 1);
 
         try {
-            handler.handle(originTopic, record.value(), headers);
+            handler.handle(originTopic, record);
         } catch (PoisonMessageException poison) {
             retryPublisher.routeToDlq(originTopic, record, headers, poison, "poison");
         } catch (RuntimeException transientError) {

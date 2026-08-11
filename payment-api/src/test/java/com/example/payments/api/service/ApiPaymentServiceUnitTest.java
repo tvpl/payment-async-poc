@@ -22,6 +22,7 @@ import org.slf4j.MDC;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -81,6 +83,27 @@ class ApiPaymentServiceUnitTest {
         assertEquals(SimulationStatus.COMPLETED, result.entry().status());
         verify(metrics).recordRequest(anyString());
         verify(producer).send(anyString(), anyString(), anyString(), any(), any());
+    }
+
+    /**
+     * task_89c681c8: causationId was declared in logback.xml but never put into MDC. For the
+     * first event in a chain it must equal the request's own requestId (EventEnvelope's own
+     * javadoc convention) — captured here at the moment of publish, while MDC is still active.
+     */
+    @Test
+    void populatesCausationIdInMdcWhilePublishing() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+        AtomicReference<String> causationIdDuringPublish = new AtomicReference<>();
+        ArgumentCaptor<String> requestId = ArgumentCaptor.forClass(String.class);
+        doAnswer(inv -> {
+            causationIdDuringPublish.set(MDC.get("causationId"));
+            return null;
+        }).when(producer).send(requestId.capture(), anyString(), anyString(), any(), any());
+
+        service.submit(REQUEST, null);
+
+        assertEquals(requestId.getValue(), causationIdDuringPublish.get());
     }
 
     @Test
@@ -208,6 +231,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -220,6 +244,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -232,6 +257,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -244,6 +270,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 

@@ -112,6 +112,11 @@ public class ApiPaymentService {
         String traceId = currentTraceId();
         MDC.put("requestId", requestId);
         MDC.put("correlationId", correlationId);
+        // The first event in the chain: causationId is its own requestId (EventEnvelope's own
+        // javadoc convention), matching the envelope built below (EventEnvelope.create(...,
+        // requestId, correlationId, requestId, traceId, ...) — requestId is also the 3rd,
+        // causationId, argument).
+        MDC.put("causationId", requestId);
         MDC.put("traceId", traceId);
         // Every exit from here on — result, timeout, interruption, shutdown or publish failure —
         // leaves the thread's MDC clean; a request thread is reused (PAY-10).
