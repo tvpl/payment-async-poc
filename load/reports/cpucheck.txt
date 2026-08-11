@@ -1,0 +1,6 @@
+[capacity] warm-up: 45s @ 10 req/s (discarded)
+[capacity] cpucheck (certified-target): snapshotting before-state
+[capacity] cpucheck (certified-target): running k6 (167 req/s x 90s)
+[capacity] cpucheck (certified-target): k6 exit=0
+[capacity] cpucheck (certified-target): snapshotting after-state
+[capacity] cpucheck (certified-target): reconciling sampled requestIds
