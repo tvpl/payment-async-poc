@@ -4,7 +4,7 @@
     "documents": 22,
     "migrations": 9,
     "schemas": 11,
-    "scripts": 24,
+    "scripts": 32,
     "sources": 199,
     "test_cases": 496,
     "tests": 106,
@@ -415,6 +415,54 @@
     },
     {
       "category": "scripts",
+      "id": "scripts/e2e/payment-failures/lib.sh",
+      "path": "scripts/e2e/payment-failures/lib.sh",
+      "sha256": "24c57b9fdc0660089e7c03ca560dfadd657725f09159b2c8d764bb421abc89a0"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/multi_instance.sh",
+      "path": "scripts/e2e/payment-failures/multi_instance.sh",
+      "sha256": "e160425b7654fbd41c47221aeb13b893bdac5ccd9f8e99adee158060237176ef"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/run.sh",
+      "path": "scripts/e2e/payment-failures/run.sh",
+      "sha256": "1b0a7d78c2500182e12bdce37e0f56ce8cfe728cdcb33468224069a69bde9ac0"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/scenarios/concurrency.sh",
+      "path": "scripts/e2e/payment-failures/scenarios/concurrency.sh",
+      "sha256": "5211bc43676f0fa21847eed787e9347f4af1aac7e3e3cd475f8d522d5eca8cd2"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/scenarios/core_backpressure.sh",
+      "path": "scripts/e2e/payment-failures/scenarios/core_backpressure.sh",
+      "sha256": "87241389bfc9206a86e607a597e3802923386bbcd4440ef6e0c383fa2ae53b14"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
+      "path": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
+      "sha256": "7ca103c4c1c263ae4255539fcaebeb03af6235ae6a5aae8398b6f86fbb75f5ef"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/scenarios/dependency_outages.sh",
+      "path": "scripts/e2e/payment-failures/scenarios/dependency_outages.sh",
+      "sha256": "c47ef76f5f3d630b6a664ff59af196a30ba2f40cc7da22e502887ed1ca3410db"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/payment-failures/scenarios/poison.sh",
+      "path": "scripts/e2e/payment-failures/scenarios/poison.sh",
+      "sha256": "dbb06babe2fdfa47826906911101436fb75f9314b7f2573f6dbc2c8c4d3ae52e"
+    },
+    {
+      "category": "scripts",
       "id": "scripts/e2e/test_check_no_composite_build.py",
       "path": "scripts/e2e/test_check_no_composite_build.py",
       "sha256": "7d2475df06bb774178a569126b18c5ea26031cb089c9b6fb5592475ebe9e7833"
@@ -453,7 +501,7 @@
       "category": "scripts",
       "id": "scripts/verify-workspace.sh",
       "path": "scripts/verify-workspace.sh",
-      "sha256": "c23c2741d157978792a2f218fd0846d0e6665372d577458049ca9f458e100f2f"
+      "sha256": "8cd1bf8ac16eb8512483e28f1450d59dc59f612270778e0554ca8adf3af71c01"
     },
     {
       "category": "scripts",

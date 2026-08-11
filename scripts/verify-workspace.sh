@@ -41,6 +41,14 @@ stage_e2e_async_redis() {
   scripts/e2e/async_redis_smoke.sh
 }
 
+stage_payment_failures() {
+  echo "=== e2e: payment multi-instance failure matrix (PAY-05..09, CAP-05, CAP-06) ==="
+  # sandbox/.env is gitignored/local-only; source it if present so POSTGRES_PASSWORD doesn't
+  # have to be passed by hand on every invocation.
+  [ -f sandbox/.env ] && set -a && source sandbox/.env && set +a
+  scripts/e2e/payment-failures/run.sh
+}
+
 stage_hygiene() {
   echo "=== hygiene: git diff --check ==="
   git diff --check
@@ -52,6 +60,7 @@ case "$STAGE" in
   artifact-only-fixture) stage_artifact_only_fixture ;;
   e2e-payment) stage_e2e_payment ;;
   e2e-async-redis) stage_e2e_async_redis ;;
+  payment-failures) stage_payment_failures ;;
   hygiene) stage_hygiene ;;
   all)
     stage_equivalence
@@ -59,6 +68,7 @@ case "$STAGE" in
     stage_artifact_only_fixture
     stage_e2e_payment
     stage_e2e_async_redis
+    stage_payment_failures
     stage_hygiene
     ;;
   *)
