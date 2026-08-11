@@ -165,4 +165,60 @@ class ResponseCoordinatorUnitTest {
         assertSame(first, second);
         assertEquals(1, coordinator.pendingCount());
     }
+
+    /**
+     * task_3801253b regression: onMessage() is the Redis PubSub listener's entry point, which
+     * Lettuce calls on the connection's single Netty event-loop thread. It must return
+     * immediately regardless of how long the underlying Redis lookup takes — the old code called
+     * {@link ResponseCoordinator#complete} inline there, so a slow/stuck store.get() blocked that
+     * thread, and with it every other waiter's notification on the same instance.
+     */
+    @Test
+    void onMessageDispatchesAsynchronouslyInsteadOfBlockingTheCallingThread() throws Exception {
+        String requestId = "req-slow";
+        StatusEntry terminal = new StatusEntry(requestId, SimulationStatus.COMPLETED, null);
+        CountDownLatch releaseStore = new CountDownLatch(1);
+        when(store.get(requestId)).thenAnswer(invocation -> {
+            assertTrue(releaseStore.await(2, TimeUnit.SECONDS), "test never released the slow store call");
+            return Optional.of(terminal);
+        });
+        CompletableFuture<StatusEntry> future = coordinator.register(requestId);
+
+        long start = System.nanoTime();
+        coordinator.onMessage(requestId);
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+        assertTrue(elapsed.compareTo(Duration.ofMillis(200)) < 0,
+                "onMessage() blocked the calling thread for " + elapsed);
+        releaseStore.countDown();
+        assertEquals(terminal, future.get(2, TimeUnit.SECONDS));
+    }
+
+    /**
+     * task_3801253b regression, the actual production symptom: with a shared Netty dispatch
+     * thread, one waiter's stuck Redis lookup used to starve every other waiter's notification
+     * too. Dispatching each onMessage() call to its own virtual thread means a still-blocked
+     * lookup for one requestId must never delay another's completion.
+     */
+    @Test
+    void aStuckNotificationForOneRequestNeverBlocksAnothers() throws Exception {
+        String stuckRequestId = "req-stuck";
+        String fastRequestId = "req-fast";
+        StatusEntry fastTerminal = new StatusEntry(fastRequestId, SimulationStatus.COMPLETED, null);
+        CountDownLatch releaseStuck = new CountDownLatch(1);
+        when(store.get(stuckRequestId)).thenAnswer(invocation -> {
+            releaseStuck.await(5, TimeUnit.SECONDS);
+            return Optional.of(new StatusEntry(stuckRequestId, SimulationStatus.COMPLETED, null));
+        });
+        when(store.get(fastRequestId)).thenReturn(Optional.of(fastTerminal));
+        coordinator.register(stuckRequestId);
+        CompletableFuture<StatusEntry> fastFuture = coordinator.register(fastRequestId);
+
+        coordinator.onMessage(stuckRequestId);
+        coordinator.onMessage(fastRequestId);
+
+        assertEquals(fastTerminal, fastFuture.get(1, TimeUnit.SECONDS),
+                "a stuck notification for another request must not delay this one");
+        releaseStuck.countDown();
+    }
 }
