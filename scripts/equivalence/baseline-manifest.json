@@ -4,7 +4,7 @@
     "documents": 22,
     "migrations": 9,
     "schemas": 11,
-    "scripts": 32,
+    "scripts": 44,
     "sources": 199,
     "test_cases": 496,
     "tests": 106,
@@ -403,6 +403,78 @@
     },
     {
       "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/lib.sh",
+      "path": "scripts/e2e/async-redis-failures/lib.sh",
+      "sha256": "cefa1eea5055b9395e57d776fc3f6d2355d0343cdc236f7966bc9b8f7530d0ba"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/multi_instance.sh",
+      "path": "scripts/e2e/async-redis-failures/multi_instance.sh",
+      "sha256": "d609ecb37d72c2caeacfc3d0b5efddb3a8821fc350b59fc8101e7ce86d2aab9f"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/run.sh",
+      "path": "scripts/e2e/async-redis-failures/run.sh",
+      "sha256": "cff9e1b2d7852dfe76f5d5254e8feb74b2078b489dbb55e80d7ef860b65c30f6"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/atomic_release.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/atomic_release.sh",
+      "sha256": "bd56c18f788365b14529b69c26727b6a034ac9ce6c0f361c0e71a353ff4188f7"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/backpressure.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/backpressure.sh",
+      "sha256": "443d24b2e472c8a2bcdc6f68c599b065cc777daa8ffac3de666d80aeef465811"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/dlq.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/dlq.sh",
+      "sha256": "c34aebfb2d2641c6fee2d8553b78d7eabc724795d8ac2fbc1e7a5c45a83f4379"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/identity.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/identity.sh",
+      "sha256": "a08377f8fe9bcabff724d3dd8a96d4a27a19d2f4b8c45f1780bd5f0599ea1c46"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/production_guard.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/production_guard.sh",
+      "sha256": "9ce1c2d2abd2100c0689f13f179bdf1bd3a6316885f1cfbd4708abb41846f2c5"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/rate_limit.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/rate_limit.sh",
+      "sha256": "6c01feb8ba844d41c045956ecb0d66f39d82ffda29cd7f34b4859fa09294cd83"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/redis_outage.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/redis_outage.sh",
+      "sha256": "121aed32756e881941cc09136511fcb63f89bf88370d088ed3514e8d6078415a"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/retention.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/retention.sh",
+      "sha256": "87426f40ef951fd8802fc04e4ba7f742be3098959f4a4620a403ca95c70d0841"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/e2e/async-redis-failures/scenarios/status_lifecycle.sh",
+      "path": "scripts/e2e/async-redis-failures/scenarios/status_lifecycle.sh",
+      "sha256": "2ad7b7ae078e72a117896d16daa1e2a64ce3e3524eafb20da764afce7e455885"
+    },
+    {
+      "category": "scripts",
       "id": "scripts/e2e/async_redis_smoke.sh",
       "path": "scripts/e2e/async_redis_smoke.sh",
       "sha256": "8c2efc01ce0c47d4af8c73411d4f721e02adb07012a980ac08481920e721e806"
@@ -501,7 +573,7 @@
       "category": "scripts",
       "id": "scripts/verify-workspace.sh",
       "path": "scripts/verify-workspace.sh",
-      "sha256": "8cd1bf8ac16eb8512483e28f1450d59dc59f612270778e0554ca8adf3af71c01"
+      "sha256": "b4bd083061269d03d0cd7892392755de2fe40656c794d9ae81f238a094b77400"
     },
     {
       "category": "scripts",

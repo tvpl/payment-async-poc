@@ -49,6 +49,11 @@ stage_payment_failures() {
   scripts/e2e/payment-failures/run.sh
 }
 
+stage_async_redis_failures() {
+  echo "=== e2e: async-redis multi-instance failure matrix (RED-01..08) ==="
+  scripts/e2e/async-redis-failures/run.sh
+}
+
 stage_hygiene() {
   echo "=== hygiene: git diff --check ==="
   git diff --check
@@ -61,6 +66,7 @@ case "$STAGE" in
   e2e-payment) stage_e2e_payment ;;
   e2e-async-redis) stage_e2e_async_redis ;;
   payment-failures) stage_payment_failures ;;
+  async-redis-failures) stage_async_redis_failures ;;
   hygiene) stage_hygiene ;;
   all)
     stage_equivalence
@@ -69,6 +75,7 @@ case "$STAGE" in
     stage_e2e_payment
     stage_e2e_async_redis
     stage_payment_failures
+    stage_async_redis_failures
     stage_hygiene
     ;;
   *)
