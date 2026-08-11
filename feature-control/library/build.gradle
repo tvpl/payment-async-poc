@@ -83,7 +83,7 @@ dependencies {
     compileOnly 'io.micronaut:micronaut-http'
     compileOnly 'io.micronaut:micronaut-http-server'
 
-    testImplementation platform('org.junit:junit-bom:5.10.3')
+    testImplementation platform('org.junit:junit-bom:6.1.3')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'io.lettuce:lettuce-core'
     // Exercise the two compileOnly optional integrations (metrics, logging) directly in tests.
