@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+}
+
+def artifactRepository = providers.gradleProperty('artifactRepository')
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'publishedFeatureControl'
+                url = uri(artifactRepository.get())
+                metadataSources {
+                    mavenPom()
+                    artifact()
+                }
+            }
+        }
+        filter {
+            includeGroup 'com.example.platform'
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.example.platform:feature-control:0.1.0'
+
+    testImplementation platform('org.junit:junit-bom:5.10.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
+}

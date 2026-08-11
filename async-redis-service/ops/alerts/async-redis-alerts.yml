@@ -1,0 +1,31 @@
+# Prometheus rules for the metrics async-redis-service actually exports (async_stream_length,
+# async_pending, async_process_latency - see docs/observability.md). The backlog threshold below
+# (80000) matches the default stream-maxlen (100000) * retention-alert-threshold (0.8); adjust it
+# if either default changes.
+groups:
+  - name: async-redis-service-backlog
+    rules:
+      - alert: AsyncRedisBacklogNearSafeBudget
+        expr: async_stream_length > 80000
+        for: 5m
+        labels:
+          severity: warning
+          service: async-redis-service
+        annotations:
+          summary: async-redis-service stream backlog is approaching its safe retention budget
+          description: >-
+            The job stream never auto-trims (RED-03/ADR-0001); a growing backlog with no drain is a
+            capacity problem, not a self-resolving condition. See the backlog-retention runbook.
+
+      - alert: AsyncRedisPendingEntriesNotDraining
+        expr: async_pending > 0 and async_pending == async_pending offset 10m
+        for: 10m
+        labels:
+          severity: critical
+          service: async-redis-service
+        annotations:
+          summary: async-redis-service has pending entries that have not drained in 10 minutes
+          description: >-
+            The consumer group's Pending Entries List is stuck (unchanged for 10m with items still
+            pending) - workers may be down (check /health/readiness) or jobs may be piling up in the
+            DLQ. See worker-outage-recovery and poison-dlq runbooks.

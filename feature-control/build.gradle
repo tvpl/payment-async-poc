@@ -1,82 +1,61 @@
+// Standalone root for the feature-control boundary: the published library plus its two
+// NON_PRODUCTION examples (feature-demo, pilot-app). The root itself is not a source project —
+// it only aggregates the shared Test/compile conventions and a few publication-verification tasks.
 plugins {
-    id 'io.micronaut.library'
-    id 'maven-publish'
+    id 'base'
 }
 
-// Published for the 30+ apps to consume as a versioned artifact (not a source dependency).
 group = 'com.example.platform'
+version = '0.1.0'
 
-micronaut {
-    version = project.property('micronautVersion')
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-// The lib references optional integrations via compileOnly; don't fail javadoc on their absence.
-tasks.named('javadoc') {
-    options.addStringOption('Xdoclint:none', '-quiet')
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-            artifactId = 'feature-control'
-            pom {
-                name = 'feature-control'
-                description = 'Shared feature-control library: v0/toggle/A-B/JWT, dynamic Redis flag store'
-                licenses {
-                    license {
-                        name = 'Apache-2.0'
-                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
-                    }
-                }
+subprojects {
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        // Integration tests (*IT) need a real Redis and are excluded by default so the quick
+        // gate (`test`) stays fast; the full gate opts in with -PwithIT (same convention as the
+        // transitional workspace root this boundary was extracted from).
+        filter {
+            setFailOnNoMatchingTests(false)
+            if (!project.hasProperty('withIT')) {
+                excludeTestsMatching '*IT'
             }
+        }
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+            exceptionFormat 'full'
         }
     }
-    repositories {
-        // Local file repo — lets CI validate the artifact/POM without any credentials.
-        maven {
-            name = 'localBuild'
-            url = layout.buildDirectory.dir('repo')
-        }
-        // GitHub Packages — the real distribution target. Credentials come from the environment.
-        maven {
-            name = 'gitHubPackages'
-            url = 'https://maven.pkg.github.com/tvpl/payment-async-poc'
-            credentials {
-                username = providers.environmentVariable('GITHUB_ACTOR').getOrElse('')
-                password = providers.environmentVariable('GITHUB_TOKEN').getOrElse('')
-            }
-        }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-parameters'
     }
 }
 
-dependencies {
-    annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
+tasks.register('publishLibraryToLocalBuildRepository') {
+    group = 'publishing'
+    description = 'Publishes the feature-control library to its boundary-local Maven repository.'
+    dependsOn ':feature-control:publishMavenPublicationToLocalBuildRepository'
+}
 
-    // JSON model (flag definitions in YAML/Redis) — part of the shared contract.
-    api 'io.micronaut.serde:micronaut-serde-api'
-    api 'io.micronaut.serde:micronaut-serde-jackson'
+tasks.register('verifyLocalPublication') {
+    group = 'verification'
+    description = 'Verifies POM, binary, sources and Javadoc for the published feature-control artifact.'
+    dependsOn tasks.named('publishLibraryToLocalBuildRepository')
 
-    // The JWT->context factory references Authentication; consuming apps bring the
-    // runtime (micronaut-security-jwt), same convention `common` uses for Lettuce/Kafka.
-    compileOnly 'io.micronaut.security:micronaut-security'
-    compileOnly 'io.lettuce:lettuce-core'
-    compileOnly 'jakarta.inject:jakarta.inject-api'
-    compileOnly 'jakarta.annotation:jakarta.annotation-api'
-    // Optional integrations, all resolved lazily via @Requires so the core stays lean:
-    //   micrometer -> feature_decisions_total metrics; aop/http -> the @FeatureGate advice.
-    compileOnly 'io.micrometer:micrometer-core'
-    compileOnly 'io.micronaut:micronaut-aop'
-    compileOnly 'io.micronaut:micronaut-http'
-    compileOnly 'io.micronaut:micronaut-http-server'
-
-    testImplementation platform('org.junit:junit-bom:5.10.3')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'io.lettuce:lettuce-core'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    doLast {
+        def repository = project(':feature-control').layout.buildDirectory.dir('repo').get().asFile
+        def artifactDirectory = new File(repository, "com/example/platform/feature-control/${project(':feature-control').version}")
+        def prefix = "feature-control-${project(':feature-control').version}"
+        [
+            "${prefix}.pom",
+            "${prefix}.jar",
+            "${prefix}-sources.jar",
+            "${prefix}-javadoc.jar"
+        ].each { artifact ->
+            if (!new File(artifactDirectory, artifact).isFile()) {
+                throw new GradleException("Missing published artifact: ${artifactDirectory}/${artifact}")
+            }
+        }
+    }
 }

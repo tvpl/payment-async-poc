@@ -15,6 +15,11 @@ from typing import Any, Iterable
 
 FORMAT_VERSION = 1
 IGNORED_PARTS = {".git", ".gradle", "build"}
+# Pre-migration monorepo modules superseded by a standalone root (MIG-02): the workspace keeps
+# them on disk only as a frozen reference until T59 removes them, so they are not live inventory.
+# Counting them would double-track every relocated file and collide on logical keys that are
+# unique by name rather than by path (e.g. Topics.java's topic constants).
+LEGACY_TRANSITIONAL_ROOTS = {"common", "api-service", "sbus-service", "core-mock"}
 TOPIC_PATTERN = re.compile(
     r'public\s+static\s+final\s+String\s+([A-Z][A-Z0-9_]*)\s*=\s*"([^"]+)"'
 )
@@ -29,8 +34,12 @@ def relative_files(root: Path, patterns: Iterable[str]) -> list[Path]:
     paths: set[Path] = set()
     for pattern in patterns:
         for path in root.glob(pattern):
-            if path.is_file() and not IGNORED_PARTS.intersection(path.relative_to(root).parts):
-                paths.add(path)
+            if not path.is_file():
+                continue
+            parts = path.relative_to(root).parts
+            if IGNORED_PARTS.intersection(parts) or parts[0] in LEGACY_TRANSITIONAL_ROOTS:
+                continue
+            paths.add(path)
     return sorted(paths, key=lambda path: path.relative_to(root).as_posix())
 
 
@@ -72,7 +81,11 @@ def build_manifest(root: Path) -> dict[str, Any]:
         *file_entries(root, "sources", ["**/src/main/java/**/*.java"]),
         *file_entries(root, "tests", ["**/src/test/**/*.java"]),
         *file_entries(root, "migrations", ["**/src/main/resources/db/migration/*.sql"]),
-        *file_entries(root, "schemas", ["**/src/main/avro/*.avsc"]),
+        # payment-contracts moved the live Avro source from `src/main/avro/` to a top-level
+        # `schemas/` directory that generateAvroJava reads directly (see contract-model/build.gradle);
+        # `history/` holds frozen prior versions covered by the contract's own compatibility tests,
+        # not this workspace-level loss-prevention gate.
+        *file_entries(root, "schemas", ["**/src/main/avro/*.avsc", "payment-contracts/schemas/*.avsc"]),
         *topic_entries(root),
         *file_entries(root, "dashboards", ["observability/grafana/dashboards/*.json"]),
         *file_entries(

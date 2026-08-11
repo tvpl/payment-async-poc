@@ -57,6 +57,14 @@ public class AsyncRedisProperties {
     private Duration connectBackoffMax = Duration.ofSeconds(5);
     /** Test hook: when set, the worker fails any job whose reference equals this (drives DLQ tests). */
     private String failOnReference;
+    /**
+     * Fraction of {@code stream-maxlen} at which the backlog is close enough to the safe budget to
+     * alert (RED-03). This service never auto-trims the stream (see {@code StreamRetentionMonitor}),
+     * so the alert is the only warning an operator gets before backlog becomes a capacity problem.
+     */
+    private double retentionAlertThreshold = 0.8;
+    /** How often the retention monitor checks backlog and reports Redis's trim capability. */
+    private Duration retentionCheckInterval = Duration.ofSeconds(30);
 
     public Duration getWaitTimeout() {
         return waitTimeout;
@@ -132,6 +140,11 @@ public class AsyncRedisProperties {
             throw new ConfigurationException(
                     "async.redis.connect-backoff-max (" + connectBackoffMax + ") must be >="
                             + " async.redis.connect-backoff-min (" + connectBackoffMin + ")");
+        }
+        if (retentionAlertThreshold <= 0 || retentionAlertThreshold > 1) {
+            throw new ConfigurationException(
+                    "async.redis.retention-alert-threshold must be in (0, 1]; was "
+                            + retentionAlertThreshold);
         }
     }
 
@@ -277,5 +290,21 @@ public class AsyncRedisProperties {
 
     public void setFailOnReference(String failOnReference) {
         this.failOnReference = failOnReference;
+    }
+
+    public double getRetentionAlertThreshold() {
+        return retentionAlertThreshold;
+    }
+
+    public void setRetentionAlertThreshold(double retentionAlertThreshold) {
+        this.retentionAlertThreshold = retentionAlertThreshold;
+    }
+
+    public Duration getRetentionCheckInterval() {
+        return retentionCheckInterval;
+    }
+
+    public void setRetentionCheckInterval(Duration retentionCheckInterval) {
+        this.retentionCheckInterval = retentionCheckInterval;
     }
 }

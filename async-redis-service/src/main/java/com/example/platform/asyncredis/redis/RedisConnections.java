@@ -39,6 +39,7 @@ public class RedisConnections {
     private final AsyncRedisProperties props;
     private volatile StatefulRedisConnection<String, String> shared;
     private volatile GenericObjectPool<StatefulRedisConnection<String, String>> pool;
+    private volatile boolean policyApplied;
 
     public RedisConnections(RedisClient client, AsyncRedisProperties props) {
         this.client = client;
@@ -79,7 +80,7 @@ public class RedisConnections {
         if (conn == null || !conn.isOpen()) {
             synchronized (this) {
                 if (shared == null || !shared.isOpen()) {
-                    shared = client.connect();
+                    shared = client().connect();
                 }
             }
         }
@@ -117,7 +118,7 @@ public class RedisConnections {
 
     /** A fresh, non-pooled connection for a worker's long-lived blocking loop; caller closes it. */
     public StatefulRedisConnection<String, String> dedicated() {
-        return client.connect();
+        return client().connect();
     }
 
     private GenericObjectPool<StatefulRedisConnection<String, String>> pool() {
@@ -139,7 +140,7 @@ public class RedisConnections {
                     // dead. Validating on borrow spends one isOpen() check to avoid handing a waiter
                     // a socket that can only fail.
                     cfg.setTestOnBorrow(true);
-                    pool = ConnectionPoolSupport.createGenericObjectPool(client::connect, cfg);
+                    pool = ConnectionPoolSupport.createGenericObjectPool(() -> client().connect(), cfg);
                 }
                 p = pool;
             }

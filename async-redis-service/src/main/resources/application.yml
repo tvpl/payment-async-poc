@@ -55,8 +55,11 @@ async:
     # A connection that survives longer than the ceiling resets the delay back to the floor.
     connect-backoff-min: 200ms
     connect-backoff-max: 5s
-    # Approximate cap on the stream length (XADD MAXLEN ~) to bound memory.
+    # Backlog budget the retention monitor alerts against (retention-alert-threshold * this value).
+    # No longer used to trim the stream inline - see StreamRetentionMonitor (RED-03).
     stream-maxlen: ${ASYNC_STREAM_MAXLEN:100000}
+    # Fraction of stream-maxlen at which the backlog alert fires.
+    retention-alert-threshold: ${ASYNC_RETENTION_ALERT_THRESHOLD:0.8}
     # Poison protection: after this many deliveries a job is moved to the DLQ.
     dlq-stream: async.jobs.dlq
     max-deliveries: ${ASYNC_MAX_DELIVERIES:5}

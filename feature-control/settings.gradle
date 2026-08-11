@@ -1,0 +1,25 @@
+pluginManagement {
+    plugins {
+        id 'io.micronaut.application' version '4.4.4'
+        id 'io.micronaut.library' version '4.4.4'
+    }
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'feature-control'
+
+// The library keeps the ':feature-control' project path (matching its published artifactId) so
+// the two example apps' `implementation project(':feature-control')` dependency declaration is
+// identical whether built from this standalone root or from the transitional workspace root
+// (which repoints the same project path at this same `library/` directory — see MIG-02).
+include 'feature-control'
+project(':feature-control').projectDir = file('library')
+
+include 'feature-demo'
+project(':feature-demo').projectDir = file('examples/feature-demo')
+
+include 'pilot-app'
+project(':pilot-app').projectDir = file('examples/pilot-app')

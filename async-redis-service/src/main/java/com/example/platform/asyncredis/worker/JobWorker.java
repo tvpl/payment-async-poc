@@ -1,6 +1,7 @@
 package com.example.platform.asyncredis.worker;
 
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
+import com.example.platform.asyncredis.dlq.DeadLetterWriter;
 import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.metrics.AsyncMetrics;
 import com.example.platform.asyncredis.queue.JobQueue;
@@ -23,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,9 +35,11 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * <p>Because the group tracks a Pending Entries List, a crashed worker's in-flight jobs are not lost.
  * {@link #reclaim} inspects pending entries and either re-claims those idle beyond {@code
- * reclaim-idle} or, once a job has been delivered more than {@code max-deliveries} times, moves it to
- * the dead-letter stream. Only the worker holding the {@link ReclaimCoordinator} turn scans, so
- * workers do not race each other to claim the same ids.
+ * reclaim-idle} or, once a job has reached {@code max-deliveries} attempts, moves it to the
+ * dead-letter stream (RED-07, see {@link DeadLetterWriter}). Only the worker holding the {@link
+ * ReclaimCoordinator} turn scans, so workers do not race each other to claim the same ids. A message
+ * whose {@code jobId} or {@code amountCents} is missing or unparseable is dead-lettered immediately on
+ * first delivery, in {@link #handle} — retrying a structurally invalid payload cannot fix it.
  *
  * <p>The connection is (re)established inside the loop with capped exponential backoff (RED-05): a
  * Redis that is down at startup, or that disappears mid-loop, leaves the worker retrying rather than
@@ -48,7 +50,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class JobWorker {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobWorker.class);
-    private static final String FIELD_DLQ_REASON = "dlqReason";
 
     private final RedisConnections redis;
     private final JobQueue queue;
@@ -56,6 +57,7 @@ public class JobWorker {
     private final WorkerIdentity identity;
     private final ReclaimCoordinator coordinator;
     private final WorkerReadiness readiness;
+    private final DeadLetterWriter deadLetterWriter;
     @Nullable
     private final AsyncMetrics metrics;
 
@@ -64,13 +66,15 @@ public class JobWorker {
 
     public JobWorker(RedisConnections redis, JobQueue queue, AsyncRedisProperties props,
                      WorkerIdentity identity, ReclaimCoordinator coordinator,
-                     WorkerReadiness readiness, @Nullable AsyncMetrics metrics) {
+                     WorkerReadiness readiness, DeadLetterWriter deadLetterWriter,
+                     @Nullable AsyncMetrics metrics) {
         this.redis = redis;
         this.queue = queue;
         this.props = props;
         this.identity = identity;
         this.coordinator = coordinator;
         this.readiness = readiness;
+        this.deadLetterWriter = deadLetterWriter;
         this.metrics = metrics;
         this.threads = new Thread[Math.max(1, props.getWorkerConcurrency())];
     }
@@ -181,8 +185,8 @@ public class JobWorker {
             List<PendingMessage> pending = c.xpending(props.getStream(), props.getGroup(),
                     Range.unbounded(), Limit.from(100));
             for (PendingMessage pm : pending) {
-                if (pm.getRedeliveryCount() > props.getMaxDeliveries()) {
-                    deadLetter(c, pm.getId());
+                if (deadLetterWriter.exceedsMaxDeliveries(pm.getRedeliveryCount())) {
+                    deadLetterExceeded(c, pm.getId());
                 } else if (pm.getMsSinceLastDelivery() >= props.getReclaimIdle().toMillis()) {
                     List<StreamMessage<String, String>> claimed = c.xclaim(props.getStream(),
                             Consumer.from(props.getGroup(), consumerName),
@@ -197,18 +201,35 @@ public class JobWorker {
         }
     }
 
-    private void deadLetter(RedisCommands<String, String> c, String id) {
+    /**
+     * Dead-letters a message that exhausted its deliveries. Reading the body back from the stream is
+     * best-effort: if it is somehow gone (the entry is still pending here, so this should not happen
+     * in practice), a minimal body carrying just the stream id still goes to the DLQ, because ACKing
+     * without any DLQ record at all is exactly the silent loss RED-07 forbids.
+     */
+    private void deadLetterExceeded(RedisCommands<String, String> c, String id) {
         try {
             List<StreamMessage<String, String>> msgs = c.xrange(props.getStream(), Range.create(id, id));
-            if (!msgs.isEmpty()) {
-                Map<String, String> body = new HashMap<>(msgs.get(0).getBody());
-                body.put(FIELD_DLQ_REASON, "max-deliveries-exceeded");
-                c.xadd(props.getDlqStream(), body);
-            }
+            Map<String, String> body = msgs.isEmpty() ? Map.of("streamId", id) : msgs.get(0).getBody();
+            deadLetterWriter.write(c, body, DeadLetterWriter.REASON_MAX_DELIVERIES_EXCEEDED);
             c.xack(props.getStream(), props.getGroup(), id);
             LOG.warn("moved poison job {} to DLQ {}", id, props.getDlqStream());
         } catch (Exception e) {
+            // Left un-acked: still pending, so the next reclaim scan retries the DLQ write.
             LOG.debug("dead-letter of {} skipped: {}", id, e.getMessage());
+        }
+    }
+
+    /** Dead-letters a message whose body failed {@link #malformedReason}, then ACKs. */
+    private void deadLetterMalformed(RedisCommands<String, String> c, String id, Map<String, String> body,
+                                     String reason) {
+        try {
+            deadLetterWriter.write(c, body, reason);
+            c.xack(props.getStream(), props.getGroup(), id);
+            LOG.warn("moved malformed job {} to DLQ {} ({})", id, props.getDlqStream(), reason);
+        } catch (Exception e) {
+            // Left un-acked: still pending, so the next redelivery retries the DLQ write.
+            LOG.debug("dead-letter of malformed {} skipped: {}", id, e.getMessage());
         }
     }
 
@@ -217,8 +238,9 @@ public class JobWorker {
         String jobId = body.get(JobQueue.FIELD_JOB_ID);
         long start = System.nanoTime();
         try {
-            if (jobId == null) {
-                c.xack(props.getStream(), props.getGroup(), message.getId());
+            String malformedReason = malformedReason(body, jobId);
+            if (malformedReason != null) {
+                deadLetterMalformed(c, message.getId(), body, malformedReason);
                 return;
             }
             String reference = body.getOrDefault(JobQueue.FIELD_REFERENCE, "");
@@ -227,10 +249,10 @@ public class JobWorker {
                 throw new IllegalStateException("simulated poison job: " + reference);
             }
             simulateProcessing();
-            long amount = parseLong(body.get(JobQueue.FIELD_AMOUNT));
+            long amount = Long.parseLong(body.get(JobQueue.FIELD_AMOUNT));
             JobResult result = new JobResult(
                     jobId,
-                    body.getOrDefault(JobQueue.FIELD_REFERENCE, ""),
+                    reference,
                     amount,
                     amount * 2 / 100, // 2% fee
                     "PROCESSED",
@@ -247,18 +269,33 @@ public class JobWorker {
         }
     }
 
+    /**
+     * {@code null} when {@code body} is safe to process; otherwise the DLQ reason (RED-07). A missing
+     * or blank {@code jobId} and a missing, unparseable, or negative {@code amountCents} are the two
+     * fields this worker cannot process no matter how many times it retries.
+     */
+    private static String malformedReason(Map<String, String> body, String jobId) {
+        if (jobId == null || jobId.isBlank()) {
+            return "missing-job-id";
+        }
+        String amountRaw = body.get(JobQueue.FIELD_AMOUNT);
+        if (amountRaw == null || amountRaw.isBlank()) {
+            return "missing-amount";
+        }
+        try {
+            if (Long.parseLong(amountRaw) < 0) {
+                return "negative-amount";
+            }
+        } catch (NumberFormatException e) {
+            return "invalid-amount";
+        }
+        return null;
+    }
+
     private void simulateProcessing() {
         long min = props.getProcessLatencyMinMs();
         long max = Math.max(min, props.getProcessLatencyMaxMs());
         sleep(min == max ? min : ThreadLocalRandom.current().nextLong(min, max + 1));
-    }
-
-    private static long parseLong(String value) {
-        try {
-            return value == null ? 0 : Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
     }
 
     private static void sleep(long ms) {

@@ -1,0 +1,69 @@
+# class: com.example.platform.featurecontrol.bucketing.Bucketer
+public static com.example.platform.featurecontrol.model.Variant select(java.util.List<com.example.platform.featurecontrol.model.Variant>, java.lang.String, java.lang.String)
+public static int bucket(java.lang.String, java.lang.String)
+# class: com.example.platform.featurecontrol.context.FeatureContext
+public boolean inAnyGroup(java.util.Set<java.lang.String>)
+public boolean inGroup(java.lang.String)
+public boolean isAuthenticated()
+public java.lang.String attribute(java.lang.String)
+public java.lang.String bucketingKey()
+public java.lang.String tenantId()
+public java.lang.String userId()
+public java.util.Map<java.lang.String, java.lang.String> attributes()
+public java.util.Set<java.lang.String> groups()
+public static com.example.platform.featurecontrol.context.FeatureContext anonymous(java.lang.String)
+public static com.example.platform.featurecontrol.context.FeatureContext$Builder builder()
+public static final java.lang.String ATTR_ANON_ID
+# class: com.example.platform.featurecontrol.metrics.CardinalityGuard
+public com.example.platform.featurecontrol.metrics.CardinalityGuard(int)
+public int size()
+public java.lang.String admit(java.lang.String)
+public static final java.lang.String OVERFLOW
+# class: com.example.platform.featurecontrol.metrics.SubjectHasher
+public static java.lang.String hash(java.lang.String)
+# class: com.example.platform.featurecontrol.model.FeatureDecision
+public boolean is(java.lang.String)
+public boolean isOn()
+public boolean on()
+public com.example.platform.featurecontrol.model.FeatureDecision(java.lang.String, java.lang.String, boolean, java.lang.String)
+public final boolean equals(java.lang.Object)
+public final int hashCode()
+public final java.lang.String toString()
+public java.lang.String flag()
+public java.lang.String reason()
+public java.lang.String variant()
+# class: com.example.platform.featurecontrol.model.FlagDefinition
+public boolean enabled()
+public com.example.platform.featurecontrol.model.FlagDefinition withVersion(long)
+public com.example.platform.featurecontrol.model.FlagDefinition(java.lang.String, com.example.platform.featurecontrol.model.FlagType, boolean, int, java.util.Set<java.lang.String>, java.util.Set<java.lang.String>, java.util.List<com.example.platform.featurecontrol.model.Variant>, java.lang.String, java.lang.String)
+public com.example.platform.featurecontrol.model.FlagDefinition(java.lang.String, com.example.platform.featurecontrol.model.FlagType, boolean, int, java.util.Set<java.lang.String>, java.util.Set<java.lang.String>, java.util.List<com.example.platform.featurecontrol.model.Variant>, java.lang.String, java.lang.String, long, java.lang.String)
+public com.example.platform.featurecontrol.model.FlagType type()
+public final boolean equals(java.lang.Object)
+public final int hashCode()
+public final java.lang.String toString()
+public int percentage()
+public java.lang.String bucketingSalt()
+public java.lang.String effectiveSalt()
+public java.lang.String name()
+public java.lang.String offName()
+public java.lang.String offVariant()
+public java.lang.String onName()
+public java.lang.String onVariant()
+public java.util.List<com.example.platform.featurecontrol.model.Variant> variants()
+public java.util.Set<java.lang.String> allowedGroups()
+public java.util.Set<java.lang.String> allowedUsers()
+public long version()
+# class: com.example.platform.featurecontrol.model.FlagType
+public static com.example.platform.featurecontrol.model.FlagType valueOf(java.lang.String)
+public static com.example.platform.featurecontrol.model.FlagType[] values()
+public static final com.example.platform.featurecontrol.model.FlagType ALLOWLIST
+public static final com.example.platform.featurecontrol.model.FlagType BOOLEAN
+public static final com.example.platform.featurecontrol.model.FlagType PERCENTAGE
+public static final com.example.platform.featurecontrol.model.FlagType VARIANT
+# class: com.example.platform.featurecontrol.model.Variant
+public com.example.platform.featurecontrol.model.Variant(java.lang.String, int)
+public final boolean equals(java.lang.Object)
+public final int hashCode()
+public final java.lang.String toString()
+public int weight()
+public java.lang.String name()
