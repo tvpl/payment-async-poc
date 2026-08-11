@@ -1,5 +1,38 @@
 {
   "schemaVersion": 1,
   "description": "Application-owned dashboards, alerts and scrape targets are assembled here only from versioned owner manifests.",
-  "assets": []
+  "assets": [
+    {
+      "owner": "payment-api",
+      "version": "0.1.0",
+      "kind": "alerts",
+      "path": "../../payment-api/ops/alerts/api-admission-and-dlq.yml",
+      "scrape_job": "payment-simulation-api",
+      "scrape_auth_status": "gap: /prometheus requires an authenticated JWT bearer token; no long-lived scrape credential is provisioned yet, so this job scrapes as unauthenticated and shows up==0 until that gap closes"
+    },
+    {
+      "owner": "payment-sbus",
+      "version": "0.1.0",
+      "kind": "alerts",
+      "path": "../../payment-sbus/ops/alerts/recoverable-dlq.yml",
+      "scrape_job": "payment-sbus",
+      "scrape_auth_status": "gap: same as payment-api — /prometheus requires an authenticated JWT bearer token, no long-lived scrape credential provisioned yet"
+    },
+    {
+      "owner": "async-redis-service",
+      "version": "0.1.0",
+      "kind": "alerts",
+      "path": "../../async-redis-service/ops/alerts/async-redis-alerts.yml",
+      "scrape_job": "async-redis-service",
+      "scrape_auth_status": "gap: same class of issue — /prometheus requires an authenticated API key, no long-lived scrape credential provisioned yet"
+    },
+    {
+      "owner": "payment-core-mock",
+      "version": "0.1.0",
+      "kind": "scrape-only",
+      "path": null,
+      "scrape_job": "payment-core-mock",
+      "scrape_auth_status": "ok: /prometheus has no auth (NON_PRODUCTION, T20/T23) — scrapes cleanly"
+    }
+  ]
 }

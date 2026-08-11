@@ -36,6 +36,11 @@ services:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/application-targets.json:/etc/prometheus/application-targets.json:ro
       - prometheus-data:/prometheus
+      # Application-owned alert rules, mounted read-only from each app's own ops/alerts/ per
+      # application-assets.json — never copied into sandbox (sandbox/docs/observability.md).
+      - ../payment-api/ops/alerts/api-admission-and-dlq.yml:/etc/prometheus/rules/payment-api-alerts.yml:ro
+      - ../payment-sbus/ops/alerts/recoverable-dlq.yml:/etc/prometheus/rules/payment-sbus-alerts.yml:ro
+      - ../async-redis-service/ops/alerts/async-redis-alerts.yml:/etc/prometheus/rules/async-redis-service-alerts.yml:ro
     networks: [sandbox]
 
   grafana:

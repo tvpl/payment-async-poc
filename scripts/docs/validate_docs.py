@@ -147,7 +147,14 @@ def variable_errors(root: Path, path: Path, text: str) -> list[str]:
 
 
 def executable_corpus(root: Path) -> str:
-    paths = [*root.glob("*/src/main/java/**/*.java")]
+    # `**/src/main/java` (not `*/src/main/java`) — boundaries sit at varying depths
+    # (payment-api/src/main/java is one level deep, feature-control/library/src/main/java and
+    # feature-control/examples/feature-demo/src/main/java are two and three), and a fixed single
+    # `*` silently missed the deeper ones, letting a dashboard reference an unverified metric
+    # (feature_decisions_total, defined in feature-control/library/.../MicrometerDecisionListener
+    # .java) pass with a false "implemented" reading. Confirmed no `*/build/*/src/main/java`
+    # generated-source path exists in this repo that this broader glob would pick up instead.
+    paths = [*root.glob("**/src/main/java/**/*.java")]
     return "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in paths if path.is_file())
 
 

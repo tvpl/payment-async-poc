@@ -2,6 +2,12 @@ global:
   scrape_interval: 10s
   evaluation_interval: 10s
 
+# Application-owned alert rules, mounted (not copied — sandbox/docs/observability.md) from each
+# app's own ops/alerts/*.yml per sandbox/observability/application-assets.json's manifest; see
+# sandbox/compose.profiles.yml's prometheus volumes for the actual mounts.
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
 scrape_configs:
   - job_name: prometheus
     static_configs:
@@ -24,5 +30,10 @@ scrape_configs:
       - targets: [kafka-exporter:9308]
 
   - job_name: application-owned
+    # Micronaut's Prometheus endpoint is /prometheus, not the Prometheus-client-default
+    # /metrics — every app in this workspace uses this same convention (see each app's
+    # application.yml `endpoints.prometheus`).
+    metrics_path: /prometheus
     file_sd_configs:
       - files: [/etc/prometheus/application-targets.json]
+        refresh_interval: 10s
