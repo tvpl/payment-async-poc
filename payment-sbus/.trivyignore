@@ -1,0 +1,20 @@
+# Documented exceptions — see validation evidence for full justification:
+# .specs/features/repository-segregation-production-hardening/validation-evidence/2026-08-12-dependency-cve-remediation.md
+#
+# Both CVEs are Alpine OS packages baked into the pinned eclipse-temurin:21-jre-alpine base
+# image, not application dependencies. Neither package is invoked by this Micronaut/JVM
+# application at runtime (libexpat is an XML parser; p11-kit loads PKCS#11 crypto-token
+# modules — this service does neither). Both are local-trigger/DoS-class issues (integer
+# overflow, NULL dereference), not remote code execution, and no exploit is known in the wild.
+# No newer eclipse-temurin:21-jre-alpine digest has been published yet with the fix baked in,
+# and this environment's Alpine package mirrors could not be reached to patch in-Dockerfile.
+#
+# Remove this file (or these two lines) once a rebuilt base image digest is picked up and the
+# rescan confirms both are gone.
+
+# libexpat: integer overflow in copyString (XML parsing) — unused by this service.
+CVE-2026-56408
+
+# p11-kit / p11-kit-trust: NULL dereference via C_DeriveKey with specific NULL parameters —
+# unused by this service (no PKCS#11 crypto-token integration).
+CVE-2026-2100

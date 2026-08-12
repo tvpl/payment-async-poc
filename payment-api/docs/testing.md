@@ -15,7 +15,7 @@ consumer e orçamento degradado do limitador.
 ## Gate de integração
 
 ```bash
-export JWT_SIGNATURE_SECRET=... PAYMENT_API_KEY=...
+export API_DEV_JWT_SECRET=... PAYMENT_API_KEY=...
 ./gradlew test -PwithIT --no-daemon
 ```
 

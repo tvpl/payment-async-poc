@@ -21,6 +21,9 @@ subprojects {
 
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
+        // Testcontainers 1.x defaults to Docker API 1.32, rejected by Docker 29+.
+        // API 1.40 is supported by both the current Desktop daemon and older CI engines.
+        systemProperty 'api.version', System.getProperty('api.version', '1.40')
         // Integration tests (*IT) need Docker (Testcontainers) and are excluded by default
         // so the normal `./gradlew test` is fast and CI-safe. Include them with -PwithIT.
         filter {

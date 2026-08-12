@@ -1,0 +1,6 @@
+micronaut:
+  server:
+    # Tests run several @MicronautTest classes in one JVM; a shared fixed port (8084, set for the
+    # real deployment in application.yml) races an OS-level unbind/rebind between classes. Random
+    # ephemeral ports for tests avoid that instead of hard-coding a value nothing else uses.
+    port: -1

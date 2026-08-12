@@ -1,6 +1,6 @@
 pluginManagement {
     plugins {
-        id 'io.micronaut.application' version '4.4.4'
+        id 'io.micronaut.application' version '4.6.2'
     }
     repositories {
         gradlePluginPortal()

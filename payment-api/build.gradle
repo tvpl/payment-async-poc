@@ -62,6 +62,15 @@ dependencies {
     annotationProcessor 'io.micronaut.openapi:micronaut-openapi'
     annotationProcessor 'io.micronaut.security:micronaut-security-annotations'
 
+    constraints {
+        // micronaut-platform's kafka.version (3.9.1) predates the fix for the HIGH kafka-clients
+        // CVEs Trivy flags; force the transitive kafka-clients pulled in by micronaut-kafka.
+        implementation('org.apache.kafka:kafka-clients:3.9.2')
+        // micronaut-platform's micrometer.version (1.15.4) predates the fix for the HIGH
+        // micrometer-core CVEs Trivy flags; force the transitive dependency.
+        implementation('io.micrometer:micrometer-core:1.15.12')
+    }
+
     implementation "com.example.payments:payment-contract-model:${contractsVersion}"
     implementation "com.example.payments:payment-contract-avro-apicurio:${contractsVersion}"
     implementation "com.example.platform:feature-control:${featureControlVersion}"
