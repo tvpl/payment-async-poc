@@ -15,9 +15,7 @@ import com.example.payments.common.model.SimulationResult;
 import com.example.payments.sbus.domain.SbusMessageStatus;
 import com.example.payments.sbus.repository.PaymentSbusMessageRepository;
 import com.redis.testcontainers.RedisContainer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.micronaut.test.support.TestPropertyProvider;
-import jakarta.inject.Inject;
+import io.micronaut.context.ApplicationContext;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -54,9 +52,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * requested -> persisted + outbox -> core.command -> core.response -> completed.
  * Requires a running Docker daemon.
  */
-@MicronautTest(startApplication = true)
 @Testcontainers
-class SbusFlowIT implements TestPropertyProvider {
+class SbusFlowIT {
 
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"));
@@ -75,24 +72,8 @@ class SbusFlowIT implements TestPropertyProvider {
         REDIS.start();
     }
 
-    @Inject
-    PaymentSbusMessageRepository messageRepository;
-
     static String registryUrl() {
         return "http://" + APICURIO.getHost() + ":" + APICURIO.getMappedPort(8080) + "/apis/registry/v2";
-    }
-
-    @Override
-    public Map<String, String> getProperties() {
-        return Map.of(
-                "kafka.bootstrap.servers", KAFKA.getBootstrapServers(),
-                "apicurio.registry.url", registryUrl(),
-                "redis.uri", REDIS.getRedisURI(),
-                "datasources.default.url", POSTGRES.getJdbcUrl() + "?stringtype=unspecified",
-                "datasources.default.username", POSTGRES.getUsername(),
-                "datasources.default.password", POSTGRES.getPassword(),
-                "sbus.outbox.initial-delay", "200ms",
-                "sbus.outbox.poll-interval", "200ms");
     }
 
     @Test
@@ -105,9 +86,12 @@ class SbusFlowIT implements TestPropertyProvider {
                 EventTypes.PAYMENT_SIMULATION_REQUESTED,
                 requestId, UUID.randomUUID().toString(), requestId, "trace", Sources.API, payload);
 
-        try (KafkaProducer<String, byte[]> producer = producer();
+        try (ApplicationContext context = ApplicationContext.run(applicationProperties());
+             KafkaProducer<String, byte[]> producer = producer();
              KafkaConsumer<String, byte[]> coreCommandConsumer = consumer("core-cmd-test");
              KafkaConsumer<String, byte[]> completedConsumer = consumer("completed-test")) {
+            PaymentSbusMessageRepository messageRepository =
+                    context.getBean(PaymentSbusMessageRepository.class);
 
             coreCommandConsumer.subscribe(List.of(Topics.CORE_COMMAND));
             completedConsumer.subscribe(List.of(Topics.COMPLETED));
@@ -140,6 +124,19 @@ class SbusFlowIT implements TestPropertyProvider {
                     assertEquals(SbusMessageStatus.COMPLETED,
                             messageRepository.findByRequestId(requestId).orElseThrow().getStatus()));
         }
+    }
+
+    private static Map<String, Object> applicationProperties() {
+        return Map.ofEntries(
+                Map.entry("kafka.bootstrap.servers", KAFKA.getBootstrapServers()),
+                Map.entry("apicurio.registry.url", registryUrl()),
+                Map.entry("redis.uri", REDIS.getRedisURI()),
+                Map.entry("datasources.default.url", POSTGRES.getJdbcUrl() + "?stringtype=unspecified"),
+                Map.entry("datasources.default.username", POSTGRES.getUsername()),
+                Map.entry("datasources.default.password", POSTGRES.getPassword()),
+                Map.entry("sbus.outbox.initial-delay", "200ms"),
+                Map.entry("sbus.outbox.poll-interval", "200ms"),
+                Map.entry("otel.traces.exporter", "none"));
     }
 
     private ConsumerRecord<String, byte[]> poll(KafkaConsumer<String, byte[]> consumer, String topic) {
