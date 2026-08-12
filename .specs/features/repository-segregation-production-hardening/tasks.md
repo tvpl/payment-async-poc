@@ -7,7 +7,7 @@ Implemente estas tarefas com a skill `tlc-spec-driven`: ative-a pelo nome e siga
 Se a skill não puder ser ativada, interrompa e informe o usuário. Cada tarefa termina com gate verde, atualização deste arquivo e da rastreabilidade, e um Conventional Commit atômico. Push, deploy, publicação externa, exclusão destrutiva e criação de repositórios remotos continuam fora da autorização.
 
 **Design:** `.specs/features/repository-segregation-production-hardening/design.md`  
-**Status:** In Progress  
+**Status:** Complete — T1–T60 done, Verifier PASS (`validation.md`, `validate_state.py` 0 erros)  
 **Baseline:** 2026-08-08; `./gradlew test --no-daemon` e `docker compose config -q` passaram.
 
 ---
