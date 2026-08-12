@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -80,6 +82,29 @@ class DocumentationValidationTest(unittest.TestCase):
 
         self.assertEqual({"imaginary_pending"}, validate_docs.metrics_in_expression("sum(imaginary_pending)"))
         self.assertFalse(validate_docs.implemented_metric("imaginary_pending", corpus))
+
+    def test_dashboard_metric_errors_actually_reads_dashboards(self) -> None:
+        # The previous version of this test only exercised two pure helpers, so it passed even
+        # while dashboard_metric_errors() globbed a deleted directory and returned [] for every
+        # input. Drive the real function against a real fixture instead.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            dashboards = root / "payment-api/ops/dashboards"
+            dashboards.mkdir(parents=True)
+            (dashboards / "broken.json").write_text(
+                json.dumps({"panels": [{"targets": [{"expr": "sum(metric_that_does_not_exist_total)"}]}]}),
+                encoding="utf-8",
+            )
+
+            errors = validate_docs.dashboard_metric_errors(root)
+
+        self.assertEqual(1, len(errors), errors)
+        self.assertIn("metric_that_does_not_exist_total", errors[0])
+
+    def test_dashboard_glob_matches_the_real_dashboards(self) -> None:
+        # A glob that matches nothing makes the check above vacuous no matter how good it is.
+        self.assertEqual([], validate_docs.dashboard_metric_errors(REPOSITORY_ROOT))
+        self.assertGreater(len(validate_docs.dashboard_paths(REPOSITORY_ROOT)), 0)
 
 
 if __name__ == "__main__":

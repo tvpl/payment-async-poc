@@ -47,6 +47,16 @@ jobs:
       - name: Set up Gradle
         if: matrix.boundary != 'sandbox'
         uses: gradle/actions/setup-gradle@v4
+      # Cross-boundary deps resolve by GAV from a sibling boundary's build output, which a fresh
+      # checkout does not have (build/ is gitignored). Without this, payment-api/payment-sbus/
+      # payment-core-mock fail on "Could not find com.example.payments:payment-contract-model".
+      - name: Publish prerequisite artifacts
+        if: contains(fromJSON('["payment-api","payment-sbus","payment-core-mock"]'), matrix.boundary)
+        run: |
+          (cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon)
+          if [ "${{ matrix.boundary }}" = "payment-api" ]; then
+            (cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon)
+          fi
       - name: Run boundary build
         id: gate
         env:
@@ -109,6 +119,13 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Publish prerequisite artifacts
+        if: contains(fromJSON('["payment-api","payment-sbus"]'), matrix.boundary)
+        run: |
+          (cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon)
+          if [ "${{ matrix.boundary }}" = "payment-api" ]; then
+            (cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon)
+          fi
       - name: Run required integration gate
         id: integration-gate
         env:
@@ -174,6 +191,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Compile every standalone root for CodeQL
         run: |
+          # Publish first: the consumer roots resolve contracts/feature-control by GAV from a
+          # sibling build/ directory that a fresh checkout does not have.
+          (cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon)
+          (cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon)
           for boundary in payment-contracts payment-api payment-sbus payment-core-mock feature-control async-redis-service; do
             (cd "$boundary" && ./gradlew classes --no-daemon)
           done

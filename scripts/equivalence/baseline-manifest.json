@@ -321,13 +321,13 @@
       "category": "scripts",
       "id": "scripts/docs/test_validate_docs.py",
       "path": "scripts/docs/test_validate_docs.py",
-      "sha256": "1c472ad5ea2dc1da3798b1765bb264d7124bc0bba679061e5052f925644117bf"
+      "sha256": "7dca25cafd2a1f88a5dddc2836d28add622e5f6c9dfb3137bb160cfa91efdaf8"
     },
     {
       "category": "scripts",
       "id": "scripts/docs/validate_docs.py",
       "path": "scripts/docs/validate_docs.py",
-      "sha256": "e50696d69701aa83a2cfcb30446044de4e5baaf49a97311dae5c97a5f987e01d"
+      "sha256": "3f64434f9d33da46d0499b67049177d9d50f08bd1cbb8b1e338e68b8768b4b0e"
     },
     {
       "category": "scripts",

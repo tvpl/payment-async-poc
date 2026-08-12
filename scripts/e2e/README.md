@@ -9,7 +9,7 @@ compartilhado, usando somente os Composes independentes de cada fronteira. Ponto
 ```bash
 cd sandbox && docker compose up -d   # Kafka, Redis, PostgreSQL, Registry
 cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon
-./gradlew :feature-control:publishMavenPublicationToLocalBuildRepository --no-daemon   # a partir de feature-control/
+cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon
 for d in payment-api payment-sbus payment-core-mock async-redis-service; do
   (cd "$d" && docker compose build && docker compose up -d)
 done
