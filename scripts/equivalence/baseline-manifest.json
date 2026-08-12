@@ -6,7 +6,7 @@
     "schemas": 11,
     "scripts": 52,
     "sources": 200,
-    "test_cases": 503,
+    "test_cases": 504,
     "tests": 108,
     "topics": 8
   },
@@ -2361,7 +2361,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/SimulationMessageHandlerUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/SimulationMessageHandlerUnitTest.java",
-      "sha256": "15f6b6e342cc0a512e8d9cbf7cee6bbee786117277d1584f8dcc91e9874ee852"
+      "sha256": "a6aaf534cfa96c4270d532d242484dd9b305ba558943d47673cbaaa0d4143611"
     },
     {
       "category": "tests",
