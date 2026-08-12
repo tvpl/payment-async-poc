@@ -97,7 +97,10 @@ Além disso, `CoreResponseConsumer` ignora respostas para simulações já em es
 
 `CoreGateway` é a interface que documenta o limite entre o SBUS e o Core. A implementação default, `KafkaCoreGateway`, reflete que o Core é alcançado via outbox e os tópicos `core.command`/`core.response`. Trocar para um Core HTTP ou gRPC real não muda o resto do SBUS.
 
-<!-- TODO verify: a referência original ao "core mock" apontava para docs/07-core-mock.md no layout legado; o mock hoje vive na raiz payment-core-mock, mas não há ainda um documento equivalente em payment-sbus/docs a linkar aqui. -->
+O simulador determinístico usado como Core nos ambientes locais é a fronteira `payment-core-mock`,
+documentada em [payment-core-mock/docs/architecture.md](../../payment-core-mock/docs/architecture.md).
+Ele é `NON_PRODUCTION` por classificação própria e não faz parte do contrato do SBUS: o que o SBUS
+depende é dos tópicos `core.command`/`core.response`, não de quem os atende.
 
 ## Endpoint interno (fallback da API)
 

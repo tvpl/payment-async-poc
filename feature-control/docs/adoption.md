@@ -110,8 +110,8 @@ Modelo pronto: `examples/pilot-app/src/test/java/com/example/platform/pilot/Pilo
 - **Redis**: aponte `redis.uri` para a instância do seu ambiente
   (`redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}` é o padrão dos exemplos). A lib não assume uma
   topologia específica, só que a URI configurada resolve para um Redis alcançável.
-  <!-- TODO verify: nenhum teste deste boundary exercita Sentinel/Cluster; confirmar antes de prometer
-       suporte HA explícito a quem adota. -->
+  Nenhum teste desta fronteira exercita Sentinel ou Cluster, então **não há suporte HA verificado**:
+  se seu ambiente depende de failover, valide-o você mesmo antes de adotar.
 - **Métricas**: se a app tiver `micrometer` no classpath, `feature_decisions_total` já é exportado
   automaticamente (ver [arquitetura](architecture.md)) — nada a configurar além disso.
 

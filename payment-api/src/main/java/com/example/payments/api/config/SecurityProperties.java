@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * API-key authentication config. A concrete, simple mechanism for the PoC; production
- * should move to JWT/OAuth2 + mTLS (see docs/15-prontidao-producao.md).
+ * should move to JWT/OAuth2 + mTLS (see the workspace doc docs/production-evidence.md).
  */
 @ConfigurationProperties("payment.security")
 public class SecurityProperties {

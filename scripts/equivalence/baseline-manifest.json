@@ -4,7 +4,7 @@
     "documents": 11,
     "migrations": 9,
     "schemas": 11,
-    "scripts": 51,
+    "scripts": 47,
     "sources": 200,
     "test_cases": 504,
     "tests": 108,
@@ -105,7 +105,7 @@
       "category": "documents",
       "id": "docs/production-evidence.md",
       "path": "docs/production-evidence.md",
-      "sha256": "b6fca0bc5d60f26f41c111bc03f4dbae50edbfbb97c94655970cb3dd265814dc"
+      "sha256": "cb01923474e897a2c77e25c982dbb10d6d4857162d73c7a2dbe114289c2789c4"
     },
     {
       "category": "documents",
@@ -123,7 +123,7 @@
       "category": "documents",
       "id": "docs/testing-policy.md",
       "path": "docs/testing-policy.md",
-      "sha256": "3026396b2d4e8a097840649fbb19b355d88960ef888d95d32000de35fa5a95c2"
+      "sha256": "4147f29c189c7b57f6faba720284c29fce3182b4567c4a0485171b74bd03f113"
     },
     {
       "category": "documents",
@@ -256,30 +256,6 @@
       "id": "payment-contracts/schemas/SimulationResultPayload.avsc",
       "path": "payment-contracts/schemas/SimulationResultPayload.avsc",
       "sha256": "e14e6c9d3b2e270564f4c6b845e577b3c5036d8a94a7fe6ff79e6ea03a5f4ca9"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-async-redis.js",
-      "path": "load/k6-async-redis.js",
-      "sha256": "85c2a11c99bb98c1388a0cdc2551dbf8d1a571bf60d328dff0782270649ae849"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-feature.js",
-      "path": "load/k6-feature.js",
-      "sha256": "f1955c4de12ee8b77e3fffb2ecbae0634a9748976c2d56cd77a776387ea8d2ba"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-poll.js",
-      "path": "load/k6-poll.js",
-      "sha256": "ac83cac42dbcbf36a9cf59c9cdfbf6e81197da44b6a8e4ad84f9f67d82aa5da6"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-simulations.js",
-      "path": "load/k6-simulations.js",
-      "sha256": "d7f6746d7cbdd20cca412f66bd11740a84ed2137f1fa01506aab0f7a42c3376a"
     },
     {
       "category": "scripts",
@@ -567,7 +543,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/Application.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/Application.java",
-      "sha256": "3eafdde139a176418f7d70cf5664ce944ad751eb5217ffb4561b330777efc530"
+      "sha256": "bb90424e90d3d7f15529a1766c5489cfc3e761fefcd92a01ff9b346f6d0b4358"
     },
     {
       "category": "sources",
@@ -765,7 +741,7 @@
       "category": "sources",
       "id": "feature-control/examples/feature-demo/src/main/java/com/example/platform/featuredemo/Application.java",
       "path": "feature-control/examples/feature-demo/src/main/java/com/example/platform/featuredemo/Application.java",
-      "sha256": "409843c962506f42ff9c00658001b3f66f4390c395ac83d134cc290bf7a6c85c"
+      "sha256": "9c3af542fdd00648083d41a9aa361b10f10f21fbb2cc20ac4b915bf6a8c728e1"
     },
     {
       "category": "sources",
@@ -807,7 +783,7 @@
       "category": "sources",
       "id": "feature-control/examples/pilot-app/src/main/java/com/example/platform/pilot/Application.java",
       "path": "feature-control/examples/pilot-app/src/main/java/com/example/platform/pilot/Application.java",
-      "sha256": "fe6b1e5f8ee7ea8cedd40ba9084fefc11488d28f9c81c05aeba43f395a4ca7c8"
+      "sha256": "ecdb0483b64a68522148ba250087e8693006cded1f8db0fd3e6047629da7b265"
     },
     {
       "category": "sources",
@@ -1137,7 +1113,7 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/config/SecurityProperties.java",
       "path": "payment-api/src/main/java/com/example/payments/api/config/SecurityProperties.java",
-      "sha256": "320e71ca4b8f930576d1d4f278bb4117c435866d01f21aea70a9be57648766d3"
+      "sha256": "1ec43caeb501cad96e022dc76fbb1ef2fd6a95e15d7fd91223beed6d3373855c"
     },
     {
       "category": "sources",

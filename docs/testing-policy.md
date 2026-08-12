@@ -29,7 +29,7 @@ Padrão comum entre fronteiras: containers estáticos, com as URLs de Kafka, Sch
 ## Carga
 
 ```bash
-make load          # taxa padrão        |   make load-heavy   # taxa alta (429/backpressure)
+cd payment-api
 k6 run -e API_KEY=dev-key-change-me -e RATE=300 -e DURATION=1m load/k6-simulations.js
 ```
 
@@ -41,7 +41,13 @@ Um smoke test faz um `POST` e segue o `requestId` até o estado terminal, valida
 
 ## CI (GitHub Actions)
 
-O CI roda em cada push/PR: compila as fronteiras, executa os testes unitários (os `*IT` ficam excluídos por padrão, sem exigir Docker) e valida a configuração do compose local. Relatórios de teste sobem como artefato do pipeline.
+O CI roda em cada push/PR: compila as sete fronteiras, executa o gate rápido (unitários — os `*IT`
+ficam excluídos por padrão) e valida a configuração do compose do sandbox. Além disso há um job
+`integration` **bloqueante** que roda `./gradlew test -PwithIT` para `payment-api`, `payment-sbus`,
+`async-redis-service` e `feature-control` contra um Redis de serviço; quando o Docker não está
+disponível o resultado é registrado como `NOT_RUN`, que também reprova — nunca vira PASS silencioso.
+Completam o pipeline actionlint, CodeQL e os gates de governança/segredos/política de CI.
+Relatórios de teste sobem como artefato do pipeline.
 
 ## Ver também
 - [Política de tecnologia](technology-policy.md) · [Evidências de produção](production-evidence.md)

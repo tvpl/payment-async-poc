@@ -30,7 +30,8 @@ REQUIRED_MARKERS = {
     "docs/testing.md": ("## Gate rápido", "## Gate de integração", "## Documentação e imagem", "NOT_RUN"),
 }
 FORBIDDEN = ("project(':", 'project(":', "docker compose down -v",
-             "payment-contracts/src", "feature-control/src", "payment-api/src", "payment-sbus/src")
+             "payment-contracts/src", "feature-control/src", "payment-api/src", "payment-sbus/src",
+             "payment-core-mock/src")
 
 
 def validate(root: Path) -> list[str]:

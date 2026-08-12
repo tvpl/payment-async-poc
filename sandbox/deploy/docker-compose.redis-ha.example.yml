@@ -10,7 +10,7 @@
 # async-redis-service queue, since both share that client.
 #
 # Usage (compose the app stack over this file):
-#   docker compose -f docker-compose.yml -f deploy/docker-compose.redis-ha.example.yml up -d
+#   docker compose -f compose.yml -f deploy/docker-compose.redis-ha.example.yml up -d   # a partir de sandbox/
 # (and set REDIS_URI on the app services, e.g. via an override or .env)
 #
 # For very large scale, Redis Cluster is the alternative (URI: redis://node1:6379,node2:6379,...);

@@ -24,7 +24,7 @@
       "kind": "alerts",
       "path": "../../async-redis-service/ops/alerts/async-redis-alerts.yml",
       "scrape_job": "async-redis-service",
-      "scrape_auth_status": "gap: same class of issue — /prometheus requires an authenticated API key, no long-lived scrape credential provisioned yet"
+      "scrape_auth_status": "gap (opposite direction): /prometheus is anonymous — ApiKeyFilter is scoped to /jobs/** and the boundary has no micronaut-security on the classpath, so the job scrapes cleanly but the endpoint is unauthenticated"
     },
     {
       "owner": "payment-core-mock",

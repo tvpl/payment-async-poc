@@ -5,7 +5,7 @@ import io.micronaut.runtime.Micronaut;
 /**
  * Standalone example of synchronous-over-asynchronous <strong>without Kafka</strong>: the API enqueues
  * work on a Redis Stream and blocks (on a virtual thread) monitoring Redis until the worker releases
- * the response. See {@code docs/17-async-sync-redis.md}.
+ * the response. See {@code docs/architecture.md}.
  */
 public class Application {
 

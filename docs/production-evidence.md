@@ -28,7 +28,7 @@ Resumo dos gaps de hardening já tratados no código, as garantias que resultam 
 
 ## Responsabilidade de deploy/operação (checklist)
 
-- [ ] Kafka multi-broker: fator de replicação 3, `min.insync.replicas=2`, eleição de líder não limpa desabilitada. Exemplo ilustrativo mantido pela fronteira `sandbox` (não testado neste repositório como cluster real). <!-- TODO verify: caminho legado apontava para deploy/docker-compose.kafka-cluster.example.yml na raiz; confirmar se o exemplo já foi movido para sandbox/deploy ao concluir a extração. -->
+- [ ] Kafka multi-broker: fator de replicação 3, `min.insync.replicas=2`, eleição de líder não limpa desabilitada. Exemplo ilustrativo em [`sandbox/deploy/docker-compose.kafka-cluster.example.yml`](../sandbox/deploy/docker-compose.kafka-cluster.example.yml), mantido pela fronteira `sandbox` (não testado neste repositório como cluster real).
 - [ ] TLS: terminar em gateway/service mesh (recomendado) ou habilitar TLS na aplicação e SASL/SSL no Kafka. Hoje os listeners locais são texto plano, apenas para desenvolvimento.
 - [ ] AuthN/AuthZ: trocar a API key por JWT/OAuth2 mais mTLS entre fronteiras. A API key é um exemplo funcional, não o alvo de produção.
 - [ ] Segredos: senhas de Postgres/Redis e chaves de API via secret manager, nunca em YAML versionado.
@@ -47,7 +47,7 @@ O store de flags (`feature-control`) e a fila do `async-redis-service` usam o me
 REDIS_URI=redis-sentinel://redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379/mymaster
 ```
 
-O cliente descobre o master atual via Sentinels e faz failover automático; pool de comandos bloqueantes, Streams/consumer groups e pub/sub de propagação continuam funcionando. Exemplo ilustrativo (master, réplica e três Sentinels) mantido pela fronteira `sandbox`. <!-- TODO verify: caminho legado apontava para deploy/docker-compose.redis-ha.example.yml na raiz; confirmar destino final sob sandbox/deploy. --> Para escala muito alta, Redis Cluster é a alternativa: como as chaves são por-request ou por-flag, não há operação multi-chave cross-slot.
+A expectativa é que o cliente descubra o master via Sentinels e faça failover automático, mantendo pool de comandos bloqueantes, Streams/consumer groups e pub/sub de propagação. **Isso não é evidência: nenhuma fronteira exercita Sentinel ou Cluster em teste** — `async-redis-service/docs/architecture.md` registra o Redis single-node como ponto único de falha, e `feature-control/docs/adoption.md` recusa explicitamente prometer suporte HA sem teste. Exemplo ilustrativo (master, réplica e três Sentinels) em [`sandbox/deploy/docker-compose.redis-ha.example.yml`](../sandbox/deploy/docker-compose.redis-ha.example.yml), mantido pela fronteira `sandbox`. Para escala muito alta, Redis Cluster é a alternativa: como as chaves são por-request ou por-flag, não há operação multi-chave cross-slot.
 
 ## Itens implementados mas verificáveis só com runtime
 

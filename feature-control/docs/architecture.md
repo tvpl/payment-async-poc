@@ -228,8 +228,9 @@ A decisão em si (`FeatureResolver.evaluate`) é in-process: um hash FNV-1a e lo
 I/O no caminho quente — o Redis só é tocado a cada `cache-ttl` (ou quando o pub/sub invalida a
 entrada). Não há um harness de carga dedicado dentro deste boundary nem um gate de capacidade próprio
 (consistente com o escopo: biblioteca + exemplos `NON_PRODUCTION`, sem tráfego real a proteger).
-<!-- TODO verify: `load/k6-feature.js`, na raiz do workspace, mede decide_ms via feature-demo; confirmar
-     se ainda é mantido antes de linkar como fonte de números de throughput para este boundary. -->
+Existe um script exploratório em [`load/k6-feature.js`](../load/k6-feature.js) que mede `decide_ms`
+através do `feature-demo`. Ele **não** está ligado a nenhum gate nem ao CI, então seus números não
+são evidência: sirva-se dele para experimentar localmente, não para afirmar throughput.
 
 ## Fronteiras
 

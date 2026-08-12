@@ -25,7 +25,7 @@ micronaut:
               jws-algorithm: HS256
 
 # For HA, override the whole URI with env REDIS_URI (e.g. redis-sentinel://...); env wins over yml.
-# See deploy/docker-compose.redis-ha.example.yml.
+# See sandbox/deploy/docker-compose.redis-ha.example.yml (outra fronteira, fora desta raiz).
 redis:
   uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
 

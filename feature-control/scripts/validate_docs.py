@@ -26,7 +26,7 @@ REQUIRED_MARKERS = {
 }
 FORBIDDEN = ("project(':", 'project(":', "docker compose down -v",
              "payment-contracts/src", "payment-api/src", "payment-sbus/src",
-             "async-redis-service/src", "core-mock/src")
+             "async-redis-service/src", "payment-core-mock/src")
 
 
 def validate(root: Path) -> list[str]:

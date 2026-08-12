@@ -50,11 +50,12 @@ Registrados em [`application-assets.json`](../observability/application-assets.j
 | Job | Status |
 |---|---|
 | `payment-simulation-api`, `payment-sbus` | gap: `/prometheus` exige bearer JWT autenticado; sem credencial de scrape de longa duração provisionada ainda, então o job aparece com `up == 0` até o gap fechar |
-| `async-redis-service` | gap: mesma classe de problema, `/prometheus` exige API key autenticada |
+| `async-redis-service` | scrape limpo, mas **sem autenticação**: `ApiKeyFilter` cobre só `/jobs/**` e o boundary não tem `micronaut-security` no classpath, então `/prometheus` é anônimo — gap de exposição, não de credencial |
 | `payment-core-mock` | ok: `/prometheus` sem auth (`NON_PRODUCTION`), scrape limpo |
 
-<!-- TODO verify: quando a credencial de scrape de longa duração for provisionada para payment-api,
-     payment-sbus e async-redis-service, atualizar esta tabela e o `scrape_auth_status` do manifest. -->
+Pendência aberta: provisionar credencial de scrape de longa duração para `payment-api` e
+`payment-sbus` (hoje `up == 0`), e decidir a proteção do `/prometheus` do `async-redis-service`.
+Ao fechar, atualizar esta tabela e o `scrape_auth_status` de `observability/application-assets.json`.
 
 ### Alertas
 
@@ -69,8 +70,8 @@ alerta. O conteúdo das regras é responsabilidade de cada owner.
 Datasources provisionados ([`datasource.yml`](../observability/grafana/provisioning/datasources/datasource.yml)):
 **Prometheus** (default, `http://prometheus:9090`) e **Jaeger** (`http://jaeger:16686`).
 
-<!-- TODO verify: o datasource Prometheus não tem `exemplarTraceIdDestinations` configurado hoje;
-     confirmar se o link métrica→trace via exemplars deve ser reativado. -->
+O datasource Prometheus não declara `exemplarTraceIdDestinations`, então não há salto
+métrica→trace por exemplar no Grafana; a correlação hoje é manual, pelo `traceId` do log.
 
 Dashboards são **montados somente leitura** (provider `application-owned`, uma pasta por owner via
 `foldersFromFilesStructure`) a partir do `ops/dashboards/` de cada app, nunca copiados:

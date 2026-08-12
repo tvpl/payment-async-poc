@@ -1,7 +1,7 @@
 # EXEMPLO de cluster Kafka multi-broker (KRaft, 3 nós) para referência de produção.
 # NÃO é exercitado neste repositório/PoC — use como ponto de partida.
 #
-# Diferenças-chave vs. o broker único do docker-compose.yml:
+# Diferenças-chave vs. o broker único do sandbox (sandbox/compose.yml):
 #   - replication-factor 3 + min.insync.replicas 2 (durabilidade)
 #   - unclean.leader.election desabilitado (não promover réplica fora de sync)
 #   - producers com acks=all + enable.idempotence (já configurado nos serviços)
