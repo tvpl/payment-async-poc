@@ -18,6 +18,8 @@ import java.time.Duration;
  *   <li>{@code sbus_dlq_unconfirmed_oldest_age_seconds} – oldest unconfirmed age.</li>
  *   <li>{@code sbus_outbox_published_total} / {@code sbus_outbox_publish_failures_total}.</li>
  *   <li>{@code sbus_dlq_total} – messages routed to the DLQ.</li>
+ *   <li>{@code sbus_unrecoverable_message_total} – a record whose own failure could not be
+ *       durably persisted either; the payload is preserved in a log line, not in a table.</li>
  *   <li>{@code sbus_end_to_end_latency} – occurredAt(request) -&gt; final event.</li>
  * </ul>
  */
@@ -30,6 +32,7 @@ public class SbusMetrics {
     private Counter outboxPublished;
     private Counter outboxPublishFailures;
     private Counter dlq;
+    private Counter unrecoverable;
     private Timer endToEndLatency;
 
     public SbusMetrics(MeterRegistry registry, OutboxEventRepository outboxRepository) {
@@ -48,6 +51,7 @@ public class SbusMetrics {
         this.outboxPublished = registry.counter("sbus_outbox_published_total");
         this.outboxPublishFailures = registry.counter("sbus_outbox_publish_failures_total");
         this.dlq = registry.counter("sbus_dlq_total");
+        this.unrecoverable = registry.counter("sbus_unrecoverable_message_total");
         this.endToEndLatency = Timer.builder("sbus_end_to_end_latency")
                 .publishPercentiles(0.5, 0.95, 0.99)
                 .register(registry);
@@ -63,6 +67,16 @@ public class SbusMetrics {
 
     public void recordDlq() {
         dlq.increment();
+    }
+
+    /**
+     * A record's own failure could not be durably persisted either (both the main handler and
+     * the retry/DLQ scheduler failed — typically Postgres itself is down). The record is not
+     * silently lost: its raw payload is logged (see RetryPublisher) so it can be replayed by
+     * hand, but this metric is the only automated signal that it happened. Alert on it above 0.
+     */
+    public void recordUnrecoverable() {
+        unrecoverable.increment();
     }
 
     public void recordEndToEnd(Duration duration) {

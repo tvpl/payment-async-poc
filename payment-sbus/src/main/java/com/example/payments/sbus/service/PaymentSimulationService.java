@@ -19,6 +19,7 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,6 +56,17 @@ public class PaymentSimulationService {
             return;
         }
 
+        // An idempotency-key replay with a FRESH requestId: the caller (payment-api) has already
+        // lost its own memory of the original mapping (its Redis idempotency-ttl can expire well
+        // before this table's own window) and is retrying with a brand new requestId carrying the
+        // same key. Resolve it against the original simulation instead of silently dropping it —
+        // see PaymentPersistenceService#findReplayTarget's javadoc for the failure this replaces.
+        Optional<PaymentSbusMessage> replayTarget = persistence.findReplayTarget(idempotencyKey, env.requestId());
+        if (replayTarget.isPresent()) {
+            resolveReplay(env, idempotencyKey, replayTarget.get());
+            return;
+        }
+
         String simulationId = UUID.randomUUID().toString();
         EventEnvelope<ProcessPaymentSimulationCommandPayload> command = env.deriveAs(
                 EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND,
@@ -69,41 +81,76 @@ public class PaymentSimulationService {
                 EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND, Topics.CORE_COMMAND, commandBytes, headers);
     }
 
-    public void handleCoreResponse(EventEnvelope<CorePaymentSimulationResponsePayload> env) {
-        CorePaymentSimulationResponsePayload core = env.payload();
-        Optional<PaymentSbusMessage> found = messageRepository.findBySimulationId(core.simulationId());
-        if (found.isEmpty()) {
-            LOG.warn("Core response for unknown simulationId={} (requestId={}) — ignoring",
-                    core.simulationId(), env.requestId());
-            return;
-        }
-        PaymentSbusMessage message = found.get();
-        if (isTerminal(message.getStatus())) {
-            LOG.info("Duplicate Core response ignored requestId={} status={}",
-                    message.getRequestId(), message.getStatus());
+    private void resolveReplay(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
+                               PaymentSbusMessage original) {
+        if (!isTerminal(original.getStatus())) {
+            // Original simulation still in flight: record the new requestId against the same
+            // simulationId now, PROCESSING — persistFinal (see handleCoreResponse) publishes its
+            // own terminal event for it once the Core responds, same as any other row.
+            persistence.registerReplayInFlight(env, idempotencyKey, original);
             return;
         }
 
-        boolean approved = SimulationResult.APPROVED.equalsIgnoreCase(core.status());
-        SimulationResult result = new SimulationResult(
-                core.simulationId(), message.getRequestId(), core.status(), core.authorizationCode(),
-                core.amount(), core.currency(), core.installments(), core.fees(), core.settlement(),
-                core.errorCode(), core.errorMessage());
-
-        String finalType = approved
-                ? EventTypes.PAYMENT_SIMULATION_COMPLETED
-                : EventTypes.PAYMENT_SIMULATION_FAILED;
+        // Original already terminal: build and publish a final event for the NEW requestId, with
+        // the ORIGINAL's stored result. The envelope is built manually (not via env.deriveAs,
+        // which would carry the REQUEST's requestId, not this correlation) so the new requestId
+        // ends up in both the outbox row's key and the Avro payload's own requestId field.
+        boolean approved = original.getStatus() == SbusMessageStatus.COMPLETED;
+        SimulationResult result = json.fromJson(original.getResult(), SimulationResult.class);
+        String finalType = approved ? EventTypes.PAYMENT_SIMULATION_COMPLETED : EventTypes.PAYMENT_SIMULATION_FAILED;
         String finalTopic = approved ? Topics.COMPLETED : Topics.FAILED;
-        EventEnvelope<SimulationResult> finalEvent = env.deriveAs(finalType, Sources.SBUS, result);
+        EventEnvelope<SimulationResult> finalEvent = new EventEnvelope<>(
+                UUID.randomUUID().toString(), finalType, EventEnvelope.CURRENT_VERSION, java.time.Instant.now(),
+                env.requestId(), env.correlationId(), env.eventId(), env.traceId(), Sources.SBUS, result);
 
-        // Avro serialization OUTSIDE the transaction.
         byte[] finalBytes = approved
                 ? avroSerde.serialize(finalTopic, AvroMapper.toAvroCompleted(finalEvent))
                 : avroSerde.serialize(finalTopic, AvroMapper.toAvroFailed(finalEvent));
         String headers = json.toJson(HeaderMap.from(finalEvent, null));
 
-        persistence.persistFinal(core.simulationId(), approved, core.errorCode(), core.errorMessage(),
-                json.toJson(result), finalType, finalTopic, finalBytes, headers);
+        persistence.persistReplayFinal(env, idempotencyKey, original, finalType, finalTopic, finalBytes, headers);
+    }
+
+    public void handleCoreResponse(EventEnvelope<CorePaymentSimulationResponsePayload> env) {
+        CorePaymentSimulationResponsePayload core = env.payload();
+        // A simulationId can be shared by more than one row (an idempotency-key replay records
+        // its fresh requestId against the same simulation — see PaymentPersistenceService). Every
+        // row still PROCESSING gets its own terminal event, each with ITS OWN requestId in the
+        // envelope — reusing one row's serialized bytes for another would ship the wrong
+        // requestId inside the payload.
+        List<PaymentSbusMessage> pending = persistence.findProcessingBySimulationId(core.simulationId());
+        if (pending.isEmpty()) {
+            LOG.info("Core response for simulationId={} (requestId={}) matches no row still "
+                    + "PROCESSING — unknown simulation or duplicate response, ignoring",
+                    core.simulationId(), env.requestId());
+            return;
+        }
+
+        boolean approved = SimulationResult.APPROVED.equalsIgnoreCase(core.status());
+        String finalType = approved
+                ? EventTypes.PAYMENT_SIMULATION_COMPLETED
+                : EventTypes.PAYMENT_SIMULATION_FAILED;
+        String finalTopic = approved ? Topics.COMPLETED : Topics.FAILED;
+
+        for (PaymentSbusMessage message : pending) {
+            SimulationResult result = new SimulationResult(
+                    core.simulationId(), message.getRequestId(), core.status(), core.authorizationCode(),
+                    core.amount(), core.currency(), core.installments(), core.fees(), core.settlement(),
+                    core.errorCode(), core.errorMessage());
+            EventEnvelope<SimulationResult> finalEvent = new EventEnvelope<>(
+                    UUID.randomUUID().toString(), finalType, EventEnvelope.CURRENT_VERSION, java.time.Instant.now(),
+                    message.getRequestId(), message.getCorrelationId(), env.eventId(), env.traceId(),
+                    Sources.SBUS, result);
+
+            // Avro serialization OUTSIDE the transaction.
+            byte[] finalBytes = approved
+                    ? avroSerde.serialize(finalTopic, AvroMapper.toAvroCompleted(finalEvent))
+                    : avroSerde.serialize(finalTopic, AvroMapper.toAvroFailed(finalEvent));
+            String headers = json.toJson(HeaderMap.from(finalEvent, null));
+
+            persistence.persistFinal(message, approved, core.errorCode(), core.errorMessage(),
+                    json.toJson(result), finalType, finalTopic, finalBytes, headers);
+        }
     }
 
     private static boolean isTerminal(SbusMessageStatus status) {

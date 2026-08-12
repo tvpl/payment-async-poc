@@ -211,14 +211,14 @@ class RecoverableDeadLetterIT {
         OutboxEvent ownerB = claims.claimBatch().getFirst();
 
         assertNotEquals(ownerA.getClaimToken(), ownerB.getClaimToken());
-        assertEquals(0, claims.markPublishedBatch(List.of(ownerA)));
+        assertFalse(claims.markPublished(ownerA));
         assertEquals(OutboxClaimService.FailureDisposition.STALE_CLAIM,
                 claims.markFailure(ownerA, "late failure", "{}"));
         Row ownedByB = row(scheduled.deduplicationKey());
         assertEquals("IN_PROGRESS", ownedByB.status());
         assertEquals(ownerB.getClaimToken(), ownedByB.claimToken());
 
-        assertEquals(1, claims.markPublishedBatch(List.of(ownerB)));
+        assertTrue(claims.markPublished(ownerB));
         assertEquals("DLQ_PUBLISHED", row(scheduled.deduplicationKey()).status());
     }
 

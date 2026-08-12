@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Transactional writes for the SBUS. Kept in a separate bean so the {@code @Transactional}
@@ -49,6 +51,82 @@ public class PaymentPersistenceService {
         this.idempotencyRepository = idempotencyRepository;
         this.json = json;
         this.metrics = metrics;
+    }
+
+    /**
+     * Read-only pre-check, run BEFORE any transaction and before a fresh {@code simulationId} is
+     * minted for this request: is {@code idempotencyKey} already known under a DIFFERENT
+     * requestId? That happens when the caller (payment-api) has already lost its own memory of
+     * the mapping — its Redis idempotency-ttl (15m) can expire well before this table's window
+     * (7d) — and retries with a brand new requestId carrying the same key. Previously
+     * {@link #persistRequested} just returned in that case: no message row, no outbox, no final
+     * event, ever, for the new requestId — a silent black hole. Returns the ORIGINAL message
+     * this new request is a replay of, so the caller can resolve it (reusing its simulationId
+     * and, if already terminal, its result) instead of starting a disconnected simulation.
+     */
+    public Optional<PaymentSbusMessage> findReplayTarget(String idempotencyKey, String currentRequestId) {
+        if (idempotencyKey == null) {
+            return Optional.empty();
+        }
+        return idempotencyRepository.findByIdempotencyKey(idempotencyKey)
+                .filter(record -> !record.getRequestId().equals(currentRequestId))
+                .flatMap(record -> messageRepository.findByRequestId(record.getRequestId()));
+    }
+
+    /**
+     * Resolves a replay whose original simulation already reached a terminal state: records the
+     * new requestId against the SAME simulationId with the original's result copied over, and
+     * publishes the final event for the new requestId (Avro bytes already serialized outside
+     * this transaction, same discipline as every other outbox write here).
+     */
+    @Transactional
+    public void persistReplayFinal(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
+                                   PaymentSbusMessage original, String eventType, String topic,
+                                   byte[] finalBytes, String headers) {
+        if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
+            return;
+        }
+        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId());
+        replica.setStatus(original.getStatus());
+        replica.setErrorCode(original.getErrorCode());
+        replica.setErrorMessage(original.getErrorMessage());
+        replica.setResult(original.getResult());
+        messageRepository.save(replica);
+        saveOutbox(env.requestId(), eventType, topic, env.requestId(), finalBytes, headers);
+        LOG.info("Resolved idempotency replay requestId={} against original={} simulationId={} "
+                + "(already terminal, result copied)", env.requestId(), original.getRequestId(),
+                original.getSimulationId());
+    }
+
+    /**
+     * Resolves a replay whose original simulation is still in flight: records the new requestId
+     * against the SAME simulationId, PROCESSING, with no outbox row yet. When the Core responds,
+     * {@link #persistFinal} finalizes every row sharing that simulationId — including this one —
+     * and publishes a final event for each, so this requestId gets its own terminal event too.
+     */
+    @Transactional
+    public void registerReplayInFlight(EventEnvelope<PaymentSimulationRequestPayload> env,
+                                       String idempotencyKey, PaymentSbusMessage original) {
+        if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
+            return;
+        }
+        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId());
+        replica.setStatus(SbusMessageStatus.PROCESSING);
+        messageRepository.save(replica);
+        LOG.info("Registered idempotency replay requestId={} against in-flight original={} "
+                + "simulationId={}", env.requestId(), original.getRequestId(), original.getSimulationId());
+    }
+
+    private PaymentSbusMessage newReplicaRow(EventEnvelope<PaymentSimulationRequestPayload> env,
+                                             String idempotencyKey, String simulationId) {
+        PaymentSbusMessage replica = new PaymentSbusMessage();
+        replica.setRequestId(env.requestId());
+        replica.setCorrelationId(env.correlationId());
+        replica.setCausationId(env.causationId());
+        replica.setIdempotencyKey(idempotencyKey);
+        replica.setSimulationId(simulationId);
+        replica.setPayload(json.toJson(env.payload()));
+        return replica;
     }
 
     @Transactional
@@ -87,33 +165,45 @@ public class PaymentPersistenceService {
                 env.requestId(), simulationId);
     }
 
+    /**
+     * Every row still PROCESSING for a simulationId — normally one, but an idempotency-key
+     * replay (see {@link #registerReplayInFlight}) can leave more than one requestId waiting on
+     * the same Core response. Read-only, outside any transaction: the caller serializes one
+     * Avro final-event payload per row (each must carry ITS OWN requestId in the envelope, not
+     * a copy of another row's bytes) before calling {@link #persistFinal} once per row.
+     */
+    public List<PaymentSbusMessage> findProcessingBySimulationId(String simulationId) {
+        return messageRepository.findAllBySimulationId(simulationId).stream()
+                .filter(m -> !isTerminal(m.getStatus()))
+                .toList();
+    }
+
+    /**
+     * Finalizes exactly the row {@code target} — fenced by primary key AND version, not by
+     * simulationId alone, since a simulationId can now be shared by more than one row.
+     */
     @Transactional
-    public boolean persistFinal(String simulationId, boolean approved, String errorCode,
+    public boolean persistFinal(PaymentSbusMessage target, boolean approved, String errorCode,
                                 String errorMessage, String resultJson, String eventType,
                                 String topic, byte[] finalBytes, String headers) {
-        PaymentSbusMessage message = messageRepository.findBySimulationId(simulationId).orElse(null);
-        if (message == null || isTerminal(message.getStatus())) {
-            return false;
-        }
-
         SbusMessageStatus terminal = approved
                 ? SbusMessageStatus.COMPLETED
                 : SbusMessageStatus.FAILED;
         Instant now = Instant.now();
         int updated = messageRepository.finalizeIfProcessing(
-                simulationId, message.getVersion(), terminal.name(), errorCode,
+                target.getId(), target.getVersion(), terminal.name(), errorCode,
                 errorMessage, resultJson, now);
         if (updated == 0) {
             return false;
         }
 
-        saveOutbox(message.getRequestId(), eventType, topic, message.getRequestId(), finalBytes, headers);
+        saveOutbox(target.getRequestId(), eventType, topic, target.getRequestId(), finalBytes, headers);
 
-        if (message.getCreatedAt() != null) {
-            metrics.recordEndToEnd(Duration.between(message.getCreatedAt(), Instant.now()));
+        if (target.getCreatedAt() != null) {
+            metrics.recordEndToEnd(Duration.between(target.getCreatedAt(), Instant.now()));
         }
         LOG.info("Recorded final event {} requestId={} simulationId={}",
-                eventType, message.getRequestId(), simulationId);
+                eventType, target.getRequestId(), target.getSimulationId());
         return true;
     }
 

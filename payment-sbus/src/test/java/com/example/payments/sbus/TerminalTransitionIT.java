@@ -73,11 +73,11 @@ class TerminalTransitionIT {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<Boolean> approved = executor.submit(() -> {
                 start.await();
-                return finalizeApproved(message.getSimulationId(), new byte[]{1});
+                return finalizeApproved(message, new byte[]{1});
             });
             Future<Boolean> failed = executor.submit(() -> {
                 start.await();
-                return finalizeFailed(message.getSimulationId(), new byte[]{2});
+                return finalizeFailed(message, new byte[]{2});
             });
             start.countDown();
 
@@ -106,11 +106,11 @@ class TerminalTransitionIT {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<Boolean> first = executor.submit(() -> {
                 start.await();
-                return finalizeApproved(message.getSimulationId(), new byte[]{3});
+                return finalizeApproved(message, new byte[]{3});
             });
             Future<Boolean> second = executor.submit(() -> {
                 start.await();
-                return finalizeApproved(message.getSimulationId(), new byte[]{3});
+                return finalizeApproved(message, new byte[]{3});
             });
             start.countDown();
 
@@ -126,8 +126,8 @@ class TerminalTransitionIT {
     void sequentialDuplicateIsIdempotent() throws SQLException {
         PaymentSbusMessage message = processingMessage();
 
-        assertTrue(finalizeApproved(message.getSimulationId(), new byte[]{4}));
-        assertFalse(finalizeApproved(message.getSimulationId(), new byte[]{4}));
+        assertTrue(finalizeApproved(message, new byte[]{4}));
+        assertFalse(finalizeApproved(message, new byte[]{4}));
         assertEquals(1, terminalOutbox(message.getRequestId()).count());
     }
 
@@ -135,8 +135,8 @@ class TerminalTransitionIT {
     void laterConflictingTerminalCannotOverwriteWinner() throws SQLException {
         PaymentSbusMessage message = processingMessage();
 
-        assertTrue(finalizeFailed(message.getSimulationId(), new byte[]{5}));
-        assertFalse(finalizeApproved(message.getSimulationId(), new byte[]{6}));
+        assertTrue(finalizeFailed(message, new byte[]{5}));
+        assertFalse(finalizeApproved(message, new byte[]{6}));
 
         PaymentSbusMessage stored = messages.findBySimulationId(message.getSimulationId()).orElseThrow();
         TerminalOutbox outbox = terminalOutbox(message.getRequestId());
@@ -151,7 +151,7 @@ class TerminalTransitionIT {
         PaymentSbusMessage message = processingMessage();
 
         assertThrows(RuntimeException.class, () -> persistence.persistFinal(
-                message.getSimulationId(), true, null, null, "{}", null,
+                message, true, null, null, "{}", null,
                 Topics.COMPLETED, new byte[]{7}, "{}"));
 
         assertEquals(SbusMessageStatus.PROCESSING,
@@ -171,13 +171,13 @@ class TerminalTransitionIT {
         return messages.save(message);
     }
 
-    private boolean finalizeApproved(String simulationId, byte[] payload) {
-        return persistence.persistFinal(simulationId, true, null, null, "{}",
+    private boolean finalizeApproved(PaymentSbusMessage message, byte[] payload) {
+        return persistence.persistFinal(message, true, null, null, "{}",
                 EventTypes.PAYMENT_SIMULATION_COMPLETED, Topics.COMPLETED, payload, "{}");
     }
 
-    private boolean finalizeFailed(String simulationId, byte[] payload) {
-        return persistence.persistFinal(simulationId, false, "DECLINED", "declined", "{}",
+    private boolean finalizeFailed(PaymentSbusMessage message, byte[] payload) {
+        return persistence.persistFinal(message, false, "DECLINED", "declined", "{}",
                 EventTypes.PAYMENT_SIMULATION_FAILED, Topics.FAILED, payload, "{}");
     }
 

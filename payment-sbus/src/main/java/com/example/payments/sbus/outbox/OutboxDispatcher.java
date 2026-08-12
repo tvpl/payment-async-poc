@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,9 +19,17 @@ import java.util.Map;
 /**
  * Orchestrates outbox publication. Claims a batch in a short transaction
  * ({@link OutboxClaimService#claimBatch()}), publishes to Kafka <em>outside</em> any
- * transaction (no locks during I/O), then marks the whole successful batch PUBLISHED in a
- * single statement. Throughput toward the Core is capped by a <strong>distributed</strong>
- * {@link RedisRateLimiter} on {@code core.command} — a global guard across SBUS instances.
+ * transaction (no locks during I/O), and marks each event PUBLISHED individually right after
+ * its own send succeeds — not accumulated and marked only once the whole batch finishes. That
+ * matters because nothing bounds one batch's wall time against the claim lease
+ * ({@code OutboxProperties#lease}): if it expires partway through (a slow Kafka leader election,
+ * a Redis hiccup on the rate limiter below), a batch-wide mark would leave every already-sent
+ * event unrecorded — and therefore reclaimable by the reaper and republished, duplicating work
+ * the Core already did. Marking per item means only events that never finished sending are ever
+ * at risk of that, which is the reaper's actual job. Throughput toward the Core is capped by a
+ * <strong>distributed</strong> {@link RedisRateLimiter} on {@code core.command} — a global guard
+ * across SBUS instances; a Redis outage there degrades that one topic's throttling, it does not
+ * abort the rest of the batch (see {@link #tryAcquireCoreCommand()}).
  */
 @Singleton
 public class OutboxDispatcher {
@@ -52,26 +59,50 @@ public class OutboxDispatcher {
 
     public int dispatchBatch() {
         List<OutboxEvent> batch = claimService.claimBatch();
-        List<OutboxEvent> published = new ArrayList<>(batch.size());
+        int publishedCount = 0;
         for (OutboxEvent event : batch) {
-            // Backpressure to the Core: if the limiter denies, release the row (PENDING)
-            // and retry on the next poll. Other topics flow freely.
-            if (Topics.CORE_COMMAND.equals(event.getTopic()) && !coreCommandLimiter.tryAcquire()) {
+            // Backpressure to the Core: if the limiter denies (or can't be reached — see
+            // tryAcquireCoreCommand), release the row (PENDING) and retry on the next poll.
+            // Other topics flow freely: a Redis outage on this one distributed counter must
+            // not stop payment.simulation.completed/failed/DLQ, which need no rate limiting.
+            if (Topics.CORE_COMMAND.equals(event.getTopic()) && !tryAcquireCoreCommand()) {
                 claimService.release(event, Instant.now().plusMillis(200));
                 continue;
             }
             if (publish(event)) {
-                published.add(event);
-                if (Topics.DLQ.equals(event.getTopic())) {
-                    metrics.recordDlq();
+                // Marked right away, not batched to the end of the loop — see class javadoc.
+                if (claimService.markPublished(event)) {
+                    publishedCount++;
+                    metrics.recordPublished(1);
+                    if (Topics.DLQ.equals(event.getTopic())) {
+                        metrics.recordDlq();
+                    }
+                } else {
+                    LOG.warn("Outbox event {} sent to Kafka but its claim was stale when marking "
+                            + "published — a duplicate PUBLISHED mark from a previous owner is "
+                            + "expected to have already recorded it", event.getId());
                 }
             }
         }
-        int marked = claimService.markPublishedBatch(published);
-        if (marked > 0) {
-            metrics.recordPublished(marked);
+        return publishedCount;
+    }
+
+    /**
+     * Wraps the distributed limiter so a Redis outage degrades to "deny this core.command row,
+     * retry next poll" instead of throwing out of {@link #dispatchBatch()} — which used to abort
+     * the whole batch, leaving every later row (including topics that need no rate limiting at
+     * all) untried until the next poll, and leaving every already-published row in this batch
+     * unmarked (see class javadoc). Fails closed per item, exactly like a real denial: this
+     * limiter exists to protect the Core from bursts, so an unreachable Redis must not let
+     * core.command flow uncounted.
+     */
+    private boolean tryAcquireCoreCommand() {
+        try {
+            return coreCommandLimiter.tryAcquire();
+        } catch (Exception e) {
+            LOG.debug("core-command rate limiter unavailable, denying this row for now: {}", e.getMessage());
+            return false;
         }
-        return marked;
     }
 
     private boolean publish(OutboxEvent event) {

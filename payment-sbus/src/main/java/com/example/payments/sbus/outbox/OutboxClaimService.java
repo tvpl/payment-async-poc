@@ -42,15 +42,17 @@ public class OutboxClaimService {
         return batch;
     }
 
-    /** Completes current-owner claims; stale tokens affect zero rows. */
+    /**
+     * Completes a single current-owner claim; a stale token affects zero rows. Called once per
+     * event, immediately after that event's own Kafka send succeeds — not accumulated and marked
+     * only after the whole batch finishes. A batch-wide mark would leave every already-sent event
+     * unrecorded (and therefore re-claimable once its lease expires, republishing something the
+     * Core already processed) if the loop is interrupted partway through, whether by the claim
+     * lease expiring mid-batch or by an unrelated later item's failure aborting the loop.
+     */
     @Transactional
-    public int markPublishedBatch(java.util.Collection<OutboxEvent> events) {
-        int marked = 0;
-        Instant now = Instant.now();
-        for (OutboxEvent event : events) {
-            marked += repository.markPublished(event.getId(), event.getClaimToken(), now);
-        }
-        return marked;
+    public boolean markPublished(OutboxEvent event) {
+        return repository.markPublished(event.getId(), event.getClaimToken(), Instant.now()) > 0;
     }
 
     /** Tx2: normal failures retry; exhaustion and every DLQ failure remain DLQ_PENDING. */

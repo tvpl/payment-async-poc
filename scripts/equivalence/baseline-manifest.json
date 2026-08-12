@@ -6,8 +6,8 @@
     "schemas": 11,
     "scripts": 47,
     "sources": 200,
-    "test_cases": 506,
-    "tests": 108,
+    "test_cases": 514,
+    "tests": 110,
     "topics": 8
   },
   "entries": [
@@ -1599,7 +1599,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryPublisher.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryPublisher.java",
-      "sha256": "68d2d50c02d788d14520dd602b88ea086937981d65d6d48c515c55f6960102ab"
+      "sha256": "cdd7f07a39e714e12ba8d9c33e426248cb3b9067c558aa6159f2c40b3f55f9dd"
     },
     {
       "category": "sources",
@@ -1611,7 +1611,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/metrics/SbusMetrics.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/metrics/SbusMetrics.java",
-      "sha256": "6a4c68c0c078f8c7334408003370a6532945c2798f35166655c77127cb223a4c"
+      "sha256": "30835155c607e8490fdd96afa1a704cc54f3f51b39a6d822f64d8ae56e1eee3f"
     },
     {
       "category": "sources",
@@ -1623,13 +1623,13 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxClaimService.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxClaimService.java",
-      "sha256": "38c6791cac3208dd7c1e0cfe92c850568905bab49c67df85cf13d93ad0e6a610"
+      "sha256": "7baff846f78bee64d32af82f50d171347a6ae7306efc7115119cd53cebab95ca"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxDispatcher.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxDispatcher.java",
-      "sha256": "433a81916b7178c1e6e3dd0af960a9982a93e570299cc91f5d72ea886df77e67"
+      "sha256": "15c2a10cd91b9f01bfc4003fbdf75edcc5183dd0c5beb505e57f9cad8c01512e"
     },
     {
       "category": "sources",
@@ -1683,7 +1683,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/repository/PaymentSbusMessageRepository.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/repository/PaymentSbusMessageRepository.java",
-      "sha256": "623e40b909feefbc0588683625ab5987398d486c9fab08485c2eb76d3abfb1e4"
+      "sha256": "6a0c32dc83e4b013b87ec74c283e46f1bb21e5e58cedb9f49e5199959e3488db"
     },
     {
       "category": "sources",
@@ -1701,13 +1701,13 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentPersistenceService.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentPersistenceService.java",
-      "sha256": "3b6b670fc50da098467f00de1820d0612f9b741226861867d9be44d0191d8993"
+      "sha256": "491eab4797160ebac1bd975366a5d2d59b7b7fd6a15b75613a5a90985918a25a"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentSimulationService.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentSimulationService.java",
-      "sha256": "b6855328d7cdfe6d5c51ee336b5994d7e7f631a1c71379e26b9c70434753104b"
+      "sha256": "0ad5257878ea613db9d75413019fb7aec666f489fa37be31833945a729866aa5"
     },
     {
       "category": "sources",
@@ -2263,6 +2263,12 @@
     },
     {
       "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/IdempotencyReplayIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/IdempotencyReplayIT.java",
+      "sha256": "753a798e0d84e9e2b3bfdea61e792c71381d771490273fb3a1e50c4448680905"
+    },
+    {
+      "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/SbusFlowIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/SbusFlowIT.java",
       "sha256": "fd39f078ef96d773904e0a36d5f4545ce98f5fdf4d7df3061eb0cbf9269ee10c"
@@ -2283,7 +2289,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/TerminalTransitionIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/TerminalTransitionIT.java",
-      "sha256": "efc34f58b2888ac827b0f60b1c8d38e6efcfeedf456c09328dca3081453ae8f4"
+      "sha256": "b92bfd11a0470792c9733e63fbaa5c9b094f5696cbe9b203d3ee7a673109f896"
     },
     {
       "category": "tests",
@@ -2325,7 +2331,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/RetryPublisherUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/RetryPublisherUnitTest.java",
-      "sha256": "d3c1ff28b5a6a28428862ed624510109d1e3153176945271ff442e2be83ef384"
+      "sha256": "6e7c0ebf7bff549c91c3a6b70d6133ed0e0ab1f4149c952aab8715b831b4870c"
     },
     {
       "category": "tests",
@@ -2350,6 +2356,12 @@
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/BackoffCalculatorUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/BackoffCalculatorUnitTest.java",
       "sha256": "fa1441363d0ce3bf995fa57edd3151df84b8585040bc7c63a96ac5c0cfa1ca78"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/OutboxBatchResilienceIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/OutboxBatchResilienceIT.java",
+      "sha256": "d9bbe8e48cc6c31e038d2535d546a7d43aae00ba29fd87b9664aa200d09adb06"
     },
     {
       "category": "tests",
@@ -2379,7 +2391,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/retry/RecoverableDeadLetterIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/retry/RecoverableDeadLetterIT.java",
-      "sha256": "2dfded31b3d7dd6c4fef05def24094dad735214d859dfc9d3cab4e8a988db00f"
+      "sha256": "954483e206de81ed5299937088ee550314aeae4630f481e32a8cc77f5f97c958"
     },
     {
       "category": "tests",
