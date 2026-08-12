@@ -31,6 +31,12 @@ dependencies {
     annotationProcessor 'io.micronaut.serde:micronaut-serde-processor'
     annotationProcessor 'io.micronaut.validation:micronaut-validation-processor'
 
+    constraints {
+        // micronaut-platform's micrometer.version (1.15.4) predates the fix for the HIGH
+        // micrometer-core CVEs Trivy flags; force the transitive dependency.
+        implementation('io.micrometer:micrometer-core:1.15.12')
+    }
+
     implementation 'io.micronaut:micronaut-http-server-netty'
     implementation 'io.micronaut.serde:micronaut-serde-jackson'
     implementation 'io.micronaut.redis:micronaut-redis-lettuce'
