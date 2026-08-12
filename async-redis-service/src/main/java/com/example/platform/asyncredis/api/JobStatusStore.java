@@ -76,7 +76,19 @@ public class JobStatusStore {
     // the wakeup push (RED-06); a public non-atomic alternative only invites reintroducing the
     // partial-release bug that made those three a single script in the first place.
 
-    /** Resolves what a poll can observe: unknown, processing, completed with result, or expired. */
+    /**
+     * Records that the reservation and PROCESSING status were persisted but the stream {@code
+     * XADD} never landed — the job does not exist anywhere a worker will look. Overwrites the
+     * PROCESSING status written just before the failed enqueue attempt (see
+     * {@code JobAcceptanceService#attemptEnqueue}).
+     */
+    public void markEnqueueFailed(String jobId) {
+        JobStatus status = new JobStatus(jobId, JobState.ENQUEUE_FAILED, System.currentTimeMillis());
+        redis.shared().set(JobKeys.status(jobId), write(status),
+                SetArgs.Builder.px(props.getStatusTtl().toMillis()));
+    }
+
+    /** Resolves what a poll can observe: unknown, processing, completed with result, expired, or enqueue-failed. */
     public JobStatusView find(String jobId) {
         RedisCommands<String, String> commands = redis.shared();
         String rawStatus = commands.get(JobKeys.status(jobId));
@@ -86,6 +98,9 @@ public class JobStatusStore {
         JobStatus status = read(rawStatus, JobStatus.class);
         if (status.state() == JobState.PROCESSING) {
             return new JobStatusView.Processing();
+        }
+        if (status.state() == JobState.ENQUEUE_FAILED) {
+            return new JobStatusView.EnqueueFailed();
         }
         String rawResult = commands.get(JobKeys.result(jobId));
         if (rawResult == null) {

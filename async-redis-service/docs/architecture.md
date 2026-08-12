@@ -10,6 +10,8 @@ Outras fronteiras do workspace usam Kafka, SBUS e Postgres quando precisam de du
 
 `POST /jobs` reserva idempotência (se a chave vier), persiste status `PROCESSING` e só então publica no Redis Stream (`XADD`), nessa ordem: assim o polling nunca confunde "aceito, ainda em processamento" com "nunca existiu" (RED-01). O request então tenta um `BRPOP` limitado (pool de conexões dedicado, orçamento medido a partir da aquisição, não só do pop) e responde `200` se o worker liberar a tempo, ou `202` com o `jobId` para polling caso contrário (RED-02).
 
+Se o `XADD` falhar depois que a reserva de idempotência já foi persistida, o `jobId` nunca chega a existir em nenhum stream, mas a reserva continua lá. Esse caso é registrado como `ENQUEUE_FAILED` (não `PROCESSING`) e devolvido como `503` — não um 500 com a mensagem interna do Lettuce vazando. Uma nova tentativa com a mesma `Idempotency-Key` reaproveita a reserva existente e tenta o `XADD` de novo, em vez de devolver um `Replay` apontando para um job que nenhum worker jamais vai ver (RED-08).
+
 ```mermaid
 sequenceDiagram
     participant C as Cliente

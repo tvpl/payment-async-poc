@@ -5,9 +5,9 @@
     "migrations": 9,
     "schemas": 11,
     "scripts": 47,
-    "sources": 200,
-    "test_cases": 514,
-    "tests": 110,
+    "sources": 202,
+    "test_cases": 517,
+    "tests": 111,
     "topics": 8
   },
   "entries": [
@@ -567,7 +567,19 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobAcceptanceService.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobAcceptanceService.java",
-      "sha256": "6705e58f54a3155ef9e209241851566cdde1a2c1f3c24f1caadf2cc054e0120a"
+      "sha256": "45cb52005e9f3cd8d6f43206d1f5467646010ee06dcf05d26007a10783012b42"
+    },
+    {
+      "category": "sources",
+      "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueException.java",
+      "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueException.java",
+      "sha256": "03e5bbb95e489450fbe7519df4b974b546555ec802f978b6d6460f546b02f701"
+    },
+    {
+      "category": "sources",
+      "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueExceptionHandler.java",
+      "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueExceptionHandler.java",
+      "sha256": "d61b99ab08ca3ec3ee18fcd8bd947bef1302d5ebd3ecde4e0863da1351ac407a"
     },
     {
       "category": "sources",
@@ -591,7 +603,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobState.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobState.java",
-      "sha256": "a45f1e8bb373680cd1d70f49787159581f9962b8c8583041afdbffc0a22e79f3"
+      "sha256": "dc25cbb6d33ff78e513cc87055000bc51534092046b9df81d747b4b2adf3f66f"
     },
     {
       "category": "sources",
@@ -603,13 +615,13 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java",
-      "sha256": "3d6064ba5797bd611e31080746b385010158c4c277eefee0ae3687b66c1d519e"
+      "sha256": "ac83fd4a2e6c76b259363ad69223278fc3ad11cf53b8f870782e3d0b784d9d7f"
     },
     {
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusView.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusView.java",
-      "sha256": "b705635839bcad89b9d2c0dfefee3dec3ba07943fdcb9fa42ea63cd263eec61b"
+      "sha256": "fad65764fc0db4b98ba0fc901f226df2244c17c9a4b0b70dae6b26ae22fa0cd8"
     },
     {
       "category": "sources",
@@ -627,7 +639,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/controller/AsyncJobController.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/controller/AsyncJobController.java",
-      "sha256": "69dd193a1105937c6fd2fc032dd4e4364ead2e95ebf004f91feb2731c5c5133c"
+      "sha256": "d011ceca8b9dfe9bc371aca4c2fa63f9d03ce48365dd65d880bd5cb0b31e89db"
     },
     {
       "category": "sources",
@@ -1768,6 +1780,12 @@
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceGatesIT.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceGatesIT.java",
       "sha256": "fd121ea265bab6c645b4b28242cf7c12823d34e1204e2382391dcd00eade259c"
+    },
+    {
+      "category": "tests",
+      "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceServiceEnqueueFailureUnitTest.java",
+      "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceServiceEnqueueFailureUnitTest.java",
+      "sha256": "af5ddb24f614c991b759fed0fc7521e869f70534fe581ad5f474b003a480c5fa"
     },
     {
       "category": "tests",
