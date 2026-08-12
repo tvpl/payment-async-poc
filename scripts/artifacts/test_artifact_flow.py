@@ -48,11 +48,9 @@ class ArtifactFlowTest(unittest.TestCase):
 
             self.assertEqual(2, len(artifact_flow.artifact_errors(repository, version="9.9.9")))
 
-    def test_composite_is_explicit_and_absent_from_release_gate(self) -> None:
-        composite = (SCRIPT_DIR / "run-with-composite.sh").read_text(encoding="utf-8")
+    def test_release_gate_never_uses_composite_substitution(self) -> None:
         release = (SCRIPT_DIR / "verify-artifact-only.sh").read_text(encoding="utf-8")
 
-        self.assertIn("--include-build", composite)
         self.assertNotIn("--include-build", release)
 
     def test_artifact_only_gate_resolves_published_and_rejects_missing(self) -> None:
@@ -68,17 +66,15 @@ class ArtifactFlowTest(unittest.TestCase):
         self.assertIn("artifact-flow: PASS", result.stdout)
         self.assertIn("missing GAV fails", result.stdout)
 
-    def test_composite_gate_resolves_the_same_gav_explicitly(self) -> None:
-        result = subprocess.run(
-            [str(SCRIPT_DIR / "run-with-composite.sh")],
-            cwd=SCRIPT_DIR.parents[1],
-            text=True,
-            capture_output=True,
-            timeout=120,
-        )
+    def test_no_root_gradle_build_exists_to_include(self) -> None:
+        # Composite substitution across boundaries is not merely discouraged, it is structurally
+        # impossible: `--include-build <root>` needs a Gradle build at the workspace root, and the
+        # migration removed the aggregator. This replaces the old run-with-composite.sh execution
+        # test, which asserted a capability that no longer has a subject.
+        root = SCRIPT_DIR.parents[1]
 
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("BUILD SUCCESSFUL", result.stdout)
+        for build_file in ("settings.gradle", "settings.gradle.kts", "build.gradle", "gradlew"):
+            self.assertFalse((root / build_file).exists(), f"unexpected root Gradle build file: {build_file}")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
     "documents": 11,
     "migrations": 9,
     "schemas": 11,
-    "scripts": 52,
+    "scripts": 51,
     "sources": 200,
     "test_cases": 504,
     "tests": 108,
@@ -295,15 +295,9 @@
     },
     {
       "category": "scripts",
-      "id": "scripts/artifacts/run-with-composite.sh",
-      "path": "scripts/artifacts/run-with-composite.sh",
-      "sha256": "c1e483d63b9a82dae86644e1cfd559a9f9d7bcdece3ef4a0433f03589a1e65bd"
-    },
-    {
-      "category": "scripts",
       "id": "scripts/artifacts/test_artifact_flow.py",
       "path": "scripts/artifacts/test_artifact_flow.py",
-      "sha256": "1f3d75e06cecaa7c74c3f4976725141f91bd9ad902504f56e68f2216b6a0a671"
+      "sha256": "89ec02fb85e4649b5da8ad08fe73ba7a573fe2b739885ed0ed3972b86d4d96dc"
     },
     {
       "category": "scripts",
@@ -537,7 +531,7 @@
       "category": "scripts",
       "id": "scripts/security/check_repository_secrets.py",
       "path": "scripts/security/check_repository_secrets.py",
-      "sha256": "bc5959b736af8295c8ad1f82510b69ad338960a698e8ab25153000965f54ff99"
+      "sha256": "b5a175039ca98a55aaec027843ac656ad570a0e6f7e862d1c5ba82d9fb968064"
     },
     {
       "category": "scripts",
@@ -1149,7 +1143,7 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/controller/FeatureAdminController.java",
       "path": "payment-api/src/main/java/com/example/payments/api/controller/FeatureAdminController.java",
-      "sha256": "43a07cb5b89e0f9ecbc4a888783069f18f56ae4a8cc48b6fc6524ed4a40332e8"
+      "sha256": "7b2b1946586a8cfebf930494807524df8494152da3cbe3b7b1cfbdd15d591c78"
     },
     {
       "category": "sources",

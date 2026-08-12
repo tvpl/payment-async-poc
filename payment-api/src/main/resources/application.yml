@@ -90,18 +90,21 @@ payment:
     status-ttl: 15m
     idempotency-ttl: 15m
     response-channel: payment-sim-responses
+    rate-limit:
+      # Route budget, tenant budget, and the instance count that keeps the Redis-down
+      # fallback from multiplying the approved burst across the fleet. Bound by
+      # RateLimitProperties (@ConfigurationProperties("payment.simulation.rate-limit")) —
+      # this block must stay under `simulation`, not `response-consumer`, or every key
+      # here silently falls back to the Java defaults and PAYMENT_API_INSTANCES goes inert.
+      limit-for-period: 200
+      tenant-limit-for-period: 50
+      instances: ${PAYMENT_API_INSTANCES:1}
+      refresh-period: 1s
   response-consumer:
     # Bounded budget before a final event is dead-lettered. This blocks the partition on
     # purpose: ordering per requestId matters more than draining ahead of a stuck Redis.
     max-attempts: 3
     retry-delay: 500ms
-    rate-limit:
-      # Route budget, tenant budget, and the instance count that keeps the Redis-down
-      # fallback from multiplying the approved burst across the fleet.
-      limit-for-period: 200
-      tenant-limit-for-period: 50
-      instances: ${PAYMENT_API_INSTANCES:1}
-      refresh-period: 1s
   security:
     # API-key auth (PoC). Production: JWT/OAuth2 + mTLS. Override keys via env/secret.
     enabled: ${PAYMENT_SECURITY_ENABLED:true}

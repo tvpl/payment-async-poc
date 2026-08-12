@@ -17,6 +17,16 @@ BOUNDARIES = {
     "sandbox",
 }
 
+# Module-level so test_ci_policy.py imports the same tuple instead of restating the commands.
+# The duplicated copy drifted once already: it still asserted the pre-migration `:api-service:`
+# aggregator paths long after the workflow moved to `cd <boundary> && ./gradlew`.
+REQUIRED_INTEGRATION = (
+    "cd payment-api && ./gradlew test -PwithIT",
+    "cd payment-sbus && ./gradlew test -PwithIT",
+    "cd async-redis-service && ./gradlew test -PwithIT",
+    "cd feature-control && ./gradlew test -PwithIT",
+)
+
 
 def validate(root: Path) -> list[str]:
     workflow = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -28,13 +38,7 @@ def validate(root: Path) -> list[str]:
     for result in ("PASS", "FAIL", "NOT_RUN"):
         if result not in workflow:
             errors.append(f"missing result state: {result}")
-    required_integration = (
-        "cd payment-api && ./gradlew test -PwithIT",
-        "cd payment-sbus && ./gradlew test -PwithIT",
-        "cd async-redis-service && ./gradlew test -PwithIT",
-        "cd feature-control && ./gradlew test -PwithIT",
-    )
-    for command in required_integration:
+    for command in REQUIRED_INTEGRATION:
         if command not in workflow:
             errors.append(f"missing integration command: {command}")
     if 'echo "result=NOT_RUN"' not in workflow or 'test "$CI_GATE_RESULT" = PASS' not in workflow:

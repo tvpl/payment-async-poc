@@ -44,7 +44,7 @@ tasks.register('verifyLocalPublication') {
     dependsOn tasks.named('publishLibraryToLocalBuildRepository')
 
     doLast {
-        def repository = project(':feature-control').layout.buildDirectory.dir('repo').get().asFile
+        def repository = layout.buildDirectory.dir('repo').get().asFile
         def artifactDirectory = new File(repository, "com/example/platform/feature-control/${project(':feature-control').version}")
         def prefix = "feature-control-${project(':feature-control').version}"
         [

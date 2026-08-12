@@ -69,12 +69,16 @@ async:
     pool-max-total: ${ASYNC_POOL_MAX_TOTAL:64}
 
 endpoints:
+  # Deny by default and opt in per endpoint. `all.enabled: true` overrides the framework's own
+  # `defaultEnabled=false` on write endpoints — with no micronaut-security on the classpath and
+  # ApiKeyFilter scoped to /jobs/**, it left POST /stop, /env, /beans, /threaddump and
+  # POST /loggers/{name} reachable anonymously on the service port. Mirrors payment-api.
   all:
-    enabled: true
-    sensitive: false
+    enabled: false
   health:
     enabled: true
-    details-visible: ANONYMOUS
+    sensitive: false
+    details-visible: NEVER
   prometheus:
     enabled: true
     sensitive: false

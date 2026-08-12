@@ -31,4 +31,4 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :feature-control:publishMavenPublicationToGitHubPackagesRepository --no-daemon
+        run: cd feature-control && ./gradlew :feature-control:publishMavenPublicationToGitHubPackagesRepository --no-daemon
