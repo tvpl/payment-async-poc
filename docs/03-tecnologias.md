@@ -248,9 +248,9 @@ Tópicos: `payment.simulation.requested`, `…core.command`, `…core.response`,
 - **Por que usamos**: subir o stack inteiro com um comando.
 - **Como configuramos**: healthchecks (infra + apps via `/health`), `depends_on`, `Dockerfile`
   único multi-target (compila uma vez), profiles (`observability`), volumes nomeados,
-  `restart: unless-stopped`, tunables via [`.env`](../.env), criação de tópicos.
+  `restart: unless-stopped`, tunables via [`.env.example`](../.env.example), criação de tópicos.
 - **Onde no código**: [`docker-compose.yml`](../docker-compose.yml), [`Dockerfile`](../Dockerfile),
-  [`.env`](../.env), [`Makefile`](../Makefile). Ver [12](12-execucao-e-operacao.md).
+  [`.env.example`](../.env.example), [`Makefile`](../Makefile). Ver [12](12-execucao-e-operacao.md).
 
 ---
 

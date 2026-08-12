@@ -31,7 +31,7 @@ Os alvos `load*` empurram métricas do k6 para o Prometheus (dashboard **k6 Load
 
 ## Configuração (.env) e profiles
 
-Tunables ficam em [`.env`](../.env) (auto-carregado pelo compose): `API_KEY`,
+Tunables ficam em `.env` (copiado de [`.env.example`](../.env.example), auto-carregado pelo compose): `API_KEY`,
 `PAYMENT_SECURITY_ENABLED`, credenciais do Postgres, `KAFKA_TOPIC_PARTITIONS/RF`,
 comportamento do Core (abaixo) e `COMPOSE_PROFILES`.
 
