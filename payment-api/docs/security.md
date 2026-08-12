@@ -4,8 +4,13 @@
 
 - `POST/GET /payment-simulations` exige `X-API-Key`.
 - `/admin/**` exige `ROLE_ADMIN` vindo do JWT.
-- `/health/liveness` e `/health/readiness` são anônimos; qualquer outra rota cai no
-  `isAuthenticated()` do catch-all.
+- `/health/liveness`, `/health/readiness` e `/v0/payment-simulations` (beta, `IS_ANONYMOUS`) são
+  anônimos; qualquer outra rota cai no `isAuthenticated()` do catch-all. O v0 não é coberto por
+  `ApiKeyFilter` (que só casa `/payment-simulations**`) — seu gate é JWT + feature flag
+  (`payment-api-v0`), não a chave de API; callers não elegíveis recebem 404, não 401/403.
+  `ConcurrencyLimitFilter`, porém, cobre as duas rotas: v0 tem seu próprio bucket de recurso
+  (mesmo tamanho configurado da rota principal), mas como nunca carrega `X-API-Key`, todo chamador
+  anônimo do v0 compartilha um único bucket de tenant `"anonymous"`.
 - Endpoints de management estão desligados por padrão; só `health` (`details-visible: NEVER`) e
   `prometheus` (autenticado) existem.
 

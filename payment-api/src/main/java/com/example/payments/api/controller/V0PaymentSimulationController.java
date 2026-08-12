@@ -38,8 +38,11 @@ import jakarta.validation.Valid;
  * <p>It is deliberately <strong>additive</strong>: eligible requests reuse the exact, already-tested
  * {@link ApiPaymentService} pipeline. v0 only adds gating + response headers ({@code X-Api-Version},
  * {@code X-Feature-Reason}) and demonstrates {@link TopicRouter} choosing an A/B topic. The path is
- * not covered by {@code ApiKeyFilter} (which only matches {@code /payment-simulations**}); its gate
- * is the JWT + feature flag instead.
+ * not covered by {@code ApiKeyFilter} (which only matches {@code /payment-simulations**}); its
+ * auth gate is the JWT + feature flag instead — deliberately, since v0 is a beta offered to a
+ * named JWT-eligible group, not a credentialed integration. It IS covered by
+ * {@code ConcurrencyLimitFilter}, though: an anonymous, unauthenticated POST route is exactly the
+ * kind of endpoint that must not be exempt from admission control (CAP-03).
  */
 @Controller("/v0/payment-simulations")
 @Secured(SecurityRule.IS_ANONYMOUS)
