@@ -32,7 +32,7 @@ def validate(root: Path) -> list[str]:
         "cd payment-api && ./gradlew test -PwithIT",
         "cd payment-sbus && ./gradlew test -PwithIT",
         "cd async-redis-service && ./gradlew test -PwithIT",
-        "cd feature-control && ./gradlew :feature-demo:test :pilot-app:test -PwithIT",
+        "cd feature-control && ./gradlew test -PwithIT",
     )
     for command in required_integration:
         if command not in workflow:

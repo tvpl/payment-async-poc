@@ -92,7 +92,7 @@ jobs:
           - boundary: async-redis-service
             command: cd async-redis-service && ./gradlew test -PwithIT --no-daemon
           - boundary: feature-control
-            command: cd feature-control && ./gradlew :feature-demo:test :pilot-app:test -PwithIT --no-daemon
+            command: cd feature-control && ./gradlew test -PwithIT --no-daemon
     services:
       redis:
         image: redis:7.4-alpine

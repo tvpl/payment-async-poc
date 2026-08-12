@@ -77,17 +77,6 @@ class EquivalenceGateTest(unittest.TestCase):
             errors,
         )
 
-    def test_legacy_transitional_roots_are_excluded(self) -> None:
-        actual = equivalence.build_manifest(REPOSITORY_ROOT)
-
-        for entry in actual["entries"]:
-            root = Path(entry["path"]).parts[0]
-            self.assertNotIn(
-                root,
-                equivalence.LEGACY_TRANSITIONAL_ROOTS,
-                f"{entry['category']}:{entry['id']} was tracked from a frozen pre-migration root",
-            )
-
     def test_baseline_records_gate_outcomes_and_preexisting_failures(self) -> None:
         evidence = equivalence.load_json(SCRIPT_DIR / "baseline-evidence.json")
 

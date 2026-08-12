@@ -223,7 +223,14 @@ def dashboard_metric_errors(root: Path) -> list[str]:
             return [item for nested in value for item in expressions(nested)]
         return []
 
-    for path in sorted((root / "observability/grafana/dashboards").glob("*.json")):
+    dashboard_paths = sorted(
+        {
+            *root.glob("*/ops/dashboards/*.json"),
+            *root.glob("sandbox/observability/dashboards/*.json"),
+            *root.glob("load/dashboards/*.json"),
+        }
+    )
+    for path in dashboard_paths:
         dashboard = load_json(path)
         for expression in expressions(dashboard):
             for metric in sorted(metrics_in_expression(expression)):

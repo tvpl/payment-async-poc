@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/lib.sh"
 
-DASHBOARDS_DIR="${REPO_ROOT}/observability/grafana/dashboards"
+DASHBOARDS_DIR="${REPO_ROOT}/sandbox/observability/dashboards"
 FIXTURE="${DASHBOARDS_DIR}/__t58_scratch_broken_dashboard.json"
 
 cleanup() { rm -f "$FIXTURE"; }
@@ -28,9 +28,9 @@ for e in dashboard_metric_errors(Path('${REPO_ROOT}')):
 # --- baseline: real dashboards, no fixture, must be clean ---
 baseline_errors=$(run_validator)
 if [ -z "$baseline_errors" ]; then
-  check_pass "real dashboards under observability/grafana/dashboards/ reference only implemented metrics"
+  check_pass "real dashboards under */ops/dashboards, sandbox/observability/dashboards and load/dashboards reference only implemented metrics"
 else
-  check_fail "real dashboards under observability/grafana/dashboards/ reference only implemented metrics" \
+  check_fail "real dashboards under */ops/dashboards, sandbox/observability/dashboards and load/dashboards reference only implemented metrics" \
     "unexpected pre-existing errors: ${baseline_errors}"
 fi
 

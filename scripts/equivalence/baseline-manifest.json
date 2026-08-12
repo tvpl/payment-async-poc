@@ -6,7 +6,7 @@
     "schemas": 11,
     "scripts": 52,
     "sources": 200,
-    "test_cases": 502,
+    "test_cases": 503,
     "tests": 108,
     "topics": 8
   },
@@ -333,7 +333,7 @@
       "category": "scripts",
       "id": "scripts/docs/validate_docs.py",
       "path": "scripts/docs/validate_docs.py",
-      "sha256": "cd9cafb5b1498cd70bd374e731c83319c3025d79b314b03c12e52338459046c2"
+      "sha256": "e50696d69701aa83a2cfcb30446044de4e5baaf49a97311dae5c97a5f987e01d"
     },
     {
       "category": "scripts",
@@ -477,13 +477,13 @@
       "category": "scripts",
       "id": "scripts/equivalence/equivalence.py",
       "path": "scripts/equivalence/equivalence.py",
-      "sha256": "021e924aa7f49df3d95f170ba897d2daa69d0c0fda38f6b28861795d294fa52e"
+      "sha256": "efd4da8fc6ea4825619e7840f5a4bf0b07256d000198e9cea07160ee07cebde8"
     },
     {
       "category": "scripts",
       "id": "scripts/equivalence/test_equivalence.py",
       "path": "scripts/equivalence/test_equivalence.py",
-      "sha256": "54d7d2454c232e9ed45ff0643316ccca44d908cdb0b2b4c4f690241596301744"
+      "sha256": "37b844d42c78362778164f20db6487c7284c09e69b7b79c628bd51eff657f21c"
     },
     {
       "category": "scripts",
@@ -507,7 +507,7 @@
       "category": "scripts",
       "id": "scripts/observability/checks/dashboard_validator.sh",
       "path": "scripts/observability/checks/dashboard_validator.sh",
-      "sha256": "c7a593f76b28045393ab5d0e7b5dcd1617baef2c3450ca9b62dd381922b3644f"
+      "sha256": "efac3af2a9d6a2a91529aeb7324cf1661154c4361701df7a3c8fbb5df0748ee5"
     },
     {
       "category": "scripts",
@@ -2361,7 +2361,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/SimulationMessageHandlerUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/SimulationMessageHandlerUnitTest.java",
-      "sha256": "61992b3166fa8453b91966db359b2ece0f0bfb5c3b392d1fb22d31076b482b16"
+      "sha256": "15f6b6e342cc0a512e8d9cbf7cee6bbee786117277d1584f8dcc91e9874ee852"
     },
     {
       "category": "tests",
