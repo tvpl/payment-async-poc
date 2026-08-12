@@ -6,7 +6,7 @@
     "schemas": 11,
     "scripts": 47,
     "sources": 200,
-    "test_cases": 504,
+    "test_cases": 506,
     "tests": 108,
     "topics": 8
   },
@@ -603,7 +603,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java",
-      "sha256": "3b5fc863cb919b2b3357ab1ae29af475a68760807640c5999206eddc5ef97f04"
+      "sha256": "3d6064ba5797bd611e31080746b385010158c4c277eefee0ae3687b66c1d519e"
     },
     {
       "category": "sources",
@@ -621,7 +621,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/config/AsyncRedisProperties.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/config/AsyncRedisProperties.java",
-      "sha256": "42b730ef3fd7375fc799ba21d2733430f45f7593ab4b6d96b7a99b18e6f026f1"
+      "sha256": "7caf13c2ea3ef26dc86a6e7dc551d14fe99e474a4c194c20e61be98db61b87cd"
     },
     {
       "category": "sources",
@@ -681,7 +681,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiter.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiter.java",
-      "sha256": "6c352f39d6b442002cc26d91486acc682fe68e27f868b66d686658a9d1480fb6"
+      "sha256": "2f8912ebc50a75ea14b925d5ea0d75c666a83f5772db14c5f1bebc8adcbc7548"
     },
     {
       "category": "sources",
@@ -1545,7 +1545,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/domain/SbusMessageStatus.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/domain/SbusMessageStatus.java",
-      "sha256": "0c2f5168a9cd7ad31efd76e077c1383ed3143f61b020d88416c1359f7c1d3623"
+      "sha256": "63ee1573bf049342c6f05cb06e7e1e0c32b41c615bd3fe01d09f8354781cfeda"
     },
     {
       "category": "sources",
@@ -1839,7 +1839,7 @@
       "category": "tests",
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiterUnitTest.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiterUnitTest.java",
-      "sha256": "b19325b6668e9f97e052eacb435e822682a6976c30dc6db89bb421cb32bc9c07"
+      "sha256": "7abc9d368ba6a8f12c66d4c353c6da9fc97910d711c25860c19c35f6727dc853"
     },
     {
       "category": "tests",

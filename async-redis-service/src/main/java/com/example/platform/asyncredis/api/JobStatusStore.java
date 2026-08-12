@@ -71,15 +71,10 @@ public class JobStatusStore {
                 SetArgs.Builder.px(props.getStatusTtl().toMillis()));
     }
 
-    /**
-     * Moves an existing status to {@code COMPLETED}, keeping the acceptance expiry
-     * ({@code KEEPTTL}) so a terminal job never extends its own retention window. {@code XX} means
-     * an already-expired job is not resurrected: there is no acceptance left to complete.
-     */
-    public void markCompleted(String jobId) {
-        JobStatus status = new JobStatus(jobId, JobState.COMPLETED, System.currentTimeMillis());
-        redis.shared().set(JobKeys.status(jobId), write(status), SetArgs.Builder.xx().keepttl());
-    }
+    // Completion is intentionally NOT exposed as a standalone method here. ResultReleaser's Lua
+    // EVAL performs the same XX+KEEPTTL status write atomically together with the result write and
+    // the wakeup push (RED-06); a public non-atomic alternative only invites reintroducing the
+    // partial-release bug that made those three a single script in the first place.
 
     /** Resolves what a poll can observe: unknown, processing, completed with result, or expired. */
     public JobStatusView find(String jobId) {

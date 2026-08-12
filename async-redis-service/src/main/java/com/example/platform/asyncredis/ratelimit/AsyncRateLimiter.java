@@ -12,8 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * workers regardless of how many API instances are running (a per-instance limiter would allow
  * {@code N × limit}). Same Lua-atomic technique as the platform's {@code RedisRateLimiter}, but
  * reimplemented here so this example stays standalone (no dependency on the Kafka/Avro {@code common}
- * module). Disabled when {@code admission-limit-per-sec <= 0}. Degrades to a local counter if Redis
- * is down (fail-degraded, not fail-open).
+ * module). Disabled when {@code admission-limit-per-sec <= 0}.
+ *
+ * <p>When Redis is down it degrades to a local counter over a <strong>per-instance share</strong>
+ * of the same budget ({@code limit / instances}, at least one) — not the whole budget. Counting the
+ * fleet-wide limit locally is what would admit {@code N × limit} precisely when the coordination
+ * that bounds it is gone, which is the failure this class's own javadoc promises to avoid.
  */
 @Singleton
 public class AsyncRateLimiter {
@@ -26,6 +30,7 @@ public class AsyncRateLimiter {
 
     private final RedisConnections redis;
     private final int limit;
+    private final int degradedLimit;
     private final long windowMillis = 1000;
 
     private final Object localLock = new Object();
@@ -35,6 +40,7 @@ public class AsyncRateLimiter {
     public AsyncRateLimiter(RedisConnections redis, AsyncRedisProperties props) {
         this.redis = redis;
         this.limit = props.getAdmissionLimitPerSec();
+        this.degradedLimit = Math.max(1, limit / Math.max(1, props.getInstances()));
     }
 
     /** @return true if the request may proceed. Always true when the limiter is disabled. */
@@ -59,7 +65,7 @@ public class AsyncRateLimiter {
                 localWindow = window;
                 localCount.set(0);
             }
-            return localCount.incrementAndGet() <= limit;
+            return localCount.incrementAndGet() <= degradedLimit;
         }
     }
 }

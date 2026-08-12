@@ -35,6 +35,12 @@ public class AsyncRedisProperties {
     private int maxDeliveries = 5;
     /** Admission rate limit for POST /jobs (per second, global via Redis). 0 disables it. */
     private int admissionLimitPerSec = 0;
+    /**
+     * Replicas sharing {@link #admissionLimitPerSec}. Divides the degraded (Redis-down) budget so
+     * a fleet of N instances does not admit N× the approved burst exactly when the coordination
+     * that bounds it is gone. Keep it equal to the real replica count.
+     */
+    private int instances = 1;
     /** Max pooled connections for concurrent blocking BRPOP waits. */
     private int poolMaxTotal = 64;
     /**
@@ -63,7 +69,13 @@ public class AsyncRedisProperties {
      * so the alert is the only warning an operator gets before backlog becomes a capacity problem.
      */
     private double retentionAlertThreshold = 0.8;
-    /** How often the retention monitor checks backlog and reports Redis's trim capability. */
+    /**
+     * How often the retention monitor checks backlog and reports Redis's trim capability.
+     *
+     * <p>Micronaut resolves {@code @Scheduled(fixedDelay = ...)} from the raw property, not from
+     * this bean, so {@code StreamRetentionMonitor} restates the same key and default. Keep the two
+     * in sync: changing only this field silently does nothing to the scheduler.
+     */
     private Duration retentionCheckInterval = Duration.ofSeconds(30);
 
     public Duration getWaitTimeout() {
@@ -226,6 +238,14 @@ public class AsyncRedisProperties {
 
     public void setAdmissionLimitPerSec(int admissionLimitPerSec) {
         this.admissionLimitPerSec = admissionLimitPerSec;
+    }
+
+    public int getInstances() {
+        return instances;
+    }
+
+    public void setInstances(int instances) {
+        this.instances = instances;
     }
 
     public int getPoolMaxTotal() {

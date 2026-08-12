@@ -60,11 +60,17 @@ async:
     stream-maxlen: ${ASYNC_STREAM_MAXLEN:100000}
     # Fraction of stream-maxlen at which the backlog alert fires.
     retention-alert-threshold: ${ASYNC_RETENTION_ALERT_THRESHOLD:0.8}
+    # Also restated in StreamRetentionMonitor's @Scheduled(fixedDelay) — Micronaut reads the raw
+    # property there, so both must carry the same default.
+    retention-check-interval: ${ASYNC_RETENTION_CHECK_INTERVAL:30s}
     # Poison protection: after this many deliveries a job is moved to the DLQ.
     dlq-stream: async.jobs.dlq
     max-deliveries: ${ASYNC_MAX_DELIVERIES:5}
     # Admission rate limit for POST /jobs (per second, global via Redis). 0 disables it.
     admission-limit-per-sec: ${ASYNC_ADMISSION_LIMIT:0}
+    # Replicas sharing that budget: divides the Redis-down fallback so the fleet does not admit
+    # instances × limit exactly when the coordination that bounds it is gone.
+    instances: ${ASYNC_REDIS_INSTANCES:1}
     # Max pooled connections for concurrent blocking BRPOP waits.
     pool-max-total: ${ASYNC_POOL_MAX_TOTAL:64}
 
