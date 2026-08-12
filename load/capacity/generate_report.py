@@ -183,9 +183,13 @@ def render_scenario_table(stats):
         f"max={fmt(lat['max'])}")
     if stats.get("reconcile"):
         r = stats["reconcile"]
+        durable = r.get("terminal_via_durable_fallback", 0)
         lines.append(
             f"- Reconciliation sample: {r['terminal']}/{r['sampled']} reached terminal "
-            f"({r['lost']} lost)" + (f" — lost ids: {r['lost_ids']}" if r["lost"] else ""))
+            f"({r['lost']} lost)" + (f" — lost ids: {r['lost_ids']}" if r["lost"] else "")
+            + (f" [{durable} confirmed only via payment_sbus_message after the HTTP path "
+               "missed them — investigate Redis TTL/SBUS circuit pressure if this stays "
+               "nonzero across runs]" if durable else ""))
     before, after = stats.get("before"), stats.get("after")
     if before and after:
         lines.append("- Resource snapshot (before -> after):")
