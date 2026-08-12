@@ -33,6 +33,66 @@
       "path": null,
       "scrape_job": "payment-core-mock",
       "scrape_auth_status": "ok: /prometheus has no auth (NON_PRODUCTION, T20/T23) — scrapes cleanly"
+    },
+    {
+      "owner": "payment-api",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../payment-api/ops/dashboards/api-overview.json"
+    },
+    {
+      "owner": "payment-api",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../payment-api/ops/dashboards/api-waiters.json"
+    },
+    {
+      "owner": "payment-sbus",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../payment-sbus/ops/dashboards/sbus-overview.json"
+    },
+    {
+      "owner": "payment-sbus",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../payment-sbus/ops/dashboards/outbox-overview.json"
+    },
+    {
+      "owner": "payment-sbus",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../payment-sbus/ops/dashboards/postgres-pool.json"
+    },
+    {
+      "owner": "async-redis-service",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../async-redis-service/ops/dashboards/async-redis.json"
+    },
+    {
+      "owner": "feature-control",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../feature-control/ops/dashboards/feature-decisions.json"
+    },
+    {
+      "owner": "sandbox",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "./dashboards/infra-exporters.json"
+    },
+    {
+      "owner": "sandbox",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "./dashboards/kafka-overview.json"
+    },
+    {
+      "owner": "workspace",
+      "version": "0.1.0",
+      "kind": "dashboards",
+      "path": "../../load/dashboards/k6-load.json"
     }
   ]
 }

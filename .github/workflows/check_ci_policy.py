@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the transitional CI contract without a YAML dependency."""
+"""Validate the CI contract without a YAML dependency."""
 
 from __future__ import annotations
 
@@ -29,10 +29,10 @@ def validate(root: Path) -> list[str]:
         if result not in workflow:
             errors.append(f"missing result state: {result}")
     required_integration = (
-        ":api-service:test -PwithIT",
-        ":sbus-service:test -PwithIT",
-        ":async-redis-service:test -PwithIT",
-        ":feature-demo:test :pilot-app:test -PwithIT",
+        "cd payment-api && ./gradlew test -PwithIT",
+        "cd payment-sbus && ./gradlew test -PwithIT",
+        "cd async-redis-service && ./gradlew test -PwithIT",
+        "cd feature-control && ./gradlew :feature-demo:test :pilot-app:test -PwithIT",
     )
     for command in required_integration:
         if command not in workflow:

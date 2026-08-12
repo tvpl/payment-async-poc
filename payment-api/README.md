@@ -17,7 +17,7 @@ que ainda está `NOT_RUN`.
 
 ```bash
 # 1. Publique as dependências (fora desta raiz, uma vez)
-(cd ../payment-contracts && ./gradlew publishAllToLocalRepository)
+(cd ../payment-contracts && ./gradlew publishAllToLocalBuildRepository)
 (cd ../feature-control && ./gradlew publishMavenPublicationToLocalBuildRepository)
 
 # 2. Suba a infraestrutura compartilhada (owner: /sandbox)

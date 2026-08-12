@@ -33,6 +33,18 @@ def markdown_paths(root: Path) -> list[Path]:
 
 
 def manifest_errors(root: Path, recorded: dict[str, object]) -> list[str]:
+    # Terminal state (T59 complete): every legacy source in ROUTES has been removed, so there is
+    # nothing left to live-rescan and compare — that would just report every recorded entry as
+    # "stale". Instead verify the recorded manifest is internally consistent: every entry must
+    # be MIGRATED. Mid-migration (some sources still present), fall back to the original
+    # live-vs-recorded comparison so a partial migration still catches drift.
+    if not any((root / source).exists() for source in ROUTES):
+        errors = []
+        for entry in recorded.get("sections", []):
+            if entry.get("status") != "MIGRATED":
+                errors.append(f"unmigrated section after legacy removal: {entry['id']}")
+        return errors
+
     current = manifest(root)
     errors = []
     if recorded.get("section_count") != current["section_count"]:
@@ -108,7 +120,8 @@ def command_errors(root: Path, path: Path, text: str, allowed: set[str]) -> list
 
 def known_ports(root: Path) -> set[int]:
     ports = set()
-    for path in [root / "docker-compose.yml", *root.glob("*/src/main/resources/application*.yml")]:
+    compose_files = [*root.glob("*/compose.yaml"), *root.glob("*/compose*.yml")]
+    for path in [*compose_files, *root.glob("*/src/main/resources/application*.yml")]:
         text = path.read_text(encoding="utf-8")
         ports.update(int(value) for value in re.findall(r'(?:"|port:\s*)(\d{4,5})(?::\d{2,5})?', text))
     ports.add(6379)
@@ -126,7 +139,11 @@ def port_errors(root: Path, path: Path, text: str) -> list[str]:
 
 def known_variables(root: Path) -> set[str]:
     variables = set()
-    for path in [root / ".env.example", root / "docker-compose.yml", *root.glob("*/src/main/resources/application*.yml")]:
+    compose_files = [*root.glob("*/compose.yaml"), *root.glob("*/compose*.yml")]
+    env_example_files = [root / ".env.example", *root.glob("*/.env.example")]
+    for path in [*env_example_files, *compose_files, *root.glob("*/src/main/resources/application*.yml")]:
+        if not path.exists():
+            continue
         variables.update(VARIABLE.findall(path.read_text(encoding="utf-8")))
         if path.name == ".env.example":
             variables.update(

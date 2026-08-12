@@ -56,6 +56,20 @@ services:
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana-data:/var/lib/grafana
+      # Application-owned dashboards, mounted read-only from each app's own ops/dashboards/ —
+      # never copied (sandbox/docs/observability.md), same convention as the Prometheus alert
+      # rules above. foldersFromFilesStructure (provisioning/dashboards/dashboards.yml) turns
+      # each subdirectory here into a Grafana folder.
+      - ../payment-api/ops/dashboards/api-overview.json:/etc/grafana/provisioning/dashboards/files/payment-api/api-overview.json:ro
+      - ../payment-api/ops/dashboards/api-waiters.json:/etc/grafana/provisioning/dashboards/files/payment-api/api-waiters.json:ro
+      - ../payment-sbus/ops/dashboards/sbus-overview.json:/etc/grafana/provisioning/dashboards/files/payment-sbus/sbus-overview.json:ro
+      - ../payment-sbus/ops/dashboards/outbox-overview.json:/etc/grafana/provisioning/dashboards/files/payment-sbus/outbox-overview.json:ro
+      - ../payment-sbus/ops/dashboards/postgres-pool.json:/etc/grafana/provisioning/dashboards/files/payment-sbus/postgres-pool.json:ro
+      - ../async-redis-service/ops/dashboards/async-redis.json:/etc/grafana/provisioning/dashboards/files/async-redis-service/async-redis.json:ro
+      - ../feature-control/ops/dashboards/feature-decisions.json:/etc/grafana/provisioning/dashboards/files/feature-control/feature-decisions.json:ro
+      - ./observability/dashboards/infra-exporters.json:/etc/grafana/provisioning/dashboards/files/sandbox/infra-exporters.json:ro
+      - ./observability/dashboards/kafka-overview.json:/etc/grafana/provisioning/dashboards/files/sandbox/kafka-overview.json:ro
+      - ../load/dashboards/k6-load.json:/etc/grafana/provisioning/dashboards/files/load/k6-load.json:ro
     depends_on: [prometheus, jaeger]
     networks: [sandbox]
 

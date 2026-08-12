@@ -1,10 +1,10 @@
 {
   "counts": {
     "dashboards": 10,
-    "documents": 22,
+    "documents": 11,
     "migrations": 9,
     "schemas": 11,
-    "scripts": 53,
+    "scripts": 52,
     "sources": 200,
     "test_cases": 502,
     "tests": 108,
@@ -13,195 +13,129 @@
   "entries": [
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/api-overview.json",
-      "path": "observability/grafana/dashboards/api-overview.json",
-      "sha256": "f2d83741efa89b44d912c44a6913c04b03bed3124f30788e049e14327acdf6ae"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/async-redis.json",
-      "path": "observability/grafana/dashboards/async-redis.json",
+      "id": "async-redis-service/ops/dashboards/async-redis.json",
+      "path": "async-redis-service/ops/dashboards/async-redis.json",
       "sha256": "9509e6e02baaeff0db8c5a9f72998fefbe98b0d755323f762b74538c5949b690"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/feature-decisions.json",
-      "path": "observability/grafana/dashboards/feature-decisions.json",
+      "id": "feature-control/ops/dashboards/feature-decisions.json",
+      "path": "feature-control/ops/dashboards/feature-decisions.json",
       "sha256": "3bcba2812e62a78f88af35376d770753ca4cda2b71096dbd72a307a4d55740fc"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/infra-exporters.json",
-      "path": "observability/grafana/dashboards/infra-exporters.json",
-      "sha256": "9c2780bdbdfa60ba10f62a635fb4b6c5748ac86de19d974b63c1f8d109ddb465"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/k6-load.json",
-      "path": "observability/grafana/dashboards/k6-load.json",
+      "id": "load/dashboards/k6-load.json",
+      "path": "load/dashboards/k6-load.json",
       "sha256": "6a1a3334fc0e3ae3c1a653a78394be1285ce0318b35b386e76d7d7b13a60e032"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/kafka-overview.json",
-      "path": "observability/grafana/dashboards/kafka-overview.json",
-      "sha256": "91c4e12861d732faa3bc7bc870e9288367b5e00f1fe9a429583af5bfa7f6a438"
+      "id": "payment-api/ops/dashboards/api-overview.json",
+      "path": "payment-api/ops/dashboards/api-overview.json",
+      "sha256": "f2d83741efa89b44d912c44a6913c04b03bed3124f30788e049e14327acdf6ae"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/outbox-overview.json",
-      "path": "observability/grafana/dashboards/outbox-overview.json",
-      "sha256": "73f61311f6155d73cd9698c3d85d8ca8a54e9685c060737d9b99b2477162eb77"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/postgres-overview.json",
-      "path": "observability/grafana/dashboards/postgres-overview.json",
-      "sha256": "0cc8a3e1c8bc79734472c78fa17d07e821da6658275bbe847a612df7695e9644"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/redis-overview.json",
-      "path": "observability/grafana/dashboards/redis-overview.json",
+      "id": "payment-api/ops/dashboards/api-waiters.json",
+      "path": "payment-api/ops/dashboards/api-waiters.json",
       "sha256": "bd2d2777427809e2e64f1085b05e2de3a9bb808bb024252da93e0dbf4b494979"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/sbus-overview.json",
-      "path": "observability/grafana/dashboards/sbus-overview.json",
+      "id": "payment-sbus/ops/dashboards/outbox-overview.json",
+      "path": "payment-sbus/ops/dashboards/outbox-overview.json",
+      "sha256": "73f61311f6155d73cd9698c3d85d8ca8a54e9685c060737d9b99b2477162eb77"
+    },
+    {
+      "category": "dashboards",
+      "id": "payment-sbus/ops/dashboards/postgres-pool.json",
+      "path": "payment-sbus/ops/dashboards/postgres-pool.json",
+      "sha256": "0cc8a3e1c8bc79734472c78fa17d07e821da6658275bbe847a612df7695e9644"
+    },
+    {
+      "category": "dashboards",
+      "id": "payment-sbus/ops/dashboards/sbus-overview.json",
+      "path": "payment-sbus/ops/dashboards/sbus-overview.json",
       "sha256": "5ec3437fd2683367a91f23e2b8c43ee28bb2d56723f83758bf65a298745a6a6b"
+    },
+    {
+      "category": "dashboards",
+      "id": "sandbox/observability/dashboards/infra-exporters.json",
+      "path": "sandbox/observability/dashboards/infra-exporters.json",
+      "sha256": "9c2780bdbdfa60ba10f62a635fb4b6c5748ac86de19d974b63c1f8d109ddb465"
+    },
+    {
+      "category": "dashboards",
+      "id": "sandbox/observability/dashboards/kafka-overview.json",
+      "path": "sandbox/observability/dashboards/kafka-overview.json",
+      "sha256": "91c4e12861d732faa3bc7bc870e9288367b5e00f1fe9a429583af5bfa7f6a438"
     },
     {
       "category": "documents",
       "id": "AGENTS.md",
       "path": "AGENTS.md",
-      "sha256": "48b4e34972028714bb237a5533dc9674badc71112ac3a046df7e132bed370b8d"
+      "sha256": "6d9e1ea7cb15e4fb64be6951455744174071fc850b692fcfb8380aa567f922f0"
     },
     {
       "category": "documents",
       "id": "README.md",
       "path": "README.md",
-      "sha256": "4bff58a408de56000dc3a2ca6f6ba757c85686a7597affe5dcb3484c750c4922"
+      "sha256": "1c81feb616b3f6f8a7d37c69a64855491e9409d28d0763445a088e05d22e573a"
     },
     {
       "category": "documents",
-      "id": "docs/01-visao-geral.md",
-      "path": "docs/01-visao-geral.md",
-      "sha256": "3ecfe5aa1844967b05a34f50127a074b9a065b5899db51b17a1d823b5a553512"
+      "id": "docs/data-ownership.md",
+      "path": "docs/data-ownership.md",
+      "sha256": "0ef208428e7477c828340d57dbba0c231a16a946fad1d954d069cc374135facc"
     },
     {
       "category": "documents",
-      "id": "docs/02-arquitetura.md",
-      "path": "docs/02-arquitetura.md",
-      "sha256": "1ca0cdbec56554ff686b3830e271c4cb1f2d2f32252ac588547b52bded9c817f"
+      "id": "docs/glossary.md",
+      "path": "docs/glossary.md",
+      "sha256": "62e56f6f931fba0d12790d47981338615f3fea64c43c12af9cbeaecbdf797e2a"
     },
     {
       "category": "documents",
-      "id": "docs/03-tecnologias.md",
-      "path": "docs/03-tecnologias.md",
-      "sha256": "a873ae3063f38ec8a36e6693e1d272c32dbc604854dcaf8cca95ac063964d210"
+      "id": "docs/payment-flow.md",
+      "path": "docs/payment-flow.md",
+      "sha256": "f653eaed4d731de0a14fdba53ed86baf3aa5a865b4ffd07cf1cdbbd0a78e1a4a"
     },
     {
       "category": "documents",
-      "id": "docs/04-fluxo-ponta-a-ponta.md",
-      "path": "docs/04-fluxo-ponta-a-ponta.md",
-      "sha256": "e0a10396acbfb80df4896503257215c480b8f6dab492bdd6c6118e5763a78ccb"
+      "id": "docs/production-evidence.md",
+      "path": "docs/production-evidence.md",
+      "sha256": "b6fca0bc5d60f26f41c111bc03f4dbae50edbfbb97c94655970cb3dd265814dc"
     },
     {
       "category": "documents",
-      "id": "docs/05-api-service.md",
-      "path": "docs/05-api-service.md",
-      "sha256": "905145848328e96d15c47b33a4076561cfce5a032e9d60bfa9f1955d28bc4280"
+      "id": "docs/resilience-contracts.md",
+      "path": "docs/resilience-contracts.md",
+      "sha256": "4961c4a8e25844b1451f936c334d7d414e20b1ee5c9d57979db5039ba94c2c35"
     },
     {
       "category": "documents",
-      "id": "docs/06-sbus-service.md",
-      "path": "docs/06-sbus-service.md",
-      "sha256": "e3c233a98be4da04f19115eb0c2a9873a75516e7fee57aec6e6cf65c381736fa"
+      "id": "docs/technology-policy.md",
+      "path": "docs/technology-policy.md",
+      "sha256": "3b9df4f2bc4a974e1599e9e21c736f81481172da70c9afceb7fe61a0f51a1495"
     },
     {
       "category": "documents",
-      "id": "docs/07-core-mock.md",
-      "path": "docs/07-core-mock.md",
-      "sha256": "8202ceb356684733294188711f37784a99034c02fb04078a6206b2bdeba60465"
+      "id": "docs/testing-policy.md",
+      "path": "docs/testing-policy.md",
+      "sha256": "3026396b2d4e8a097840649fbb19b355d88960ef888d95d32000de35fa5a95c2"
     },
     {
       "category": "documents",
-      "id": "docs/08-eventos-e-contratos.md",
-      "path": "docs/08-eventos-e-contratos.md",
-      "sha256": "b8c5bbf72b14e021bb761465457fa6eef45cb85b936f8f3becbb2dbc082f7162"
+      "id": "docs/workspace-architecture.md",
+      "path": "docs/workspace-architecture.md",
+      "sha256": "3f1049d3e2768c37aed5a74d1a5205fa4440d6bc7cb44d6b8d27af7219d39fe3"
     },
     {
       "category": "documents",
-      "id": "docs/09-dados-redis-postgres.md",
-      "path": "docs/09-dados-redis-postgres.md",
-      "sha256": "8247478a70cc0073ddd23dd4866ee9a3a3a1d6949150ff3bbf79d1ec00ed39eb"
-    },
-    {
-      "category": "documents",
-      "id": "docs/10-observabilidade.md",
-      "path": "docs/10-observabilidade.md",
-      "sha256": "26c493615a4d6fc568f852c0577cd503f79975275085d04fbbf89a1ec9243c09"
-    },
-    {
-      "category": "documents",
-      "id": "docs/11-resiliencia-e-tradeoffs.md",
-      "path": "docs/11-resiliencia-e-tradeoffs.md",
-      "sha256": "cb69328709e2fb83b2b5bca4061cfd27c9b38817467096d9000264a980dd52a0"
-    },
-    {
-      "category": "documents",
-      "id": "docs/12-execucao-e-operacao.md",
-      "path": "docs/12-execucao-e-operacao.md",
-      "sha256": "9dbc10bc3dd4730421150bf45e9b205038df4203c9befc1b634c8bcecf267bd0"
-    },
-    {
-      "category": "documents",
-      "id": "docs/13-testes.md",
-      "path": "docs/13-testes.md",
-      "sha256": "7baa40905aa508564494859bd59ef1592b4b062b9115f49cc5ae3dd7d0a6cefb"
-    },
-    {
-      "category": "documents",
-      "id": "docs/14-glossario.md",
-      "path": "docs/14-glossario.md",
-      "sha256": "4e249c3c1e04ffb5a2ba50669da35b622d26405fe96eaaa532690e20dda76242"
-    },
-    {
-      "category": "documents",
-      "id": "docs/15-prontidao-producao.md",
-      "path": "docs/15-prontidao-producao.md",
-      "sha256": "29fc3c1c9d2ebc915c27e0e89ced30bc064e312ea44dccca6bf18793eff07732"
-    },
-    {
-      "category": "documents",
-      "id": "docs/16-feature-control-lib.md",
-      "path": "docs/16-feature-control-lib.md",
-      "sha256": "fa8fd647e6252d9d04499652bdd65b7878d1c4027eac53e3cfd608625b528e17"
-    },
-    {
-      "category": "documents",
-      "id": "docs/17-async-sync-redis.md",
-      "path": "docs/17-async-sync-redis.md",
-      "sha256": "bc0177ade02560e3e06245b3dc780e4a2439f55ddf55553ab1eb594bf5a136b4"
-    },
-    {
-      "category": "documents",
-      "id": "docs/18-operacao-features.md",
-      "path": "docs/18-operacao-features.md",
-      "sha256": "7a591b40ee037a92faf300a88a672b4d3d9d8d2251348ab9aacda754e5269730"
-    },
-    {
-      "category": "documents",
-      "id": "docs/19-adocao.md",
-      "path": "docs/19-adocao.md",
-      "sha256": "3085aef84b87f113a9f3120ad4593fa908373a4790b4daf54c7c22424b6f89c1"
-    },
-    {
-      "category": "documents",
-      "id": "docs/README.md",
-      "path": "docs/README.md",
-      "sha256": "568aad4c9a2b86f1e884f332d7fe7b48a4d65a4d9678d024e5c2f1dff1cb8978"
+      "id": "docs/workspace-overview.md",
+      "path": "docs/workspace-overview.md",
+      "sha256": "1df08beafbc2e7366dd5667edfd5bb8a1fff26a41e1ae21c83c73f0bc4f865f4"
     },
     {
       "category": "migrations",
@@ -325,12 +259,6 @@
     },
     {
       "category": "scripts",
-      "id": "Makefile",
-      "path": "Makefile",
-      "sha256": "76f5fa36f0785a0578d4303921aec943c4dcf34103f7bc81174e39c2eebafea2"
-    },
-    {
-      "category": "scripts",
       "id": "load/k6-async-redis.js",
       "path": "load/k6-async-redis.js",
       "sha256": "85c2a11c99bb98c1388a0cdc2551dbf8d1a571bf60d328dff0782270649ae849"
@@ -381,7 +309,7 @@
       "category": "scripts",
       "id": "scripts/artifacts/verify-artifact-only.sh",
       "path": "scripts/artifacts/verify-artifact-only.sh",
-      "sha256": "98c1791d9256b7491a97f8648ee72aa5b68223fcff3ca514b9bff45d3f57afed"
+      "sha256": "ad213a8de80cd115cf5dfefa57337df94d34396aeaa6809232a74c2ea3188d94"
     },
     {
       "category": "scripts",
@@ -393,7 +321,7 @@
       "category": "scripts",
       "id": "scripts/docs/build_relocation_manifest.py",
       "path": "scripts/docs/build_relocation_manifest.py",
-      "sha256": "babca53ce1032c22875217cfa8443d6a423ab8d9d5ccdc1c9d9e8457b78289ca"
+      "sha256": "96aff357bbb96b91e70b2aa1b9e00f1e656d379eb83b4dbea6cde2c8378fbfd7"
     },
     {
       "category": "scripts",
@@ -405,7 +333,7 @@
       "category": "scripts",
       "id": "scripts/docs/validate_docs.py",
       "path": "scripts/docs/validate_docs.py",
-      "sha256": "7ddc431bf60339ffddbe111d88cda0be4f2f19cfc0e857db0e9cefe160d9d74f"
+      "sha256": "cd9cafb5b1498cd70bd374e731c83319c3025d79b314b03c12e52338459046c2"
     },
     {
       "category": "scripts",
@@ -549,7 +477,7 @@
       "category": "scripts",
       "id": "scripts/equivalence/equivalence.py",
       "path": "scripts/equivalence/equivalence.py",
-      "sha256": "eae1d75c8750f6db804c3c7c412272fa566d9b03d6706b3cb9c0c95f4cd53461"
+      "sha256": "021e924aa7f49df3d95f170ba897d2daa69d0c0fda38f6b28861795d294fa52e"
     },
     {
       "category": "scripts",

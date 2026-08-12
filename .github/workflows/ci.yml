@@ -23,19 +23,19 @@ jobs:
       matrix:
         include:
           - boundary: payment-contracts
-            command: ./gradlew :common:build --no-daemon
+            command: cd payment-contracts && ./gradlew build --no-daemon
           - boundary: payment-api
-            command: ./gradlew :api-service:build --no-daemon
+            command: cd payment-api && ./gradlew build --no-daemon
           - boundary: payment-sbus
-            command: ./gradlew :sbus-service:build --no-daemon
+            command: cd payment-sbus && ./gradlew build --no-daemon
           - boundary: payment-core-mock
-            command: ./gradlew :core-mock:build --no-daemon
+            command: cd payment-core-mock && ./gradlew build --no-daemon
           - boundary: feature-control
-            command: ./gradlew :feature-control:build :feature-demo:build :pilot-app:build --no-daemon
+            command: cd feature-control && ./gradlew build --no-daemon
           - boundary: async-redis-service
-            command: ./gradlew :async-redis-service:build --no-daemon
+            command: cd async-redis-service && ./gradlew build --no-daemon
           - boundary: sandbox
-            command: docker compose config -q
+            command: cd sandbox && make config
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -86,13 +86,13 @@ jobs:
       matrix:
         include:
           - boundary: payment-api
-            command: ./gradlew :api-service:test -PwithIT --no-daemon
+            command: cd payment-api && ./gradlew test -PwithIT --no-daemon
           - boundary: payment-sbus
-            command: ./gradlew :sbus-service:test -PwithIT --no-daemon
+            command: cd payment-sbus && ./gradlew test -PwithIT --no-daemon
           - boundary: async-redis-service
-            command: ./gradlew :async-redis-service:test -PwithIT --no-daemon
+            command: cd async-redis-service && ./gradlew test -PwithIT --no-daemon
           - boundary: feature-control
-            command: ./gradlew :feature-demo:test :pilot-app:test -PwithIT --no-daemon
+            command: cd feature-control && ./gradlew :feature-demo:test :pilot-app:test -PwithIT --no-daemon
     services:
       redis:
         image: redis:7.4-alpine
@@ -172,8 +172,11 @@ jobs:
         with:
           languages: java-kotlin
       - uses: gradle/actions/setup-gradle@v4
-      - name: Compile for CodeQL
-        run: ./gradlew classes --no-daemon
+      - name: Compile every standalone root for CodeQL
+        run: |
+          for boundary in payment-contracts payment-api payment-sbus payment-core-mock feature-control async-redis-service; do
+            (cd "$boundary" && ./gradlew classes --no-daemon)
+          done
       - uses: github/codeql-action/analyze@v3
 
   governance:

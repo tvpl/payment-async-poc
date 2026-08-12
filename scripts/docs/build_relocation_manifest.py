@@ -39,6 +39,12 @@ def section_entries(root: Path) -> list[dict[str, object]]:
     entries = []
     for source, (owner, target, action) in sorted(ROUTES.items()):
         path = root / source
+        if not path.exists():
+            # The whole point of this manifest is tracking legacy docs on their way to a new
+            # home (T59) — once a source is gone, its sections are migrated by definition, not
+            # an error. See validate_docs.py#manifest_errors for the terminal-state check this
+            # enables (verifies the recorded manifest itself, not a live re-scan of nothing).
+            continue
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             match = HEADING.match(line)
             if not match:

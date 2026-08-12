@@ -87,11 +87,23 @@ def build_manifest(root: Path) -> dict[str, Any]:
         # not this workspace-level loss-prevention gate.
         *file_entries(root, "schemas", ["**/src/main/avro/*.avsc", "payment-contracts/schemas/*.avsc"]),
         *topic_entries(root),
-        *file_entries(root, "dashboards", ["observability/grafana/dashboards/*.json"]),
+        # T59 relocated dashboards from the legacy root observability/grafana/dashboards/ into
+        # each owner's own ops/dashboards/ (apps), sandbox/observability/dashboards/ (shared
+        # infra) or load/dashboards/ (workspace-owned k6 dashboard) — never copied, see
+        # sandbox/docs/observability.md and sandbox/observability/application-assets.json.
+        *file_entries(
+            root,
+            "dashboards",
+            [
+                "*/ops/dashboards/*.json",
+                "sandbox/observability/dashboards/*.json",
+                "load/dashboards/*.json",
+            ],
+        ),
         *file_entries(
             root,
             "scripts",
-            ["Makefile", "scripts/**/*.sh", "scripts/**/*.py", "load/**/*.js"],
+            ["scripts/**/*.sh", "scripts/**/*.py", "load/**/*.js"],
         ),
         *file_entries(root, "documents", ["README.md", "AGENTS.md", "docs/**/*.md"]),
     ]
