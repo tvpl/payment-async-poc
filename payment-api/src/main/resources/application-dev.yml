@@ -14,5 +14,5 @@ micronaut:
         signatures:
           secret:
             generator:
-              secret: ${JWT_SIGNATURE_SECRET}
+              secret: ${API_DEV_JWT_SECRET}
               jws-algorithm: HS256

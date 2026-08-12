@@ -21,7 +21,7 @@ services:
       PAYMENT_API_KEY: ${PAYMENT_API_KEY:-}
       # application-dev.yml's HS256 dev-token signer has no default (dev/test only, never used
       # in application-prod.yml, which validates asymmetric JWTs via JWT_JWKS_URL instead).
-      JWT_SIGNATURE_SECRET: ${JWT_SIGNATURE_SECRET:-dev-jwt-signature-secret-change-me-please-32-bytes}
+      API_DEV_JWT_SECRET: ${API_DEV_JWT_SECRET:-dev-jwt-signature-secret-change-me-please-32-bytes}
       JWT_JWKS_URL: ${JWT_JWKS_URL:-}
       JWT_ISSUER: ${JWT_ISSUER:-}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-}

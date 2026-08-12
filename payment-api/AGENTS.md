@@ -54,7 +54,7 @@ Instruções para agentes que trabalham **dentro** desta fronteira. Nada aqui de
 | Gate | Comando |
 | --- | --- |
 | Rápido | `./gradlew test --no-daemon` |
-| Integração | `JWT_SIGNATURE_SECRET=... PAYMENT_API_KEY=... ./gradlew test -PwithIT --no-daemon` |
+| Integração | `API_DEV_JWT_SECRET=... PAYMENT_API_KEY=... ./gradlew test -PwithIT --no-daemon` |
 | Build | `./gradlew build --no-daemon` |
 | Documentação | `scripts/verify-docs.sh` |
 | Pacote de release | `deploy/verify.sh --structural` (ou sem flag, com Docker e sandbox no ar) |
