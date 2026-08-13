@@ -11,9 +11,17 @@ scenario_outbox_crash_window_reclaim() {
   if [ -z "$req" ]; then log_fail "${name}" "setup: submit_payment returned no requestId"; return; fi
   sleep 2
 
-  row_id=$(psql_sandbox "SELECT id FROM outbox_event WHERE aggregate_id = '${req}' AND topic = 'payment.simulation.completed' AND status = 'PUBLISHED' ORDER BY id DESC LIMIT 1;")
+  # payment-core-mock's approve/decline decision is probabilistic (PAY-06 must hold either way),
+  # so the terminal topic is 'payment.simulation.completed' OR 'payment.simulation.failed' — never
+  # pin to one, or this setup fails at random on a genuine decline instead of a real defect.
+  row_id=$(psql_sandbox "SELECT id FROM outbox_event WHERE aggregate_id = '${req}' AND topic IN ('payment.simulation.completed','payment.simulation.failed') AND status = 'PUBLISHED' ORDER BY id DESC LIMIT 1;")
   row_id=$(echo "$row_id" | tr -d '[:space:]')
-  if [ -z "$row_id" ]; then log_fail "${name}" "setup: no PUBLISHED terminal-event outbox row found for ${req}"; return; fi
+  if [ -z "$row_id" ]; then
+    local sim_status
+    sim_status=$(psql_sandbox "SELECT status FROM payment_sbus_message WHERE request_id = '${req}';" | tr -d '[:space:]')
+    log_fail "${name}" "setup: no PUBLISHED terminal-event outbox row found for ${req} (simulation status: ${sim_status:-unknown})"
+    return
+  fi
 
   before_body=$(curl -s -m 10 -H "X-API-Key: ${API_KEY}" "http://localhost:8080/payment-simulations/${req}")
   before_auth=$(json_field "$before_body" "result.authorizationCode")

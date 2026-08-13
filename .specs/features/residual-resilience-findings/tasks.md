@@ -233,7 +233,7 @@ T7 → T8
 
 ---
 
-### T7: Tornar `outbox-crash-window-reclaim` independente da decisão do Core
+### T7: Tornar `outbox-crash-window-reclaim` independente da decisão do Core ✅
 
 **What**: Trocar o filtro de tópico fixo por um conjunto dos dois tópicos terminais e reportar o estado terminal atingido quando nenhuma linha for encontrada.
 **Where**: `scripts/e2e/payment-failures/scenarios/crash_recovery.sh`
