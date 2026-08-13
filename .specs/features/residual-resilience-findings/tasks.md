@@ -207,7 +207,7 @@ T7 → T8
 
 ---
 
-### T6: IT ponta a ponta com Redis realmente parado
+### T6: IT ponta a ponta com Redis realmente parado ✅
 
 **What**: IT que para o container de Redis e assere `POST → 503`, `GET → 503` (sem SBUS) e recuperação sem reinício, incluindo a ausência de tokens de infraestrutura no corpo.
 **Where**: `payment-api/src/test/java/com/example/payments/api/RedisOutageFailClosedIT.java`
