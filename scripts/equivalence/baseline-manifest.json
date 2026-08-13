@@ -6,8 +6,8 @@
     "schemas": 11,
     "scripts": 47,
     "sources": 204,
-    "test_cases": 532,
-    "tests": 114,
+    "test_cases": 535,
+    "tests": 115,
     "topics": 8
   },
   "entries": [
@@ -1587,7 +1587,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/CoreResponseConsumer.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/CoreResponseConsumer.java",
-      "sha256": "c08a30137b6fb2bc06e7cfb72a1eaf2f219bcad6c4a24242fbd192b971a297df"
+      "sha256": "ceb8fa10eebdd080b97583e5da881e7658c1ee636000e384f4d34e76f007d1ea"
     },
     {
       "category": "sources",
@@ -1605,7 +1605,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/PaymentRequestedConsumer.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/PaymentRequestedConsumer.java",
-      "sha256": "1133a3b815ba4f6ebe7db68eadfca13b31d038a75d8a047cfc1b879615a6cc8d"
+      "sha256": "3b3d68ad817781bef12fba17474f710f45f3de3c7f60a5b5216e868efa9c592d"
     },
     {
       "category": "sources",
@@ -1617,13 +1617,13 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryConsumer.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryConsumer.java",
-      "sha256": "29a2e3e3b3e60aefff4aae4ede982eb0b145beac544912af3ec082a3479cb5d0"
+      "sha256": "2b64910e6194b5019b5c63adb49980001cd24a00ee4694a121be44a9765623e3"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryPublisher.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryPublisher.java",
-      "sha256": "cdd7f07a39e714e12ba8d9c33e426248cb3b9067c558aa6159f2c40b3f55f9dd"
+      "sha256": "ebcbb73980d1fafd2d2d64dd7185e629e07ef3f82075eec49e7848313154f1cb"
     },
     {
       "category": "sources",
@@ -2368,6 +2368,12 @@
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/config/RetentionPolicyGuardUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/config/RetentionPolicyGuardUnitTest.java",
       "sha256": "87d5080e91f4b7b4180308c524ef287e18f7dfc845499ae2d4f7c5abc3254eea"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/ConsumerErrorStrategyUnitTest.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/ConsumerErrorStrategyUnitTest.java",
+      "sha256": "affa41d2bad6bef1343170d165808d988cf17ec79ff4d571fefed4a2bf932148"
     },
     {
       "category": "tests",

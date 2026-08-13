@@ -14,12 +14,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-/** Consumes the Core's response (Avro). Poison → DLQ; transient → retry topic. */
+/**
+ * Consumes the Core's response (Avro). Poison → DLQ; transient → retry topic.
+ *
+ * <p>{@code retryCount}/{@code retryDelay}: see {@link PaymentRequestedConsumer}'s javadoc —
+ * same 30-minute budget against the same failure (Postgres down when {@link RetryPublisher}
+ * tries to durably record the retry/DLQ).
+ */
 @KafkaListener(
         groupId = "payment-sbus",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
-        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 50, retryDelay = "2s"))
+        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 900, retryDelay = "2s"))
 public class CoreResponseConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreResponseConsumer.class);

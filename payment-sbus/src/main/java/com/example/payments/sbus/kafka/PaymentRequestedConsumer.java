@@ -19,12 +19,17 @@ import java.util.Map;
  * handler; on a poison message → DLQ; on a transient failure → the dedicated retry topic.
  * Offsets commit per record only after we return normally; if the DLQ/retry publish itself
  * fails we rethrow so {@link ErrorStrategy} retries the record (no silent loss).
+ *
+ * <p>The only way that rethrow happens is {@link RetryPublisher}'s own durable write failing —
+ * in practice, Postgres itself being down. {@code retryCount}/{@code retryDelay} below are that
+ * budget: 900 × 2s = 30 minutes, long enough to ride out a realistic failover or restart without
+ * giving up. See {@link RetryPublisher} for what happens once even that is exhausted.
  */
 @KafkaListener(
         groupId = "payment-sbus",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
-        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 50, retryDelay = "2s"))
+        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 900, retryDelay = "2s"))
 public class PaymentRequestedConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(PaymentRequestedConsumer.class);

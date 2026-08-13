@@ -17,7 +17,7 @@ Métricas em `/prometheus` (autenticado). Os nomes abaixo são verificados contr
 
 ## O que observar primeiro
 
-**`sbus_unrecoverable_message_total > 0`** é o sinal mais grave da fronteira e deve alertar em qualquer valor acima de zero. Ele significa que tanto o handler principal quanto o agendador de retry/DLQ falharam — tipicamente o próprio PostgreSQL está fora. O registro não é perdido silenciosamente: o payload bruto vai para uma linha de log marcada, para replay manual. Mas essa métrica é o **único sinal automatizado** de que isso aconteceu.
+**`sbus_unrecoverable_message_total > 0`** é o sinal mais grave da fronteira e deve alertar em qualquer valor acima de zero. Ele só sobe depois que o consumidor já esgotou **30 minutos** tentando persistir o retry/DLQ (`retryCount: 900` × `retryDelay: 2s` no `@ErrorStrategy` de cada consumer Kafka) — orçamento calibrado para sobreviver a um failover ou restart comum do PostgreSQL sem desistir. Se a métrica subiu, a indisponibilidade já passou disso: o registro não foi perdido silenciosamente (o payload bruto vai para uma linha de log marcada, para replay manual), mas essa métrica é o **único sinal automatizado** de que algo saiu do caminho automático e agora depende de intervenção humana.
 
 **`sbus_dlq_unconfirmed_oldest_age_seconds` subindo** significa que existe falha terminal aguardando confirmação do broker há tempo demais. O alerta [`recoverable-dlq.yml`](../ops/alerts/recoverable-dlq.yml) dispara enquanto houver item pendente antigo. Runbook: [`dlq-unconfirmed.md`](../ops/runbooks/dlq-unconfirmed.md).
 

@@ -20,9 +20,12 @@ import java.util.Map;
  * failed in the first place (see {@code DependencyPolicies}, which declares POSTGRESQL's
  * recoverable state as {@code KAFKA_RECORD}: the record itself, still on the topic, is meant to
  * be the recovery path). If persisting the failure *also* fails, every method here logs the raw
- * record at ERROR before rethrowing, so the consumer's {@code @ErrorStrategy} still retries (the
- * record is not acknowledged) but a human has the payload to replay by hand if Postgres stays
- * down long enough to exhaust the framework's own retry budget and the offset advances anyway.
+ * record at ERROR before rethrowing, so the consumer's {@code @ErrorStrategy} keeps retrying
+ * the whole record (it is never acknowledged) for its full budget — 900 attempts at 2s, 30
+ * minutes, calibrated to outlast a realistic Postgres failover or restart rather than give up on
+ * an ordinary blip. Only past that point does the offset advance and this stops being automatic:
+ * the {@code sbus_unrecoverable_message_total} metric fires, and the logged payload (base64) is
+ * a human's only remaining path to replay the record by hand.
  */
 @Singleton
 public class RetryPublisher {
