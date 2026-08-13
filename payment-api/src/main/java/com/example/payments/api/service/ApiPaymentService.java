@@ -7,6 +7,7 @@ import com.example.payments.api.client.SbusStatusResponse;
 import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
+import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.idempotency.IdempotencyFingerprint;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.idempotency.PublishState;
@@ -178,15 +179,31 @@ public class ApiPaymentService {
      * Status lookup with durable fallback: Redis first; if absent or not yet terminal,
      * consult the SBUS (Postgres-backed) so a finished result is never lost when the
      * Redis entry expired or was never written by this set of instances.
+     *
+     * <p>A Redis outage does not, by itself, turn into an error here: the SBUS fallback is
+     * still consulted, so a caller polling for a request whose Redis entry can't be read gets
+     * the durable answer instead of losing it to an infrastructure blip. Only when SBUS also
+     * has nothing (unknown request, or its own circuit is open) does the original Redis
+     * failure surface — as {@link com.example.payments.api.error.StoreUnavailableException},
+     * never as an empty result that the caller would read as "no such request" (RES-02/RES-03).
      */
     public Optional<StatusEntry> getStatus(String requestId) {
-        Optional<StatusEntry> local = store.get(requestId);
+        Optional<StatusEntry> local = Optional.empty();
+        StoreUnavailableException storeFailure = null;
+        try {
+            local = store.get(requestId);
+        } catch (StoreUnavailableException e) {
+            storeFailure = e;
+        }
         if (local.isPresent() && isTerminal(local.get().status())) {
             return local;
         }
         Optional<StatusEntry> durable = fromSbus(requestId);
         if (durable.isPresent()) {
             return durable;
+        }
+        if (storeFailure != null) {
+            throw storeFailure;
         }
         return local;
     }

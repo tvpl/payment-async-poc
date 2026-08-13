@@ -154,7 +154,7 @@ T7 → T8
 
 ---
 
-### T4: Preservar o fallback durável do SBUS no `getStatus`
+### T4: Preservar o fallback durável do SBUS no `getStatus` ✅
 
 **What**: Fazer `ApiPaymentService.getStatus` tratar a indisponibilidade do Redis como "não sei ainda" e seguir para o fallback do SBUS, propagando `StoreUnavailableException` só quando nenhum dos dois responde.
 **Where**: `payment-api/src/main/java/com/example/payments/api/service/ApiPaymentService.java`

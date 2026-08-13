@@ -1,11 +1,13 @@
 package com.example.payments.api.service;
 
+import com.example.payments.api.client.SbusStatusResponse;
 import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
+import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.idempotency.IdempotencyFingerprint;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.idempotency.PublishState;
@@ -285,5 +287,42 @@ class ApiPaymentServiceUnitTest {
         assertEquals("the-key", exception.idempotencyKey());
         assertEquals("original-request-id", exception.originalRequestId());
         verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    void getStatusFallsBackToSbusWhenRedisIsUnreachable() {
+        String requestId = "req-outage-1";
+        when(store.get(requestId)).thenThrow(new StoreUnavailableException("Failed to read status for " + requestId,
+                new RuntimeException("connection refused")));
+        when(sbusStatusGateway.getStatus(requestId)).thenReturn(Optional.of(
+                new SbusStatusResponse(requestId, "COMPLETED", null)));
+
+        Optional<StatusEntry> result = service.getStatus(requestId);
+
+        assertTrue(result.isPresent());
+        assertEquals(SimulationStatus.COMPLETED, result.get().status());
+    }
+
+    @Test
+    void getStatusFailsClosedWhenRedisIsUnreachableAndSbusHasNoAnswer() {
+        String requestId = "req-outage-2";
+        when(store.get(requestId)).thenThrow(new StoreUnavailableException("Failed to read status for " + requestId,
+                new RuntimeException("connection refused")));
+        when(sbusStatusGateway.getStatus(requestId)).thenReturn(Optional.empty());
+
+        assertThrows(StoreUnavailableException.class, () -> service.getStatus(requestId));
+    }
+
+    @Test
+    void getStatusStillWorksNormallyWhenRedisIsHealthy() {
+        String requestId = "req-healthy-1";
+        when(store.get(requestId)).thenReturn(
+                Optional.of(new StatusEntry(requestId, SimulationStatus.COMPLETED, null)));
+
+        Optional<StatusEntry> result = service.getStatus(requestId);
+
+        assertTrue(result.isPresent());
+        assertEquals(SimulationStatus.COMPLETED, result.get().status());
+        verify(sbusStatusGateway, never()).getStatus(anyString());
     }
 }
