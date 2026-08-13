@@ -128,7 +128,7 @@ T7 → T8
 
 ---
 
-### T3: Blindar `RedisStatusStore` contra falha do Lettuce
+### T3: Blindar `RedisStatusStore` contra falha do Lettuce ✅
 
 **What**: Envolver as 7 chamadas Lettuce (`save`, `get`, `reserve` ×2, `markPublishState`, `publishResponse`, `commands()`) para lançar `StoreUnavailableException` em vez de deixar a exceção do driver escapar.
 **Where**: `payment-api/src/main/java/com/example/payments/api/redis/RedisStatusStore.java`
