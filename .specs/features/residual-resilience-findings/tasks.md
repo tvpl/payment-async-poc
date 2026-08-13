@@ -181,12 +181,12 @@ T7 → T8
 
 ---
 
-### T5: Impedir que o consumer confirme offset após falha de escrita
+### T5: Fechar a lacuna de cobertura do caminho de falha do Redis no consumer ✅
 
-**What**: Garantir que `PaymentResponseConsumer` propague `StoreUnavailableException` em vez de engolir, para que o offset não avance e o resultado do pagamento não se perca.
-**Where**: `payment-api/src/main/java/com/example/payments/api/kafka/PaymentResponseConsumer.java`
+**What**: Ao ler `PaymentResponseConsumer.java` para implementar esta tarefa, descoberto que RES-05 já vale: `apply()` nunca engole exceção, `applyWithinBudget()` tenta e despacha para o DLQ, que propaga se falhar, e `SYNC_PER_RECORD` só comita quando `receive()` retorna normalmente. Não há bug — a lacuna é de teste: `PaymentResponseConsumerUnitTest` cobre o estágio de decode falhando (DLQ indisponível) mas nunca o estágio de apply falhando por `StoreUnavailableException` (Redis fora). Este SPEC_DEVIATION está registrado na tabela de Assumptions do spec.
+**Where**: `payment-api/src/test/java/com/example/payments/api/kafka/PaymentResponseConsumerUnitTest.java`
 **Depends on**: T3
-**Reuses**: padrão de rethrow de `payment-sbus/src/main/java/.../kafka/RetryPublisher.java`
+**Reuses**: padrão já existente em `aDlqThatCannotConfirmIsNeverTreatedAsAcknowledged`
 **Requirement**: RES-05
 
 **Tools**:
@@ -194,16 +194,16 @@ T7 → T8
 - Skill: NONE
 
 **Done when**:
-- [ ] Falha de escrita do status propaga (não há `catch` que engula)
-- [ ] Teste unitário prova que a exceção sai do handler do listener
-- [ ] Teste unitário prova que o caminho de sucesso continua não lançando
+- [ ] Teste prova: `StoreUnavailableException` no apply → esgota `maxAttempts` → despacha para o DLQ → `receive()` retorna normalmente (offset comita, resultado está seguro no DLQ)
+- [ ] Teste prova: `StoreUnavailableException` no apply + DLQ também falha → `receive()` propaga (offset não comita)
+- [ ] Nenhum código de produção alterado nesta tarefa
 - [ ] Gate check passa: `cd payment-api && ./gradlew test --no-daemon`
-- [ ] Test count: 128 + 2 novos = 130 testes passam
+- [ ] Test count: 73 + 2 novos = 75 testes unitários passam
 
 **Tests**: unit
 **Gate**: quick
 
-**Commit**: `fix(payment-api): never ack a response whose status write failed`
+**Commit**: `test(payment-api): cover the apply-stage Redis-outage path in the response consumer`
 
 ---
 
