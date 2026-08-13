@@ -102,7 +102,7 @@ T7 → T8
 
 ---
 
-### T2: Criar `StoreUnavailableExceptionHandler`
+### T2: Criar `StoreUnavailableExceptionHandler` ✅
 
 **What**: Handler que mapeia `StoreUnavailableException` para `503` + `application/problem+json`, com `Retry-After`, sem texto de infraestrutura no corpo.
 **Where**: `payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableExceptionHandler.java`
