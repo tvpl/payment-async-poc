@@ -103,21 +103,47 @@ O efeito combinado é que o gate de matriz de falhas reprova (`9/11`, `Done-when
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| RES-01 | P1: Falha fechada (POST → 503) | Tasks | In Tasks |
-| RES-02 | P1: GET usa o fallback durável do SBUS em vez de falhar | Tasks | Pending |
-| RES-03 | P1: GET → 503 quando nenhum store responde (nunca 404) | Tasks | Pending |
-| RES-04 | P1: Nenhum detalhe de infraestrutura no corpo | Tasks | Pending |
-| RES-05 | P1: Consumer não confirma offset em falha de escrita | Tasks | Pending |
-| RES-06 | P1: Recuperação sem reinício | Tasks | Pending |
-| RES-07 | P2: Setup do cenário aceita qualquer tópico terminal | Tasks | Pending |
-| RES-08 | P2: Falha do cenário identifica o estado terminal atingido | Tasks | Pending |
-| RES-09 | P3: Execução ao vivo 11/11 com evidência datada | Tasks | Pending |
+| RES-01 | P1: Falha fechada (POST → 503) | Tasks | Verified |
+| RES-02 | P1: GET usa o fallback durável do SBUS em vez de falhar | Tasks | Verified |
+| RES-03 | P1: GET → 503 quando nenhum store responde (nunca 404) | Tasks | Verified |
+| RES-04 | P1: Nenhum detalhe de infraestrutura no corpo | Tasks | Verified |
+| RES-05 | P1: Consumer não confirma offset em falha de escrita | Tasks | Verified (já correto — ver Assumptions) |
+| RES-06 | P1: Recuperação sem reinício | Tasks | Verified |
+| RES-07 | P2: Setup do cenário aceita qualquer tópico terminal | Tasks | Verified |
+| RES-08 | P2: Falha do cenário identifica o estado terminal atingido | Tasks | Verified |
+| RES-09 | P3: Execução ao vivo 11/11 com evidência datada | Tasks | Verified |
 
 **ID format:** `RES-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
 **Coverage:** 9 total, 9 mapeados para tarefas, 0 não mapeados
+
+---
+
+## Evidência da execução ao vivo (RES-09)
+
+`scripts/verify-workspace.sh payment-failures` — 2026-08-13, contra `payment-api` reconstruído com as correções T1–T6 e `payment-sbus`/`payment-core-mock`/sandbox já de pé:
+
+```
+PASS: duplicate-idempotency-key-cross-instance
+PASS: cross-instance-fleet-coordination
+PASS: due-retry-does-not-block-live-traffic
+PASS: outbox-crash-window-reclaim: reclaimed+republished row 200853 (PAY-05) without altering
+      the already-chosen terminal result (PAY-06, authorizationCode=253484)
+PASS: sbus-container-kill-mid-flight
+PASS: slow-core-backpressure
+PASS: poison-message-to-dlq
+PASS: kafka-unavailable-on-publish
+PASS: redis-unavailable-api: Redis outage failed closed with HTTP 503, no unhandled exception
+PASS: postgres-unavailable-sbus
+PASS: registry-unavailable
+
+payment-failures: 11/11 scenarios (floor is 10)
+verify-workspace: PASS (stage=payment-failures)
+```
+
+Os dois cenários que reprovavam antes desta feature (`outbox-crash-window-reclaim`, `redis-unavailable-api`) agora passam pelo motivo certo: o primeiro porque o setup já não depende do Core aprovar; o segundo porque `RedisStatusStore` agora falha fechado em vez de vazar a exceção do Lettuce.
 
 ---
 

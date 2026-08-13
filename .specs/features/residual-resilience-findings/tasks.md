@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/residual-resilience-findings/spec.md`
 **Design**: none — nenhuma decisão arquitetural nova; o alvo já está documentado em `design.md` §7.2 de `repository-segregation-production-hardening` e os padrões (`PublishFailedException` + handler, `AdmissionRedisOutageIT`) já existem no boundary.
-**Status**: In Progress
+**Status**: Done
 
 ---
 
@@ -259,7 +259,7 @@ T7 → T8
 
 ---
 
-### T8: Execução ao vivo da matriz e evidência datada
+### T8: Execução ao vivo da matriz e evidência datada ✅
 
 **What**: Rodar a matriz de falhas ao vivo com a stack de pé, atingir `11/11`, e registrar o resultado datado na traceability do spec.
 **Where**: `.specs/features/residual-resilience-findings/spec.md`

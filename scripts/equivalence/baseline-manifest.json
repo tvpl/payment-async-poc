@@ -5,9 +5,9 @@
     "migrations": 9,
     "schemas": 11,
     "scripts": 47,
-    "sources": 202,
-    "test_cases": 519,
-    "tests": 111,
+    "sources": 204,
+    "test_cases": 532,
+    "tests": 114,
     "topics": 8
   },
   "entries": [
@@ -423,7 +423,7 @@
       "category": "scripts",
       "id": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
       "path": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
-      "sha256": "7ca103c4c1c263ae4255539fcaebeb03af6235ae6a5aae8398b6f86fbb75f5ef"
+      "sha256": "08f263a035c00b80e76652d70d19000b2d1b0e98ed4e83c77b62e6af1d270a05"
     },
     {
       "category": "scripts",
@@ -1213,6 +1213,18 @@
     },
     {
       "category": "sources",
+      "id": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableException.java",
+      "path": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableException.java",
+      "sha256": "2fd8d870411fde91a7050750d91517ea8e20f70013ba9cac38113b9c329840f3"
+    },
+    {
+      "category": "sources",
+      "id": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableExceptionHandler.java",
+      "path": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableExceptionHandler.java",
+      "sha256": "1ca12903c410ee7f56c555f632628fffe06917071aa9bab83731f21072974cbf"
+    },
+    {
+      "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/error/ValidationExceptionHandler.java",
       "path": "payment-api/src/main/java/com/example/payments/api/error/ValidationExceptionHandler.java",
       "sha256": "13083144bdd78f295e4e3ae6e92f70eb2a9727b056499e799810fbc70dd0eedb"
@@ -1305,13 +1317,13 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/redis/RedisStatusStore.java",
       "path": "payment-api/src/main/java/com/example/payments/api/redis/RedisStatusStore.java",
-      "sha256": "f5f5b1c4e269d3056711bc14490d795cf7c377c7621d396ac7d02e63999ed838"
+      "sha256": "53ca6ddc209942b5751ae92829777908a586ec37a1e17dc02a9d1c68430c6c33"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/service/ApiPaymentService.java",
       "path": "payment-api/src/main/java/com/example/payments/api/service/ApiPaymentService.java",
-      "sha256": "62a91076a21ae94571e99cdafa48ee41b420f11829d3e14b1dfc904b8fde3fb7"
+      "sha256": "96c328a2e4101126b8dfd64b1b5b39ad1a883815027d3738587e355830077777"
     },
     {
       "category": "sources",
@@ -2089,6 +2101,12 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/RedisOutageFailClosedIT.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/RedisOutageFailClosedIT.java",
+      "sha256": "d804345495084de750cf6ee8f29d8cb88ff7bbdced5348232852961fd0f38d8e"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/SbusFallbackBudgetIT.java",
       "path": "payment-api/src/test/java/com/example/payments/api/SbusFallbackBudgetIT.java",
       "sha256": "25d9e945abe8c71dcc00d8412cc164f826b3b14f237cd7c6209dc083e7c22f9b"
@@ -2137,6 +2155,12 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/error/StoreUnavailableExceptionHandlerUnitTest.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/error/StoreUnavailableExceptionHandlerUnitTest.java",
+      "sha256": "cab65ba1e4826fa30b92f2a749b1b326f19d2394242307d0165523728bce80c4"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/idempotency/IdempotencyFingerprintUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/idempotency/IdempotencyFingerprintUnitTest.java",
       "sha256": "f6542b4c4e298c81968687ada3cfa87fdfe4f880bcfda4815eacc5e728e22201"
@@ -2145,7 +2169,7 @@
       "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/kafka/PaymentResponseConsumerUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/kafka/PaymentResponseConsumerUnitTest.java",
-      "sha256": "1f0a9af4b32d03b636430a13e0438ce4203dcb71174c18b4e6269974f2461f51"
+      "sha256": "e974624941661e83ff9d74722d48fbb95f7da5644bd0cf9ea09ebc2f349f4b54"
     },
     {
       "category": "tests",
@@ -2185,9 +2209,15 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/redis/RedisStatusStoreOutageIT.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/redis/RedisStatusStoreOutageIT.java",
+      "sha256": "76303f35b800bf75d235f04926e72e9ee1681733c6cebc53836866343f9035f2"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/service/ApiPaymentServiceUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/service/ApiPaymentServiceUnitTest.java",
-      "sha256": "148b536a9d414f3798dd32e66653c603d9fc9015ed28df7f43c7d6a20f8e3a37"
+      "sha256": "1655e763e2e8e359d6eefc241775c72ca92f76eb8b6bbfd068cdbb05c7f53b45"
     },
     {
       "category": "tests",
