@@ -24,8 +24,9 @@ matriz de segurança e management, idempotência contra Redis real, recuperaçã
 publicação com broker derrubado, orçamento do fallback contra um SBUS lento de verdade, poison/DLQ
 e outage de Redis no consumo, e admissão `202`/`429` por recurso e por tenant.
 
-Dois ITs param containers de propósito (`AdmissionRedisOutageIT`, `ResponseConsumerRedisOutageIT`,
-`PublishFailureIT`) e por isso vivem em classes próprias, com containers próprios.
+Quatro ITs param containers de propósito (`AdmissionRedisOutageIT`, `ResponseConsumerRedisOutageIT`,
+`RedisOutageFailClosedIT`, `PublishFailureIT`) e por isso vivem em classes próprias, com containers
+próprios.
 
 ## Documentação e imagem
 
