@@ -2,7 +2,9 @@
 
 ## Mutações admin (FTR-04)
 
-`FlagAdminService.put`/`delete` exigem um `actor` autenticado não vazio antes de qualquer chamada ao Redis (`requireActor`, curto-circuita sem tocar o store). Toda mutação aceita é CAS e audita before/after/ator/versão/resultado no mesmo `EVAL` Lua — não existe caminho para uma mutação sem auditoria correspondente. `FeatureAdminController` (no exemplo `feature-demo`) exige `ROLE_ADMIN` via `intercept-url-map` e lê a versão para um `delete` sem `?version=` explícito do store autoritativo (`FlagAdminService.currentVersion`), nunca do resolver cacheado — um bug real de constructor ambíguo que fazia esse valor voltar sempre `0` foi encontrado e corrigido durante o gate de T50 (ver `tasks.md`).
+`FlagAdminService.put`/`delete` exigem um `actor` autenticado não vazio antes de qualquer chamada ao Redis (`requireActor`, curto-circuita sem tocar o store). Toda mutação aceita é CAS e audita before/after/ator/versão/resultado no mesmo `EVAL` Lua — não existe caminho para uma mutação sem auditoria correspondente. `FeatureAdminController` (no exemplo `feature-demo`) exige `ROLE_ADMIN` via `intercept-url-map` e lê a versão para um `delete` sem `?version=` explícito do store autoritativo (`FlagAdminService.currentVersion`), nunca do resolver cacheado.
+
+A distinção entre store autoritativo e resolver cacheado não é cosmética: ler a versão do cache faria o CAS comparar contra um valor possivelmente obsoleto, transformando a proteção contra escrita concorrente em teatro. Um `delete` chegaria com uma versão que o operador nunca viu e sobrescreveria a mudança de um colega sem conflito aparente.
 
 ## Telemetria sem PII (FTR-05)
 

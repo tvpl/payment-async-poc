@@ -27,6 +27,10 @@ REQUIRED_MARKERS = {
 FORBIDDEN = ("project(':", 'project(":', "docker compose down -v",
              "payment-contracts/src", "payment-api/src", "payment-sbus/src",
              "async-redis-service/src", "payment-core-mock/src")
+# This boundary is consumed as a published Maven artifact, so its docs are read by people who
+# have no access to the workspace's own planning artefacts. A bare `tasks.md` link resolves to
+# nothing here, and a task id (T50) means nothing to them.
+PROCESS_ARTEFACT = re.compile(r"`tasks\.md`|\bT\d{2,3}\b")
 
 
 def validate(root: Path) -> list[str]:
@@ -48,6 +52,10 @@ def validate(root: Path) -> list[str]:
         for marker in FORBIDDEN:
             if marker in text:
                 errors.append(f"forbidden boundary reference {marker!r} in {relative}")
+        for match in PROCESS_ARTEFACT.finditer(text):
+            errors.append(f"internal process reference {match.group(0)!r} in {relative}: this "
+                          "boundary ships as a published library, so its docs must stand alone "
+                          "for a consumer who cannot see the workspace's task tracking")
     adr = root / "docs/adr/0001-nonproduction-example-startup-guard.md"
     if adr.is_file():
         text = adr.read_text(encoding="utf-8")
