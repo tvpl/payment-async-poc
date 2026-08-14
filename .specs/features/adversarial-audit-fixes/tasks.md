@@ -202,7 +202,7 @@ T23 → T24
 
 ---
 
-### T6: Tenant anônimo fixo na rota /v0
+### T6: Tenant anônimo fixo na rota /v0 ✅
 
 **What**: `ConcurrencyLimitFilter` usa `ANONYMOUS_TENANT` quando o path é `/v0/...` — `X-API-Key` arbitrária deixa de criar bucket novo por request.
 **Where**: `payment-api/src/main/java/com/example/payments/api/filter/ConcurrencyLimitFilter.java`
@@ -213,8 +213,8 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: rajada no /v0 com `X-API-Key` rotativa cai toda no mesmo bucket anônimo (429 no limite de tenant, não bypass)
-- [ ] Gate Full passa
+- [x] IT: rajada no /v0 com `X-API-Key` rotativa cai toda no mesmo bucket anônimo (429 no limite de tenant, não bypass)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

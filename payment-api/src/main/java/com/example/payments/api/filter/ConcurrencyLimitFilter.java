@@ -64,7 +64,18 @@ public class ConcurrencyLimitFilter implements HttpServerFilter {
         return chain.proceed(request);
     }
 
+    /**
+     * v0 is anonymous by design and not covered by {@code ApiKeyFilter}
+     * ({@code /v0/payment-simulations} is unauthenticated), so any {@code X-API-Key} it carries
+     * is unvalidated caller-supplied text. Fingerprinting it anyway would let a rotating key
+     * mint a fresh tenant bucket - starting with a full budget - on every request, bypassing
+     * the tenant budget entirely (AUD-05). Every v0 caller shares the fixed anonymous bucket
+     * regardless of what the header says.
+     */
     private static String tenant(HttpRequest<?> request) {
+        if (request.getPath().startsWith("/v0/")) {
+            return ANONYMOUS_TENANT;
+        }
         String credential = request.getHeaders().get("X-API-Key");
         if (credential == null || credential.isBlank()) {
             return ANONYMOUS_TENANT;

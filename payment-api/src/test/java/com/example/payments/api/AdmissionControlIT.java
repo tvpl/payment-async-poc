@@ -154,6 +154,43 @@ class AdmissionControlIT {
         }
     }
 
+    /**
+     * task_T6 (AUD-05): {@code ConcurrencyLimitFilter} used to fingerprint whatever
+     * {@code X-API-Key} a v0 caller supplied, even though v0 is unauthenticated and that
+     * header is never validated - a rotating key minted a brand-new tenant bucket per request,
+     * each starting with a full budget, bypassing admission control entirely. Every v0 caller
+     * must now land in the same fixed anonymous bucket regardless of the header.
+     */
+    @Test
+    void aBurstOnV0WithRotatingApiKeysStillLandsInTheSameAnonymousTenantBucket() {
+        // v0 callers here carry no eligible JWT, so a request that clears admission still 404s
+        // at the controller (see statusOfV0Attempt()'s own note below) - "admitted" therefore
+        // means "not rejected by the limiter (429)", the same convention every other v0 test in
+        // this class already uses.
+        int pastAdmission = 0;
+        for (int attempt = 0; attempt < RESOURCE_BUDGET + TENANT_BUDGET; attempt++) {
+            if (statusOfV0AttemptWithRotatingKey() != HttpStatus.TOO_MANY_REQUESTS) {
+                pastAdmission++;
+            }
+        }
+
+        org.junit.jupiter.api.Assertions.assertTrue(pastAdmission <= TENANT_BUDGET,
+                "rotating X-API-Key on /v0 must not mint a fresh tenant bucket per request; "
+                        + pastAdmission + " requests cleared admission, past the tenant budget of "
+                        + TENANT_BUDGET);
+    }
+
+    private HttpStatus statusOfV0AttemptWithRotatingKey() {
+        try {
+            return client.toBlocking().exchange(
+                    HttpRequest.POST("/v0/payment-simulations", REQUEST)
+                            .header("X-API-Key", UUID.randomUUID().toString())
+                            .header("Idempotency-Key", UUID.randomUUID().toString())).getStatus();
+        } catch (HttpClientResponseException e) {
+            return e.getStatus();
+        }
+    }
+
     @Test
     void theResourceBudgetCapsTheRouteAcrossTenants() {
         int admitted = 0;
