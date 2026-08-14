@@ -39,10 +39,17 @@
 
 ### AD-006 — Meta de capacidade e saturação
 
-- **Status:** active
+- **Status:** superseded by AD-007
 - **Date:** 2026-08-08
 - **Decision:** o gate alvo será 10.000 req/min por 15 minutos e spike de 20.000 req/min por 60 segundos; excesso terá `429`, `202` ou buffering limitado, nunca perda silenciosa aceita.
 - **Rationale:** transforma “milhares por minuto” em capacidade mensurável e trata limites downstream como restrição real.
+
+### AD-007 — Recalibração da meta de capacidade e saturação (supersede AD-006)
+
+- **Status:** active
+- **Date:** 2026-08-14
+- **Decision:** o gate alvo passa a ser 1.000 req/min sustentado por 15 minutos e spike de 2.000 req/min por 60 segundos, com latência média ≤ 300ms e p99 ≤ 10s (novo, não existia em AD-006). Admissão recalibrada: rota 20/s (era 200/s), tenant 10/s (era 50/s); o Core (`sbus.core.limit-for-period: 50`) fica inalterado, agora com 3× de folga em vez de ser o gargalo. Excesso continua `429`, `202` ou buffering limitado — nunca perda silenciosa aceita.
+- **Rationale:** decisão do usuário ("limite esperado esta alto, 10mil, pode ser 1000 por min") — o alvo de AD-006 estava alto demais para o propósito real do sistema. Junto com isso, a auditoria adversarial de 2026-08-13 invalidou o relatório CAP-02 vigente: ele media o rate limiter de um único tenant (50/s admitidos, 70% de 429), não capacidade do sistema, porque o k6 usava uma única API key. A recalibração da admissão e um gate honesto (k6 com ≥2 tenants, veredito reprova quando `429 > 1%` do steady) andam juntos — um alvo novo sem um gate honesto só trocaria o número errado por outro.
 
 ## Handoff
 

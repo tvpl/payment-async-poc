@@ -531,7 +531,7 @@ T23 → T24
 
 ---
 
-### T21: AD-007 + recalibração de configuração
+### T21: AD-007 + recalibração de configuração ✅
 
 **What**: Registrar AD-007 em `.specs/STATE.md` (supersede AD-006); `limit-for-period: 20`, `tenant-limit-for-period: 10` no YAML da API; docs de configuração/segurança/performance atualizados nas fronteiras tocadas.
 **Where**: `payment-api/src/main/resources/application.yml`
@@ -542,9 +542,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] AD-007 registrado com status active e AD-006 marcado superseded
-- [ ] Limites novos no YAML + docs; gates de docs passam
-- [ ] Gate Build passa
+- [x] AD-007 registrado com status active e AD-006 marcado superseded
+- [x] Limites novos no YAML + docs; gates de docs passam
+- [x] Gate Build passa
 
 **Tests**: none
 **Gate**: build

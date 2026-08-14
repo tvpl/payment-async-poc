@@ -89,8 +89,8 @@ payment:
       # RateLimitProperties (@ConfigurationProperties("payment.simulation.rate-limit")) —
       # this block must stay under `simulation`, not `response-consumer`, or every key
       # here silently falls back to the Java defaults and PAYMENT_API_INSTANCES goes inert.
-      limit-for-period: 200
-      tenant-limit-for-period: 50
+      limit-for-period: 20
+      tenant-limit-for-period: 10
       instances: ${PAYMENT_API_INSTANCES:1}
       refresh-period: 1s
   response-consumer:

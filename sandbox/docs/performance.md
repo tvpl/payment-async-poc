@@ -10,4 +10,4 @@ Para testes de carga do workspace:
 - registre versão das imagens, profiles, recursos do Docker e data do relatório;
 - não transforme resultados locais em claim de produção.
 
-A meta cross-boundary de 10.000 req/min e spike de 20.000 req/min pertence ao gate final das aplicações, não a esta infraestrutura isolada.
+A meta cross-boundary (AD-007, supersede AD-006) de 1.000 req/min e spike de 2.000 req/min pertence ao gate final das aplicações, não a esta infraestrutura isolada.
