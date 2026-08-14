@@ -56,12 +56,20 @@ public class PaymentSimulationService {
             return;
         }
 
-        // An idempotency-key replay with a FRESH requestId: the caller (payment-api) has already
-        // lost its own memory of the original mapping (its Redis idempotency-ttl can expire well
-        // before this table's own window) and is retrying with a brand new requestId carrying the
-        // same key. Resolve it against the original simulation instead of silently dropping it —
-        // see PaymentPersistenceService#findReplayTarget's javadoc for the failure this replaces.
-        Optional<PaymentSbusMessage> replayTarget = persistence.findReplayTarget(idempotencyKey, env.requestId());
+        // Canonical fingerprint of THIS payload (AUD-01) — computed from what the SBUS actually
+        // received, never trusted from an API-asserted header, since this decides whether a
+        // request reuses another operation's result.
+        String fingerprint = IdempotencyFingerprint.of(env.payload());
+
+        // An idempotency-key replay with a FRESH requestId AND a MATCHING fingerprint: the caller
+        // (payment-api) has already lost its own memory of the original mapping (its Redis
+        // idempotency-ttl can expire well before this table's own window) and is retrying with a
+        // brand new requestId carrying the same key. Resolve it against the original simulation
+        // instead of silently dropping it — see PaymentPersistenceService#findReplayTarget's
+        // javadoc for the failure this replaces. A DIVERGENT fingerprint (or no match at all) is
+        // not a replay — it falls through and is processed as its own new simulation below.
+        Optional<PaymentSbusMessage> replayTarget =
+                persistence.findReplayTarget(idempotencyKey, env.requestId(), fingerprint);
         if (replayTarget.isPresent()) {
             resolveReplay(env, idempotencyKey, replayTarget.get());
             return;
@@ -77,7 +85,7 @@ public class PaymentSimulationService {
         byte[] commandBytes = avroSerde.serialize(Topics.CORE_COMMAND, AvroMapper.toAvroCommand(command));
         String headers = json.toJson(HeaderMap.from(command, traceparent));
 
-        persistence.persistRequested(env, idempotencyKey, simulationId,
+        persistence.persistRequested(env, idempotencyKey, simulationId, fingerprint,
                 EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND, Topics.CORE_COMMAND, commandBytes, headers);
     }
 

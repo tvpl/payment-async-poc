@@ -22,6 +22,13 @@ public class IdempotencyRecord {
     private String requestId;
     private String status;
 
+    /**
+     * Canonical fingerprint of the request payload (AUD-01), nullable — rows written before
+     * this column existed stay null and are treated as non-replay targets by
+     * {@code PaymentPersistenceService#findReplayTarget}.
+     */
+    private String fingerprint;
+
     @MappedProperty(type = DataType.JSON)
     private String responsePayload;
 
@@ -61,6 +68,14 @@ public class IdempotencyRecord {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getFingerprint() {
+        return fingerprint;
+    }
+
+    public void setFingerprint(String fingerprint) {
+        this.fingerprint = fingerprint;
     }
 
     public String getResponsePayload() {

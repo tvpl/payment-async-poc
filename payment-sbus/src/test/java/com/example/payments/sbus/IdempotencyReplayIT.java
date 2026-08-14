@@ -146,9 +146,96 @@ class IdempotencyReplayIT {
         assertEquals(1, outboxCountForKey(replayRequestId));
     }
 
+    /**
+     * task_T10 (AUD-01): a replay with the SAME idempotency key but a DIFFERENT payload used to
+     * be resolved by key alone — the second, genuinely different operation got the original's
+     * result copied onto it (a wrong-value bug: the caller asked to simulate one payment and
+     * received another's outcome). The fingerprint gate means a divergent payload is not a
+     * replay at all; it must be processed as its own new simulation, all the way to its own
+     * Core round-trip and its own result.
+     */
+    @Test
+    void sameKeyWithDivergentPayloadProcessesAsANewSimulationInsteadOfCopyingTheOriginalsResult() throws Exception {
+        String idempotencyKey = "idem-" + UUID.randomUUID();
+        String originalRequestId = UUID.randomUUID().toString();
+        String divergentRequestId = UUID.randomUUID().toString();
+
+        var originalEnv = requestedEnvelope(originalRequestId, idempotencyKey);
+        service.handleRequested(originalEnv, idempotencyKey, null);
+        PaymentSbusMessage inFlight = messages.findByRequestId(originalRequestId).orElseThrow();
+        service.handleCoreResponse(coreResponseEnvelope(originalEnv, inFlight.getSimulationId(), true));
+        PaymentSbusMessage original = messages.findByRequestId(originalRequestId).orElseThrow();
+        assertEquals(SbusMessageStatus.COMPLETED, original.getStatus());
+
+        // Same idempotency key, but a genuinely different payload (amount differs) — a divergent
+        // fingerprint, not a replay.
+        var divergentEnv = requestedEnvelope(divergentRequestId, idempotencyKey, new BigDecimal("999.00"));
+        service.handleRequested(divergentEnv, idempotencyKey, null);
+
+        PaymentSbusMessage divergent = messages.findByRequestId(divergentRequestId).orElseThrow(
+                () -> new AssertionError("divergent-payload request was dropped instead of being processed as new"));
+        assertNotEquals(original.getSimulationId(), divergent.getSimulationId(),
+                "a divergent payload must get its own simulation, not reuse the original's");
+        assertEquals(SbusMessageStatus.PROCESSING, divergent.getStatus(),
+                "it must go through its own Core round-trip, not copy the original's terminal result");
+
+        // Finalize it with a DIFFERENT outcome than the original to prove the result is genuinely
+        // its own, not a copy.
+        service.handleCoreResponse(coreResponseEnvelope(divergentEnv, divergent.getSimulationId(), false));
+        PaymentSbusMessage divergentFinal = messages.findByRequestId(divergentRequestId).orElseThrow();
+        assertEquals(SbusMessageStatus.FAILED, divergentFinal.getStatus());
+        assertNotEquals(original.getResult(), divergentFinal.getResult());
+        // Its own outbox trail too: one core.command row plus its own final event, same shape as
+        // any brand-new simulation — not the single "final event only" shape a real replay gets.
+        assertEquals(2, outboxCountForKey(divergentRequestId));
+    }
+
+    /**
+     * task_T10 (AUD-01): a row written before the fingerprint column existed has
+     * {@code fingerprint IS NULL}. It must never be treated as a replay target — there is no
+     * fingerprint to compare against, so honesty requires "not a replay", not "assume it matches".
+     */
+    @Test
+    void legacyRecordWithNullFingerprintIsTreatedAsNonReplay() throws Exception {
+        String idempotencyKey = "idem-" + UUID.randomUUID();
+        String legacyRequestId = UUID.randomUUID().toString();
+        String freshRequestId = UUID.randomUUID().toString();
+
+        var legacyEnv = requestedEnvelope(legacyRequestId, idempotencyKey);
+        service.handleRequested(legacyEnv, idempotencyKey, null);
+        PaymentSbusMessage legacyInFlight = messages.findByRequestId(legacyRequestId).orElseThrow();
+        service.handleCoreResponse(coreResponseEnvelope(legacyEnv, legacyInFlight.getSimulationId(), true));
+        clearFingerprint(idempotencyKey);
+
+        var freshEnv = requestedEnvelope(freshRequestId, idempotencyKey);
+        service.handleRequested(freshEnv, idempotencyKey, null);
+
+        PaymentSbusMessage fresh = messages.findByRequestId(freshRequestId).orElseThrow(
+                () -> new AssertionError("request against a null-fingerprint legacy row was dropped"));
+        PaymentSbusMessage legacy = messages.findByRequestId(legacyRequestId).orElseThrow();
+        assertNotEquals(legacy.getSimulationId(), fresh.getSimulationId(),
+                "a null-fingerprint legacy row must never be treated as a replay target");
+        assertEquals(SbusMessageStatus.PROCESSING, fresh.getStatus());
+    }
+
+    private void clearFingerprint(String idempotencyKey) throws Exception {
+        try (var connection = DriverManager.getConnection(
+                     POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.prepareStatement(
+                     "UPDATE idempotency_record SET fingerprint = NULL WHERE idempotency_key = ?")) {
+            statement.setString(1, idempotencyKey);
+            statement.executeUpdate();
+        }
+    }
+
     private static EventEnvelope<PaymentSimulationRequestPayload> requestedEnvelope(String requestId, String idempotencyKey) {
+        return requestedEnvelope(requestId, idempotencyKey, new BigDecimal("50.00"));
+    }
+
+    private static EventEnvelope<PaymentSimulationRequestPayload> requestedEnvelope(
+            String requestId, String idempotencyKey, BigDecimal amount) {
         var payload = new PaymentSimulationRequestPayload(
-                "MERCHANT-001", new BigDecimal("50.00"), "BRL", "CREDIT_CARD", "VISA", 1, "AUTHORIZE_AND_CAPTURE");
+                "MERCHANT-001", amount, "BRL", "CREDIT_CARD", "VISA", 1, "AUTHORIZE_AND_CAPTURE");
         return EventEnvelope.create(EventTypes.PAYMENT_SIMULATION_REQUESTED,
                 requestId, UUID.randomUUID().toString(), requestId, "trace-" + requestId, Sources.API, payload);
     }

@@ -290,7 +290,7 @@ T23 → T24
 
 ---
 
-### T10: Fingerprint no idempotency_record do SBUS
+### T10: Fingerprint no idempotency_record do SBUS ✅
 
 **What**: Migration `V10` (coluna `fingerprint` nullable); `persistRequested` grava fingerprint canônico calculado do payload; `findReplayTarget` compara — divergente ou legado-null ⇒ não é replay, simulação nova (design §5).
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentPersistenceService.java`
@@ -301,10 +301,10 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: mesma chave + payload divergente após a janela da API → simulação NOVA com resultado próprio (o cenário de valor errado do F1)
-- [ ] IT: mesma chave + payload idêntico → replay como hoje
-- [ ] IT: linha legada com fingerprint null → tratada como não-replay
-- [ ] Gate Full passa
+- [x] IT: mesma chave + payload divergente após a janela da API → simulação NOVA com resultado próprio (o cenário de valor errado do F1)
+- [x] IT: mesma chave + payload idêntico → replay como hoje
+- [x] IT: linha legada com fingerprint null → tratada como não-replay
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

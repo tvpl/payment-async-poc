@@ -63,13 +63,22 @@ public class PaymentPersistenceService {
      * event, ever, for the new requestId — a silent black hole. Returns the ORIGINAL message
      * this new request is a replay of, so the caller can resolve it (reusing its simulationId
      * and, if already terminal, its result) instead of starting a disconnected simulation.
+     *
+     * <p>The stored record's fingerprint (AUD-01) must match {@code currentFingerprint} for this
+     * to count as a replay: an {@code Idempotency-Key} dedupes identical operations, not any two
+     * operations that happen to share a key. A divergent fingerprint — or a legacy record whose
+     * fingerprint predates this column (null) — means "not a replay"; the caller processes the
+     * request as a brand-new simulation instead of copying another operation's result.
      */
-    public Optional<PaymentSbusMessage> findReplayTarget(String idempotencyKey, String currentRequestId) {
+    public Optional<PaymentSbusMessage> findReplayTarget(String idempotencyKey, String currentRequestId,
+                                                          String currentFingerprint) {
         if (idempotencyKey == null) {
             return Optional.empty();
         }
         return idempotencyRepository.findByIdempotencyKey(idempotencyKey)
                 .filter(record -> !record.getRequestId().equals(currentRequestId))
+                .filter(record -> record.getFingerprint() != null
+                        && record.getFingerprint().equals(currentFingerprint))
                 .flatMap(record -> messageRepository.findByRequestId(record.getRequestId()));
     }
 
@@ -131,16 +140,26 @@ public class PaymentPersistenceService {
 
     @Transactional
     public void persistRequested(EventEnvelope<PaymentSimulationRequestPayload> env,
-                                 String idempotencyKey, String simulationId,
+                                 String idempotencyKey, String simulationId, String fingerprint,
                                  String eventType, String topic, byte[] commandBytes, String headers) {
         // Authoritative idempotency inside the tx (request_id UNIQUE is the backstop).
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
             return;
         }
-        if (idempotencyKey != null && idempotencyRepository.existsByIdempotencyKey(idempotencyKey)) {
+        Optional<IdempotencyRecord> existingKeyRecord = idempotencyKey == null
+                ? Optional.empty() : idempotencyRepository.findByIdempotencyKey(idempotencyKey);
+        if (existingKeyRecord.isPresent()
+                && fingerprint.equals(existingKeyRecord.get().getFingerprint())) {
+            // The SAME operation raced ahead of us between findReplayTarget's read and this
+            // transaction: another in-flight request already claimed idempotencyKey -> requestId
+            // for this exact fingerprint. Drop — that other transaction's row is authoritative.
             LOG.info("Duplicate idempotencyKey={} ignored requestId={}", idempotencyKey, env.requestId());
             return;
         }
+        // existingKeyRecord present with a DIFFERENT (or legacy-null) fingerprint is not this
+        // case: idempotencyKey is unique, so we cannot insert a second idempotency_record row for
+        // it, but the message itself still gets processed as its own new, independent simulation
+        // (AUD-01) — it is simply not tracked for future replay dedup under this key.
 
         PaymentSbusMessage message = new PaymentSbusMessage();
         message.setRequestId(env.requestId());
@@ -152,11 +171,12 @@ public class PaymentPersistenceService {
         message.setPayload(json.toJson(env.payload()));
         messageRepository.save(message);
 
-        if (idempotencyKey != null) {
+        if (idempotencyKey != null && existingKeyRecord.isEmpty()) {
             IdempotencyRecord record = new IdempotencyRecord();
             record.setIdempotencyKey(idempotencyKey);
             record.setRequestId(env.requestId());
             record.setStatus(SbusMessageStatus.PROCESSING.name());
+            record.setFingerprint(fingerprint);
             idempotencyRepository.save(record);
         }
 
