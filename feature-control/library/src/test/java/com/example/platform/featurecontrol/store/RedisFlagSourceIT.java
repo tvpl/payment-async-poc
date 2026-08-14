@@ -252,6 +252,46 @@ class RedisFlagSourceIT {
                 "once the backoff window elapses, the next read must attempt Redis again");
     }
 
+    @Test
+    void invalidationDuringAnInFlightRefreshIsNotLostToTheStaleWrite() throws InterruptedException {
+        // AUD-26: a refresh() reads Redis, then (later) writes the cache. If an invalidate() lands in
+        // that gap -- e.g. triggered by a concurrent admin mutation's pub/sub signal -- the refresh's
+        // now-stale result must not overwrite the cache after the invalidation.
+        seed(true); // the value in place when the in-flight refresh below starts reading
+
+        CountDownLatch readCompleted = new CountDownLatch(1);
+        CountDownLatch releaseRead = new CountDownLatch(1);
+        FlagKeyReader gatedReader = key -> {
+            String value = connection.sync().get(key); // real Redis read, captures the value now
+            readCompleted.countDown();
+            try {
+                releaseRead.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException ignored) {
+            }
+            return value;
+        };
+        RedisFlagSource gatedSource = new RedisFlagSource(gatedReader, objectMapper, settings);
+
+        Thread refreshThread = new Thread(() -> gatedSource.find(flagName));
+        refreshThread.start();
+        assertTrue(readCompleted.await(5, TimeUnit.SECONDS),
+                "the in-flight refresh must have completed its Redis read before we race it");
+
+        // A concurrent admin mutation lands (new value) and its invalidation signal arrives WHILE the
+        // in-flight refresh above is still holding its now-stale read.
+        seed(false);
+        gatedSource.invalidate(flagName);
+        releaseRead.countDown();
+        refreshThread.join(5_000);
+
+        assertTrue(gatedSource.ageOf(flagName).isEmpty(),
+                "the stale in-flight refresh must not be written to the cache after the invalidation");
+
+        FlagDefinition afterward = gatedSource.find(flagName).orElseThrow();
+        assertFalse(afterward.enabled(),
+                "the next read must see the real post-invalidation value, not the raced stale one");
+    }
+
     /** Real Redis I/O for the success path, with a deterministic on/off failure switch and a call counter. */
     private static final class CountingFlagKeyReader implements FlagKeyReader {
         private final StatefulRedisConnection<String, String> connection;

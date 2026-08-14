@@ -158,7 +158,7 @@ T23 → T24
 
 ---
 
-### T4: Auditoria noop + guarda de geração no cache
+### T4: Auditoria noop + guarda de geração no cache ✅
 
 **What**: `DELETE_LUA` de flag inexistente audita `result: "noop"`; `refresh()` só assenta no cache se nenhuma invalidação chegou durante a leitura (contador de geração por chave).
 **Where**: `feature-control/library/src/main/java/com/example/platform/featurecontrol/store/VersionedFlagStore.java`
@@ -169,9 +169,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: delete de inexistente → stream de auditoria registra `noop`
-- [ ] IT: invalidação durante refresh em andamento não é perdida (o valor pós-escrita vence)
-- [ ] Gate Full passa
+- [x] IT: delete de inexistente → stream de auditoria registra `noop`
+- [x] IT: invalidação durante refresh em andamento não é perdida (o valor pós-escrita vence)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

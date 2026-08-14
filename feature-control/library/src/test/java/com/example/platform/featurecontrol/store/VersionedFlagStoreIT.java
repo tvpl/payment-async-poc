@@ -183,7 +183,22 @@ class VersionedFlagStoreIT {
         assertEquals(0L, result);
         // Still atomically audited: a delete-of-nothing is still a real, evidenced admin action.
         assertEquals(1, auditEntries().size());
-        assertEquals("delete", auditEntries().get(0).getBody().get("action"));
+        Map<String, String> body = auditEntries().get(0).getBody();
+        assertEquals("delete", body.get("action"));
+        // AUD-21: deleting nothing is not a successful mutation -- the audit must say so.
+        assertEquals("noop", body.get("result"));
+    }
+
+    @Test
+    void deleteOfAnExistingFlagStillAuditsResultOk() {
+        FlagDefinition v1 = new FlagDefinition(flagName, FlagType.BOOLEAN, true, 0, null, null, null, "on", "off", 1, null);
+        store.put(flagName, 0, json(v1), "alice");
+
+        store.delete(flagName, 1, "alice");
+
+        Map<String, String> body = auditEntries().get(1).getBody();
+        assertEquals("delete", body.get("action"));
+        assertEquals("ok", body.get("result"), "a delete that actually removed a flag must still audit as 'ok'");
     }
 
     @Test

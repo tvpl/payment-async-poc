@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Dynamic {@link FlagSource} backed by Redis, so a flag can be flipped at runtime across all 30+
@@ -41,6 +42,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * jittered by {@code cache-ttl-jitter}); reads within that window serve the stale policy directly from
  * the cache entry, without acquiring the lock or calling Redis again.
  *
+ * <p><strong>Invalidation-safe refresh (AUD-26):</strong> {@link #invalidate} can run concurrently with
+ * an in-flight {@link #refresh} for the same key (it doesn't take the single-flight lock). Without a
+ * guard, a refresh that started before an admin mutation invalidated the cache could still win the
+ * race and write its now-stale value back after the invalidation, silently reverting the mutation for
+ * up to a full {@code cache-ttl}. A per-key generation counter, bumped by every invalidation, closes
+ * that window: a refresh only commits its result to the cache if no invalidation happened since it
+ * started.
+ *
  * <p>Only active when a {@link RedisClient} bean is present and {@code platform.features.redis-enabled}
  * is not {@code false}.
  */
@@ -60,6 +69,10 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
     private final ConcurrentHashMap<String, Cached> cache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Object> refreshLocks = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> failureBackoffUntilMillis = new ConcurrentHashMap<>();
+    // AUD-26: bumped by invalidate()/invalidateAll() so an in-flight refresh() can detect that its
+    // result is stale before writing it back into the cache.
+    private final ConcurrentHashMap<String, Long> generation = new ConcurrentHashMap<>();
+    private final AtomicLong globalGeneration = new AtomicLong();
     private final Random jitterRandom = new Random();
 
     public RedisFlagSource(FlagKeyReader redis,
@@ -137,6 +150,11 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
     }
 
     private LookupResult refresh(String name) {
+        // AUD-26: snapshot the generation before touching Redis. If invalidate()/invalidateAll() bumps
+        // it while this read is in flight, the read below is racing a newer truth and must not
+        // overwrite it once it comes back.
+        long keyGenAtStart = generation.getOrDefault(name, 0L);
+        long globalGenAtStart = globalGeneration.get();
         try {
             String json = redis.get(settings.getKeyPrefix() + name);
             FlagDefinition definition = json == null
@@ -145,8 +163,10 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
             long now = System.currentTimeMillis();
             long ttlMillis = CacheJitter.jittered(
                     settings.getCacheTtl().toMillis(), settings.getCacheTtlJitter(), jitterRandom);
-            cache.put(name, new Cached(definition, now, now + ttlMillis));
-            failureBackoffUntilMillis.remove(name); // recovered: next expiry will hit Redis again promptly
+            if (generation.getOrDefault(name, 0L) == keyGenAtStart && globalGeneration.get() == globalGenAtStart) {
+                cache.put(name, new Cached(definition, now, now + ttlMillis));
+                failureBackoffUntilMillis.remove(name); // recovered: next expiry will hit Redis again promptly
+            }
             return LookupResult.of(definition);
         } catch (Exception e) {
             LOG.debug("Redis flag lookup failed for {} ({}); applying stale policy", name, e.getMessage());
@@ -172,11 +192,13 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
 
     /** Drops the in-process cache entry so the next read reflects a just-written value immediately. */
     public void invalidate(String name) {
+        generation.merge(name, 1L, Long::sum);
         cache.remove(name);
     }
 
     /** Drops the entire cache (used on a wildcard change signal). */
     public void invalidateAll() {
+        globalGeneration.incrementAndGet();
         cache.clear();
     }
 }
