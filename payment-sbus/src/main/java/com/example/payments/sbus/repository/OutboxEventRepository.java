@@ -76,15 +76,23 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     int releaseClaim(long id, UUID claimToken, String status, Instant nextAttemptAt);
 
-    /** Reclaims rows stuck IN_PROGRESS to their normal or DLQ pending queue. */
+    /**
+     * Locks a bounded batch of rows stuck IN_PROGRESS past their claim lease, for
+     * {@code OutboxReaper} to reclaim one by one — each reclaim goes through
+     * {@code OutboxClaimService#markFailure} exactly like a real publish failure would (AUD-08:
+     * {@code attempts} incremented, backoff applied, exhaustion routes to the DLQ), instead of a
+     * blind reset that let a permanently-stuck row loop hot forever. {@code FOR UPDATE SKIP
+     * LOCKED} lets multiple SBUS instances reclaim concurrently without stepping on each other,
+     * same discipline as {@link #lockPendingBatch}.
+     */
     @Query(value = """
-            UPDATE outbox_event
-            SET status = CASE WHEN topic = 'payment.simulation.dlq'
-                              THEN 'DLQ_PENDING' ELSE 'PENDING' END,
-                claimed_at = NULL, claim_token = NULL
+            SELECT * FROM outbox_event
             WHERE status = 'IN_PROGRESS' AND claimed_at < :threshold
+            ORDER BY claimed_at
+            LIMIT :limit
+            FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
-    int reclaimStuck(Instant threshold);
+    List<OutboxEvent> findStuckBatch(Instant threshold, int limit);
 
     /** Housekeeping: purge successfully published rows older than the retention window. */
     @Query(value = """

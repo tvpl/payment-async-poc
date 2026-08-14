@@ -164,6 +164,10 @@ class RecoverableDeadLetterIT {
                 json.fromJson(claimed.getHeaders(), Map.class));
         ageClaim(result.deduplicationKey());
         reaper.reclaim();
+        // task_T13 (AUD-08): the reclaim above now counts as a failed attempt and applies
+        // backoff (next_attempt_at moves into the future) instead of leaving the row
+        // immediately due again — makeDue mirrors waiting out that backoff window.
+        makeDue(result.deduplicationKey());
         assertEquals(1, dispatcher(publisher).dispatchBatch());
 
         assertEquals("DLQ_PUBLISHED", row(result.deduplicationKey()).status());
@@ -208,6 +212,8 @@ class RecoverableDeadLetterIT {
         OutboxEvent ownerA = claims.claimBatch().getFirst();
         ageClaim(scheduled.deduplicationKey());
         reaper.reclaim();
+        // task_T13 (AUD-08): reclaim now applies backoff before the row is due again.
+        makeDue(scheduled.deduplicationKey());
         OutboxEvent ownerB = claims.claimBatch().getFirst();
 
         assertNotEquals(ownerA.getClaimToken(), ownerB.getClaimToken());
@@ -292,6 +298,45 @@ class RecoverableDeadLetterIT {
         assertEquals("DLQ_PENDING", row.status());
         assertEquals(Topics.DLQ, row.topic());
         assertFalse("FAILED".equals(row.status()));
+    }
+
+    /**
+     * task_T13 (AUD-08): the reaper's UPDATE used to be a blind {@code claimed_at = NULL} reset
+     * with no bookkeeping — a row that's always mid-flight (its own publisher instance keeps
+     * crashing, or dying, before it ever completes) got reclaimed, re-claimed, stuck again,
+     * reclaimed again, forever, at full speed with no backoff. Each reclaim here now counts as a
+     * failed attempt with backoff (max-attempts=2 in this file's properties()) — the second
+     * reclaim must exhaust it and route the row to the DLQ, exactly like a real publish failure
+     * would, instead of looping.
+     */
+    @Test
+    void aRowThatIsAlwaysStuckWhenReapedAccumulatesAttemptsAndEndsAtTheDlqInsteadOfLoopingForever()
+            throws Exception {
+        OutboxEvent event = pendingEvent("always-stuck", Topics.CORE_COMMAND);
+        repository.save(event);
+
+        // First claim, then reaped while still mid-flight: attempts 0 -> 1, under max-attempts
+        // (2) — backs off and stays PENDING, not DLQ yet.
+        claims.claimBatch();
+        ageClaim("always-stuck");
+        assertEquals(1, reaper.reclaim());
+        Row afterFirstReclaim = row("always-stuck");
+        assertEquals("PENDING", afterFirstReclaim.status());
+        assertEquals(Topics.CORE_COMMAND, afterFirstReclaim.topic());
+        assertEquals(1, afterFirstReclaim.attempts());
+        makeDue("always-stuck");
+
+        // Claimed again, reaped again while still mid-flight: attempts 1 -> 2, exhausts
+        // max-attempts — the row that would otherwise loop hot forever routes to the DLQ.
+        claims.claimBatch();
+        ageClaim("always-stuck");
+        assertEquals(1, reaper.reclaim());
+        Row afterSecondReclaim = row("always-stuck");
+        assertEquals("DLQ_PENDING", afterSecondReclaim.status());
+        assertEquals(Topics.DLQ, afterSecondReclaim.topic());
+        assertEquals(2, afterSecondReclaim.attempts());
+        Map<?, ?> dlqHeaders = json.fromJson(afterSecondReclaim.headers(), Map.class);
+        assertEquals("outbox-reaper", dlqHeaders.get("x-dlq-stage"));
     }
 
     private OutboxDispatcher dispatcher(KafkaPublisher publisher) {

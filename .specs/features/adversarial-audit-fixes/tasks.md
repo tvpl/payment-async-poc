@@ -356,7 +356,7 @@ T23 → T24
 
 ---
 
-### T13: Reaper com attempts, backoff e LIMIT
+### T13: Reaper com attempts, backoff e LIMIT ✅
 
 **What**: O UPDATE do reaper passa a `attempts = attempts + 1`, `next_attempt_at = now + backoff(attempts)` e `LIMIT` em lote — linha sempre-reclamada alcança `max-attempts` e DLQ em vez de loop quente.
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/repository/OutboxEventRepository.java`
@@ -367,8 +367,8 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: linha cujo publisher morre repetidamente acumula attempts pelo reaper e termina `DLQ_PENDING` (hoje: loop infinito sem backoff)
-- [ ] Gate Full passa
+- [x] IT: linha cujo publisher morre repetidamente acumula attempts pelo reaper e termina `DLQ_PENDING` (hoje: loop infinito sem backoff)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full
