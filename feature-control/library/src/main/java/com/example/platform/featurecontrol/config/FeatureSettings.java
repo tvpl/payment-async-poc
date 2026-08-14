@@ -16,6 +16,11 @@ import java.time.Duration;
  *       many flags don't all expire in lockstep and thunder-herd Redis at once (FTR-02).</li>
  *   <li>{@code max-stale} — the longest a last-known-good value may keep being served once Redis
  *       stops answering; beyond this, {@code stale-fallback} applies (FTR-02).</li>
+ *   <li>{@code failure-backoff} — how long, per key, a failed Redis read is remembered so subsequent
+ *       reads serve the stale policy directly without acquiring the single-flight lock or touching
+ *       Redis again; jittered by {@code cache-ttl-jitter}. Bounds Redis traffic during a sustained
+ *       outage to roughly one attempt per key per window instead of every waiting thread paying a
+ *       full command timeout in series (AUD-14).</li>
  *   <li>{@code stale-fallback} — what {@link com.example.platform.featurecontrol.store.RedisFlagSource}
  *       does once {@code max-stale} is exceeded (or nothing was ever fetched): defer to the YAML
  *       baseline, or force the flag off (FTR-02).</li>
@@ -38,6 +43,7 @@ public class FeatureSettings {
     private double cacheTtlJitter = 0.1;
     private Duration maxStale = Duration.ofMinutes(5);
     private StaleFallback staleFallback = StaleFallback.BASELINE;
+    private Duration failureBackoff = Duration.ofSeconds(1);
     private String keyPrefix = "feature:";
     private boolean masterEnabled = true;
     private Duration convergenceAlertThreshold = Duration.ofSeconds(2);
@@ -92,6 +98,14 @@ public class FeatureSettings {
 
     public void setStaleFallback(StaleFallback staleFallback) {
         this.staleFallback = staleFallback;
+    }
+
+    public Duration getFailureBackoff() {
+        return failureBackoff;
+    }
+
+    public void setFailureBackoff(Duration failureBackoff) {
+        this.failureBackoff = failureBackoff;
     }
 
     public String getKeyPrefix() {

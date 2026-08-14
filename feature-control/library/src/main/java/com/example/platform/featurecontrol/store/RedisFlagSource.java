@@ -34,6 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * same key at once, only one of them actually talks to Redis; the rest wait for and reuse that
  * result, instead of stampeding Redis with duplicate lookups.
  *
+ * <p><strong>Failure backoff (AUD-14):</strong> single-flight alone doesn't bound Redis traffic during
+ * a <em>sustained</em> outage — once a refresh fails, the cache entry stays expired, so every thread
+ * queued on the single-flight lock re-attempts Redis in turn, each paying a full command timeout in
+ * series. A failed refresh instead records a per-key backoff deadline ({@code failure-backoff},
+ * jittered by {@code cache-ttl-jitter}); reads within that window serve the stale policy directly from
+ * the cache entry, without acquiring the lock or calling Redis again.
+ *
  * <p>Only active when a {@link RedisClient} bean is present and {@code platform.features.redis-enabled}
  * is not {@code false}.
  */
@@ -52,6 +59,7 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
     private final FeatureSettings settings;
     private final ConcurrentHashMap<String, Cached> cache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Object> refreshLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> failureBackoffUntilMillis = new ConcurrentHashMap<>();
     private final Random jitterRandom = new Random();
 
     public RedisFlagSource(FlagKeyReader redis,
@@ -85,13 +93,25 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
             return LookupResult.of(fresh.definition());
         }
 
+        // AUD-14: a sustained outage keeps the cache entry expired, so without this check every
+        // thread that queues on the single-flight lock below would still re-attempt Redis in turn,
+        // each paying a full command timeout in series. Within the backoff window, skip the lock and
+        // Redis entirely and serve the stale policy straight from whatever is cached right now.
+        if (inFailureBackoff(name, now)) {
+            return LookupResult.unavailable(staleFor(name, now));
+        }
+
         // Single-flight: only the first thread to see an expired/missing entry talks to Redis; any
         // concurrent caller for the same key blocks here and then reuses that thread's result.
         Object lock = refreshLocks.computeIfAbsent(name, key -> new Object());
         synchronized (lock) {
-            Cached recheck = freshCacheEntry(name, System.currentTimeMillis());
+            long recheckNow = System.currentTimeMillis();
+            Cached recheck = freshCacheEntry(name, recheckNow);
             if (recheck != null) {
                 return LookupResult.of(recheck.definition());
+            }
+            if (inFailureBackoff(name, recheckNow)) {
+                return LookupResult.unavailable(staleFor(name, recheckNow));
             }
             return refresh(name);
         }
@@ -103,8 +123,20 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
         return cached != null && cached.expiresAtMillis() > now ? cached : null;
     }
 
-    private LookupResult refresh(String name) {
+    private boolean inFailureBackoff(String name, long now) {
+        Long backoffUntil = failureBackoffUntilMillis.get(name);
+        return backoffUntil != null && now < backoffUntil;
+    }
+
+    /** Applies {@link StalePolicy} to the currently cached entry for {@code name}, without Redis I/O. */
+    private Optional<FlagDefinition> staleFor(String name, long now) {
         Cached previous = cache.get(name);
+        long ageMillis = previous == null ? Long.MAX_VALUE : Math.max(0, now - previous.fetchedAtMillis());
+        return StalePolicy.apply(name, previous == null ? null : previous.definition(), ageMillis,
+                settings.getMaxStale().toMillis(), settings.getStaleFallback());
+    }
+
+    private LookupResult refresh(String name) {
         try {
             String json = redis.get(settings.getKeyPrefix() + name);
             FlagDefinition definition = json == null
@@ -114,15 +146,15 @@ public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
             long ttlMillis = CacheJitter.jittered(
                     settings.getCacheTtl().toMillis(), settings.getCacheTtlJitter(), jitterRandom);
             cache.put(name, new Cached(definition, now, now + ttlMillis));
+            failureBackoffUntilMillis.remove(name); // recovered: next expiry will hit Redis again promptly
             return LookupResult.of(definition);
         } catch (Exception e) {
             LOG.debug("Redis flag lookup failed for {} ({}); applying stale policy", name, e.getMessage());
-            long ageMillis = previous == null
-                    ? Long.MAX_VALUE
-                    : Math.max(0, System.currentTimeMillis() - previous.fetchedAtMillis());
-            Optional<FlagDefinition> stale = StalePolicy.apply(name, previous == null ? null : previous.definition(),
-                    ageMillis, settings.getMaxStale().toMillis(), settings.getStaleFallback());
-            return LookupResult.unavailable(stale);
+            long now = System.currentTimeMillis();
+            long backoffMillis = CacheJitter.jittered(
+                    settings.getFailureBackoff().toMillis(), settings.getCacheTtlJitter(), jitterRandom);
+            failureBackoffUntilMillis.put(name, now + backoffMillis);
+            return LookupResult.unavailable(staleFor(name, now));
         }
     }
 

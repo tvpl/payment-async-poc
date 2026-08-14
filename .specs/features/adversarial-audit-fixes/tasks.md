@@ -114,7 +114,7 @@ T23 → T24
 
 ---
 
-### T2: Janela de backoff de falha no RedisFlagSource
+### T2: Janela de backoff de falha no RedisFlagSource ✅
 
 **What**: Timestamp de falha por chave; dentro da janela (1s, jitterada) `find()` serve a política de stale sem lock e sem Redis (design §2).
 **Where**: `feature-control/library/src/main/java/com/example/platform/featurecontrol/store/RedisFlagSource.java`
@@ -125,9 +125,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT com Redis parado: N threads concorrentes lendo a mesma flag geram ≤ ~1 tentativa de Redis por segundo (asserção sobre contador de tentativas, não timing frouxo)
-- [ ] Recuperação ≤ ~1s após o Redis voltar (leitura fresca volta a servir)
-- [ ] Gate Full passa
+- [x] IT com Redis parado: N threads concorrentes lendo a mesma flag geram ≤ ~1 tentativa de Redis por segundo (asserção sobre contador de tentativas, não timing frouxo)
+- [x] Recuperação ≤ ~1s após o Redis voltar (leitura fresca volta a servir)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

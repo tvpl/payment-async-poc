@@ -204,6 +204,54 @@ class RedisFlagSourceIT {
                 "20 concurrent misses for the same key must single-flight into exactly 1 Redis call");
     }
 
+    @Test
+    void sustainedOutageBoundsRedisAttemptsToRoughlyOnePerFailureBackoffWindow() throws InterruptedException {
+        // AUD-14: without a backoff, single-flight only collapses *simultaneous* callers -- a
+        // sustained outage still means every sequential read re-enters the lock and re-attempts Redis,
+        // each paying a full command timeout in series.
+        settings.setFailureBackoff(Duration.ofMillis(300));
+        seed(true);
+        source.find(flagName); // warms the cache
+        assertEquals(1, reader.callCount());
+
+        Thread.sleep(70); // past cache-ttl (50ms)
+        reader.setFailing(true);
+
+        // First read after the outage starts: cache is expired, no backoff recorded yet -> hits Redis
+        // once, fails, and records the backoff window.
+        source.find(flagName);
+        assertEquals(2, reader.callCount());
+
+        // A burst of sequential reads within the backoff window must not touch Redis again.
+        for (int i = 0; i < 10; i++) {
+            source.find(flagName);
+            Thread.sleep(15);
+        }
+
+        assertEquals(2, reader.callCount(),
+                "reads within the failure-backoff window must not re-attempt Redis");
+    }
+
+    @Test
+    void recoveryResumesShortlyAfterTheFailureBackoffWindowElapses() throws InterruptedException {
+        settings.setFailureBackoff(Duration.ofMillis(100));
+        seed(true);
+        source.find(flagName);
+
+        Thread.sleep(70); // past cache-ttl
+        reader.setFailing(true);
+        source.find(flagName); // records the backoff window
+        int callsAfterFirstFailure = reader.callCount();
+
+        Thread.sleep(150); // past the 100ms backoff window
+        reader.setFailing(false); // Redis is back
+
+        FlagDefinition recovered = source.find(flagName).orElseThrow();
+        assertTrue(recovered.enabled());
+        assertEquals(callsAfterFirstFailure + 1, reader.callCount(),
+                "once the backoff window elapses, the next read must attempt Redis again");
+    }
+
     /** Real Redis I/O for the success path, with a deterministic on/off failure switch and a call counter. */
     private static final class CountingFlagKeyReader implements FlagKeyReader {
         private final StatefulRedisConnection<String, String> connection;
