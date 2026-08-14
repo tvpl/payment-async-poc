@@ -128,6 +128,17 @@ public class JobStatusStore {
         return casStatus(jobId, JobState.ENQUEUE_FAILED, status);
     }
 
+    /**
+     * Routes a job to its terminal {@code FAILED} state (AUD-13): the worker gave up on it — poison
+     * (max-deliveries exceeded) or structurally malformed — and moved it to the dead-letter stream.
+     * Conditioned on the status still being {@code PROCESSING}, same as {@link #markEnqueueFailed}:
+     * a release that raced ahead and completed the job first must never be overwritten.
+     */
+    public void markFailed(String jobId) {
+        JobStatus status = new JobStatus(jobId, JobState.FAILED, System.currentTimeMillis());
+        casStatus(jobId, JobState.PROCESSING, status);
+    }
+
     /** Runs {@link #CAS_STATUS_LUA}: writes {@code next} only if the current state is {@code required}. */
     private boolean casStatus(String jobId, JobState required, JobStatus next) {
         Long won = redis.shared().eval(CAS_STATUS_LUA, ScriptOutputType.INTEGER,
@@ -149,6 +160,9 @@ public class JobStatusStore {
         }
         if (status.state() == JobState.ENQUEUE_FAILED) {
             return new JobStatusView.EnqueueFailed();
+        }
+        if (status.state() == JobState.FAILED) {
+            return new JobStatusView.Failed();
         }
         String rawResult = commands.get(JobKeys.result(jobId));
         if (rawResult == null) {

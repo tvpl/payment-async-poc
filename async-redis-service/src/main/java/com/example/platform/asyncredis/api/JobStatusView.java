@@ -32,4 +32,12 @@ public sealed interface JobStatusView {
      */
     record EnqueueFailed() implements JobStatusView {
     }
+
+    /**
+     * Terminal: the worker routed this job to the dead-letter stream (AUD-13). Unlike {@link
+     * EnqueueFailed}, retrying will never succeed — the client needs an observable terminal state
+     * instead of the job silently aging out to {@link Unknown}.
+     */
+    record Failed() implements JobStatusView {
+    }
 }

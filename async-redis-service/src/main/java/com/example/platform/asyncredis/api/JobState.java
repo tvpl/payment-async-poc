@@ -16,5 +16,12 @@ public enum JobState {
      * same reservation on the next request carrying the same Idempotency-Key, instead of a
      * {@code Replay} pointing at a job that doesn't exist on any stream.
      */
-    ENQUEUE_FAILED
+    ENQUEUE_FAILED,
+
+    /**
+     * The worker routed this job to the dead-letter stream — poison (max-deliveries exceeded) or
+     * structurally malformed. Terminal (AUD-13): unlike {@code ENQUEUE_FAILED}, no retry against
+     * the same jobId will ever succeed.
+     */
+    FAILED
 }

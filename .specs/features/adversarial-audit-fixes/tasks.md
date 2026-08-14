@@ -466,7 +466,7 @@ T23 → T24
 
 ---
 
-### T18: Estado FAILED terminal para jobs dead-letterados
+### T18: Estado FAILED terminal para jobs dead-letterados ✅
 
 **What**: `JobState.FAILED` + `JobStatusView.Failed`; os dois caminhos de DLQ marcam `FAILED` (XX condicionado a `PROCESSING`); `GET` → `200` com `status:"FAILED"`.
 **Where**: `async-redis-service/src/main/java/com/example/platform/asyncredis/worker/JobWorker.java`
@@ -477,9 +477,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: job envenenado → DLQ → `GET` retorna `FAILED` (hoje: 202 por 24h e depois 404)
-- [ ] DLQ-antes-do-XACK preservado nos dois caminhos
-- [ ] Gate Full passa
+- [x] IT: job envenenado → DLQ → `GET` retorna `FAILED` (hoje: 202 por 24h e depois 404)
+- [x] DLQ-antes-do-XACK preservado nos dois caminhos
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full
