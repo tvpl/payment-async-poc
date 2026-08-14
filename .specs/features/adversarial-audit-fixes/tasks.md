@@ -334,7 +334,7 @@ T23 → T24
 
 ---
 
-### T12: Renovação de lease por linha no dispatcher
+### T12: Renovação de lease por linha no dispatcher ✅
 
 **What**: A cada linha publicada, renovar `claimed_at` das linhas restantes do claim (`UPDATE ... WHERE claim_token = :token AND status='IN_PROGRESS'`) — lote lento não excede o lease por construção (design AUD-07).
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxDispatcher.java`
@@ -345,9 +345,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT com lease curto: lote lento (latência injetada por linha) completa sem nenhuma linha reapeada/republicada
-- [ ] Fence perdido ainda interrompe o lote com métrica (comportamento existente preservado)
-- [ ] Gate Full passa
+- [x] IT com lease curto: lote lento (latência injetada por linha) completa sem nenhuma linha reapeada/republicada
+- [x] Fence perdido ainda interrompe o lote com métrica (comportamento existente preservado)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

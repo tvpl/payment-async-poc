@@ -60,7 +60,8 @@ public class OutboxDispatcher {
     public int dispatchBatch() {
         List<OutboxEvent> batch = claimService.claimBatch();
         int publishedCount = 0;
-        for (OutboxEvent event : batch) {
+        for (int i = 0; i < batch.size(); i++) {
+            OutboxEvent event = batch.get(i);
             // Backpressure to the Core: if the limiter denies (or can't be reached — see
             // tryAcquireCoreCommand), release the row (PENDING) and retry on the next poll.
             // Other topics flow freely: a Redis outage on this one distributed counter must
@@ -82,6 +83,23 @@ public class OutboxDispatcher {
                             + "published — a duplicate PUBLISHED mark from a previous owner is "
                             + "expected to have already recorded it", event.getId());
                 }
+            }
+            // AUD-07: renew the lease of the rows this batch still hasn't gotten to, right after
+            // this row's own turn — never accumulated to the end of the loop. A slow batch (one
+            // row taking a long time) must not let its OWN lease expire out from under the rows
+            // still waiting; without this, the reaper could reclaim — and a later poll could
+            // republish — a row this dispatcher is still actively about to send.
+            List<OutboxEvent> remaining = batch.subList(i + 1, batch.size());
+            if (!remaining.isEmpty() && !claimService.renewRemaining(remaining)) {
+                // A genuinely lost fence: something else (the reaper, on an already-expired
+                // lease) reclaimed at least one remaining row out from under this batch.
+                // Continuing would risk double-publishing it — abort the rest of the batch; the
+                // reaper's normal recovery path (attempts + backoff, see OutboxReaper) picks up
+                // whatever is left.
+                metrics.recordPublishFailure();
+                LOG.error("Lost the outbox claim lease while renewing {} remaining row(s) "
+                        + "mid-batch — aborting the rest of this batch", remaining.size());
+                break;
             }
         }
         return publishedCount;

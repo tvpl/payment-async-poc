@@ -74,6 +74,26 @@ public class OutboxClaimService {
         return dlq ? FailureDisposition.DLQ_PENDING : FailureDisposition.RETRY_PENDING;
     }
 
+    /**
+     * Renews the lease of every row in {@code remaining}, called by {@link OutboxDispatcher}
+     * after each row's own publish turn so a slow batch's still-unprocessed rows never outlive
+     * their lease mid-way through (AUD-07). Stops at the first row whose claim no longer matches
+     * — something else (the reaper, on a genuinely expired lease) already reclaimed it — since
+     * continuing to trust this batch's ownership of the rest would risk a double-publish.
+     *
+     * @return false if any row's claim could not be renewed (fence lost)
+     */
+    @Transactional
+    public boolean renewRemaining(List<OutboxEvent> remaining) {
+        Instant now = Instant.now();
+        for (OutboxEvent event : remaining) {
+            if (repository.renewClaim(event.getId(), event.getClaimToken(), now) == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** Releases a still-PENDING-after-throttle row (rate limiter denied the Core command). */
     @Transactional
     public void release(OutboxEvent event, Instant nextAttemptAt) {

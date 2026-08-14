@@ -29,6 +29,19 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     List<OutboxEvent> lockPendingBatch(Instant now, int limit);
 
+    /**
+     * Renews the lease of a row still owned by the current claim (AUD-07): called for every
+     * remaining claimed row after each row's own publish turn completes, so a slow batch never
+     * outlives its own lease mid-way through. Fenced the same way as every other claim-owner
+     * mutation here — a stale token (something else already reclaimed the row) affects zero rows.
+     */
+    @Query(value = """
+            UPDATE outbox_event
+            SET claimed_at = :now
+            WHERE id = :id AND claim_token = :claimToken AND status = 'IN_PROGRESS'
+            """, nativeQuery = true)
+    int renewClaim(long id, UUID claimToken, Instant now);
+
     /** Fenced completion: only the current lease owner may publish the row. */
     @Query(value = """
             UPDATE outbox_event

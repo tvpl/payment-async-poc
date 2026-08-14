@@ -184,6 +184,125 @@ class OutboxBatchResilienceIT {
         verify(publisher, never()).send(any(), eq("batch-2-command"), any(), any());
     }
 
+    /**
+     * task_T12 (AUD-07): each row published used to leave the REMAINING claimed rows' lease
+     * untouched — a slow batch (one row taking a long time) could let the claim lease of rows
+     * still waiting their turn expire mid-batch, so the reaper could reclaim (and a later poll
+     * could republish) a row this exact dispatcher instance was still actively about to send.
+     * Row 1's mocked send backdates rows 2 and 3's {@code claimed_at} directly — standing in for
+     * "a lot of wall-clock time passed while row 1 was slow" without a flaky real sleep — and each
+     * later row's own send asserts its claim was already renewed (fresh, not the backdated value)
+     * BEFORE its own turn began, proving the dispatcher renews proactively as it goes, not by luck.
+     */
+    @Test
+    void aSlowBatchRenewsTheRemainingClaimedRowsSoNoneIsEverLeftToOutliveItsLease() throws Exception {
+        repository.save(pendingEvent("slow-1", Topics.REQUESTED));
+        repository.save(pendingEvent("slow-2", Topics.REQUESTED));
+        repository.save(pendingEvent("slow-3", Topics.REQUESTED));
+
+        KafkaPublisher publisher = mock(KafkaPublisher.class);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            backdateClaim("slow-2");
+            backdateClaim("slow-3");
+            return null;
+        }).when(publisher).send(any(), eq("slow-1"), any(), any());
+        org.mockito.Mockito.doAnswer(invocation -> {
+            assertEquals("IN_PROGRESS", row("slow-2").status());
+            assertTrue(claimedAtIsRecent("slow-2"),
+                    "slow-2's claim must already have been renewed before its own turn began");
+            return null;
+        }).when(publisher).send(any(), eq("slow-2"), any(), any());
+        org.mockito.Mockito.doAnswer(invocation -> {
+            assertTrue(claimedAtIsRecent("slow-3"),
+                    "slow-3's claim must already have been renewed before slow-2's turn began");
+            return null;
+        }).when(publisher).send(any(), eq("slow-3"), any(), any());
+
+        int published = dispatcher(publisher, mock(RedisRateLimiter.class)).dispatchBatch();
+
+        assertEquals(3, published);
+        assertEquals("PUBLISHED", row("slow-1").status());
+        assertEquals("PUBLISHED", row("slow-2").status());
+        assertEquals("PUBLISHED", row("slow-3").status());
+        verify(publisher, times(1)).send(any(), eq("slow-1"), any(), any());
+        verify(publisher, times(1)).send(any(), eq("slow-2"), any(), any());
+        verify(publisher, times(1)).send(any(), eq("slow-3"), any(), any());
+    }
+
+    /**
+     * task_T12 (AUD-07): a genuinely lost fence — something else already reclaimed a remaining
+     * row while this batch was mid-flight — must still abort the rest of the batch and record a
+     * metric, exactly as any other outbox publish failure does (existing behavior preserved).
+     * {@code forceReclaim} stands in for a real concurrent reaper cycle winning the race against
+     * fence-2 before this dispatcher's own renewal gets to it.
+     */
+    @Test
+    void aTrulyLostFenceDuringRenewalAbortsTheRestOfTheBatchWithAMetric() throws Exception {
+        repository.save(pendingEvent("fence-1", Topics.REQUESTED));
+        repository.save(pendingEvent("fence-2", Topics.REQUESTED));
+        repository.save(pendingEvent("fence-3", Topics.REQUESTED));
+
+        KafkaPublisher publisher = mock(KafkaPublisher.class);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            forceReclaim("fence-2");
+            return null;
+        }).when(publisher).send(any(), eq("fence-1"), any(), any());
+
+        SbusMetrics metrics = mock(SbusMetrics.class);
+        OutboxDispatcher dispatcher = new OutboxDispatcher(
+                claims, publisher, metrics, json, mock(RedisRateLimiter.class), publicationLock);
+        int published = dispatcher.dispatchBatch();
+
+        assertEquals(1, published, "only fence-1, already sent before the fence was lost, counts as published");
+        assertEquals("PUBLISHED", row("fence-1").status());
+        // fence-2 was reclaimed out from under the batch (simulating a real concurrent reaper) —
+        // the aborted batch must not touch it further.
+        assertEquals("PENDING", row("fence-2").status());
+        // fence-3 was never reached: the batch aborted instead of ploughing ahead once its own
+        // fencing of the remaining rows could no longer be trusted. Its own claim is untouched —
+        // the reaper's normal schedule recovers it once that claim's own lease expires.
+        assertEquals("IN_PROGRESS", row("fence-3").status());
+        verify(publisher, never()).send(any(), eq("fence-2"), any(), any());
+        verify(publisher, never()).send(any(), eq("fence-3"), any(), any());
+        verify(metrics).recordPublishFailure();
+    }
+
+    private void backdateClaim(String identity) throws Exception {
+        try (var connection = connection();
+             var statement = connection.prepareStatement("""
+                     UPDATE outbox_event SET claimed_at = now() - interval '10 seconds'
+                     WHERE deduplication_key = ?
+                     """)) {
+            statement.setString(1, identity);
+            assertEquals(1, statement.executeUpdate());
+        }
+    }
+
+    private boolean claimedAtIsRecent(String identity) throws Exception {
+        try (var connection = connection();
+             var statement = connection.prepareStatement("""
+                     SELECT claimed_at > now() - interval '5 seconds' FROM outbox_event
+                     WHERE deduplication_key = ?
+                     """)) {
+            statement.setString(1, identity);
+            try (var result = statement.executeQuery()) {
+                assertTrue(result.next());
+                return result.getBoolean(1);
+            }
+        }
+    }
+
+    private void forceReclaim(String identity) throws Exception {
+        try (var connection = connection();
+             var statement = connection.prepareStatement("""
+                     UPDATE outbox_event SET status = 'PENDING', claimed_at = NULL, claim_token = NULL
+                     WHERE deduplication_key = ?
+                     """)) {
+            statement.setString(1, identity);
+            assertEquals(1, statement.executeUpdate());
+        }
+    }
+
     private OutboxDispatcher dispatcher(KafkaPublisher publisher, RedisRateLimiter limiter) {
         return new OutboxDispatcher(claims, publisher, mock(SbusMetrics.class), json, limiter, publicationLock);
     }
