@@ -92,11 +92,20 @@ public class PaymentSimulationService {
     private void resolveReplay(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
                                PaymentSbusMessage original) {
         if (!isTerminal(original.getStatus())) {
-            // Original simulation still in flight: record the new requestId against the same
-            // simulationId now, PROCESSING — persistFinal (see handleCoreResponse) publishes its
-            // own terminal event for it once the Core responds, same as any other row.
-            persistence.registerReplayInFlight(env, idempotencyKey, original);
-            return;
+            // Original simulation still in flight (as of our last read): record the new requestId
+            // against the same simulationId now, PROCESSING — persistFinal (see
+            // handleCoreResponse) publishes its own terminal event for it once the Core responds,
+            // same as any other row.
+            Optional<PaymentSbusMessage> nowTerminal = persistence.registerReplayInFlight(env, idempotencyKey, original);
+            if (nowTerminal.isEmpty()) {
+                return;
+            }
+            // AUD-11: the original actually finalized between our read above and the
+            // registration transaction — registerReplayInFlight declined to leave a PROCESSING
+            // row that would never be picked up by a Core response that already arrived. Fall
+            // through and re-resolve this exactly like an already-terminal replay, using the
+            // FRESH row it handed back.
+            original = nowTerminal.get();
         }
 
         // Original already terminal: build and publish a final event for the NEW requestId, with

@@ -313,7 +313,7 @@ T23 → T24
 
 ---
 
-### T11: Replay não fica stranded PROCESSING
+### T11: Replay não fica stranded PROCESSING ✅
 
 **What**: `registerReplayInFlight` re-verifica o estado da original dentro da transação; se já terminal, sinaliza ao caller para resolver como replay terminal (loop de re-resolução em `resolveReplay`).
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentSimulationService.java`
@@ -324,8 +324,8 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT que interleava: resposta do Core lida → replay registrado → finalização; o replay termina COMPLETED (não fica PROCESSING órfão)
-- [ ] Gate Full passa
+- [x] IT que interleava: resposta do Core lida → replay registrado → finalização; o replay termina COMPLETED (não fica PROCESSING órfão)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

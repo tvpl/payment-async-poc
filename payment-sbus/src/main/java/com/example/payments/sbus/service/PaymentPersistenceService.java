@@ -108,22 +108,47 @@ public class PaymentPersistenceService {
     }
 
     /**
-     * Resolves a replay whose original simulation is still in flight: records the new requestId
-     * against the SAME simulationId, PROCESSING, with no outbox row yet. When the Core responds,
-     * {@link #persistFinal} finalizes every row sharing that simulationId — including this one —
-     * and publishes a final event for each, so this requestId gets its own terminal event too.
+     * Resolves a replay whose original simulation was (at the caller's last read) still in
+     * flight: records the new requestId against the SAME simulationId, PROCESSING, with no
+     * outbox row yet. When the Core responds, {@link #persistFinal} finalizes every row sharing
+     * that simulationId — including this one — and publishes a final event for each, so this
+     * requestId gets its own terminal event too.
+     *
+     * <p>Race guarded here (AUD-11): the caller's "still in flight" read of {@code original} can
+     * be stale by the time this transaction actually runs — the Core's response can land and
+     * finalize the original in between. {@code PaymentSimulationService#handleCoreResponse} (via
+     * {@link #findProcessingBySimulationId}) reads its own PROCESSING snapshot once, up front; a
+     * replica inserted AFTER that snapshot was taken would never be picked up
+     * by that finalization pass and would stay PROCESSING forever, since the Core answers a given
+     * simulationId exactly once. Re-reading {@code original} fresh, inside this same transaction,
+     * catches that: if it already went terminal, no PROCESSING row is inserted at all — the
+     * caller gets the fresh terminal row back and must resolve this as a terminal replay instead
+     * (same path as {@link #persistReplayFinal}), never as a stranded in-flight one.
+     *
+     * @return empty if the replica was registered as in-flight (the normal case); otherwise the
+     *         freshly-read original, already terminal, for the caller to re-resolve
      */
     @Transactional
-    public void registerReplayInFlight(EventEnvelope<PaymentSimulationRequestPayload> env,
+    public Optional<PaymentSbusMessage> registerReplayInFlight(EventEnvelope<PaymentSimulationRequestPayload> env,
                                        String idempotencyKey, PaymentSbusMessage original) {
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
-            return;
+            return Optional.empty();
+        }
+        PaymentSbusMessage fresh = messageRepository.findByRequestId(original.getRequestId())
+                .orElse(original);
+        if (isTerminal(fresh.getStatus())) {
+            LOG.info("Replay requestId={} against original={} simulationId={} found the original "
+                    + "already terminal inside the transaction — resolving as a terminal replay "
+                    + "instead of registering a stranded PROCESSING row", env.requestId(),
+                    original.getRequestId(), original.getSimulationId());
+            return Optional.of(fresh);
         }
         PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId());
         replica.setStatus(SbusMessageStatus.PROCESSING);
         messageRepository.save(replica);
         LOG.info("Registered idempotency replay requestId={} against in-flight original={} "
                 + "simulationId={}", env.requestId(), original.getRequestId(), original.getSimulationId());
+        return Optional.empty();
     }
 
     private PaymentSbusMessage newReplicaRow(EventEnvelope<PaymentSimulationRequestPayload> env,

@@ -11,6 +11,7 @@ import com.example.payments.common.model.SimulationResult;
 import com.example.payments.sbus.domain.PaymentSbusMessage;
 import com.example.payments.sbus.domain.SbusMessageStatus;
 import com.example.payments.sbus.repository.PaymentSbusMessageRepository;
+import com.example.payments.sbus.service.PaymentPersistenceService;
 import com.example.payments.sbus.service.PaymentSimulationService;
 import com.redis.testcontainers.RedisContainer;
 import io.micronaut.context.ApplicationContext;
@@ -62,6 +63,7 @@ class IdempotencyReplayIT {
 
     private ApplicationContext context;
     private PaymentSimulationService service;
+    private PaymentPersistenceService persistence;
     private PaymentSbusMessageRepository messages;
 
     @BeforeAll
@@ -72,6 +74,7 @@ class IdempotencyReplayIT {
         REDIS.start();
         context = ApplicationContext.run(properties());
         service = context.getBean(PaymentSimulationService.class);
+        persistence = context.getBean(PaymentPersistenceService.class);
         messages = context.getBean(PaymentSbusMessageRepository.class);
     }
 
@@ -216,6 +219,52 @@ class IdempotencyReplayIT {
         assertNotEquals(legacy.getSimulationId(), fresh.getSimulationId(),
                 "a null-fingerprint legacy row must never be treated as a replay target");
         assertEquals(SbusMessageStatus.PROCESSING, fresh.getStatus());
+    }
+
+    /**
+     * task_T11 (AUD-11): registerReplayInFlight used to trust the caller's "still PROCESSING"
+     * read of the original without re-checking. If the Core's response landed and finalized the
+     * original in the window between that read and this transaction, the replica got registered
+     * PROCESSING anyway — and since {@code handleCoreResponse} reads its PROCESSING snapshot only
+     * once per Core response, a replica inserted after that snapshot is never picked up: it stays
+     * PROCESSING forever. This interleaves the exact ordering that produces that race — the
+     * original is fully finalized (the Core response already read AND applied) BEFORE the replay
+     * registration transaction runs with a deliberately stale "still PROCESSING" snapshot, the
+     * same snapshot {@code PaymentSimulationService#resolveReplay} would have read a moment
+     * earlier — and proves the fix: no PROCESSING row is left behind; the fresh, already-terminal
+     * original is handed back instead.
+     */
+    @Test
+    void replayRegisteredWithAStaleInFlightSnapshotAfterTheOriginalAlreadyFinalizedIsNotStranded() throws Exception {
+        String idempotencyKey = "idem-" + UUID.randomUUID();
+        String originalRequestId = UUID.randomUUID().toString();
+        String replayRequestId = UUID.randomUUID().toString();
+
+        var originalEnv = requestedEnvelope(originalRequestId, idempotencyKey);
+        service.handleRequested(originalEnv, idempotencyKey, null);
+        // The stale snapshot: exactly what a concurrent replay-registration path would have read
+        // BEFORE the Core response below finalizes the original.
+        PaymentSbusMessage staleOriginal = messages.findByRequestId(originalRequestId).orElseThrow();
+        assertEquals(SbusMessageStatus.PROCESSING, staleOriginal.getStatus());
+
+        // "Core response read" through "finalization": fully applied and committed before the
+        // replay registration below ever runs.
+        service.handleCoreResponse(coreResponseEnvelope(originalEnv, staleOriginal.getSimulationId(), true));
+        assertEquals(SbusMessageStatus.COMPLETED, messages.findByRequestId(originalRequestId).orElseThrow().getStatus());
+
+        // "replay registrado": registerReplayInFlight runs with the STALE (still-PROCESSING)
+        // snapshot captured above.
+        var replayEnv = requestedEnvelope(replayRequestId, idempotencyKey);
+        var nowTerminal = persistence.registerReplayInFlight(replayEnv, idempotencyKey, staleOriginal);
+
+        assertTrue(nowTerminal.isPresent(),
+                "registerReplayInFlight must detect the original already went terminal inside the "
+                        + "transaction and hand back the fresh row instead of registering a stranded one");
+        assertEquals(SbusMessageStatus.COMPLETED, nowTerminal.get().getStatus());
+        assertTrue(messages.findByRequestId(replayRequestId).isEmpty(),
+                "no PROCESSING row must be left behind for the replay — the caller resolves it as "
+                        + "terminal instead, never as an orphan waiting for a Core response that "
+                        + "already came and went");
     }
 
     private void clearFingerprint(String idempotencyKey) throws Exception {
