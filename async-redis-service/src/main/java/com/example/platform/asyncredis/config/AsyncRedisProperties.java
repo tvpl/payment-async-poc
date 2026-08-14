@@ -128,6 +128,13 @@ public class AsyncRedisProperties {
             throw new ConfigurationException(
                     "async.redis.status-ttl (" + statusTtl + ") must be >= result-ttl (" + resultTtl + ")");
         }
+        if (statusTtl.compareTo(idempotencyTtl) < 0) {
+            throw new ConfigurationException(
+                    "async.redis.status-ttl (" + statusTtl + ") must be >= idempotency-ttl ("
+                            + idempotencyTtl + "); a status that expires first leaves the idempotency"
+                            + " reservation pointing at a status key that no longer exists, so a replay"
+                            + " within the reservation's own window would resolve against nothing (AUD-20)");
+        }
         if (poolMaxTotal <= 0) {
             throw new ConfigurationException(
                     "async.redis.pool-max-total must be greater than zero; an unbounded wait pool has"

@@ -510,7 +510,7 @@ T23 → T24
 
 ---
 
-### T20: Higiene do async-redis
+### T20: Higiene do async-redis ✅
 
 **What**: Fechar a conexão shared antiga ao recriar; validação de startup `status-ttl >= idempotency-ttl`.
 **Where**: `async-redis-service/src/main/java/com/example/platform/asyncredis/redis/RedisConnections.java`
@@ -521,8 +521,8 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Unit: recriação fecha a anterior; config com `status-ttl < idempotency-ttl` recusa boot
-- [ ] Gate Quick passa
+- [x] Unit: recriação fecha a anterior; config com `status-ttl < idempotency-ttl` recusa boot
+- [x] Gate Quick passa
 
 **Tests**: unit
 **Gate**: quick
