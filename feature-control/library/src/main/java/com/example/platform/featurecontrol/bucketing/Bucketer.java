@@ -31,7 +31,9 @@ public final class Bucketer {
 
     /**
      * Selects a weighted variant deterministically for the given key. Weights are normalized to the
-     * total; a variant with weight 0 is never selected. Returns {@code null} for an empty list.
+     * total; a variant with weight 0 is never selected. Returns {@code null} for an empty list, and
+     * also {@code null} (never the first variant) when every variant's weight is zero or less — there
+     * is no valid distribution to pick from (AUD-22).
      */
     public static Variant select(List<Variant> variants, String salt, String key) {
         if (variants == null || variants.isEmpty()) {
@@ -42,7 +44,7 @@ public final class Bucketer {
             total += v.weight();
         }
         if (total <= 0) {
-            return variants.get(0);
+            return null;
         }
         // Map the stable hash into [0,total) and walk the cumulative weights.
         long point = Math.floorMod(hash(salt + ":" + key), total);

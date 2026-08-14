@@ -133,6 +133,30 @@ class FeatureResolverUnitTest {
     }
 
     @Test
+    void variantBucketedIntoTheOffVariantReportsIsOnFalse() {
+        // AUD-04: a single 100%-weighted variant is always chosen -- deterministic regardless of key --
+        // and it is configured as this flag's off-variant, the control arm of the split.
+        FlagSource src = new MapFlagSource().put(new FlagDefinition(
+                "engine", FlagType.VARIANT, true, 0, null, null,
+                List.of(new Variant("control", 100)), "on", "control"));
+        FeatureResolver r = resolver(src);
+        FeatureDecision d = r.evaluate("engine", user("u1"));
+        assertEquals("control", d.variant());
+        assertFalse(d.isOn(), "the off-variant is a valid pick but must never report isOn()==true");
+    }
+
+    @Test
+    void variantNotMatchingTheOffVariantStillReportsIsOnTrue() {
+        FlagSource src = new MapFlagSource().put(new FlagDefinition(
+                "engine", FlagType.VARIANT, true, 0, null, null,
+                List.of(new Variant("treatment", 100)), "on", "control"));
+        FeatureResolver r = resolver(src);
+        FeatureDecision d = r.evaluate("engine", user("u1"));
+        assertEquals("treatment", d.variant());
+        assertTrue(d.isOn());
+    }
+
+    @Test
     void variantWeightedPickIsDeterministic() {
         FlagSource src = new MapFlagSource().put(new FlagDefinition(
                 "engine", FlagType.VARIANT, true, 0, null, null,

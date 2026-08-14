@@ -136,7 +136,7 @@ T23 → T24
 
 ---
 
-### T3: VARIANT isOn honesto + peso zero resolve off
+### T3: VARIANT isOn honesto + peso zero resolve off ✅
 
 **What**: `variant()` compara a escolhida com `off-variant` (`isOn=false` quando iguais); `Bucketer.select` com soma de pesos ≤ 0 retorna null (off), não a primeira variante.
 **Where**: `feature-control/library/src/main/java/com/example/platform/featurecontrol/resolver/FeatureResolver.java`
@@ -147,9 +147,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Unit: usuário bucketado na variante de controle recebe `isOn()==false` (o caso que abria `@FeatureGate`/`TopicRouter` para 100%)
-- [ ] Unit: pesos todos zero → off, com reason explícito
-- [ ] Gate Quick passa
+- [x] Unit: usuário bucketado na variante de controle recebe `isOn()==false` (o caso que abria `@FeatureGate`/`TopicRouter` para 100%)
+- [x] Unit: pesos todos zero → off, com reason explícito
+- [x] Gate Quick passa
 
 **Tests**: unit
 **Gate**: quick

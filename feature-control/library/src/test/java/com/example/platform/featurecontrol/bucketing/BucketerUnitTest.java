@@ -79,8 +79,17 @@ class BucketerUnitTest {
     @Test
     void selectHandlesEmptyAndZeroWeights() {
         assertNull(Bucketer.select(List.of(), "x", "y"));
-        // All-zero weights: falls back to the first variant deterministically.
+        // AUD-22: all-zero weights must resolve off (null) -- there is no valid distribution to pick
+        // from, and a weight-0 variant must never be selectable per this method's own contract.
         List<Variant> zero = List.of(new Variant("only", 0));
-        assertEquals("only", Bucketer.select(zero, "x", "y").name());
+        assertNull(Bucketer.select(zero, "x", "y"));
+    }
+
+    @Test
+    void selectWithAllZeroWeightsAcrossMultipleVariantsStillResolvesOff() {
+        // Same defect with more than one candidate: none of them has a positive weight, so none is a
+        // valid pick -- not "silently fall back to whichever is first in the list".
+        List<Variant> allZero = List.of(new Variant("a", 0), new Variant("b", 0));
+        assertNull(Bucketer.select(allZero, "x", "y"));
     }
 }

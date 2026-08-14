@@ -111,7 +111,10 @@ public class FeatureResolver {
         if (chosen == null) {
             return new FeatureDecision(flag, def.offName(), false, "variant:empty->off");
         }
-        return new FeatureDecision(flag, chosen.name(), true, "variant:" + chosen.name());
+        // AUD-04: the off-variant is still a valid pick — it just isn't "on". Without this check,
+        // every VARIANT flag reported isOn()==true even for traffic bucketed into its own control arm.
+        boolean isOn = !chosen.name().equals(def.offVariant());
+        return new FeatureDecision(flag, chosen.name(), isOn, "variant:" + chosen.name());
     }
 
     /** @return a reason ({@code allowlist:user}/{@code allowlist:group}) if the context matches. */
