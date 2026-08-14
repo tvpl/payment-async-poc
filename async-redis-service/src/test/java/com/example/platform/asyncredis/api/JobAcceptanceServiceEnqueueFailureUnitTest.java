@@ -63,6 +63,15 @@ class JobAcceptanceServiceEnqueueFailureUnitTest {
         }
 
         @Override
+        public boolean tryRecoverEnqueueFailed(String jobId) {
+            if (status.get(jobId) instanceof JobStatusView.EnqueueFailed) {
+                status.put(jobId, new JobStatusView.Processing());
+                return true;
+            }
+            return false;
+        }
+
+        @Override
         public JobStatusView find(String jobId) {
             return status.getOrDefault(jobId, new JobStatusView.Unknown());
         }

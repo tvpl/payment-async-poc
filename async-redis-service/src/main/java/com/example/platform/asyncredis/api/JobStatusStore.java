@@ -3,6 +3,7 @@ package com.example.platform.asyncredis.api;
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
 import com.example.platform.asyncredis.dto.JobResult;
 import com.example.platform.asyncredis.redis.RedisConnections;
+import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.micronaut.serde.ObjectMapper;
@@ -22,6 +23,28 @@ import org.slf4j.LoggerFactory;
 public class JobStatusStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(JobStatusStore.class);
+
+    /**
+     * Moves the status to {@code ARGV[1]} only if it is currently {@code ARGV[3]} — a single-EVAL
+     * compare-and-set (AUD-03), same pattern as {@code ResultReleaser.RELEASE_SCRIPT} and
+     * {@code VersionedFlagStore}'s Lua CAS. Replaces the check-then-act of a separate {@code GET}
+     * (or {@link #find}) followed by an unconditioned write, which lets two concurrent callers both
+     * pass the check and both act.
+     *
+     * <p>KEYS[1]=status ARGV[1]=new status JSON ARGV[2]=ttl millis ARGV[3]=required current state
+     * name. Returns 1 if the write happened, 0 if the current state did not match (including a
+     * missing/expired key, which never matches).
+     */
+    private static final String CAS_STATUS_LUA =
+            "local cur = redis.call('get', KEYS[1]) "
+                    + "if cur then "
+                    + "local decoded = cjson.decode(cur) "
+                    + "if decoded.state == ARGV[3] then "
+                    + "redis.call('set', KEYS[1], ARGV[1], 'PX', ARGV[2]) "
+                    + "return 1 "
+                    + "end "
+                    + "end "
+                    + "return 0";
 
     private final RedisConnections redis;
     private final ObjectMapper objectMapper;
@@ -78,14 +101,39 @@ public class JobStatusStore {
 
     /**
      * Records that the reservation and PROCESSING status were persisted but the stream {@code
-     * XADD} never landed — the job does not exist anywhere a worker will look. Overwrites the
-     * PROCESSING status written just before the failed enqueue attempt (see
-     * {@code JobAcceptanceService#attemptEnqueue}).
+     * XADD} never landed — the job does not exist anywhere a worker will look. Conditioned on the
+     * status still being {@code PROCESSING} (AUD-03): a release that raced ahead and completed the
+     * job between the failed enqueue attempt and this call must never be overwritten back to a
+     * non-terminal state. A residual window remains — this call can itself race a same-instant
+     * release and lose the CAS after the release already moved past {@code PROCESSING} — but the
+     * outcome is always the newer, correct terminal state, never a resurrected one.
      */
     public void markEnqueueFailed(String jobId) {
         JobStatus status = new JobStatus(jobId, JobState.ENQUEUE_FAILED, System.currentTimeMillis());
-        redis.shared().set(JobKeys.status(jobId), write(status),
-                SetArgs.Builder.px(props.getStatusTtl().toMillis()));
+        casStatus(jobId, JobState.PROCESSING, status);
+    }
+
+    /**
+     * Attempts the {@code ENQUEUE_FAILED -> PROCESSING} transition as a single CAS (AUD-03):
+     * replaces the old check-then-act ({@link #find} for {@code ENQUEUE_FAILED} followed by an
+     * unconditioned enqueue retry), under which two concurrent replays could both pass the check
+     * and both enqueue.
+     *
+     * @return {@code true} when this call won the CAS and the caller must (re)attempt the enqueue;
+     *         {@code false} when another concurrent replay already won it (or the status was not
+     *         {@code ENQUEUE_FAILED}) — the caller must not enqueue.
+     */
+    public boolean tryRecoverEnqueueFailed(String jobId) {
+        JobStatus status = new JobStatus(jobId, JobState.PROCESSING, System.currentTimeMillis());
+        return casStatus(jobId, JobState.ENQUEUE_FAILED, status);
+    }
+
+    /** Runs {@link #CAS_STATUS_LUA}: writes {@code next} only if the current state is {@code required}. */
+    private boolean casStatus(String jobId, JobState required, JobStatus next) {
+        Long won = redis.shared().eval(CAS_STATUS_LUA, ScriptOutputType.INTEGER,
+                new String[]{JobKeys.status(jobId)},
+                write(next), Long.toString(props.getStatusTtl().toMillis()), required.name());
+        return won != null && won == 1L;
     }
 
     /** Resolves what a poll can observe: unknown, processing, completed with result, expired, or enqueue-failed. */

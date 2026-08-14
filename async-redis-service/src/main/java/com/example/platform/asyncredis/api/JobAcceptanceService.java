@@ -48,17 +48,23 @@ public class JobAcceptanceService {
         if (outcome instanceof AcceptOutcome.Accepted accepted) {
             return attemptEnqueue(accepted.jobId(), request);
         }
-        if (outcome instanceof AcceptOutcome.Replay replay
-                && store.find(replay.jobId()) instanceof JobStatusView.EnqueueFailed) {
-            return attemptEnqueue(replay.jobId(), request);
+        if (outcome instanceof AcceptOutcome.Replay replay && store.tryRecoverEnqueueFailed(replay.jobId())) {
+            // Won the CAS: this call alone is responsible for the retry. A concurrent replay that
+            // loses the CAS falls through to `return outcome` below and enqueues nothing (AUD-03).
+            return enqueueAfterStatusSet(replay.jobId(), request);
         }
-        // Replay (against a job that DID enqueue) and Conflict both enqueue nothing: the key
-        // already owns a job.
+        // Replay (against a job that DID enqueue, or that another concurrent replay just recovered)
+        // and Conflict both enqueue nothing: the key already owns a job.
         return outcome;
     }
 
     private AcceptOutcome attemptEnqueue(String jobId, SubmitJobRequest request) {
         store.createProcessing(jobId);
+        return enqueueAfterStatusSet(jobId, request);
+    }
+
+    /** Enqueues a job whose {@code PROCESSING} status is already persisted, by whichever caller won it. */
+    private AcceptOutcome enqueueAfterStatusSet(String jobId, SubmitJobRequest request) {
         try {
             enqueuer.enqueue(jobId, request);
         } catch (RuntimeException e) {

@@ -444,7 +444,7 @@ T23 → T24
 
 ---
 
-### T17: Transições de status do async-redis viram CAS Lua
+### T17: Transições de status do async-redis viram CAS Lua ✅
 
 **What**: `ENQUEUE_FAILED → PROCESSING` só via CAS (um vencedor); `markEnqueueFailed` condicionado a `PROCESSING` (nunca sobrescreve terminal); documentar a janela residual (design §7).
 **Where**: `async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java`
@@ -455,9 +455,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT concorrente: dois replays do mesmo `ENQUEUE_FAILED` → exatamente um XADD (contagem no stream)
-- [ ] IT: `markEnqueueFailed` após release do worker → `COMPLETED` preservado, `GET` retorna o resultado
-- [ ] Gate Full passa
+- [x] IT concorrente: dois replays do mesmo `ENQUEUE_FAILED` → exatamente um XADD (contagem no stream)
+- [x] IT: `markEnqueueFailed` após release do worker → `COMPLETED` preservado, `GET` retorna o resultado
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full
