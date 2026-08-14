@@ -1,6 +1,7 @@
 package com.example.payments.api.service;
 
 import com.example.payments.api.client.SbusStatusResponse;
+import com.example.payments.api.config.ApiProperties;
 import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.dto.PaymentSimulationRequest;
@@ -16,6 +17,7 @@ import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
 import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.model.SimulationStatus;
+import io.lettuce.core.RedisClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -33,12 +35,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -179,6 +183,60 @@ class ApiPaymentServiceUnitTest {
         assertTrue(saved.getAllValues().stream()
                 .noneMatch(entry -> entry.status() == SimulationStatus.SENT_TO_SBUS
                         || entry.status() == SimulationStatus.PROCESSING));
+    }
+
+    /**
+     * task_T7 (AUD-06): only the publish-failure path used to unregister the waiter it
+     * registered. Any exception thrown by markPublishState/save/completeFromStore between
+     * register() and await() leaked the waiter forever - it never expires, so it is a
+     * permanent entry in the pending-waiters map (and in {@code api_pending}). These three
+     * tests use a real {@link ResponseCoordinator} (not a mock) so {@code pendingCount()}
+     * reflects the actual waiter registry, the same way {@link ResponseCoordinatorUnitTest}
+     * proves every other exit path leaves it empty.
+     */
+    @Test
+    void unregistersTheWaiterWhenMarkPublishStateThrowsAfterRegister() {
+        ResponseCoordinator realCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+        ApiPaymentService realService =
+                new ApiPaymentService(store, realCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
+        doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
+                .when(store).markPublishState(anyString(), anyString(), anyString(), eq(PublishState.PUBLISHED));
+
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+
+        assertEquals(0, realCoordinator.pendingCount(),
+                "the waiter must be unregistered even though markPublishState threw after register()");
+    }
+
+    @Test
+    void unregistersTheWaiterWhenSaveThrowsAfterRegister() {
+        ResponseCoordinator realCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+        ApiPaymentService realService =
+                new ApiPaymentService(store, realCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
+        // Only the post-register save (SENT_TO_SBUS) should throw; the earlier PENDING save
+        // (before register()) must be left alone or this would not exercise the leak at all.
+        doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
+                .when(store).save(argThat(entry -> entry.status() == SimulationStatus.SENT_TO_SBUS));
+
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+
+        assertEquals(0, realCoordinator.pendingCount(),
+                "the waiter must be unregistered even though store.save(SENT_TO_SBUS) threw after register()");
+    }
+
+    @Test
+    void unregistersTheWaiterWhenCompleteFromStoreThrowsAfterRegister() {
+        ResponseCoordinator realCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+        ResponseCoordinator spyCoordinator = spy(realCoordinator);
+        doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
+                .when(spyCoordinator).completeFromStore(anyString());
+        ApiPaymentService realService =
+                new ApiPaymentService(store, spyCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
+
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+
+        assertEquals(0, spyCoordinator.pendingCount(),
+                "the waiter must be unregistered even though completeFromStore threw after register()");
     }
 
     @Test

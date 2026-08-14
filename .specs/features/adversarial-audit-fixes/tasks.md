@@ -223,7 +223,7 @@ T23 → T24
 
 ---
 
-### T7: Waiter removido em toda saída
+### T7: Waiter removido em toda saída ✅
 
 **What**: `publishAndAwait` garante `unregister` por try/finally em qualquer exceção entre `register()` e `await()` (hoje só o caminho de falha de publish limpa).
 **Where**: `payment-api/src/main/java/com/example/payments/api/service/ApiPaymentService.java`
@@ -234,9 +234,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Unit: `markPublishState`/`save`/`completeFromStore` lançando após register → waiter removido (asserção no tamanho do mapa/`api_pending`)
-- [ ] Caminhos existentes inalterados (suite verde)
-- [ ] Gate Quick passa
+- [x] Unit: `markPublishState`/`save`/`completeFromStore` lançando após register → waiter removido (asserção no tamanho do mapa/`api_pending`)
+- [x] Caminhos existentes inalterados (suite verde)
+- [x] Gate Quick passa
 
 **Tests**: unit
 **Gate**: quick
