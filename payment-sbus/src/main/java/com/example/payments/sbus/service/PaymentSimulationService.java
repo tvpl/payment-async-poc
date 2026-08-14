@@ -111,9 +111,17 @@ public class PaymentSimulationService {
         // Original already terminal: build and publish a final event for the NEW requestId, with
         // the ORIGINAL's stored result. The envelope is built manually (not via env.deriveAs,
         // which would carry the REQUEST's requestId, not this correlation) so the new requestId
-        // ends up in both the outbox row's key and the Avro payload's own requestId field.
+        // ends up in the outbox row's key. The stored result's OWN requestId field (AUD-27) is
+        // rewritten too — it was minted for the ORIGINAL request and, left alone, would publish
+        // (and persist) the replay's terminal event carrying someone else's requestId inside its
+        // own payload, not just in the Kafka envelope.
         boolean approved = original.getStatus() == SbusMessageStatus.COMPLETED;
-        SimulationResult result = json.fromJson(original.getResult(), SimulationResult.class);
+        SimulationResult storedResult = json.fromJson(original.getResult(), SimulationResult.class);
+        SimulationResult result = new SimulationResult(
+                storedResult.simulationId(), env.requestId(), storedResult.status(),
+                storedResult.authorizationCode(), storedResult.amount(), storedResult.currency(),
+                storedResult.installments(), storedResult.fees(), storedResult.settlement(),
+                storedResult.errorCode(), storedResult.errorMessage());
         String finalType = approved ? EventTypes.PAYMENT_SIMULATION_COMPLETED : EventTypes.PAYMENT_SIMULATION_FAILED;
         String finalTopic = approved ? Topics.COMPLETED : Topics.FAILED;
         EventEnvelope<SimulationResult> finalEvent = new EventEnvelope<>(
@@ -125,7 +133,8 @@ public class PaymentSimulationService {
                 : avroSerde.serialize(finalTopic, AvroMapper.toAvroFailed(finalEvent));
         String headers = json.toJson(HeaderMap.from(finalEvent, null));
 
-        persistence.persistReplayFinal(env, idempotencyKey, original, finalType, finalTopic, finalBytes, headers);
+        persistence.persistReplayFinal(env, idempotencyKey, original, finalType, finalTopic,
+                finalBytes, headers, json.toJson(result));
     }
 
     public void handleCoreResponse(EventEnvelope<CorePaymentSimulationResponsePayload> env) {

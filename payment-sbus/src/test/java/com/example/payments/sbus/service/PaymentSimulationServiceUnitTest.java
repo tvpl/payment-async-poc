@@ -84,6 +84,6 @@ class PaymentSimulationServiceUnitTest {
         // treated as a normal in-flight success) — no persistReplayFinal call, no terminal event,
         // ever, for the replay.
         verify(persistence).persistReplayFinal(eq(replayEnv), eq(idempotencyKey), eq(freshTerminalOriginal),
-                anyString(), anyString(), any(byte[].class), anyString());
+                anyString(), anyString(), any(byte[].class), anyString(), anyString());
     }
 }

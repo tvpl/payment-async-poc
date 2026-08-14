@@ -422,7 +422,7 @@ T23 → T24
 
 ---
 
-### T16: Higiene do SBUS (bundle coeso)
+### T16: Higiene do SBUS (bundle coeso) ✅
 
 **What**: `initialDelay` de housekeeping configurável; purga `PUBLISHED` com `LIMIT`; índice para o claim `PENDING` (`V11`); evento de replay terminal reescreve `requestId` dentro do payload Avro (não só no envelope).
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxHousekeeping.java`
@@ -433,9 +433,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] `initialDelay` vem de propriedade; purga em lotes com LIMIT; `V11` cria o índice
-- [ ] IT do replay assere `result.requestId == replayRequestId` no payload retornado (hoje codifica o bug)
-- [ ] Gate Full passa
+- [x] `initialDelay` vem de propriedade; purga em lotes com LIMIT; `V11` cria o índice
+- [x] IT do replay assere `result.requestId == replayRequestId` no payload retornado (hoje codifica o bug)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

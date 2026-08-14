@@ -10,7 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
-/** Purges PUBLISHED outbox rows older than the retention window, so the table stays small. */
+/**
+ * Purges PUBLISHED outbox rows older than the retention window, so the table stays small.
+ * Deletes in bounded batches (AUD-24), like every other retention purge here (see
+ * {@code RetentionHousekeeping}) — an unbounded {@code DELETE} on a table that can grow into the
+ * millions holds its lock for as long as the whole scan takes.
+ */
 @Singleton
 public class OutboxHousekeeping {
 
@@ -24,11 +29,14 @@ public class OutboxHousekeeping {
         this.properties = properties;
     }
 
-    @Scheduled(fixedDelay = "${sbus.outbox.housekeeping-interval:1h}", initialDelay = "1h")
+    // AUD-23: initialDelay now reads sbus.outbox.housekeeping-initial-delay instead of a
+    // hardcoded literal, matching every other tunable on this job.
+    @Scheduled(fixedDelay = "${sbus.outbox.housekeeping-interval:1h}",
+            initialDelay = "${sbus.outbox.housekeeping-initial-delay:1h}")
     @Transactional
     public void purge() {
         Instant threshold = Instant.now().minus(properties.getRetention());
-        int deleted = repository.deletePublishedBefore(threshold);
+        int deleted = repository.deletePublishedBefore(threshold, properties.getBatchSize());
         if (deleted > 0) {
             LOG.info("Outbox housekeeping purged {} published row(s)", deleted);
         }

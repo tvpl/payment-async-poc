@@ -13,6 +13,7 @@ import com.example.payments.sbus.domain.SbusMessageStatus;
 import com.example.payments.sbus.repository.PaymentSbusMessageRepository;
 import com.example.payments.sbus.service.PaymentPersistenceService;
 import com.example.payments.sbus.service.PaymentSimulationService;
+import com.example.payments.sbus.support.Json;
 import com.redis.testcontainers.RedisContainer;
 import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.AfterAll;
@@ -65,6 +66,7 @@ class IdempotencyReplayIT {
     private PaymentSimulationService service;
     private PaymentPersistenceService persistence;
     private PaymentSbusMessageRepository messages;
+    private Json json;
 
     @BeforeAll
     void start() {
@@ -76,6 +78,7 @@ class IdempotencyReplayIT {
         service = context.getBean(PaymentSimulationService.class);
         persistence = context.getBean(PaymentPersistenceService.class);
         messages = context.getBean(PaymentSbusMessageRepository.class);
+        json = context.getBean(Json.class);
     }
 
     @AfterAll
@@ -107,8 +110,20 @@ class IdempotencyReplayIT {
                 () -> new AssertionError("replay requestId was dropped — the black hole this test guards against"));
         assertEquals(SbusMessageStatus.COMPLETED, replica.getStatus());
         assertEquals(original.getSimulationId(), replica.getSimulationId());
-        assertEquals(original.getResult(), replica.getResult());
         assertNotEquals(originalRequestId, replayRequestId);
+
+        // task_T16 (AUD-27): the replay's own result carries the ORIGINAL's outcome (same
+        // simulationId, status, amount, ...) but its OWN requestId — not a byte-for-byte copy of
+        // the original's stored result, which would leave the original's requestId embedded
+        // inside the replay's payload.
+        SimulationResult originalResult = json.fromJson(original.getResult(), SimulationResult.class);
+        SimulationResult replicaResult = json.fromJson(replica.getResult(), SimulationResult.class);
+        assertEquals(replayRequestId, replicaResult.requestId(),
+                "the payload's own requestId field must match the replay request that triggered "
+                        + "it, not the original's");
+        assertEquals(originalResult.simulationId(), replicaResult.simulationId());
+        assertEquals(originalResult.status(), replicaResult.status());
+        assertEquals(originalResult.amount(), replicaResult.amount());
 
         // The replay got its OWN outbox row (and therefore its own Kafka event), not a copy of
         // the original's — a caller polling specifically for replayRequestId must see it. The

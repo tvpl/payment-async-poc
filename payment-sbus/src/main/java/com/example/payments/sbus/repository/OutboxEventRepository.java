@@ -94,12 +94,20 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     List<OutboxEvent> findStuckBatch(Instant threshold, int limit);
 
-    /** Housekeeping: purge successfully published rows older than the retention window. */
+    /**
+     * Housekeeping: purge successfully published rows older than the retention window, in a
+     * bounded batch (AUD-24) — same discipline as {@link IdempotencyRecordRepository} and
+     * {@link PaymentSbusMessageRepository}'s own retention purges, so a table that has grown
+     * large never holds a delete lock for as long as an unbounded scan would take.
+     */
     @Query(value = """
             DELETE FROM outbox_event
-            WHERE status IN ('PUBLISHED', 'DLQ_PUBLISHED') AND published_at < :threshold
+            WHERE id IN (
+                SELECT id FROM outbox_event
+                WHERE status IN ('PUBLISHED', 'DLQ_PUBLISHED') AND published_at < :threshold
+                LIMIT :limit)
             """, nativeQuery = true)
-    int deletePublishedBefore(Instant threshold);
+    int deletePublishedBefore(Instant threshold, int limit);
 
     long countByStatus(OutboxStatus status);
 

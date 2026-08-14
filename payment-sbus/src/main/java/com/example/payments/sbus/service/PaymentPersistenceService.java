@@ -87,11 +87,16 @@ public class PaymentPersistenceService {
      * new requestId against the SAME simulationId with the original's result copied over, and
      * publishes the final event for the new requestId (Avro bytes already serialized outside
      * this transaction, same discipline as every other outbox write here).
+     *
+     * <p>{@code resultJson} is the CALLER's already-corrected result (AUD-27) — its {@code
+     * requestId} field rewritten to this replay's own requestId, not the original's — persisted
+     * here verbatim so the DB-stored result and the published Avro payload never disagree with
+     * each other about whose request this is.
      */
     @Transactional
     public void persistReplayFinal(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
                                    PaymentSbusMessage original, String eventType, String topic,
-                                   byte[] finalBytes, String headers) {
+                                   byte[] finalBytes, String headers, String resultJson) {
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
             return;
         }
@@ -99,7 +104,7 @@ public class PaymentPersistenceService {
         replica.setStatus(original.getStatus());
         replica.setErrorCode(original.getErrorCode());
         replica.setErrorMessage(original.getErrorMessage());
-        replica.setResult(original.getResult());
+        replica.setResult(resultJson);
         messageRepository.save(replica);
         saveOutbox(env.requestId(), eventType, topic, env.requestId(), finalBytes, headers);
         LOG.info("Resolved idempotency replay requestId={} against original={} simulationId={} "
