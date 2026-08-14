@@ -69,4 +69,38 @@ class IdempotencyFingerprintUnitTest {
 
         assertNotEquals(IdempotencyFingerprint.of(a), IdempotencyFingerprint.of(b));
     }
+
+    /**
+     * task_T8 (AUD-18): before escaping, a literal {@code |} inside a free-text field forged a
+     * field boundary — {@code paymentMethod="pm|X", brand="1"} and
+     * {@code paymentMethod="pm", brand="X|1"} joined ("...|pm|X|1|...") to the identical
+     * canonical string, so two genuinely different payloads produced the same fingerprint
+     * (delimiter-injection collision).
+     */
+    @Test
+    void doesNotCollideWhenAFieldContainsTheDelimiterItself() {
+        var a = new PaymentSimulationRequest(
+                "MERCHANT-001", new BigDecimal("10.00"), "BRL", "pm|X", "1", 1, "AUTHORIZE_AND_CAPTURE");
+        var b = new PaymentSimulationRequest(
+                "MERCHANT-001", new BigDecimal("10.00"), "BRL", "pm", "X|1", 1, "AUTHORIZE_AND_CAPTURE");
+
+        assertNotEquals(IdempotencyFingerprint.of(a), IdempotencyFingerprint.of(b));
+    }
+
+    /**
+     * Escaping the delimiter without also escaping a pre-existing backslash first is its own
+     * collision class: with only {@code |} escaped, {@code paymentMethod="\", brand="|a"} and
+     * {@code paymentMethod="|\\", brand="a"} both join to the identical {@code "\|\|a"} - the
+     * backslash from one field's raw data is mistaken for the escape marker of the delimiter
+     * that follows it. Escaping {@code \} first (before {@code |}) is what prevents this.
+     */
+    @Test
+    void doesNotCollideWhenAFieldsOwnBackslashLooksLikeAnEscapedDelimiter() {
+        var a = new PaymentSimulationRequest(
+                "MERCHANT-001", new BigDecimal("10.00"), "BRL", "\\", "|a", 1, "AUTHORIZE_AND_CAPTURE");
+        var b = new PaymentSimulationRequest(
+                "MERCHANT-001", new BigDecimal("10.00"), "BRL", "|\\", "a", 1, "AUTHORIZE_AND_CAPTURE");
+
+        assertNotEquals(IdempotencyFingerprint.of(a), IdempotencyFingerprint.of(b));
+    }
 }

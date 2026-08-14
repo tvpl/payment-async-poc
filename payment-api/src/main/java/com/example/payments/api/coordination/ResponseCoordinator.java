@@ -77,18 +77,26 @@ public class ResponseCoordinator {
         if (shuttingDown) {
             return;
         }
+        // The field is only assigned once subscribe() has actually succeeded; a connection that
+        // opens but fails to subscribe is closed in the catch below instead of being leaked as
+        // an orphaned Lettuce connection on every retry (AUD-17).
+        StatefulRedisPubSubConnection<String, String> connection = null;
         try {
-            pubSub = redisClient.connectPubSub();
-            pubSub.addListener(new RedisPubSubAdapter<>() {
+            connection = redisClient.connectPubSub();
+            connection.addListener(new RedisPubSubAdapter<>() {
                 @Override
                 public void message(String channel, String requestId) {
                     onMessage(requestId);
                 }
             });
             // Lettuce re-subscribes channels automatically after a reconnect.
-            pubSub.sync().subscribe(properties.getResponseChannel());
+            connection.sync().subscribe(properties.getResponseChannel());
+            pubSub = connection;
             LOG.info("Subscribed to Redis channel {}", properties.getResponseChannel());
         } catch (Exception e) {
+            if (connection != null) {
+                connection.close();
+            }
             LOG.warn("Redis pub/sub subscribe failed; retrying in 5s ({})", e.getMessage());
             scheduler.schedule(this::trySubscribe, 5, TimeUnit.SECONDS);
         }

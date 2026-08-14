@@ -5,6 +5,8 @@ import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.redis.RedisStatusStore;
 import com.example.payments.common.model.SimulationStatus;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -220,5 +225,30 @@ class ResponseCoordinatorUnitTest {
         assertEquals(fastTerminal, fastFuture.get(1, TimeUnit.SECONDS),
                 "a stuck notification for another request must not delay this one");
         releaseStuck.countDown();
+    }
+
+    /**
+     * task_T8 (AUD-17): {@code trySubscribe()}'s reconnect path used to leak the Lettuce
+     * connection when {@code connectPubSub()} succeeded but the subsequent {@code subscribe()}
+     * call threw - the already-opened connection was never closed, only ever retried again on
+     * top of it. {@code start()} (the {@code @PostConstruct} entry point) is package-private and
+     * called directly here rather than requiring a real Redis PubSub connection.
+     */
+    @Test
+    void closesTheConnectionWhenSubscribeFailsAfterConnecting() {
+        RedisClient redisClient = mock(RedisClient.class);
+        @SuppressWarnings("unchecked")
+        StatefulRedisPubSubConnection<String, String> connection = mock(StatefulRedisPubSubConnection.class);
+        @SuppressWarnings("unchecked")
+        RedisPubSubCommands<String, String> syncCommands = mock(RedisPubSubCommands.class);
+        when(redisClient.connectPubSub()).thenReturn(connection);
+        when(connection.sync()).thenReturn(syncCommands);
+        doThrow(new RuntimeException("subscribe failed")).when(syncCommands).subscribe(anyString());
+        ResponseCoordinator leaky = new ResponseCoordinator(redisClient, store, new ApiProperties());
+
+        leaky.start();
+
+        verify(connection).close();
+        leaky.close();
     }
 }

@@ -245,7 +245,7 @@ T23 → T24
 
 ---
 
-### T8: Leak de conexão pub/sub + escaping do fingerprint
+### T8: Leak de conexão pub/sub + escaping do fingerprint ✅
 
 **What**: `trySubscribe` fecha a conexão recém-aberta quando `subscribe()` falha; `IdempotencyFingerprint` escapa `|`/`\` nos campos antes do join.
 **Where**: `payment-api/src/main/java/com/example/payments/api/coordination/ResponseCoordinator.java`
@@ -256,9 +256,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Unit: os dois payloads que hoje colidem (`pm|X`+`1` vs `pm`+`X|1`) produzem fingerprints distintos
-- [ ] Unit: subscribe falhando → conexão criada é fechada (verify no mock)
-- [ ] Gate Quick passa
+- [x] Unit: os dois payloads que hoje colidem (`pm|X`+`1` vs `pm`+`X|1`) produzem fingerprints distintos
+- [x] Unit: subscribe falhando → conexão criada é fechada (verify no mock)
+- [x] Gate Quick passa
 
 **Tests**: unit
 **Gate**: quick
