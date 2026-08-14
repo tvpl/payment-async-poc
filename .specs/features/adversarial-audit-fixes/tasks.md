@@ -267,7 +267,7 @@ T23 → T24
 
 ---
 
-### T9: paymentMethod limitado + remoção da superfície topic-ab
+### T9: paymentMethod limitado + remoção da superfície topic-ab ✅
 
 **What**: `@Pattern("[A-Z_]{2,32}")` em `paymentMethod` (e `brand`); colapso para `"other"` na métrica acima de 50 valores; remover a flag `payment-topic-ab`, o header `X-Routed-Topic` e o uso de `TopicRouter` no v0 (anuncia roteamento que não acontece).
 **Where**: `payment-api/src/main/java/com/example/payments/api/controller/V0PaymentSimulationController.java`
@@ -278,10 +278,10 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: `paymentMethod` fora do padrão → 400 problem+json
-- [ ] Unit: 51º valor distinto vira série `"other"`
-- [ ] `X-Routed-Topic` ausente da resposta v0; flag removida do YAML e docs
-- [ ] Gate Full passa
+- [x] IT: `paymentMethod` fora do padrão → 400 problem+json
+- [x] Unit: 51º valor distinto vira série `"other"`
+- [x] `X-Routed-Topic` ausente da resposta v0; flag removida do YAML e docs
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

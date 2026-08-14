@@ -8,6 +8,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * API metrics exposed to Prometheus:
@@ -22,8 +24,18 @@ import java.time.Duration;
 @Singleton
 public class ApiMetrics {
 
+    /**
+     * AUD-16: even with {@code paymentMethod} restricted by {@code @Pattern} at the request
+     * boundary, the metric itself stays bounded independently (defense in depth) - the 51st
+     * distinct value seen collapses into a literal {@code "other"} series instead of growing
+     * the {@code payment_method} tag's cardinality without limit.
+     */
+    private static final int PAYMENT_METHOD_CARDINALITY_LIMIT = 50;
+    private static final String OTHER_PAYMENT_METHOD = "other";
+
     private final MeterRegistry registry;
     private final ResponseCoordinator coordinator;
+    private final Set<String> seenPaymentMethods = ConcurrentHashMap.newKeySet();
 
     private Counter timeouts;
     private Counter completed;
@@ -50,10 +62,25 @@ public class ApiMetrics {
         registry.gauge("api_pending", coordinator, ResponseCoordinator::pendingCount);
     }
 
-    /** Tagged by payment method (low cardinality) for per-method request rates. */
+    /** Tagged by payment method (bounded cardinality) for per-method request rates. */
     public void recordRequest(String paymentMethod) {
         registry.counter("api_requests_total", "payment_method",
-                paymentMethod == null ? "unknown" : paymentMethod).increment();
+                paymentMethodTag(paymentMethod == null ? "unknown" : paymentMethod)).increment();
+    }
+
+    /**
+     * Distinct values beyond {@link #PAYMENT_METHOD_CARDINALITY_LIMIT} collapse to
+     * {@link #OTHER_PAYMENT_METHOD} instead of minting a new Micrometer series each.
+     */
+    private String paymentMethodTag(String paymentMethod) {
+        if (seenPaymentMethods.contains(paymentMethod)) {
+            return paymentMethod;
+        }
+        if (seenPaymentMethods.size() >= PAYMENT_METHOD_CARDINALITY_LIMIT) {
+            return OTHER_PAYMENT_METHOD;
+        }
+        seenPaymentMethods.add(paymentMethod);
+        return paymentMethod;
     }
 
     public void recordTimeout() {

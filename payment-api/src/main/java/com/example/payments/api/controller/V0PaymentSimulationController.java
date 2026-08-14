@@ -5,11 +5,9 @@ import com.example.payments.api.dto.StatusResponse;
 import com.example.payments.api.error.Problem;
 import com.example.payments.api.service.ApiPaymentService;
 import com.example.payments.common.events.Headers;
-import com.example.payments.common.events.Topics;
 import com.example.payments.common.model.SimulationStatus;
 import com.example.platform.featurecontrol.context.FeatureContext;
 import com.example.platform.featurecontrol.context.JwtFeatureContextFactory;
-import com.example.platform.featurecontrol.kafka.TopicRouter;
 import com.example.platform.featurecontrol.model.FeatureDecision;
 import com.example.platform.featurecontrol.resolver.FeatureResolver;
 import io.micronaut.core.annotation.Nullable;
@@ -37,30 +35,25 @@ import jakarta.validation.Valid;
  *
  * <p>It is deliberately <strong>additive</strong>: eligible requests reuse the exact, already-tested
  * {@link ApiPaymentService} pipeline. v0 only adds gating + response headers ({@code X-Api-Version},
- * {@code X-Feature-Reason}) and demonstrates {@link TopicRouter} choosing an A/B topic. The path is
- * not covered by {@code ApiKeyFilter} (which only matches {@code /payment-simulations**}); its
- * auth gate is the JWT + feature flag instead — deliberately, since v0 is a beta offered to a
- * named JWT-eligible group, not a credentialed integration. It IS covered by
- * {@code ConcurrencyLimitFilter}, though: an anonymous, unauthenticated POST route is exactly the
- * kind of endpoint that must not be exempt from admission control (CAP-03).
+ * {@code X-Feature-Reason}). The path is not covered by {@code ApiKeyFilter} (which only matches
+ * {@code /payment-simulations**}); its auth gate is the JWT + feature flag instead — deliberately,
+ * since v0 is a beta offered to a named JWT-eligible group, not a credentialed integration. It IS
+ * covered by {@code ConcurrencyLimitFilter}, though: an anonymous, unauthenticated POST route is
+ * exactly the kind of endpoint that must not be exempt from admission control (CAP-03).
  */
 @Controller("/v0/payment-simulations")
 @Secured(SecurityRule.IS_ANONYMOUS)
 public class V0PaymentSimulationController {
 
     private static final String V0_FLAG = "payment-api-v0";
-    private static final String TOPIC_FLAG = "payment-topic-ab";
 
     private final ApiPaymentService service;
     private final FeatureResolver features;
-    private final TopicRouter topicRouter;
 
     public V0PaymentSimulationController(ApiPaymentService service,
-                                         FeatureResolver features,
-                                         TopicRouter topicRouter) {
+                                         FeatureResolver features) {
         this.service = service;
         this.features = features;
-        this.topicRouter = topicRouter;
     }
 
     @Post
@@ -79,9 +72,6 @@ public class V0PaymentSimulationController {
                     .body(Problem.of(404, "Not Found", "No such resource"));
         }
 
-        // Demonstrate A/B topic selection (surfaced as a header; the pipeline itself is unchanged).
-        String routedTopic = topicRouter.route(TOPIC_FLAG, ctx, Topics.REQUESTED, Topics.REQUESTED + ".v0");
-
         ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey);
         var entry = result.entry();
         StatusResponse body = new StatusResponse(
@@ -97,8 +87,7 @@ public class V0PaymentSimulationController {
         }
         return HttpResponse.status(status).body(body)
                 .header("X-Api-Version", "v0")
-                .header("X-Feature-Reason", v0.reason())
-                .header("X-Routed-Topic", routedTopic);
+                .header("X-Feature-Reason", v0.reason());
     }
 
     @Get("/{requestId}")

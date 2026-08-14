@@ -76,13 +76,6 @@ platform:
           - v0-testers
         on-variant: v0
         off-variant: v1
-      # Route the requested event to topic A or B (off by default -> the normal topic).
-      payment-topic-ab:
-        type: PERCENTAGE
-        enabled: false
-        percentage: 0
-        on-variant: payment.simulation.requested.v0
-        off-variant: payment.simulation.requested
 
 payment:
   simulation:

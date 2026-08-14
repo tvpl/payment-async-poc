@@ -18,8 +18,8 @@ public record PaymentSimulationRequest(
         @NotBlank String merchantId,
         @NotNull @DecimalMin(value = "0.01") BigDecimal amount,
         @NotBlank @Pattern(regexp = "[A-Z]{3}") String currency,
-        @NotBlank String paymentMethod,
-        @Nullable String brand,
+        @NotBlank @Pattern(regexp = "[A-Z_]{2,32}") String paymentMethod,
+        @Nullable @Pattern(regexp = "[A-Z_]{2,32}") String brand,
         @NotNull @Min(1) @Max(24) Integer installments,
         @NotBlank String captureMode
 ) {
