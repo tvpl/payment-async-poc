@@ -19,6 +19,7 @@
 //         -e SCENARIO_LABEL=steady --summary-export=/load/reports/steady.summary.json \
 //         /load/k6/capacity.js
 import http from 'k6/http';
+import exec from 'k6/execution';
 import { Counter } from 'k6/metrics';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
@@ -44,6 +45,9 @@ const status202 = new Counter('cap_status_202');
 const status422 = new Counter('cap_status_422');
 const status429 = new Counter('cap_status_429');
 const technicalErrors = new Counter('cap_technical_errors');
+// Per-tenant request counts, so a report/investigation can confirm the split across API_KEYS is
+// actually even rather than assuming it from the average rate alone.
+const keyCounters = API_KEYS.map((_, i) => new Counter(`cap_key_${i}_reqs`));
 
 // Expected outcomes under load per design.md §6.2: 200 (completed within wait-timeout), 202
 // (fell back before terminal), 422 (Core decline — CORE_DECLINE_PCT), 429 (rate limiter). Only
@@ -86,11 +90,19 @@ export default function () {
   const cursor = __VU + __ITER;
   const idx = cursor % BASE_URLS.length;
   const baseUrl = BASE_URLS[idx];
-  // AUD-30: independent modulus from the instance pick above, so tenant and instance don't
-  // correlate 1:1 when both lists happen to be the same length — every tenant still exercises
-  // every instance over the run.
-  const keyIdx = (cursor + 1) % API_KEYS.length;
+  // AUD-30: tenant key picked from exec.scenario.iterationInInstance — a counter incremented
+  // once per iteration *globally across every VU*, in actual chronological request order — not
+  // (VU+ITER), and not Math.random() either. RedisRateLimiter.java enforces the tenant budget in
+  // a *per-second* fixed window, and k6's constant-arrival-rate executor schedules iterations
+  // deterministically to hit the target rate: a (VU+ITER) modulus correlates with which second a
+  // request lands in (whole seconds clustered onto one tenant even though the run-wide split
+  // looked even — measured 16.5% 429 on a live run), and a per-iteration coin flip still leaves
+  // enough binomial variance per second at ~8.5 offered against a 10/s cap to occasionally miss
+  // the AUD-30 1% budget (measured 3.25% on a live run). Alternating on the true global
+  // chronological sequence keeps every single 1-second window within 1 of an even split.
+  const keyIdx = exec.scenario.iterationInInstance % API_KEYS.length;
   const apiKey = API_KEYS[keyIdx];
+  keyCounters[keyIdx].add(1);
   const idempotencyKey = uuidv4();
 
   const res = http.post(`${baseUrl}/payment-simulations`, PAYLOAD, {

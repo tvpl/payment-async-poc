@@ -576,7 +576,7 @@ T23 → T24
 
 ---
 
-### T23: Revogação + execução ao vivo do gate de capacidade
+### T23: Revogação + execução ao vivo do gate de capacidade ✅
 
 **What**: Marcar o relatório de 2026-08-12 como REVOGADO no CAP-02 (mediu o limiter de tenant); reconstruir imagens com as correções; rodar o cenário completo (15 min steady + spike) ao vivo; relatório novo datado.
 **Where**: `.specs/features/repository-segregation-production-hardening/spec.md`
@@ -587,9 +587,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] Relatório novo: 1.000 req/min sustentado, `429 ≤ 1%`, média ≤ 300ms, p99 ≤ 10s, 0 erro técnico
-- [ ] CAP-02 aponta para a evidência nova e marca a anterior revogada
-- [ ] Gate ao vivo passa
+- [x] Relatório novo: 1.000 req/min sustentado, `429 ≤ 1%`, média ≤ 300ms, p99 ≤ 10s, 0 erro técnico
+- [x] CAP-02 aponta para a evidência nova e marca a anterior revogada
+- [x] Gate ao vivo passa
 
 **Tests**: none
 **Gate**: build
