@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 2,
+  "next_id": 4,
   "lessons": [
     {
       "id": "L-001",
@@ -22,6 +22,42 @@
       ],
       "created": "2026-08-12T10:22:11Z",
       "last_seen": "2026-08-12T10:22:11Z"
+    },
+    {
+      "id": "L-002",
+      "key": "spec_precision_gap::when a spec or task claims a test exercises a real dependency outage verify the test actually stops the real process instead of throwing an in process exception from a wrapper an outage simulated by exception injection is a legitimate tradeoff under shared infra constraints but the spec wording must say so instead of claiming a literal stop",
+      "text": "When a spec or task claims a test exercises a real dependency outage, verify the test actually stops the real process instead of throwing an in-process exception from a wrapper — an outage simulated by exception injection is a legitimate tradeoff under shared-infra constraints, but the spec wording must say so instead of claiming a literal stop.",
+      "signal": "spec_precision_gap",
+      "scope": "testing",
+      "status": "candidate",
+      "features": [
+        "adversarial-audit-fixes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md P3 Success Criteria / tasks.md T1 Done-when vs feature-control/library/src/test/java/com/example/platform/featurecontrol/resolver/MasterSwitchIT.java (testing)"
+      ],
+      "created": "2026-08-14T17:08:32Z",
+      "last_seen": "2026-08-14T17:08:32Z"
+    },
+    {
+      "id": "L-003",
+      "key": "gate_fail::when an e2e scenario depends on a probabilistic mock outcome e g approve decline assert on a field present in every outcome branch not one that only exists on a single branch comparing an absent on both sides field as if it changed produces an intermittent false failure indistinguishable from a real regression",
+      "text": "When an E2E scenario depends on a probabilistic mock outcome (e.g. approve/decline), assert on a field present in every outcome branch, not one that only exists on a single branch — comparing an absent-on-both-sides field as if it changed produces an intermittent false failure indistinguishable from a real regression.",
+      "signal": "gate_fail",
+      "scope": "e2e",
+      "status": "candidate",
+      "features": [
+        "adversarial-audit-fixes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "scripts/e2e/payment-failures/scenarios/crash_recovery.sh:48 (outbox-crash-window-reclaim) (e2e)"
+      ],
+      "created": "2026-08-14T17:08:32Z",
+      "last_seen": "2026-08-14T17:08:32Z"
     }
   ]
 }
