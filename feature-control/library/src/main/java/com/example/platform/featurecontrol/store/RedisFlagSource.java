@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 @Requires(beans = RedisClient.class)
 @Requires(property = "platform.features.redis-enabled", notEquals = "false", defaultValue = "true")
-public class RedisFlagSource implements FlagSource {
+public class RedisFlagSource implements FlagSource, TrinaryFlagSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(RedisFlagSource.class);
 
@@ -64,10 +64,25 @@ public class RedisFlagSource implements FlagSource {
 
     @Override
     public Optional<FlagDefinition> find(String name) {
+        return lookup(name).served();
+    }
+
+    /**
+     * AUD-02: trinary lookup for {@link com.example.platform.featurecontrol.resolver.MasterSwitch}'s
+     * kill-switch latch. Shares the same cache/single-flight path as {@link #find}, but preserves
+     * whether the value came from a fresh/cached read (FOUND/ABSENT) or a failed one (UNAVAILABLE) —
+     * a distinction {@link Optional} alone can't carry.
+     */
+    @Override
+    public LookupResult findTrinary(String name) {
+        return lookup(name);
+    }
+
+    private LookupResult lookup(String name) {
         long now = System.currentTimeMillis();
         Cached fresh = freshCacheEntry(name, now);
         if (fresh != null) {
-            return Optional.ofNullable(fresh.definition());
+            return LookupResult.of(fresh.definition());
         }
 
         // Single-flight: only the first thread to see an expired/missing entry talks to Redis; any
@@ -76,7 +91,7 @@ public class RedisFlagSource implements FlagSource {
         synchronized (lock) {
             Cached recheck = freshCacheEntry(name, System.currentTimeMillis());
             if (recheck != null) {
-                return Optional.ofNullable(recheck.definition());
+                return LookupResult.of(recheck.definition());
             }
             return refresh(name);
         }
@@ -88,7 +103,7 @@ public class RedisFlagSource implements FlagSource {
         return cached != null && cached.expiresAtMillis() > now ? cached : null;
     }
 
-    private Optional<FlagDefinition> refresh(String name) {
+    private LookupResult refresh(String name) {
         Cached previous = cache.get(name);
         try {
             String json = redis.get(settings.getKeyPrefix() + name);
@@ -99,14 +114,15 @@ public class RedisFlagSource implements FlagSource {
             long ttlMillis = CacheJitter.jittered(
                     settings.getCacheTtl().toMillis(), settings.getCacheTtlJitter(), jitterRandom);
             cache.put(name, new Cached(definition, now, now + ttlMillis));
-            return Optional.ofNullable(definition);
+            return LookupResult.of(definition);
         } catch (Exception e) {
             LOG.debug("Redis flag lookup failed for {} ({}); applying stale policy", name, e.getMessage());
             long ageMillis = previous == null
                     ? Long.MAX_VALUE
                     : Math.max(0, System.currentTimeMillis() - previous.fetchedAtMillis());
-            return StalePolicy.apply(name, previous == null ? null : previous.definition(), ageMillis,
-                    settings.getMaxStale().toMillis(), settings.getStaleFallback());
+            Optional<FlagDefinition> stale = StalePolicy.apply(name, previous == null ? null : previous.definition(),
+                    ageMillis, settings.getMaxStale().toMillis(), settings.getStaleFallback());
+            return LookupResult.unavailable(stale);
         }
     }
 

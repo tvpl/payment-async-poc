@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 @Singleton
 @Primary
-public class CompositeFlagSource implements FlagSource {
+public class CompositeFlagSource implements FlagSource, TrinaryFlagSource {
 
     private final StaticFlagSource baseline;
     @Nullable
@@ -36,5 +36,19 @@ public class CompositeFlagSource implements FlagSource {
             }
         }
         return baseline.find(name);
+    }
+
+    /**
+     * AUD-02: delegates to the dynamic Redis source's trinary lookup when one is configured, so
+     * {@link com.example.platform.featurecontrol.resolver.MasterSwitch} can distinguish a Redis outage
+     * from a legitimately absent flag. Without a Redis source (YAML-only apps), the baseline can never
+     * be "unavailable" — absence there is always a genuine FOUND/ABSENT.
+     */
+    @Override
+    public LookupResult findTrinary(String name) {
+        if (dynamic != null) {
+            return dynamic.findTrinary(name);
+        }
+        return LookupResult.of(baseline.find(name).orElse(null));
     }
 }
