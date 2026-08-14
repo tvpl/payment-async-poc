@@ -488,7 +488,7 @@ T23 → T24
 
 ---
 
-### T19: Renovação de lease durante o scan de reclaim
+### T19: Renovação de lease durante o scan de reclaim ✅
 
 **What**: O scan renova o turno a cada entrada processada; renovação falhou → aborta o scan (design AUD-12).
 **Where**: `async-redis-service/src/main/java/com/example/platform/asyncredis/worker/JobWorker.java`
@@ -499,9 +499,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: scan mais longo que o lease com renovação → nenhum segundo worker toma o turno (delivery count não infla)
-- [ ] IT: renovação negada → scan aborta sem processar o restante
-- [ ] Gate Full passa
+- [x] IT: scan mais longo que o lease com renovação → nenhum segundo worker toma o turno (delivery count não infla)
+- [x] IT: renovação negada → scan aborta sem processar o restante
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

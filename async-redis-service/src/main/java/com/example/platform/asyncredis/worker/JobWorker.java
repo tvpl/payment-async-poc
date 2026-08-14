@@ -182,6 +182,13 @@ public class JobWorker {
     /**
      * Inspects the group's pending entries: poison jobs (delivered too many times) go to the DLQ;
      * entries idle beyond {@code reclaim-idle} are claimed by this worker and re-processed.
+     *
+     * <p>The turn was claimed once, before this method was called (see {@link #consume}). A scan
+     * of many entries can outlive that single lease, so the turn is renewed after every entry
+     * processed here (AUD-12): if a renewal is ever denied — the lease lapsed and a second worker
+     * already fenced ahead — the scan aborts immediately rather than keep processing entries under
+     * a turn it may no longer hold, which is what let two workers both {@code XCLAIM} the same
+     * entries and inflate their delivery counts.
      */
     private void reclaim(RedisCommands<String, String> c, String consumerName) {
         try {
@@ -197,6 +204,11 @@ public class JobWorker {
                     for (StreamMessage<String, String> message : claimed) {
                         handle(c, message);
                     }
+                }
+                if (!coordinator.claimTurn(consumerName)) {
+                    LOG.debug("reclaim turn lost mid-scan for {}; aborting with entries remaining",
+                            consumerName);
+                    return;
                 }
             }
         } catch (Exception e) {
