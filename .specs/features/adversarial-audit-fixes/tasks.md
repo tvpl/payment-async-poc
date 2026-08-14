@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/adversarial-audit-fixes/spec.md`
 **Design**: `.specs/features/adversarial-audit-fixes/design.md`
-**Status**: Draft
+**Status**: Done
 
 ---
 
@@ -598,7 +598,7 @@ T23 → T24
 
 ---
 
-### T24: Verificação final do workspace
+### T24: Verificação final do workspace ✅
 
 **What**: `scripts/verify-workspace.sh` completo (8 estágios) com todas as imagens reconstruídas; equivalence regenerado; traceability do spec desta feature toda `Verified`; handoff atualizado.
 **Where**: `.specs/features/adversarial-audit-fixes/spec.md`
@@ -609,10 +609,10 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] 8/8 estágios PASS ao vivo
-- [ ] Suítes das 4 fronteiras + feature-control verdes (baselines só cresceram)
-- [ ] Equivalence PASS; traceability atualizada
-- [ ] Gate Build passa
+- [x] 8/8 estágios PASS ao vivo — `scripts/verify-workspace.sh`: equivalence, no-composite-build, artifact-only-consumer, e2e-payment, e2e-async-redis, payment-failures (11/11), async-redis-failures (34/34), hygiene. Achado real no caminho: RED-01's short-TTL scratch container nunca ficava healthy porque T20's AUD-20 guard (`status-ttl >= idempotency-ttl`) corretamente recusava seu `idempotency-ttl` default de 24h contra um `status-ttl` de 8s — corrigido setando `ASYNC_REDIS_IDEMPOTENCY_TTL=8s` no fixture (`scripts/e2e/async-redis-failures/scenarios/status_lifecycle.sh`), não uma mudança no guard.
+- [x] Suítes das 4 fronteiras + feature-control verdes (baselines só cresceram) — cada task T1-T20 passou seu próprio gate Full/Quick ao vivo no commit; `equivalence verify` confirma que a contagem só cresceu (sources 204→211, tests 115→127, test_cases 535→592, migrations 9→11).
+- [x] Equivalence PASS; traceability atualizada — `equivalence: PASS (436 entries)`; todas as 27 linhas AUD-xx marcadas `Verified` com ponteiro de commit.
+- [x] Gate Build passa — `git diff --check` limpo.
 
 **Tests**: none
 **Gate**: build
