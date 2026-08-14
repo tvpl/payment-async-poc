@@ -1,4 +1,4 @@
-// k6 script for the T57 capacity gate (CAP-01..07, EDG-07).
+// k6 script for the capacity gate (CAP-01..07, EDG-07, AUD-30/AD-007).
 //
 // Drives POST /payment-simulations against a 2-instance payment-api fleet (round-robin, proving
 // CAP-05's cross-instance coordination under load), classifies responses per design.md §6.2
@@ -7,9 +7,15 @@
 // load/capacity/reconcile.py) can poll them to a terminal state and prove CAP-02's
 // zero-silent-loss claim without polling all ~150k requests inline.
 //
+// AUD-30: load is distributed across >=2 tenant API keys (round-robin, same pattern as the
+// instance distribution below) so this measures the route's real capacity instead of a single
+// tenant's rate-limit ceiling — the exact gap that made the 2026-08-12 report certify the
+// tenant bucket (50/s, 70% 429) as if it were system capacity.
+//
 //   docker run --rm --network payment-sandbox -v "$(pwd)/load:/load" grafana/k6:0.54.0 \
 //     run -e BASE_URLS=http://payment-api-1:8080,http://payment-api-2:8080 \
-//         -e RATE=167 -e DURATION=15m -e PRE_VUS=260 -e MAX_VUS=760 \
+//         -e API_KEYS=key-a,key-b \
+//         -e RATE=17 -e DURATION=15m -e PRE_VUS=100 -e MAX_VUS=300 \
 //         -e SCENARIO_LABEL=steady --summary-export=/load/reports/steady.summary.json \
 //         /load/k6/capacity.js
 import http from 'k6/http';
@@ -17,7 +23,10 @@ import { Counter } from 'k6/metrics';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 const BASE_URLS = (__ENV.BASE_URLS || 'http://localhost:8080').split(',');
-const API_KEY = __ENV.API_KEY || 'dev-key-change-me';
+// AUD-30: API_KEYS (comma-separated) replaces the single-tenant API_KEY. API_KEY is still read as
+// a one-key fallback so ad hoc single-tenant runs (e.g. the CAP-05 duplicate-key probe scripts)
+// keep working unchanged.
+const API_KEYS = (__ENV.API_KEYS || __ENV.API_KEY || 'dev-key-change-me').split(',');
 const RATE = parseInt(__ENV.RATE || '10');
 const DURATION = __ENV.DURATION || '30s';
 const PRE_VUS = parseInt(__ENV.PRE_VUS || '50');
@@ -63,6 +72,10 @@ export const options = {
     },
   },
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
+  // AD-007 / spec.md P3 AC4: latency targets asserted as k6 thresholds, not just reported.
+  thresholds: {
+    http_req_duration: ['avg<300', 'p(99)<10000'],
+  },
 };
 
 export default function () {
@@ -73,12 +86,17 @@ export default function () {
   const cursor = __VU + __ITER;
   const idx = cursor % BASE_URLS.length;
   const baseUrl = BASE_URLS[idx];
+  // AUD-30: independent modulus from the instance pick above, so tenant and instance don't
+  // correlate 1:1 when both lists happen to be the same length — every tenant still exercises
+  // every instance over the run.
+  const keyIdx = (cursor + 1) % API_KEYS.length;
+  const apiKey = API_KEYS[keyIdx];
   const idempotencyKey = uuidv4();
 
   const res = http.post(`${baseUrl}/payment-simulations`, PAYLOAD, {
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': API_KEY,
+      'X-API-Key': apiKey,
       'Idempotency-Key': idempotencyKey,
     },
     tags: { instance: baseUrl },

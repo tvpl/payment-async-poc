@@ -65,7 +65,10 @@ jvm:
 app_config:
   payment-api:
     wait_timeout: 3s # payment-api/src/main/resources/application.yml:89
-    response_consumer_rate_limit: { limit_for_period: 200, tenant_limit_for_period: 50, refresh_period: 1s }
+    # AD-007 (2026-08-14): recalibrated from limit_for_period 200 / tenant_limit_for_period 50 —
+    # see .specs/STATE.md AD-007. The prior numbers matched AD-006's 10,000 req/min target; this
+    # gate now runs against a 1,000 req/min target with 2 tenant API keys (AUD-30), not one.
+    response_consumer_rate_limit: { limit_for_period: 20, tenant_limit_for_period: 10, refresh_period: 1s }
     sbus_client: { connect_timeout: 500ms, read_timeout: 800ms }
   payment-sbus:
     db_pool_max_size: 10 # payment-sbus/src/main/resources/application.yml:80
@@ -94,12 +97,15 @@ payload:
   idempotency_key: unique per request (uuid), except the CAP-05 duplicate-key probe
 
 scenarios:
-  # steady/spike numbers are AD-006's literal target. soak/slowdown/recovery durations are not
-  # spec-mandated numbers — sized to demonstrate the behavior within this run's time budget, not
-  # to claim a certified duration. Concurrency (pre/max VUs) derives from design.md §6.1's own
-  # "Wait HTTP" table: rate x wait_timeout(3s) concurrent in-flight requests, x1.5 margin.
-  steady: { rate_per_sec: 167, duration: 15m, pre_vus: 260, max_vus: 760 } # 10,000/min
-  spike: { rate_per_sec: 333, duration: 60s, pre_vus: 520, max_vus: 1500 } # 20,000/min
+  # steady/spike numbers are AD-007's literal target (supersedes AD-006 — see .specs/STATE.md).
+  # soak/slowdown/recovery durations are not spec-mandated numbers — sized to demonstrate the
+  # behavior within this run's time budget, not to claim a certified duration. Concurrency
+  # (pre/max VUs) derives from design.md §6.1's own "Wait HTTP" table: rate x wait_timeout(3s)
+  # concurrent in-flight requests, with headroom for the AD-007 p99<=10s ceiling if latency spikes.
+  # Load is split across 2 tenant API keys (AUD-30, ~half the rate each) instead of the single
+  # tenant load/k6/capacity.js used before the recalibration.
+  steady: { rate_per_sec: 17, duration: 15m, pre_vus: 100, max_vus: 300 } # 1,020/min, ~8.5/s/tenant
+  spike: { rate_per_sec: 33, duration: 60s, pre_vus: 150, max_vus: 500 } # 1,980/min, ~16.5/s/tenant
   soak: { rate_per_sec: 133, duration: 10m, pre_vus: 210, max_vus: 610 } # drift/leak check beyond steady's window
   slowdown: { rate_per_sec: 2, duration: 90s, pre_vus: 20, max_vus: 40, core_latency_min_ms: 1500, core_latency_max_ms: 3500 }
   # rate deliberately low, not the usual scenario rate: with core-mock's single-partition
@@ -110,14 +116,17 @@ scenarios:
   recovery: { observe_window: 3m, sample_interval: 10s } # no new load; drains what slowdown/spike left behind
 
 thresholds:
-  # Spec-defined (design.md §6.2), enforced unconditionally by generate_report.py:
+  # Spec-defined (design.md §6.2, AD-007), enforced unconditionally by generate_report.py:
   technical_error_rate_max: 0.001 # CAP-02 "<0,1%"
   sampled_reconciliation_loss_max: 0 # CAP-02 "zero perda silenciosa" (sampled, see report methodology)
-  # Baseline-derived (design.md §6.2: latency thresholds come FROM a baseline run, not invented
-  # first) — proposed here from this gate's own certified-target/steady run, held as PROPOSED
-  # pending explicit sign-off before being treated as a certification gate on a future run:
-  latency_p95_ms: PROPOSED_FROM_BASELINE
-  latency_p99_ms: PROPOSED_FROM_BASELINE
+  # AUD-30: 429s are admission-control rejections, not technical errors — but a PASS with a high
+  # 429 rate is exactly how the 2026-08-12 report certified the wrong thing (70% 429, single
+  # tenant). Enforced only on the steady scenario (spec.md P3 AC3): spike is deliberately offered
+  # above the admitted rate and is judged on boundedness, not on a 429 ceiling.
+  steady_429_rate_max: 0.01 # CAP-02/AUD-30 "429 <= 1% do total em steady"
+  # AD-007 targets, enforced as k6 thresholds directly in load/k6/capacity.js (not invented here):
+  latency_avg_ms_max: 300
+  latency_p99_ms_max: 10000
 
 report:
   # generate_report.py fills these in from k6 --summary-export JSON + collect_metrics.sh

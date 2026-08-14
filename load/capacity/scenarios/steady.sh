@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# CAP-02: 10,000 req/min (167 req/s) sustained for 15 minutes, zero silent loss, technical error
-# rate < 0.1%. Also exercises CAP-05 (round-robin across payment-api-1/2, requestId ordering
-# holds since a duplicate Idempotency-Key sent to both instances mid-run resolves to one id).
+# CAP-02 (AD-007/AUD-30): 1,000 req/min (17 req/s) sustained for 15 minutes across >=2 tenant API
+# keys, zero silent loss, technical error rate < 0.1%, 429 <= 1% of the steady window, avg latency
+# <= 300ms, p99 <= 10s. Also exercises CAP-05 (round-robin across payment-api-1/2, requestId
+# ordering holds since a duplicate Idempotency-Key sent to both instances mid-run resolves to one
+# id).
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
@@ -32,5 +34,5 @@ fi
 echo "{\"requestId_a\":\"${REQ_A}\",\"requestId_b\":\"${REQ_B}\",\"match\":$( [ "$REQ_A" = "$REQ_B" ] && [ -n "$REQ_A" ] && echo true || echo false )}" \
   > "${OUT}/steady.cap05_probe.json"
 
-run_k6_scenario "$PROFILE" steady 167 15m 260 760 100
+run_k6_scenario "$PROFILE" steady 17 15m 100 300 100
 log "steady (${PROFILE}): done"

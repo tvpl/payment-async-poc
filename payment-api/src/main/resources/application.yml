@@ -103,6 +103,10 @@ payment:
     enabled: ${PAYMENT_SECURITY_ENABLED:true}
     api-keys:
       - ${PAYMENT_API_KEY}
+      # Second tenant key for the capacity gate (T22): the honest gate needs >=2 real tenants to
+      # measure route capacity instead of one tenant's rate-limit ceiling. Defaulted so boundaries
+      # that never set it (existing IT suites, other environments) keep working unchanged.
+      - ${PAYMENT_API_KEY_2:dev-key-2-change-me}
   sbus:
     # Circuit for the durable status fallback: stop paying the read-timeout on every request
     # once the SBUS is consistently failing.

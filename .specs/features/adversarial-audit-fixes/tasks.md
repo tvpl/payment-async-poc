@@ -553,7 +553,7 @@ T23 → T24
 
 ---
 
-### T22: Gate de capacidade honesto
+### T22: Gate de capacidade honesto ✅
 
 **What**: k6 com 2 tenants (~8,5/s cada); thresholds `avg<300` e `p(99)<10000` em `http_req_duration`; veredito do relatório reprova com `429 > 1%` do steady — mix de status entra no veredito.
 **Where**: `load/k6/capacity.js`
@@ -564,10 +564,10 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] k6 distribui por 2 API keys; thresholds ativos
-- [ ] `generate_report.py` reprova por mix (verificado com fixture de mix ruim)
-- [ ] DRYRUN do cenário passa
-- [ ] Gate Build passa
+- [x] k6 distribui por 2 API keys; thresholds ativos
+- [x] `generate_report.py` reprova por mix (verificado com fixture de mix ruim)
+- [x] DRYRUN do cenário passa
+- [x] Gate Build passa
 
 **Tests**: none
 **Gate**: build

@@ -23,6 +23,12 @@ from pathlib import Path
 
 HARD_ERROR_RATE_MAX = 0.001  # CAP-02
 HARD_SAMPLED_LOSS_MAX = 0  # CAP-02, on the sampled subset (see reconcile.py)
+# AUD-30: the 2026-08-12 report certified PASS while 70% of requests were 429'd, because the
+# verdict only ever looked at technical errors (5xx/timeouts), never the admission-control mix.
+# 429 is expected anomaly-free noise at or below the approved target, not silently tolerated
+# saturation — enforced on the "steady" scenario only (spike is deliberately offered above the
+# admitted rate and is judged on boundedness elsewhere, not a 429 ceiling).
+HARD_429_RATE_MAX = 0.01  # CAP-02/AUD-30 "429 <= 1% do total em steady"
 
 SCENARIOS = ["steady", "spike", "soak", "slowdown", "recovery"]
 
@@ -143,6 +149,14 @@ def evaluate_thresholds(stats, profile):
             reasons.append(
                 f"{reconcile['lost']}/{reconcile['sampled']} sampled requests never reached a "
                 f"terminal state (CAP-02 zero silent loss)")
+        if stats.get("scenario") == "steady":
+            total = stats.get("total_requests") or 0
+            status_429 = (stats.get("status_mix") or {}).get("429", 0)
+            rate_429 = (status_429 / total) if total else 0.0
+            if rate_429 > HARD_429_RATE_MAX:
+                reasons.append(
+                    f"429 rate {rate_429:.4%} > {HARD_429_RATE_MAX:.4%} of steady total "
+                    f"(AUD-30 admission-control mix)")
     else:  # constrained-core — bounded-backlog check only
         before = stats.get("before") or {}
         after = stats.get("after") or {}
@@ -271,22 +285,43 @@ def aggregate(reports_dir, manifest_path, output_path):
 def selftest():
     """CAP-07 proof: the threshold evaluator must fail a synthetic bad run and pass a synthetic
     good one, deterministically. This is a unit-test of generate_report.py's own gate logic, not
-    a live run — it proves the fail path fires without waiting through another 15-minute scenario."""
+    a live run — it proves the fail path fires without waiting through another 15-minute scenario.
+
+    AUD-30 addition: a separate good/bad pair isolates the 429-mix rule (technical errors and
+    reconciliation both clean, only the status mix is bad) — this is exactly the shape of the
+    2026-08-12 report the recalibration revoked: 0 technical errors, but 70% 429. Without this
+    check, that report's own verdict logic would have called it PASS."""
     good = {
-        "total_requests": 100000, "technical_errors": 5, "error_rate": 5 / 100000,
+        "scenario": "steady", "total_requests": 100000, "technical_errors": 5, "error_rate": 5 / 100000,
+        "status_mix": {"200": 90000, "202": 9000, "422": 500, "429": 500},
         "reconcile": {"sampled": 2000, "terminal": 2000, "lost": 0, "lost_ids": []},
     }
     bad = {
-        "total_requests": 100000, "technical_errors": 500, "error_rate": 500 / 100000,
+        "scenario": "steady", "total_requests": 100000, "technical_errors": 500, "error_rate": 500 / 100000,
+        "status_mix": {"200": 20000, "202": 5000, "422": 5000, "429": 70000},
         "reconcile": {"sampled": 2000, "terminal": 1990, "lost": 10, "lost_ids": ["x"] * 10},
     }
     good_passed, good_reasons = evaluate_thresholds(good, "certified-target")
     bad_passed, bad_reasons = evaluate_thresholds(bad, "certified-target")
 
-    ok = good_passed and not good_reasons and not bad_passed and len(bad_reasons) == 2
+    # Isolates AUD-30: technical errors and reconciliation are both clean (would pass on their
+    # own) — only the 429 mix is bad, mirroring the revoked 2026-08-12 report's exact shape.
+    bad_mix_only = {
+        "scenario": "steady", "total_requests": 100000, "technical_errors": 5, "error_rate": 5 / 100000,
+        "status_mix": {"200": 20000, "202": 9500, "422": 500, "429": 70000},
+        "reconcile": {"sampled": 2000, "terminal": 2000, "lost": 0, "lost_ids": []},
+    }
+    bad_mix_passed, bad_mix_reasons = evaluate_thresholds(bad_mix_only, "certified-target")
+
+    ok = (
+        good_passed and not good_reasons
+        and not bad_passed and len(bad_reasons) == 3
+        and not bad_mix_passed and len(bad_mix_reasons) == 1 and "429" in bad_mix_reasons[0]
+    )
     print(json.dumps({
         "good_passed": good_passed, "good_reasons": good_reasons,
         "bad_passed": bad_passed, "bad_reasons": bad_reasons,
+        "bad_mix_only_passed": bad_mix_passed, "bad_mix_only_reasons": bad_mix_reasons,
         "selftest": "PASS" if ok else "FAIL",
     }, indent=2))
     return 0 if ok else 1

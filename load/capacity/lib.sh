@@ -9,6 +9,9 @@ REPORTS_DIR="${REPO_ROOT}/load/reports"
 
 SANDBOX_NETWORK="${SANDBOX_NETWORK:-payment-sandbox}"
 PAYMENT_API_KEY="${PAYMENT_API_KEY:-dev-key-change-me}"
+# AUD-30: second tenant key so the gate measures route capacity across >=2 tenants instead of one
+# tenant's rate-limit bucket. Matches application.yml's default so a fresh sandbox works unset.
+PAYMENT_API_KEY_2="${PAYMENT_API_KEY_2:-dev-key-2-change-me}"
 JWT_SIGNATURE_SECRET="${JWT_SIGNATURE_SECRET:-dev-jwt-signature-secret-change-me-please-32-bytes}"
 SBUS_DEV_JWT_SECRET="${SBUS_DEV_JWT_SECRET:-dev-jwt-signature-secret-change-me-please-32-bytes}"
 
@@ -48,6 +51,7 @@ run_api() {
     -e SBUS_BASE_URL=http://payment-sbus-1:8081 \
     -e PAYMENT_API_INSTANCES="$instances" \
     -e PAYMENT_API_KEY="$PAYMENT_API_KEY" \
+    -e PAYMENT_API_KEY_2="$PAYMENT_API_KEY_2" \
     -e JWT_SIGNATURE_SECRET="$JWT_SIGNATURE_SECRET" \
     -e JWT_JWKS_URL= -e JWT_ISSUER= -e JWT_AUDIENCE= \
     payment-api:local >/dev/null
@@ -138,7 +142,7 @@ warm_up() {
   log "warm-up: 45s @ 10 req/s (discarded)"
   docker run --rm --network "$SANDBOX_NETWORK" -v "${REPO_ROOT}/load:/load" \
     -e BASE_URLS="http://payment-api-1:8080,http://payment-api-2:8080" \
-    -e API_KEY="$PAYMENT_API_KEY" -e RATE=10 -e DURATION=45s \
+    -e API_KEYS="${PAYMENT_API_KEY},${PAYMENT_API_KEY_2}" -e RATE=10 -e DURATION=45s \
     -e PRE_VUS=40 -e MAX_VUS=100 -e SCENARIO_LABEL=warmup -e SAMPLE_EVERY=1000000 \
     grafana/k6:0.54.0 run /load/k6/capacity.js > /dev/null 2>&1
 }
@@ -168,7 +172,7 @@ run_k6_scenario() {
   log "${scenario} (${profile}): running k6 (${rate} req/s x ${duration})"
   docker run --rm --network "$SANDBOX_NETWORK" -v "${REPO_ROOT}/load:/load" \
     -e BASE_URLS="http://payment-api-1:8080,http://payment-api-2:8080" \
-    -e API_KEY="$PAYMENT_API_KEY" -e RATE="$rate" -e DURATION="$duration" \
+    -e API_KEYS="${PAYMENT_API_KEY},${PAYMENT_API_KEY_2}" -e RATE="$rate" -e DURATION="$duration" \
     -e PRE_VUS="$pre_vus" -e MAX_VUS="$max_vus" -e SCENARIO_LABEL="$scenario" -e SAMPLE_EVERY="$sample_every" \
     grafana/k6:0.54.0 run --summary-export="/load/reports/${profile}/${scenario}.summary.json" \
     /load/k6/capacity.js > "${out}/${scenario}.stdout.txt" 2>&1
