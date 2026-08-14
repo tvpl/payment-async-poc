@@ -124,6 +124,36 @@ class AdmissionControlIT {
         assertEquals(HttpStatus.ACCEPTED, submit(quiet).getStatus());
     }
 
+    /**
+     * task_T5 (AUD-05): the old admission check was two sequential {@code tryAcquire} calls
+     * (route, then tenant) with no rollback - a tenant over its own budget still consumed a
+     * route token on every denied attempt, letting a single bursting tenant drain the shared
+     * route budget for everyone else. The fix is one atomic Lua script that rolls the route
+     * token back when the tenant check denies.
+     */
+    @Test
+    void aBurstingTenantDoesNotConsumeTheRouteBudgetForAnother() {
+        String noisy = TENANTS.get(0);
+        String quiet = TENANTS.get(1);
+
+        for (int attempt = 0; attempt < RESOURCE_BUDGET; attempt++) {
+            try {
+                submit(noisy);
+            } catch (HttpClientResponseException ignored) {
+                // expected once noisy's own tenant budget is exhausted
+            }
+        }
+
+        // quiet must still be admitted for its own full tenant budget: if noisy's denied
+        // attempts had drained the shared route budget (the un-fixed bug), this would 429
+        // immediately instead.
+        for (int admitted = 0; admitted < TENANT_BUDGET; admitted++) {
+            assertEquals(HttpStatus.ACCEPTED, submit(quiet).getStatus(),
+                    "quiet tenant should still be admitted up to its own tenant budget; "
+                            + "the noisy tenant's denied attempts must not have consumed the route budget");
+        }
+    }
+
     @Test
     void theResourceBudgetCapsTheRouteAcrossTenants() {
         int admitted = 0;

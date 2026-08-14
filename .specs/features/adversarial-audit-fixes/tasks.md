@@ -180,7 +180,7 @@ T23 → T24
 
 ---
 
-### T5: Admissão atômica de dois orçamentos (Lua único)
+### T5: Admissão atômica de dois orçamentos (Lua único) ✅
 
 **What**: Substituir os dois `tryAcquire` sequenciais pelo script de dois contadores com rollback (design §3); fallback degradado aplica a fatia por instância aos dois orçamentos.
 **Where**: `payment-api/src/main/java/com/example/payments/api/ratelimit/RedisRateLimiter.java`
@@ -191,9 +191,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: tenant estourado NÃO consome o orçamento de rota — outro tenant continua sendo admitido até o limite da rota (o cenário exato que o teste antigo não discriminava)
-- [ ] IT degradado (Redis parado): os dois orçamentos aplicam a fatia local
-- [ ] Gate Full passa
+- [x] IT: tenant estourado NÃO consome o orçamento de rota — outro tenant continua sendo admitido até o limite da rota (o cenário exato que o teste antigo não discriminava)
+- [x] IT degradado (Redis parado): os dois orçamentos aplicam a fatia local
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

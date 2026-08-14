@@ -57,7 +57,7 @@ public class ConcurrencyLimitFilter implements HttpServerFilter {
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         String resource = request.getMethod().name() + ":" + request.getPath();
-        if (!resourceLimiter.tryAcquire(resource) || !tenantLimiter.tryAcquire(tenant(request))) {
+        if (!resourceLimiter.tryAcquireBoth(resource, tenantLimiter, tenant(request))) {
             return Publishers.just(HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS)
                     .header("Retry-After", "1"));
         }

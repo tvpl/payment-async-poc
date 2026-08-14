@@ -24,6 +24,27 @@ public class RedisRateLimiter {
             if c <= tonumber(ARGV[2]) then return 1 else return 0 end
             """;
 
+    /**
+     * Evaluates the route (KEYS[1]/ARGV[2]) and tenant (KEYS[2]/ARGV[3]) budgets in one
+     * round-trip. The route counter is incremented first; if the route itself is already over
+     * budget, its own INCR above the limit is harmless (the tenant counter is never touched).
+     * Only when the route admits does the tenant counter get evaluated - and if the tenant
+     * denies, the route token just consumed is rolled back with a DECR before returning 0, so a
+     * tenant that is over its own budget never eats into the shared route budget (AUD-05).
+     */
+    private static final String DUAL_BUDGET_LUA = """
+            local r = redis.call('INCR', KEYS[1])
+            if r == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
+            if r > tonumber(ARGV[2]) then return 0 end
+            local t = redis.call('INCR', KEYS[2])
+            if t == 1 then redis.call('PEXPIRE', KEYS[2], ARGV[1]) end
+            if t > tonumber(ARGV[3]) then
+              redis.call('DECR', KEYS[1])
+              return 0
+            end
+            return 1
+            """;
+
     private final Supplier<RedisCommands<String, String>> commands;
     private final String name;
     private final int limitForPeriod;
@@ -47,7 +68,7 @@ public class RedisRateLimiter {
 
     public boolean tryAcquire(String scope) {
         long window = System.currentTimeMillis() / windowMillis;
-        String key = "rl:" + name + ":" + scope + ":" + window;
+        String key = key(scope, window);
         try {
             Long allowed = commands.get().eval(LUA, ScriptOutputType.INTEGER,
                     new String[]{key}, String.valueOf(windowMillis), String.valueOf(limitForPeriod));
@@ -55,6 +76,32 @@ public class RedisRateLimiter {
         } catch (Exception exception) {
             return localTryAcquire(scope, window);
         }
+    }
+
+    /**
+     * Atomically evaluates this limiter (the route budget) together with {@code tenantLimiter}
+     * (the tenant budget) for the same request, with the tenant denial rolling back the route
+     * token it would otherwise have wasted (AUD-05). When Redis is unreachable, both budgets
+     * fall back independently to their own per-instance local slice, same as {@link #tryAcquire}.
+     */
+    public boolean tryAcquireBoth(String scope, RedisRateLimiter tenantLimiter, String tenantScope) {
+        long window = System.currentTimeMillis() / windowMillis;
+        String routeKey = key(scope, window);
+        String tenantKey = tenantLimiter.key(tenantScope, window);
+        try {
+            Long allowed = commands.get().eval(DUAL_BUDGET_LUA, ScriptOutputType.INTEGER,
+                    new String[]{routeKey, tenantKey},
+                    String.valueOf(windowMillis),
+                    String.valueOf(limitForPeriod),
+                    String.valueOf(tenantLimiter.limitForPeriod));
+            return allowed != null && allowed == 1L;
+        } catch (Exception exception) {
+            return localTryAcquire(scope, window) && tenantLimiter.localTryAcquire(tenantScope, window);
+        }
+    }
+
+    private String key(String scope, long window) {
+        return "rl:" + name + ":" + scope + ":" + window;
     }
 
     private boolean localTryAcquire(String scope, long window) {
