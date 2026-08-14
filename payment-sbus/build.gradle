@@ -101,6 +101,10 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'com.redis:testcontainers-redis:2.2.2'
     testImplementation 'org.awaitility:awaitility:4.2.1'
+    // Already a runtime dependency (application.yml parsing) — exposed to tests too so
+    // ConsumerErrorStrategyUnitTest can assert against the actual YAML-configured
+    // max.poll.interval.ms instead of duplicating the value as a literal.
+    testImplementation 'org.yaml:snakeyaml'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

@@ -400,7 +400,7 @@ T23 → T24
 
 ---
 
-### T15: Grupos separados + max.poll.interval
+### T15: Grupos separados + max.poll.interval ✅
 
 **What**: `payment-sbus-requested` / `payment-sbus-core-response` como groupIds; `max.poll.interval.ms: 2100000` no consumer default; IT provando releitura idempotente do histórico ANTES do rename (design §4).
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/kafka/PaymentRequestedConsumer.java`
@@ -411,9 +411,9 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: processar o mesmo registro Requested duas vezes → segunda é no-op; resposta p/ simulação terminal → ignorada (prova da releitura segura)
-- [ ] groupIds distintos nos dois consumers; `max.poll.interval.ms` > orçamento de retry (asserção por reflexão como em `ConsumerErrorStrategyUnitTest`)
-- [ ] Gate Full passa
+- [x] IT: processar o mesmo registro Requested duas vezes → segunda é no-op; resposta p/ simulação terminal → ignorada (prova da releitura segura)
+- [x] groupIds distintos nos dois consumers; `max.poll.interval.ms` > orçamento de retry (asserção por reflexão como em `ConsumerErrorStrategyUnitTest`)
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full

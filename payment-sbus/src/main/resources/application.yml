@@ -50,6 +50,14 @@ kafka:
       max:
         poll:
           records: 100
+          interval:
+            # AUD-10: unset before, defaulting to Kafka's own 5-minute default — far below the
+            # 30-minute retry budget (retryCount=900 x retryDelay=2s, see PaymentRequestedConsumer
+            # / CoreResponseConsumer) a durable-persistence retry loop needs to ride out a
+            # realistic Postgres failover. Below the budget, the consumer group would evict the
+            # instance for exceeding max.poll.interval.ms long before the retries exhaust. 35
+            # minutes clears the 30-minute budget with margin.
+            ms: 2100000
   producers:
     default:
       key:

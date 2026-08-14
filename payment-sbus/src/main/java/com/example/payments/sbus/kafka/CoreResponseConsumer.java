@@ -20,9 +20,17 @@ import java.util.Map;
  * <p>{@code retryCount}/{@code retryDelay}: see {@link PaymentRequestedConsumer}'s javadoc —
  * same 30-minute budget against the same failure (Postgres down when {@link RetryPublisher}
  * tries to durably record the retry/DLQ).
+ *
+ * <p>{@code groupId} (AUD-10): dedicated to this topic, same reasoning as
+ * {@link PaymentRequestedConsumer}'s javadoc — no longer shares {@code payment-sbus} with it, so
+ * a rebalance on either listener never revokes the other's partitions. The new group's
+ * {@code EARLIEST} reset rereads this topic's history once on first deploy — safe by
+ * construction, since a Core response for a simulation that is already terminal (or unknown) is
+ * ignored (see {@code PaymentSimulationService#handleCoreResponse}); proven directly by
+ * {@code ConsumerGroupReplayIsInertIT}.
  */
 @KafkaListener(
-        groupId = "payment-sbus",
+        groupId = "payment-sbus-core-response",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
         errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 900, retryDelay = "2s"))
