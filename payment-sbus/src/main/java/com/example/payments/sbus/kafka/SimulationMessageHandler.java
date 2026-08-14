@@ -24,6 +24,25 @@ import java.util.Map;
  * <p>Deserialization/validation failures are surfaced as {@link PoisonMessageException}
  * (route straight to DLQ); failures from the business processing propagate as ordinary
  * {@link RuntimeException} (eligible for retry).
+ *
+ * <p>Not every decode failure is poison, though (AUD-09): a Schema Registry outage during
+ * deserialization is a connectivity problem, not a defect in the payload. Before this fix, ANY
+ * exception from {@link AvroSerde#deserialize} — including a registry that simply isn't
+ * reachable right now — was classified poison and dead-lettered, which meant a perfectly valid
+ * payment got dropped straight to the DLQ during a routine registry restart. Connectivity
+ * failures surface as {@link RegistryUnavailableException} instead, which the consumers route to
+ * the transient/retry path exactly like {@link AvroCodecUnavailableException} already does.
+ * Detection walks the cause chain for either: a raw {@link java.io.IOException} (a client-side
+ * network failure that never even reached the Apicurio REST client), or an Apicurio
+ * {@code RestClientException} whose embedded {@code Error} has no {@code errorCode} — the
+ * client's own signal for "no HTTP response was ever received", as opposed to a real HTTP error
+ * response from the registry (which always carries a status code). The Apicurio client does NOT
+ * preserve the original {@code IOException} as a Java {@code cause} for a connectivity failure —
+ * {@code ErrorHandler#parseError} synthesizes a fresh exception from just the failing exception's
+ * class name and message — so the errorCode check is the reliable signal in practice; the raw
+ * {@code IOException} check is a defensive fallback. A genuinely undecodable payload never
+ * touches the network in the first place, so neither signal fires — it still lands on
+ * {@link PoisonMessageException}.
  */
 @Singleton
 public class SimulationMessageHandler {
@@ -58,6 +77,10 @@ public class SimulationMessageHandler {
         } catch (AvroCodecUnavailableException unavailable) {
             throw unavailable;
         } catch (Exception e) {
+            if (isRegistryConnectivityFailure(e)) {
+                throw new RegistryUnavailableException(
+                        "Registry unavailable while decoding PaymentSimulationRequested", e);
+            }
             throw new PoisonMessageException("Invalid PaymentSimulationRequested", e);
         }
         Mdc.fromConsumer(record, env);
@@ -80,6 +103,10 @@ public class SimulationMessageHandler {
         } catch (AvroCodecUnavailableException unavailable) {
             throw unavailable;
         } catch (Exception e) {
+            if (isRegistryConnectivityFailure(e)) {
+                throw new RegistryUnavailableException(
+                        "Registry unavailable while decoding CorePaymentSimulationResponse", e);
+            }
             throw new PoisonMessageException("Invalid CorePaymentSimulationResponse", e);
         }
         Mdc.fromConsumer(record, env);
@@ -88,5 +115,35 @@ public class SimulationMessageHandler {
         } finally {
             Mdc.clear();
         }
+    }
+
+    /**
+     * A connectivity failure talking to the registry surfaces as a network exception ({@link
+     * java.io.IOException} or a subclass — {@code ConnectException}, {@code SocketTimeoutException},
+     * {@code HttpConnectTimeoutException}, …) somewhere in the cause chain: the Apicurio client
+     * wraps the failed HTTP call in one of its own {@code RuntimeException} subclasses around
+     * that underlying I/O failure. A genuinely undecodable payload never reaches the network at
+     * all (a malformed wire header, an unresolvable local schema mismatch), so it never has an
+     * {@code IOException} anywhere in its chain — this discriminates the two without depending on
+     * a specific Apicurio exception class, which would be fragile across client versions.
+     */
+    private static boolean isRegistryConnectivityFailure(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.io.IOException) {
+                return true;
+            }
+            // The Apicurio client does not preserve the underlying IOException as a Java cause
+            // for a connectivity failure (JdkHttpClient/ErrorHandler#parseError synthesizes a
+            // fresh RestClientException from just the failing exception's class name/message,
+            // discarding the original exception entirely) — its OWN "no HTTP response at all"
+            // signal is an embedded Error with no errorCode (handleErrorResponse, used when the
+            // registry DID answer with an HTTP error status, always sets one).
+            if (cause instanceof io.apicurio.registry.rest.client.exception.RestClientException restClientException
+                    && restClientException.getError() != null
+                    && restClientException.getError().getErrorCode() == null) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -35,6 +35,10 @@ micronaut:
 kafka:
   bootstrap:
     servers: ${KAFKA_BOOTSTRAP_SERVERS:`localhost:9092`}
+  # The built-in "kafka" readiness indicator is superseded by health/KafkaHealthIndicator
+  # (AUD-09), which reads the declared sbus.dependencies.kafka budget; the built-in one does not.
+  health:
+    enabled: false
   consumers:
     default:
       key:
@@ -68,6 +72,10 @@ payments:
 # Redis is used only for the distributed (global) core-command rate limiter.
 redis:
   uri: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+  # The built-in "redis" readiness indicator is superseded by health/RedisHealthIndicator
+  # (AUD-09), which reads the declared sbus.dependencies.redis budget; the built-in one does not.
+  health:
+    enabled: false
 
 datasources:
   default:
@@ -150,6 +158,13 @@ endpoints:
     enabled: true
     sensitive: false
     details-visible: NEVER
+    # Superseded by the "postgresql" indicator (health/PostgresHealthIndicator, AUD-09), which
+    # reads the declared sbus.dependencies.postgresql budget. The built-in indicator's own
+    # connection acquisition has no such bound (HikariCP's connectionTimeout defaults to 30s),
+    # so a stale pooled connection during a real outage can hold up readiness far longer than any
+    # declared budget.
+    jdbc:
+      enabled: false
   prometheus:
     enabled: true
     sensitive: true

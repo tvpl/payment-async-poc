@@ -377,7 +377,7 @@ T23 → T24
 
 ---
 
-### T14: HealthIndicators reais + classificação do Registry
+### T14: HealthIndicators reais + classificação do Registry ✅
 
 **What**: Um `HealthIndicator` de readiness por dependência (`readiness-required`) executando os budgets declarados (design §6); `SimulationMessageHandler` separa indisponibilidade do Registry (transitória → retry) de payload indecodificável (poison).
 **Where**: `payment-sbus/src/main/java/com/example/payments/sbus/health/` (novo pacote)
@@ -388,10 +388,10 @@ T23 → T24
 **Tools**: MCP: NONE · Skill: NONE
 
 **Done when**:
-- [ ] IT: Registry parado → readiness DOWN e registro consumido vai para retry, não para DLQ (hoje: readiness UP e pagamento válido dead-letterado)
-- [ ] IT: Postgres parado → readiness DOWN
-- [ ] Payload realmente indecodificável continua poison → DLQ
-- [ ] Gate Full passa
+- [x] IT: Registry parado → readiness DOWN e registro consumido vai para retry, não para DLQ (hoje: readiness UP e pagamento válido dead-letterado)
+- [x] IT: Postgres parado → readiness DOWN
+- [x] Payload realmente indecodificável continua poison → DLQ
+- [x] Gate Full passa
 
 **Tests**: integration
 **Gate**: full
