@@ -129,7 +129,7 @@
       "category": "documents",
       "id": "docs/workspace-architecture.md",
       "path": "docs/workspace-architecture.md",
-      "sha256": "3f1049d3e2768c37aed5a74d1a5205fa4440d6bc7cb44d6b8d27af7219d39fe3"
+      "sha256": "ab4bbabdf221e51bde082394d20ad9ec204f75ad5a21f63e32e0a9c3d2825d71"
     },
     {
       "category": "documents",
@@ -435,7 +435,7 @@
       "category": "scripts",
       "id": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
       "path": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
-      "sha256": "08f263a035c00b80e76652d70d19000b2d1b0e98ed4e83c77b62e6af1d270a05"
+      "sha256": "9fa2a9a3fbc21966fa076c13b2932389cacf6602602509f7b08c18b60182a1b3"
     },
     {
       "category": "scripts",

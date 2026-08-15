@@ -71,7 +71,7 @@ Fluxo completo, hop a hop, com a sequência de mensagens: [Fluxo de pagamento](p
 
 `feature-control` não recebe chamadas de rede como um serviço central. Cada aplicação injeta o resolver da biblioteca e resolve a decisão localmente. A configuração combina uma baseline estática com overrides dinâmicos do Redis, e o bucketing usa uma chave estável para que rollouts e testes A/B sejam determinísticos.
 
-- `payment-api` aplica allowlist por JWT numa rota e pode rotear tópico por flag.
+- `payment-api` aplica allowlist por JWT numa rota (`/v0`). O roteamento de tópico por flag existiu (`payment-topic-ab`) mas foi removido (AUD-27): anunciava um roteamento que nunca acontecia, o publish sempre foi `Topics.REQUESTED`.
 - `feature-demo` expõe cenários didáticos e operações administrativas.
 - `pilot-app` demonstra a integração mínima esperada nas aplicações consumidoras da biblioteca.
 
