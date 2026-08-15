@@ -28,10 +28,11 @@ Estas instruções governam somente `async-redis-service`. Regras cross-boundary
 ## Invariantes
 
 - Status é persistido antes do enfileiramento; polling nunca confunde "em processamento" com "desconhecido".
+- Toda transição de status é compare-and-set (`EVAL` Lua único), nunca check-then-act: `ENQUEUE_FAILED -> PROCESSING`, `-> ENQUEUE_FAILED` e `-> FAILED` só escrevem se o status atual ainda for o esperado, então um release concorrente ou uma repetição concorrente nunca sobrescreve um estado terminal já alcançado (AUD-03, AUD-13).
 - Consumer id é único por instância e worker (`<instance-id>-w<index>`); nenhum processo compartilha nome de consumidor.
-- Reclaim tem um único coordenador por vez; workers não competem pelo mesmo scan do PEL.
+- Reclaim tem um único coordenador por vez; workers não competem pelo mesmo scan do PEL. O turno é renovado a cada entrada processada durante a varredura, não uma vez só no início (AUD-12).
 - Resultado, status terminal e wakeup são liberados atomicamente (script Lua) e de forma idempotente antes do ACK.
-- Mensagem inválida (jobId/amount ausente ou malformado) e mensagem que excede `max-deliveries` vão para a DLQ com motivo antes do ACK — nunca ACK silencioso.
+- Mensagem inválida (jobId/amount ausente ou malformado) e mensagem que excede `max-deliveries` vão para a DLQ com motivo antes do ACK — nunca ACK silencioso. O job também é marcado `FAILED` antes do ACK (AUD-13): `GET /jobs/{jobId}` responde `200 FAILED` de imediato, em vez de expirar em silêncio para `404 UNKNOWN` depois do `status-ttl`.
 - O stream nunca é trimado automaticamente; a política `ACKED` fica registrada como trabalho futuro (ver ADR-0001).
 - Pool de espera tem `maxTotal`/`maxWait` finitos; saturação vira `202` com backpressure explícito, nunca bloqueio sem orçamento.
 - O Compose cria somente este serviço e usa a rede externa do sandbox.

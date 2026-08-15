@@ -12,6 +12,8 @@ Outras fronteiras do workspace usam Kafka, SBUS e Postgres quando precisam de du
 
 Se o `XADD` falhar depois que a reserva de idempotência já foi persistida, o `jobId` nunca chega a existir em nenhum stream, mas a reserva continua lá. Esse caso é registrado como `ENQUEUE_FAILED` (não `PROCESSING`) e devolvido como `503` — não um 500 com a mensagem interna do Lettuce vazando. Uma nova tentativa com a mesma `Idempotency-Key` reaproveita a reserva existente e tenta o `XADD` de novo, em vez de devolver um `Replay` apontando para um job que nenhum worker jamais vai ver (RED-08).
 
+A transição `ENQUEUE_FAILED -> PROCESSING` é uma compare-and-set de único `EVAL` Lua (AUD-03), não um `find` seguido de uma escrita incondicional: entre duas repetições concorrentes da mesma `Idempotency-Key`, só a que vence o CAS reenfileira; a outra recebe o outcome já resolvido e não enfileira nada. O caminho inverso é condicionado do mesmo jeito — `markEnqueueFailed` só escreve `ENQUEUE_FAILED` se o status ainda for `PROCESSING`, então um release que corre na frente e completa o job entre a falha do `XADD` e essa chamada nunca é sobrescrito de volta para um estado não terminal.
+
 ```mermaid
 sequenceDiagram
     participant C as Cliente
@@ -40,11 +42,15 @@ Como o `BRPOP resp:{jobId}` é numa lista compartilhada no Redis, e não em mem�
 
 Cada instância roda `worker-concurrency` workers, cada um com um nome de consumidor único (`<instance-id>-w<index>`) dentro do mesmo consumer group (RED-04). Um único worker por vez segura o turno de reclaim (lease com fencing por dono) e varre o PEL: entradas idle além de `reclaim-idle` são reclamadas e reprocessadas; entradas que já atingiram `max-deliveries` vão para a DLQ. A conexão do worker é (re)estabelecida dentro do laço com backoff exponencial limitado; a readiness só sobe quando um worker de fato lê do grupo (RED-05).
 
+O turno de reclaim é renovado a cada entrada processada durante a varredura, não uma única vez no início dela (AUD-12): um scan de muitas entradas pendentes pode durar bem mais que uma única lease, e sem renovação por entrada um segundo worker poderia assumir o turno no meio da varredura e reclamar (`XCLAIM`) as mesmas entradas ainda em voo, inflando artificialmente sua contagem de entregas rumo à DLQ. Uma renovação negada aborta a varredura imediatamente, deixando as entradas restantes para o próximo dono do turno.
+
 Mensagens ficam no stream e no PEL até o `XACK`; um worker que morre no meio do processamento não perde o job, ele volta a ser candidato a reclaim.
 
 ## Liberação atômica do resultado
 
 Ao terminar, o worker libera resultado, status terminal e o wakeup (`LPUSH` na lista por requisição) em um único script Lua idempotente, gated por uma chave-marcador: uma redelivery nunca duplica o wakeup nem deixa o status preso em `PROCESSING` com o resultado já pronto (RED-06). O ACK só acontece depois desse script retornar sem lançar. Mensagem inválida (jobId/amount ausente ou malformado) ou que excede `max-deliveries` é gravada na DLQ com o motivo antes do ACK, nunca depois, nunca silenciosamente (RED-07).
+
+Os dois caminhos de DLQ também gravam o status `FAILED` do job (`JobState.FAILED`, `JobStatusView.Failed`) antes do ACK, condicionado ao status ainda ser `PROCESSING` — mesma CAS usada em `markEnqueueFailed`, então um release que corre na frente e completa o job primeiro nunca é sobrescrito (AUD-13). Um `GET /jobs/{jobId}` contra um job dead-lettered responde `200` com `status: "FAILED"` assim que essa escrita acontece, em vez de continuar parecendo `202 PROCESSING` até o `status-ttl` expirar e só então virar `404 UNKNOWN` como se o job nunca tivesse existido — esse era o comportamento antes do fix, e é a lacuna que motivou o estado terminal `FAILED` (ver [contratos](contracts.md)). Uma mensagem sem `jobId` (o caso `missing-job-id`) não tem chave de status para marcar — nada foi aceito sob esse id.
 
 A admissão de novas requisições (`admission-limit-per-sec`) roda um script Lua atômico no Redis, com fallback local, para não estourar o limite global quando várias instâncias competem pelo mesmo orçamento. Ao saturar, a resposta é `429` com `Retry-After`, antes de sobrecarregar os workers (ver [contratos](contracts.md)).
 
