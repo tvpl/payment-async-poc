@@ -6,7 +6,7 @@ Sandbox saudável com Kafka, PostgreSQL, Redis, Registry e rede `payment-sandbox
 
 ## Startup e readiness
 
-Falha de configuração encerra o startup. Readiness deve ficar down quando uma dependência obrigatória não sustenta a garantia; liveness informa somente o processo. Verifique consumer lag, pool JDBC, Redis, Registry, outbox e idade de DLQ antes de liberar tráfego.
+Falha de configuração encerra o startup. Readiness fica down quando uma dependência obrigatória não sustenta a garantia; liveness informa somente o processo. Cada dependência declarada (`kafka`, `postgresql`, `redis`, `registry`) tem um `HealthIndicator` próprio que checa conectividade real dentro do budget de `sbus.dependencies.*` (`GET /health/readiness`) — não é apenas uma declaração de configuração, ver [arquitetura](architecture.md#readiness) para o que cada um checa. Verifique consumer lag, pool JDBC, Redis, Registry, outbox e idade de DLQ antes de liberar tráfego.
 
 ## Retry, DLQ e recovery
 

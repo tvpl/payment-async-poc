@@ -19,6 +19,11 @@ O ciclo de publicação confiável. `lease` e `max-attempts` têm efeito de corr
 | `initial-delay` | `3s` | Atraso antes do primeiro ciclo após o boot |
 | `lease` | `1m` | Validade de um claim antes de o reaper devolver a linha para `PENDING` |
 | `retention` | `3d` | Idade de uma linha `PUBLISHED` antes da purga |
+| `reaper-interval` | `30s` | Frequência do `OutboxReaper` |
+| `housekeeping-interval` | `1h` | Frequência da purga de linhas `PUBLISHED`/`DLQ_PUBLISHED` (`OutboxHousekeeping`) |
+| `housekeeping-initial-delay` | `1h` | Atraso antes do primeiro ciclo de `OutboxHousekeeping` após o boot |
+
+As três últimas linhas não aparecem em `application.yml` — são placeholders `${sbus.outbox....:default}` lidos diretamente pela anotação `@Scheduled`, não campos de `OutboxProperties`. O gate de drift de configuração só cobre chaves presentes no YAML; estes defaults são verificados manualmente contra `OutboxReaper`/`OutboxHousekeeping`.
 
 ## Proteção do Core — `sbus.core.*`
 
@@ -43,7 +48,7 @@ Falha transitória vai para um tópico de retry dedicado, não bloqueia a parti�
 
 ## Housekeeping — `sbus.housekeeping.*`
 
-Purga em lotes, para que nenhuma tabela cresça indefinidamente.
+Purga em lotes, para que nenhuma tabela cresça indefinidamente. Job `RetentionHousekeeping`; distinto do `OutboxHousekeeping` (que purga `outbox_event` e usa `sbus.outbox.*`, ver acima).
 
 | Chave | Default | Efeito |
 | --- | --- | --- |
@@ -84,10 +89,23 @@ Cada dependência tipa timeout, tentativas e participação em readiness. Nenhum
 | `datasources.default.maximum-pool-size` | `10` | Conexões JDBC; o dispatcher usa transações curtas para não segurá-las |
 | `datasources.default.schema-generate` | `NONE` | O schema é do Flyway, nunca gerado pelo ORM |
 | `kafka.consumers.default.max.poll.records` | `100` | Registros por poll |
+| `kafka.consumers.default.max.poll.interval.ms` | `2100000` (35min) | Teto do grupo antes de evictar a instância; folga acima do orçamento de retry durável de 30min (`retryCount: 900` × `retryDelay: 2s`) para que a instância nunca seja evictada antes de esgotar suas próprias tentativas |
 | `payments.avro.codec-pool-size` | `8` | Codecs Apicurio disponíveis |
 | `payments.avro.codec-acquire-timeout` | `250ms` | Espera máxima por um codec antes de tratar como falta de capacidade |
 
 Os consumidores usam `ByteArrayDeserializer` e decodificam Avro explicitamente. É deliberado: falhar no deserializer transformaria uma mensagem envenenada em erro de infraestrutura, sem chance de roteá-la para a DLQ com os bytes originais.
+
+### Grupos de consumer
+
+Cada consumer Kafka usa seu próprio `groupId`, isolado por tópico (ver [arquitetura](architecture.md#grupos-de-consumer-isolados-por-tópico)):
+
+| Consumer | Tópico | `groupId` |
+| --- | --- | --- |
+| `PaymentRequestedConsumer` | `payment.simulation.requested` | `payment-sbus-requested` |
+| `CoreResponseConsumer` | `payment.simulation.core.response` | `payment-sbus-core-response` |
+| `RetryConsumer` | tópicos `.retry` | `payment-sbus-retry` |
+
+Antes, os dois primeiros compartilhavam um único grupo (`payment-sbus`); um rebalance disparado por qualquer um dos dois revogava as partições de ambos, mesmo consumindo tópicos diferentes.
 
 ## Segredos e build
 
