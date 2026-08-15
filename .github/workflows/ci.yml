@@ -12,6 +12,7 @@ env:
   API_KEY: ci-only-required-value
   JWT_SIGNATURE_SECRET: ci-only-signing-value-with-at-least-32-bytes
   POSTGRES_PASSWORD: ci-only-required-value
+  GRAFANA_ADMIN_PASSWORD: ci-only-required-value
   COVERAGE_GATE_STATUS: NOT_RUN
 
 jobs:
@@ -214,12 +215,14 @@ jobs:
           python3 .github/workflows/check_ci_policy.py
       - name: Record quality policy
         run: |
-          echo "| Gate | Result |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| workflow lint | ${{ needs.workflow-lint.result == 'success' && 'PASS' || 'FAIL' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| static analysis | ${{ needs.static-analysis.result == 'success' && 'PASS' || 'FAIL' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| coverage | ${COVERAGE_GATE_STATUS} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| dependency updates | PASS |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "| Gate | Result |"
+            echo "| --- | --- |"
+            echo "| workflow lint | ${{ needs.workflow-lint.result == 'success' && 'PASS' || 'FAIL' }} |"
+            echo "| static analysis | ${{ needs.static-analysis.result == 'success' && 'PASS' || 'FAIL' }} |"
+            echo "| coverage | ${COVERAGE_GATE_STATUS} |"
+            echo "| dependency updates | PASS |"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Enforce executed blocking gates
         env:
           BOUNDARY_RESULT: ${{ needs.boundary-build.result }}
