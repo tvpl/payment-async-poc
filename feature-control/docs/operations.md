@@ -106,6 +106,12 @@ Toda mutação aceita grava duas trilhas, no mesmo `EVAL` Lua da escrita (nunca 
   `<key-prefix>audit` (`LPUSH`+`LTRIM`, até 1000 entradas) via `AuditService` — best-effort, útil para
   inspeção rápida sem ferramenta de stream: `LRANGE feature:audit 0 20`.
 
+Um `DELETE` cujo `version` casa mas cuja flag já não existe não muda nada em Redis — e o registro de
+auditoria diz isso: `result=noop`, não `result=ok` (AUD-21). `result=ok` fica reservado para uma
+mutação que de fato aconteceu (chave removida ou criada/atualizada); um `noop` na trilha não é um erro
+nem indica um `DELETE` que falhou — é a diferença entre "não havia nada para apagar" e "algo foi
+apagado", visível em quem investiga a auditoria depois.
+
 ### Cuidados
 
 - Baixar a porcentagem **tira** usuários de "on" (não é monotônico ao descer) — comunique antes de

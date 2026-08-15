@@ -8,6 +8,7 @@ Todas as propriedades vivem sob `platform.features.*`, bindadas por `FeatureSett
 | `cache-ttl` | `5s` | janela de propagação de um flip; menor = flips mais rápidos, mais leituras no Redis. |
 | `cache-ttl-jitter` | `0.1` | jitter fracionário por chave para evitar thundering herd na expiração. |
 | `max-stale` | `5m` | por quanto tempo um valor last-known-good continua sendo servido após o Redis parar de responder. |
+| `failure-backoff` | `1s` | por chave, quanto tempo uma leitura Redis falha é lembrada; leituras dentro da janela servem a política de stale direto do cache, sem lock nem nova chamada ao Redis — evita que uma outage sustentada faça cada thread enfileirada pagar um timeout de comando em série (AUD-14). Jitterado por `cache-ttl-jitter`. |
 | `stale-fallback` | `BASELINE` | `BASELINE` (volta ao YAML) ou `FAIL_CLOSED` (força off) após `max-stale`. |
 | `key-prefix` | `feature:` | namespace de chave Redis (`<prefix><flag>`, `<prefix>audit-stream`, `<prefix>reclaim-lease`). |
 | `master-enabled` | `true` | kill-switch estático; `false` força toda flag a resolver off/default. |

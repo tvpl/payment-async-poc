@@ -101,7 +101,17 @@ fixam o grupo piloto em "on" independentemente da porcentagem ou do peso sortead
 ### VARIANT — multivariado, seleção ponderada
 
 Pick ponderado entre `variants()` nomeadas (pesos não precisam somar 100; são normalizados). Sem
-override de allowlist e com a lista de variantes vazia, resolve off.
+override de allowlist e com a lista de variantes vazia, resolve off; com uma lista não vazia mas cujos
+pesos somam zero ou menos, `Bucketer.select` também resolve `null` (nunca cai para a primeira
+variante da lista) e o resultado é off — não existe distribuição válida para escolher (AUD-22; na
+prática inatingível por uma flag construída normalmente, já que o construtor de `FlagDefinition` já
+rejeita uma flag VARIANT com peso total ≤ 0).
+
+A variante escolhida ainda pode ser o `off-variant` configurado da flag — é uma escolha ponderada
+válida como qualquer outra. Nesse caso `FeatureDecision.isOn()` é `false` mesmo a flag estando
+`enabled` e tendo produzido uma escolha: `isOn` reflete se a variante escolhida é a de controle, não se
+a flag "respondeu" (AUD-04). `TopicRouter`/`@FeatureGate`/`ApiVersionResolver`, que ramificam por
+`isOn()`, dependem dessa distinção.
 
 ### Bônus: API v0 como ALLOWLIST
 
@@ -152,10 +162,35 @@ thundering herd no Redis). `CompositeFlagSource` sobrepõe esse resultado ao bas
   enquanto mais novo que `max-stale` (padrão 5m); passado isso, `stale-fallback` decide — `BASELINE`
   (volta ao YAML) ou `FAIL_CLOSED` (força off). Sem Redis (`redis-enabled=false`), a lib segue
   funcionando só com YAML.
+- **Backoff de falha (AUD-14)**: single-flight só colapsa chamadores *simultâneos* — numa outage
+  sustentada, a entrada do cache continua expirada, então cada chamador sequencial ainda entraria na
+  fila do lock e tentaria o Redis de novo, cada um pagando um timeout de comando inteiro em série. Uma
+  leitura que falha grava um prazo de backoff por chave (`failure-backoff`, padrão 1s, jitterado por
+  `cache-ttl-jitter`); leituras dentro dessa janela servem a política de stale direto da entrada em
+  cache, sem tocar o lock nem o Redis de novo. Uma leitura bem-sucedida limpa o prazo, então a
+  recuperação retoma na próxima leitura assim que o Redis volta.
+- **Refresh à prova de invalidação (AUD-26)**: `invalidate`/`invalidateAll` não tomam o lock de
+  single-flight, então um `refresh` em voo pode ler o Redis antes de uma invalidação chegar e ainda
+  assim escrever esse resultado agora obsoleto de volta no cache depois — revertendo silenciosamente
+  a mutação por até um `cache-ttl` inteiro. Um contador de geração por chave (mais um global, para
+  `invalidateAll`) é incrementado a cada invalidação; um `refresh` só grava seu resultado no cache se
+  nenhuma invalidação aconteceu desde que ele começou.
 - **Kill-switch global**: consultado por `MasterSwitch` antes de qualquer estratégia. Dois gatilhos:
   estático (`platform.features.master-enabled=false`, um ajuste de deploy) ou dinâmico (habilitar a
   flag reservada `__kill_switch__` via admin, que se propaga como qualquer outra flag). Ligado, toda
   decisão resolve para off/default com `reason=kill-switch`.
+- **O kill-switch dinâmico trava através de uma outage do Redis (AUD-02)**: `find()` (a leitura
+  pública) colapsa "chave não existe" e "Redis falhou" no mesmo `Optional.empty()` — insuficiente para
+  o kill-switch, cuja direção segura é o oposto da do cache (`StalePolicy` prefere "off" na dúvida; um
+  kill-switch precisa preferir "continua armado" na dúvida). `RedisFlagSource`/`CompositeFlagSource`
+  expõem por isso uma leitura interna de três vias — `TrinaryFlagSource.findTrinary`, com
+  `LookupOutcome` `FOUND`/`ABSENT`/`UNAVAILABLE` — consultada só por `MasterSwitch`, nunca pelo
+  `FeatureResolver`. `MasterSwitch` mantém um latch (`lastKnownKilled`) que só é atualizado numa leitura
+  `FOUND` (chave existe, Redis saudável) ou `ABSENT` (chave genuinamente removida, Redis saudável);
+  numa leitura `UNAVAILABLE` (Redis fora do ar, ou o valor veio do fallback de stale-policy) o latch
+  fica como estava. Cold start (nenhuma leitura anterior) começa destravado — sem estado local
+  persistido não há como saber o estado dinâmico antes da primeira leitura bem-sucedida, então
+  `master-enabled: false` em YAML continua sendo o break-glass de cold-start, não o latch.
 
 ## Escrita administrativa
 
