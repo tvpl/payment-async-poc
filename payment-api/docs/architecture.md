@@ -45,6 +45,36 @@ POST /payment-simulations
 O handler roda em `TaskExecutors.BLOCKING`, apoiado por virtual threads no JDK 21: milhares de
 requisições podem esperar em paralelo sem consumir uma thread de plataforma cada.
 
+## Admissão: dois orçamentos, uma operação atômica
+
+`ConcurrencyLimitFilter` avalia o orçamento da rota e o orçamento do tenant numa única chamada,
+`RedisRateLimiter.tryAcquireBoth` (`ratelimit/RedisRateLimiter.java`), que roda **um** script Lua
+(`DUAL_BUDGET_LUA`) no Redis: `INCR` no contador da rota, `INCR` no contador do tenant e, se o
+tenant estourar o próprio orçamento, um `DECR` de volta no contador da rota antes de negar. Isso
+existe porque a versão anterior fazia duas chamadas `tryAcquire` sequenciais e independentes — a
+rota já tinha consumido seu token quando a checagem do tenant negava, então um único tenant em
+rajada conseguia drenar o orçamento da rota inteira para todos os outros chamadores (AUD-05). Com o
+rollback atômico, uma negação de tenant nunca custa token de rota. Quando o Redis está fora, as
+duas checagens caem para a fração local (`limit-for-period / instances`) de forma independente, sem
+a garantia de rollback — ver [configuration.md](configuration.md#admissão) e o runbook
+[admission-saturation.md](../ops/runbooks/admission-saturation.md).
+
+No `/v0/payment-simulations`, não autenticado, todo chamador cai no mesmo bucket de tenant fixo
+`"anonymous"`: fingerprintar um `X-API-Key` não validado ali deixaria uma chave rotativa mintar um
+bucket novo — com orçamento cheio — a cada requisição, driblando o limite por tenant por completo
+(AUD-05, `ConcurrencyLimitFilter.tenant()`).
+
+## Fingerprint de idempotência
+
+`IdempotencyFingerprint.of` (`idempotency/IdempotencyFingerprint.java`) concatena, na ordem,
+`merchantId`, `amount` normalizado (`BigDecimal#stripTrailingZeros()`), `currency`, `paymentMethod`,
+`brand`, `installments` e `captureMode`, separados por `|`, e aplica SHA-256 sobre o resultado. Cada
+campo é escapado antes de entrar na string canônica (`\` → `\\`, depois `|` → `\|`), para que um
+delimitador literal dentro de um campo de texto livre (por exemplo `paymentMethod`) não possa forjar
+uma fronteira de campo e colidir dois payloads diferentes no mesmo fingerprint (AUD-18: sem o escape,
+`paymentMethod="pm|X"` com `installments=1` e `paymentMethod="pm"` com o restante deslocado podiam
+gerar a mesma string concatenada).
+
 ## Caminho de uma consulta
 
 ```text

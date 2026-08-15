@@ -15,6 +15,23 @@
 
 Sinais que merecem alerta estão em [../ops/alerts/api-admission-and-dlq.yml](../ops/alerts/api-admission-and-dlq.yml).
 
+### Cardinalidade de `payment_method`
+
+`paymentMethod`/`brand` já são restritos na borda por `@Pattern("[A-Z_]{2,32}")`
+(`dto/PaymentSimulationRequest.java`), então valor fora do formato é rejeitado com `400` antes de
+alimentar a tag. `ApiMetrics` (`metrics/ApiMetrics.java`) ainda limita a cardinalidade de forma
+independente, como defesa em profundidade: os primeiros 50 valores distintos de `paymentMethod`
+vistos ganham série própria; o 51º em diante colapsa na série literal `"other"` em vez de crescer
+`api_requests_total{payment_method=...}` sem limite (AUD-16).
+
+### Superfície removida
+
+O v0 (`/v0/payment-simulations`) chegou a anunciar roteamento por tópico via a flag
+`payment-topic-ab`, chamada a `TopicRouter` e o header `X-Routed-Topic` na resposta — mas o publish
+sempre ia para `Topics.REQUESTED` independente do que `TopicRouter` calculasse, então o header
+anunciava um roteamento que nunca acontecia. Os três foram removidos (AUD-27); não há `X-Routed-Topic`
+nem flag `payment-topic-ab` em nenhuma resposta ou config desta fronteira.
+
 ## Logs
 
 Estruturados (`logstash-logback-encoder`), com `requestId`, `correlationId`, `traceId` no MDC
