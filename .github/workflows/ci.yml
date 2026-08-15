@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  API_KEY: ci-only-required-value
+  PAYMENT_API_KEY: ci-only-required-value
   JWT_SIGNATURE_SECRET: ci-only-signing-value-with-at-least-32-bytes
   POSTGRES_PASSWORD: ci-only-required-value
   GRAFANA_ADMIN_PASSWORD: ci-only-required-value
