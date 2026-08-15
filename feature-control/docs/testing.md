@@ -16,7 +16,7 @@ Unidade apenas (`*UnitTest.java`, `*Test.java` sem sufixo `IT`); exclui integra�
 
 Requer Redis real em `localhost:6379`. Cobre `library` (CAS/auditoria contra Redis real, pubsub multi-instância, cache last-known-good), `feature-demo` (fluxo HTTP completo: JWT, admin, `NonProductionGuardIT`) e `pilot-app` (adoção mínima + `NonProductionGuardIT`).
 
-Contagem de referência, medida ao vivo em 2026-08-13: **113 testes no gate rápido, 150 no gate de integração**, ambos sem falha ou skip. O baseline só cresce — teste não pode ser apagado, ignorado ou enfraquecido para fechar gate, e `NOT_RUN` nunca vira `PASS`.
+Contagem de referência, medida ao vivo em 2026-08-15: **116 testes no gate rápido, 162 no gate de integração**, ambos sem falha ou skip. O baseline só cresce — teste não pode ser apagado, ignorado ou enfraquecido para fechar gate, e `NOT_RUN` nunca vira `PASS`.
 
 Duas condições do ambiente local fazem o gate de integração falhar sem que exista defeito, e ambas produzem erro claro:
 
