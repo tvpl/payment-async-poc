@@ -1,0 +1,22 @@
+{
+  "requestId": "req-canonical-001",
+  "status": "COMPLETED",
+  "result": {
+    "simulationId": "sim-canonical-001",
+    "requestId": "req-canonical-001",
+    "status": "APPROVED",
+    "authorizationCode": "AUTH123",
+    "amount": 125.50,
+    "currency": "BRL",
+    "installments": 3,
+    "fees": {
+      "mdr": 2.50,
+      "interchange": 1.10,
+      "netAmount": 121.90
+    },
+    "settlement": {
+      "settlementDate": "2026-08-20",
+      "settlementType": "D+2"
+    }
+  }
+}

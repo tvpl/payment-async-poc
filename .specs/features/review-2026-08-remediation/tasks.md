@@ -430,8 +430,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Divergência de fixture derruba o gate (provado e revertido)
-- [ ] `scripts/verify-workspace.sh hygiene` continua verde
+- [x] Divergência de fixture derruba o gate (provado e revertido)
+- [x] `scripts/verify-workspace.sh hygiene` continua verde
 
 **Tests**: unit
 **Gate**: quick
