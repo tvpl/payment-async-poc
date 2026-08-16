@@ -364,8 +364,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: chave >128 chars injetada via Kafka vai à DLQ sem passar pelos retries
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: chave >128 chars injetada via Kafka vai à DLQ sem passar pelos retries
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

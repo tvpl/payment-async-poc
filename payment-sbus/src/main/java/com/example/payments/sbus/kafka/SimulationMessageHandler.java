@@ -85,8 +85,11 @@ public class SimulationMessageHandler {
         }
         Mdc.fromConsumer(record, env);
         try {
-            // Business processing — transient failures propagate (retryable).
+            // Business processing — transient failures propagate (retryable); a data-integrity
+            // violation (IDEM-04) is reclassified as poison below.
             service.handleRequested(env, headers.get(Headers.IDEMPOTENCY_KEY), headers.get(Headers.TRACEPARENT));
+        } catch (RuntimeException failure) {
+            throw asPoisonIfDataIntegrityViolation(failure);
         } finally {
             Mdc.clear();
         }
@@ -112,9 +115,46 @@ public class SimulationMessageHandler {
         Mdc.fromConsumer(record, env);
         try {
             service.handleCoreResponse(env);
+        } catch (RuntimeException failure) {
+            throw asPoisonIfDataIntegrityViolation(failure);
         } finally {
             Mdc.clear();
         }
+    }
+
+    /**
+     * IDEM-04: a persistence failure caused by a data-integrity violation (SQLState class
+     * {@code 22} — data exception, e.g. a value too long for a column — or {@code 23} —
+     * integrity constraint violation, e.g. a broken UNIQUE/NOT NULL/CHECK) is a defect in the
+     * message itself, not a transient outage: retrying it would fail identically forever, every
+     * time, until an operator intervenes. Reclassifying it as {@link PoisonMessageException}
+     * routes it straight to the DLQ instead of burning the full transient-retry budget on a
+     * message that can never succeed.
+     *
+     * <p>The DLQ reason (SEC-02/SEC-03) is a fixed, sanitized string carrying only the SQLState —
+     * never the driver's own exception message, which embeds the failing row verbatim (Postgres's
+     * "Detail: Failing row contains (...)" includes the business payload) and would leak payload
+     * content into a Kafka header. Any other failure (e.g. the database being unreachable, whose
+     * SQLState class is neither 22 nor 23) is returned unchanged for the caller's existing
+     * transient/retry handling.
+     */
+    private static RuntimeException asPoisonIfDataIntegrityViolation(RuntimeException failure) {
+        String sqlState = findSqlState(failure);
+        if (sqlState != null && (sqlState.startsWith("22") || sqlState.startsWith("23"))) {
+            return new PoisonMessageException(
+                    "Persistence rejected the message: data-integrity violation (SQLState " + sqlState + ")",
+                    failure);
+        }
+        return failure;
+    }
+
+    private static String findSqlState(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.sql.SQLException sqlException) {
+                return sqlException.getSQLState();
+            }
+        }
+        return null;
     }
 
     /**

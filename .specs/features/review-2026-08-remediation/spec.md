@@ -268,7 +268,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | IDEM-01 | P1: Tenant e idempotência | Design | Verified |
 | IDEM-02 | P1: Tenant e idempotência | Design | Verified |
 | IDEM-03 | P1: Tenant e idempotência | Design | Verified |
-| IDEM-04 | P1: Tenant e idempotência | Design | Pending |
+| IDEM-04 | P1: Tenant e idempotência | Design | Verified |
 | TEN-01 | P1: Tenant e idempotência | Design | Verified |
 | TEN-02 | P1: Tenant e idempotência | Design | Verified |
 | TEN-03 | P1: Tenant e idempotência | Design | Verified |
