@@ -3,6 +3,7 @@ package com.example.payments.api.controller;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.dto.StatusResponse;
+import com.example.payments.api.error.Problem;
 import com.example.payments.api.service.ApiPaymentService;
 import com.example.payments.common.events.Headers;
 import com.example.payments.common.model.SimulationStatus;
@@ -38,9 +39,16 @@ public class PaymentSimulationController {
 
     @Post
     @ExecuteOn(TaskExecutors.BLOCKING)
-    public HttpResponse<StatusResponse> create(
+    public HttpResponse<?> create(
             @Valid @Body PaymentSimulationRequest request,
             @Header(name = Headers.IDEMPOTENCY_KEY, defaultValue = "") @Nullable String idempotencyKey) {
+
+        if (!IdempotencyKeyValidation.isValid(idempotencyKey)) {
+            return HttpResponse.status(HttpStatus.BAD_REQUEST)
+                    .contentType(Problem.MEDIA_TYPE)
+                    .body(Problem.of(400, "Invalid request",
+                            "Idempotency-Key header is required and must match [A-Za-z0-9_-]{1,128}"));
+        }
 
         ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey);
         StatusEntry entry = result.entry();

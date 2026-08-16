@@ -108,7 +108,10 @@ class ApiFlowIT {
                 "MERCHANT-001", new BigDecimal("125.50"), "BRL", "CREDIT_CARD", "VISA", 3, "AUTHORIZE_AND_CAPTURE");
 
         HttpResponse<StatusResponse> accepted = client.toBlocking().exchange(
-                HttpRequest.POST("/payment-simulations", request).header("X-API-Key", API_KEY), StatusResponse.class);
+                HttpRequest.POST("/payment-simulations", request)
+                        .header("X-API-Key", API_KEY)
+                        .header("Idempotency-Key", UUID.randomUUID().toString()),
+                StatusResponse.class);
 
         assertEquals(HttpStatus.ACCEPTED, accepted.getStatus());
         StatusResponse body = accepted.body();

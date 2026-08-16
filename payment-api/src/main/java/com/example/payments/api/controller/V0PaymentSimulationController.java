@@ -72,6 +72,13 @@ public class V0PaymentSimulationController {
                     .body(Problem.of(404, "Not Found", "No such resource"));
         }
 
+        if (!IdempotencyKeyValidation.isValid(idempotencyKey)) {
+            return HttpResponse.status(HttpStatus.BAD_REQUEST)
+                    .contentType(Problem.MEDIA_TYPE)
+                    .body(Problem.of(400, "Invalid request",
+                            "Idempotency-Key header is required and must match [A-Za-z0-9_-]{1,128}"));
+        }
+
         ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey);
         var entry = result.entry();
         StatusResponse body = new StatusResponse(

@@ -205,9 +205,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] 400 sem header/formatos inválidos, sem I/O de domínio (verificado por mock)
-- [ ] Aplica-se a `/payment-simulations` e `/v0/...`
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] 400 sem header/formatos inválidos, sem I/O de domínio (verificado por mock)
+- [x] Aplica-se a `/payment-simulations` e `/v0/...`
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

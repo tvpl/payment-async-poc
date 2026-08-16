@@ -265,8 +265,8 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| IDEM-01 | P1: Tenant e idempotência | Design | Pending |
-| IDEM-02 | P1: Tenant e idempotência | Design | Pending |
+| IDEM-01 | P1: Tenant e idempotência | Design | Implementing |
+| IDEM-02 | P1: Tenant e idempotência | Design | Verified |
 | IDEM-03 | P1: Tenant e idempotência | Design | Pending |
 | IDEM-04 | P1: Tenant e idempotência | Design | Pending |
 | TEN-01 | P1: Tenant e idempotência | Design | Implementing |
@@ -287,7 +287,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | SEC-05 | P1: Segurança e governança | Design | Pending |
 | SEC-06 | P1: Segurança e governança | Design | Pending |
 | SEC-07 | P1: Segurança e governança | Design | Verified |
-| SEC-08 | P1: Segurança e governança | Design | Pending |
+| SEC-08 | P1: Segurança e governança | Design | Verified |
 | RES-01 | P1: Resiliência de fundo | Design | Pending |
 | RES-02 | P1: Resiliência de fundo | Design | Pending |
 | RES-03 | P1: Resiliência de fundo | Design | Pending |
