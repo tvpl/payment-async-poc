@@ -182,9 +182,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit tests 1:1 com ACs 3-5 da story P1 (403/uso do único/400 multi)
-- [ ] Boot falha com binding vazio (teste de contexto)
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Unit tests 1:1 com ACs 3-5 da story P1 (403/uso do único/400 multi)
+- [x] Boot falha com binding vazio (teste de contexto)
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
