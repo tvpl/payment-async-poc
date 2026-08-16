@@ -11,6 +11,10 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * loop by default) to a {@code @RequestFilter} method wired to {@link TaskExecutors#BLOCKING}, so
  * the admission gate never shares the event loop with {@code /health/liveness}. Preserves the
  * exact 401/pass-through semantics of the migrated filter (T5's behavior, unchanged).
+ *
+ * <p>SEC-04: comparison happens on SHA-256 digests via {@link MessageDigest#isEqual}, and config
+ * accepts either a raw dev key or an already-hashed {@code sha256:<hex>} entry - both resolve to
+ * the same target digest, so a caller's raw credential is accepted either way.
  */
 class ApiKeyFilterUnitTest {
 
@@ -60,6 +68,37 @@ class ApiKeyFilterUnitTest {
         ApiKeyFilter disabled = filterWith(false, VALID_KEY);
 
         assertNull(disabled.filterRequest(HttpRequest.GET("/payment-simulations")));
+    }
+
+    /** SEC-04: a raw credential is accepted when its SHA-256 digest matches a configured hash. */
+    @Test
+    void aRawKeyMatchingAConfiguredHashIsAccepted() {
+        ApiKeyFilter hashConfigured = filterWith(true, ApiKeyFilter.HASH_PREFIX + sha256Hex("prod-secret"));
+
+        MutableHttpResponse<?> result =
+                hashConfigured.filterRequest(HttpRequest.GET("/payment-simulations").header(HEADER, "prod-secret"));
+
+        assertNull(result, "the raw credential must match its own configured hash");
+    }
+
+    /** SEC-04: the wrong credential is rejected even though a hash (not plaintext) is configured. */
+    @Test
+    void aWrongKeyAgainstAConfiguredHashIsRejected() {
+        ApiKeyFilter hashConfigured = filterWith(true, ApiKeyFilter.HASH_PREFIX + sha256Hex("prod-secret"));
+
+        MutableHttpResponse<?> result = hashConfigured.filterRequest(
+                HttpRequest.GET("/payment-simulations").header(HEADER, "not-the-secret"));
+
+        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatus());
+    }
+
+    private static String sha256Hex(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**

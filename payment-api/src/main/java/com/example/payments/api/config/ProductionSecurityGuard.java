@@ -1,5 +1,6 @@
 package com.example.payments.api.config;
 
+import com.example.payments.api.filter.ApiKeyFilter;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
@@ -49,6 +50,11 @@ public final class ProductionSecurityGuard {
             if (key == null || key.isBlank() || DEV_DEFAULT_API_KEY.equals(key)) {
                 throw new ConfigurationException(
                         "payment.security.api-keys must not be blank or the development default in production");
+            }
+            if (!key.startsWith(ApiKeyFilter.HASH_PREFIX)) {
+                throw new ConfigurationException(
+                        "payment.security.api-keys must be " + ApiKeyFilter.HASH_PREFIX
+                                + "<hex> hashes in production (SEC-04); plaintext keys are dev-only");
             }
         }
         validateTenants(tenants);

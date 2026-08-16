@@ -12,7 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ProductionSecurityGuardUnitTest {
 
-    private static final List<String> VALID_KEYS = List.of("prod-issued-key");
+    /** SEC-04: production keys are already-hashed {@code sha256:<hex>} entries, never plaintext. */
+    private static final List<String> VALID_KEYS =
+            List.of("sha256:2f6e0c3e0c1a6b3a5d8e9f0a1b2c3d4e5f60718293a4b5c6d7e8f9001122334");
     private static final Map<String, List<String>> VALID_TENANTS = Map.of("key-hash", List.of("tenant-a"));
 
     @Test
@@ -76,6 +78,14 @@ class ProductionSecurityGuardUnitTest {
         assertThrows(ConfigurationException.class, () -> ProductionSecurityGuard.validate(
                 "https://idp.example.test/jwks", "https://idp.example.test/",
                 "payment-api", Duration.ZERO, true, List.of(" "), VALID_TENANTS));
+    }
+
+    /** SEC-04: production must reject a key that is not already a {@code sha256:<hex>} hash. */
+    @Test
+    void rejectsPlaintextApiKeyInProduction() {
+        assertThrows(ConfigurationException.class, () -> ProductionSecurityGuard.validate(
+                "https://idp.example.test/jwks", "https://idp.example.test/",
+                "payment-api", Duration.ZERO, true, List.of("prod-issued-key"), VALID_TENANTS));
     }
 
     /** Boot guard edge case: an empty tenant binding must fail production boot (TEN-01/02/03). */

@@ -520,8 +520,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit: aceitação por hash, rejeição, boot prod com claro falha
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Unit: aceitação por hash, rejeição, boot prod com claro falha
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
