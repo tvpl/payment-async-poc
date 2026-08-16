@@ -68,20 +68,22 @@ public class ApiPaymentService {
     public record SubmitResult(StatusEntry entry, boolean timedOut, boolean duplicate) {
     }
 
-    public SubmitResult submit(PaymentSimulationRequest request, String idempotencyKeyHeader) {
+    public SubmitResult submit(PaymentSimulationRequest request, String idempotencyKeyHeader, String tenantId) {
         metrics.recordRequest(request.paymentMethod());
 
         String idempotencyKey = (idempotencyKeyHeader == null || idempotencyKeyHeader.isBlank())
                 ? UUID.randomUUID().toString()
                 : idempotencyKeyHeader;
-        // Idempotency: first writer wins the key + canonical fingerprint atomically; a later
-        // request with the same key replays it only if the payload also matches (PAY-01/PAY-02).
+        // Idempotency: first writer wins the key + canonical fingerprint atomically, scoped to the
+        // tenant; a later request with the same key replays it only if the payload also matches and
+        // the tenant is the same owner (PAY-01/PAY-02, TEN-04/TEN-05).
         String fingerprint = IdempotencyFingerprint.of(request);
         String requestId = UUID.randomUUID().toString();
-        IdempotencyOutcome outcome = store.reserve(idempotencyKey, requestId, fingerprint);
+        IdempotencyOutcome outcome = store.reserve(tenantId, idempotencyKey, requestId, fingerprint);
 
         if (outcome instanceof IdempotencyOutcome.Conflict conflict) {
-            LOG.info("Idempotency conflict key={} originalRequestId={}", idempotencyKey, conflict.requestId());
+            LOG.info("Idempotency conflict tenant={} key={} originalRequestId={}",
+                    tenantId, idempotencyKey, conflict.requestId());
             throw new IdempotencyConflictException(idempotencyKey, conflict.requestId());
         }
         if (outcome instanceof IdempotencyOutcome.Replay replay) {
@@ -91,9 +93,9 @@ public class ApiPaymentService {
             // A previous attempt on this key never confirmed its publish. Recover it under the
             // same identity rather than reporting progress that never happened (PAY-03).
             requestId = resume.requestId();
-            LOG.info("Resuming unpublished request key={} requestId={}", idempotencyKey, requestId);
+            LOG.info("Resuming unpublished request tenant={} key={} requestId={}", tenantId, idempotencyKey, requestId);
         }
-        return publishAndAwait(request, idempotencyKey, fingerprint, requestId);
+        return publishAndAwait(request, tenantId, idempotencyKey, fingerprint, requestId);
     }
 
     /** Replays a confirmed identity. A status we do not have is never reported as progress. */
@@ -106,6 +108,7 @@ public class ApiPaymentService {
     }
 
     private SubmitResult publishAndAwait(PaymentSimulationRequest request,
+                                         String tenantId,
                                          String idempotencyKey,
                                          String fingerprint,
                                          String requestId) {
@@ -122,13 +125,14 @@ public class ApiPaymentService {
         // Every exit from here on — result, timeout, interruption, shutdown or publish failure —
         // leaves the thread's MDC clean; a request thread is reused (PAY-10).
         try {
-            return publishAndAwaitLogged(request, idempotencyKey, fingerprint, requestId, correlationId, traceId);
+            return publishAndAwaitLogged(request, tenantId, idempotencyKey, fingerprint, requestId, correlationId, traceId);
         } finally {
             MDC.clear();
         }
     }
 
     private SubmitResult publishAndAwaitLogged(PaymentSimulationRequest request,
+                                               String tenantId,
                                                String idempotencyKey,
                                                String fingerprint,
                                                String requestId,
@@ -155,12 +159,12 @@ public class ApiPaymentService {
             } catch (Exception e) {
                 // Keep the identity, mark it unpublished: the caller gets an honest failure and a
                 // retry with the same key resumes this requestId instead of waiting out an orphan.
-                store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISH_FAILED);
+                store.markPublishState(tenantId, idempotencyKey, requestId, fingerprint, PublishState.PUBLISH_FAILED);
                 throw new PublishFailedException("Failed to publish PaymentSimulationRequested", e);
             }
             // Broker acknowledged. A crash in this window republishes the same requestId on retry,
             // which downstream consumers absorb without changing a chosen outcome (PAY-06).
-            store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISHED);
+            store.markPublishState(tenantId, idempotencyKey, requestId, fingerprint, PublishState.PUBLISHED);
             store.save(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
             LOG.info("Published PaymentSimulationRequested requestId={}", requestId);
 

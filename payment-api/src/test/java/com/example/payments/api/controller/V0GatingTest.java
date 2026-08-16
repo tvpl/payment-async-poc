@@ -72,7 +72,7 @@ class V0GatingTest {
     void eligibleCallerReachesPipelineWithV0Header() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
 
         HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key");
 
@@ -89,7 +89,7 @@ class V0GatingTest {
     void v0ResponseNeverAnnouncesARoutedTopic() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
 
         HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key");
 

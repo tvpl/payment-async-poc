@@ -14,8 +14,8 @@ public class ApiProperties {
     private Duration waitTimeout = Duration.ofSeconds(3);
     /** TTL of the per-request status/result entry in Redis. */
     private Duration statusTtl = Duration.ofMinutes(15);
-    /** TTL of the idempotencyKey -> requestId mapping in Redis. */
-    private Duration idempotencyTtl = Duration.ofMinutes(15);
+    /** TTL of the idempotencyKey -> requestId mapping in Redis (IDEM-03: 24h per the published contract). */
+    private Duration idempotencyTtl = Duration.ofHours(24);
     /** Redis pub/sub channel used to wake waiters across instances. */
     private String responseChannel = "payment-sim-responses";
     /** How long a publish attempt is considered in flight before a retry may resume it. */

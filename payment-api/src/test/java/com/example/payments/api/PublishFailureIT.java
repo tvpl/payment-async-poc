@@ -155,7 +155,10 @@ class PublishFailureIT {
     }
 
     private IdempotencyReservation reservation(String idempotencyKey) {
-        String raw = inspector.sync().get("idem:" + idempotencyKey);
+        // The API key above has no payment.security.tenants entry, so TenantResolver falls back
+        // to the implicit "default" tenant (see TenantResolver javadoc), and the reservation is
+        // keyed accordingly.
+        String raw = inspector.sync().get("idem:default:" + idempotencyKey);
         assertNotNull(raw, "no reservation stored for " + idempotencyKey);
         try {
             return objectMapper.readValue(raw, IdempotencyReservation.class);

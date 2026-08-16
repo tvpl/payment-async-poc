@@ -81,7 +81,7 @@ payment:
   simulation:
     wait-timeout: 3s
     status-ttl: 15m
-    idempotency-ttl: 15m
+    idempotency-ttl: 24h
     response-channel: payment-sim-responses
     rate-limit:
       # Route budget, tenant budget, and the instance count that keeps the Redis-down

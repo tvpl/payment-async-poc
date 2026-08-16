@@ -9,7 +9,7 @@ vez de degradar silenciosamente em produção.
 | --- | --- | --- |
 | `payment.simulation.wait-timeout` | `3s` | quanto a requisição HTTP espera pelo resultado |
 | `payment.simulation.status-ttl` | `15m` | validade da entrada de status no Redis |
-| `payment.simulation.idempotency-ttl` | `15m` | validade da reserva de idempotência |
+| `payment.simulation.idempotency-ttl` | `24h` | validade da reserva de idempotência (janela publicada no contrato) |
 | `payment.simulation.publish-lease` | `30s` | tempo em que uma tentativa de publicação é considerada em voo |
 | `payment.simulation.response-channel` | `payment-sim-responses` | canal pub/sub que acorda waiters |
 

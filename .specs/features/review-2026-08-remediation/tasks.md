@@ -228,9 +228,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: mesma chave em tenants distintos gera reservas independentes
-- [ ] IT: payload diferente no mesmo tenant → 409 dentro da janela de 24h
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: mesma chave em tenants distintos gera reservas independentes
+- [x] IT: payload diferente no mesmo tenant → 409 dentro da janela de 24h
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full
