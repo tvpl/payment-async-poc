@@ -61,6 +61,11 @@ public class PaymentSimulationService {
         // request reuses another operation's result.
         String fingerprint = IdempotencyFingerprint.of(env.payload());
 
+        // TEN-06/edge case: an empty tenantId (envelope predates tenant scoping, or the caller
+        // never set one) falls back to the synthetic "legacy" tenant rather than erroring — the
+        // same fallback the V12 migration applies to pre-existing rows.
+        String tenantId = effectiveTenant(env.tenantId());
+
         // An idempotency-key replay with a FRESH requestId AND a MATCHING fingerprint: the caller
         // (payment-api) has already lost its own memory of the original mapping (its Redis
         // idempotency-ttl can expire well before this table's own window) and is retrying with a
@@ -69,7 +74,7 @@ public class PaymentSimulationService {
         // javadoc for the failure this replaces. A DIVERGENT fingerprint (or no match at all) is
         // not a replay — it falls through and is processed as its own new simulation below.
         Optional<PaymentSbusMessage> replayTarget =
-                persistence.findReplayTarget(idempotencyKey, env.requestId(), fingerprint);
+                persistence.findReplayTarget(tenantId, idempotencyKey, env.requestId(), fingerprint);
         if (replayTarget.isPresent()) {
             resolveReplay(env, idempotencyKey, replayTarget.get());
             return;
@@ -85,8 +90,18 @@ public class PaymentSimulationService {
         byte[] commandBytes = avroSerde.serialize(Topics.CORE_COMMAND, AvroMapper.toAvroCommand(command));
         String headers = json.toJson(HeaderMap.from(command, traceparent));
 
-        persistence.persistRequested(env, idempotencyKey, simulationId, fingerprint,
+        persistence.persistRequested(env, tenantId, idempotencyKey, simulationId, fingerprint,
                 EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND, Topics.CORE_COMMAND, commandBytes, headers);
+    }
+
+    /**
+     * TEN-06: the effective tenant for a request whose envelope carries no tenant identity (empty
+     * or blank {@code tenantId} — an envelope predating tenant scoping, or a caller that never set
+     * one). Mirrors the V12 migration's own {@code DEFAULT 'legacy'} so pre-existing and
+     * tenant-less traffic land in the same bucket instead of erroring.
+     */
+    private static String effectiveTenant(String tenantId) {
+        return (tenantId == null || tenantId.isBlank()) ? "legacy" : tenantId;
     }
 
     private void resolveReplay(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
@@ -126,7 +141,8 @@ public class PaymentSimulationService {
         String finalTopic = approved ? Topics.COMPLETED : Topics.FAILED;
         EventEnvelope<SimulationResult> finalEvent = new EventEnvelope<>(
                 UUID.randomUUID().toString(), finalType, EventEnvelope.CURRENT_VERSION, java.time.Instant.now(),
-                env.requestId(), env.correlationId(), env.eventId(), env.traceId(), Sources.SBUS, result);
+                env.requestId(), env.correlationId(), env.eventId(), env.traceId(), Sources.SBUS,
+                original.getTenantId(), result);
 
         byte[] finalBytes = approved
                 ? avroSerde.serialize(finalTopic, AvroMapper.toAvroCompleted(finalEvent))
@@ -166,7 +182,7 @@ public class PaymentSimulationService {
             EventEnvelope<SimulationResult> finalEvent = new EventEnvelope<>(
                     UUID.randomUUID().toString(), finalType, EventEnvelope.CURRENT_VERSION, java.time.Instant.now(),
                     message.getRequestId(), message.getCorrelationId(), env.eventId(), env.traceId(),
-                    Sources.SBUS, result);
+                    Sources.SBUS, message.getTenantId(), result);
 
             // Avro serialization OUTSIDE the transaction.
             byte[] finalBytes = approved

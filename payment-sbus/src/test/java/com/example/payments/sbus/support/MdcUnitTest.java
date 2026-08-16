@@ -27,7 +27,7 @@ class MdcUnitTest {
     void fromConsumerPopulatesEveryCorrelationFieldFromTheEnvelope() {
         EventEnvelope<String> env = new EventEnvelope<>(
                 "event-1", "PaymentSimulationRequested", EventEnvelope.CURRENT_VERSION, Instant.now(),
-                "req-1", "corr-1", "cause-1", "trace-1", "sbus-test", "payload");
+                "req-1", "corr-1", "cause-1", "trace-1", "sbus-test", "", "payload");
         ConsumerRecord<String, byte[]> record =
                 new ConsumerRecord<>("payment.simulation.requested", 2, 42L, "key", new byte[0]);
 
@@ -47,7 +47,7 @@ class MdcUnitTest {
     void clearRemovesEveryFieldSoTheNextLogLineOnTheThreadDoesNotLeakCorrelationIds() {
         EventEnvelope<String> env = new EventEnvelope<>(
                 "event-1", "PaymentSimulationRequested", EventEnvelope.CURRENT_VERSION, Instant.now(),
-                "req-1", "corr-1", "cause-1", "trace-1", "sbus-test", "payload");
+                "req-1", "corr-1", "cause-1", "trace-1", "sbus-test", "", "payload");
         ConsumerRecord<String, byte[]> record =
                 new ConsumerRecord<>("payment.simulation.requested", 0, 0L, "key", new byte[0]);
         Mdc.fromConsumer(record, env);

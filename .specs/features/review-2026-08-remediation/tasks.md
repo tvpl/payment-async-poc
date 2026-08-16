@@ -341,9 +341,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: eventos de tenants distintos com mesma chave processam independentes
-- [ ] Envelope com tenant vazio cai em `legacy` sem erro
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: eventos de tenants distintos com mesma chave processam independentes
+- [x] Envelope com tenant vazio cai em `legacy` sem erro
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

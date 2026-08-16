@@ -12,8 +12,6 @@ import java.util.Optional;
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface IdempotencyRecordRepository extends CrudRepository<IdempotencyRecord, Long> {
 
-    Optional<IdempotencyRecord> findByIdempotencyKey(String idempotencyKey);
-
     /**
      * TEN-06: post-migration, {@code idempotency_key} is unique only within a tenant — the same
      * key legitimately exists for more than one tenant. Callers resolving replay/dedup MUST scope
