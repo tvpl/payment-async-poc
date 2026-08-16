@@ -274,8 +274,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Cenários do Independent Test da story P1 todos verdes
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] Cenários do Independent Test da story P1 todos verdes
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full
