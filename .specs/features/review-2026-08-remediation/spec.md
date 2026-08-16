@@ -286,7 +286,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | SEC-04 | P1: Segurança e governança | Design | Pending |
 | SEC-05 | P1: Segurança e governança | Design | Pending |
 | SEC-06 | P1: Segurança e governança | Design | Pending |
-| SEC-07 | P1: Segurança e governança | Design | Pending |
+| SEC-07 | P1: Segurança e governança | Design | Verified |
 | SEC-08 | P1: Segurança e governança | Design | Pending |
 | RES-01 | P1: Resiliência de fundo | Design | Pending |
 | RES-02 | P1: Resiliência de fundo | Design | Pending |

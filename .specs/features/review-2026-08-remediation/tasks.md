@@ -137,9 +137,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Teste vermelho ao adicionar campo `cardNumber` num modelo (provado e revertido)
-- [ ] ADR em `payment-contracts/docs/adr/` registra denylist e evolução
-- [ ] Gate check passes: `cd payment-contracts && ./gradlew test --no-daemon`
+- [x] Teste vermelho ao adicionar campo `cardNumber` num modelo (provado e revertido)
+- [x] ADR em `payment-contracts/docs/adr/` registra denylist e evolução
+- [x] Gate check passes: `cd payment-contracts && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
