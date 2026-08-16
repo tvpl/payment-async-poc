@@ -2,17 +2,18 @@ package com.example.payments.api.filter;
 
 import com.example.payments.api.config.ApiRateLimiterFactory;
 import com.example.payments.api.ratelimit.RedisRateLimiter;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.Order;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
-import io.micronaut.http.annotation.Filter;
-import io.micronaut.http.filter.HttpServerFilter;
-import io.micronaut.http.filter.ServerFilterChain;
+import io.micronaut.http.annotation.RequestFilter;
+import io.micronaut.http.annotation.ServerFilter;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import jakarta.inject.Named;
-import org.reactivestreams.Publisher;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -33,9 +34,15 @@ import java.util.HexFormat;
  * (see {@code V0PaymentSimulationController}), so it never carries an {@code X-API-Key} — every
  * anonymous v0 caller therefore shares one {@code "anonymous"} tenant bucket, same as any
  * anonymous caller would on the main route.
+ *
+ * <p>Runs on {@link TaskExecutors#BLOCKING} (BUDG-03): the dual-budget check below is a
+ * synchronous Redis round-trip (Lettuce sync commands), and filter methods execute on the Netty
+ * event loop by default — a slow Redis would otherwise stall every connection the event loop
+ * serves, including {@code /health/liveness} (BUDG-04).
  */
-@Filter(value = {"/payment-simulations", "/v0/payment-simulations"}, methods = HttpMethod.POST)
-public class ConcurrencyLimitFilter implements HttpServerFilter {
+@ServerFilter(value = {"/payment-simulations", "/v0/payment-simulations"}, methods = HttpMethod.POST)
+@Order(-10) // run after auth
+public class ConcurrencyLimitFilter {
 
     private static final String ANONYMOUS_TENANT = "anonymous";
 
@@ -49,19 +56,16 @@ public class ConcurrencyLimitFilter implements HttpServerFilter {
         this.tenantLimiter = tenantLimiter;
     }
 
-    @Override
-    public int getOrder() {
-        return -10; // run after auth
-    }
-
-    @Override
-    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+    /** Returns {@code null} to proceed, or a response to short-circuit the chain. */
+    @RequestFilter
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    public @Nullable MutableHttpResponse<?> filterRequest(HttpRequest<?> request) {
         String resource = request.getMethod().name() + ":" + request.getPath();
         if (!resourceLimiter.tryAcquireBoth(resource, tenantLimiter, tenant(request))) {
-            return Publishers.just(HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .header("Retry-After", "1"));
+            return HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .header("Retry-After", "1");
         }
-        return chain.proceed(request);
+        return null;
     }
 
     /**

@@ -278,7 +278,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | TEN-07 | P1: Tenant e idempotência | Design | Pending |
 | BUDG-01 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-02 | P1: Orçamentos de tempo | Design | Verified |
-| BUDG-03 | P1: Orçamentos de tempo | Design | Pending |
+| BUDG-03 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-04 | P1: Orçamentos de tempo | Design | Pending |
 | SEC-01 | P1: Segurança e governança | Design | Pending |
 | SEC-02 | P1: Segurança e governança | Design | Pending |

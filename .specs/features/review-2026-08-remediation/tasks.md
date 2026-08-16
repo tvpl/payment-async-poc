@@ -475,9 +475,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Asserção de thread nos testes: filtro nunca roda em thread de event loop
-- [ ] ITs de admissão existentes verdes sem alteração de expectativa
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] Asserção de thread nos testes: filtro nunca roda em thread de event loop
+- [x] ITs de admissão existentes verdes sem alteração de expectativa
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

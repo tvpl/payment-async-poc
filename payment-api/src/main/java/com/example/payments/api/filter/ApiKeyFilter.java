@@ -2,16 +2,16 @@ package com.example.payments.api.filter;
 
 import com.example.payments.api.config.SecurityProperties;
 import com.example.payments.api.error.Problem;
-import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.annotation.Order;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
-import io.micronaut.http.annotation.Filter;
-import io.micronaut.http.filter.HttpServerFilter;
-import io.micronaut.http.filter.ServerFilterChain;
-import jakarta.inject.Singleton;
-import org.reactivestreams.Publisher;
+import io.micronaut.http.annotation.RequestFilter;
+import io.micronaut.http.annotation.ServerFilter;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,9 +20,14 @@ import java.util.Set;
  * Authenticates business endpoints with an {@code X-API-Key} header (a simple, concrete
  * mechanism for the PoC). Management endpoints (health/metrics/swagger) are not covered by
  * this filter's path pattern. Production should use JWT/OAuth2 + mTLS.
+ *
+ * <p>Runs on {@link TaskExecutors#BLOCKING} (BUDG-03): filter methods execute on the Netty
+ * event loop by default, and this method is the admission gate ahead of the rate limiter's
+ * Redis calls - it must never share that fate, even though today's check itself is in-memory.
  */
-@Filter({"/payment-simulations", "/payment-simulations/**"})
-public class ApiKeyFilter implements HttpServerFilter {
+@ServerFilter({"/payment-simulations", "/payment-simulations/**"})
+@Order(-20) // run before the rate limiter
+public class ApiKeyFilter {
 
     private static final String HEADER = "X-API-Key";
 
@@ -34,23 +39,19 @@ public class ApiKeyFilter implements HttpServerFilter {
         this.apiKeys = new HashSet<>(properties.getApiKeys());
     }
 
-    @Override
-    public int getOrder() {
-        return -20; // run before the rate limiter
-    }
-
-    @Override
-    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
+    /** Returns {@code null} to proceed, or a response to short-circuit the chain. */
+    @RequestFilter
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    public @Nullable MutableHttpResponse<?> filterRequest(HttpRequest<?> request) {
         if (!enabled) {
-            return chain.proceed(request);
+            return null;
         }
         String key = request.getHeaders().get(HEADER);
         if (key != null && apiKeys.contains(key)) {
-            return chain.proceed(request);
+            return null;
         }
-        MutableHttpResponse<?> unauthorized = HttpResponse.status(HttpStatus.UNAUTHORIZED)
+        return HttpResponse.status(HttpStatus.UNAUTHORIZED)
                 .contentType(Problem.MEDIA_TYPE)
                 .body(Problem.of(401, "Unauthorized", "Missing or invalid " + HEADER));
-        return Publishers.just(unauthorized);
     }
 }
