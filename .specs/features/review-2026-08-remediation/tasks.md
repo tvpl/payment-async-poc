@@ -542,9 +542,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Boot prod com auto-register true falha (teste de contexto)
-- [ ] Nível de log muda por env sem rebuild (teste de config)
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Boot prod com auto-register true falha (teste de contexto)
+- [x] Nível de log muda por env sem rebuild (teste de config)
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

@@ -15,5 +15,6 @@
         <appender-ref ref="JSON"/>
     </root>
 
-    <logger name="com.example.payments" level="DEBUG"/>
+    <!-- SEC-06: INFO by default in every environment; LOG_LEVEL_APP overrides without a rebuild. -->
+    <logger name="com.example.payments" level="${LOG_LEVEL_APP:-INFO}"/>
 </configuration>
