@@ -101,9 +101,12 @@ public class RedisStatusStore {
     }
 
     /**
-     * Atomically reserves an idempotency key for this requestId + payload fingerprint
-     * (PAY-01). Identity, fingerprint and publish state are stored together in a single
-     * {@code SET NX} so no request can observe a key associated with only half the identity.
+     * Atomically reserves an idempotency key for this requestId + payload fingerprint,
+     * scoped to {@code tenantId} (PAY-01, TEN-04, TEN-05). Identity, fingerprint and publish
+     * state are stored together in a single {@code SET NX} so no request can observe a key
+     * associated with only half the identity. The Redis key includes the tenant
+     * ({@code idem:{tenant}:{key}}), so two tenants reusing the same {@code idempotencyKey} and
+     * payload never see each other's reservation, replay, or conflict (TEN-04).
      *
      * <p>Same key + same fingerprint replays the original identity (PAY-02); same key with
      * a different fingerprint is a deterministic conflict, never a silent replay.
@@ -113,8 +116,8 @@ public class RedisStatusStore {
      * failed attempt is recovered under the same requestId instead of leaving a reservation
      * that simulates processing until it expires (PAY-03).
      */
-    public IdempotencyOutcome reserve(String idempotencyKey, String requestId, String fingerprint) {
-        String key = IDEM_PREFIX + idempotencyKey;
+    public IdempotencyOutcome reserve(String tenantId, String idempotencyKey, String requestId, String fingerprint) {
+        String key = idemKey(tenantId, idempotencyKey);
         String value = writeReservation(new IdempotencyReservation(
                 requestId, fingerprint, PublishState.PENDING_PUBLISH, leaseDeadline()));
         long ttlMillis = properties.getIdempotencyTtl().toMillis();
@@ -153,14 +156,15 @@ public class RedisStatusStore {
      * <p>{@code XX} means an already-expired reservation is not resurrected: there is no
      * identity left to recover.
      */
-    public void markPublishState(String idempotencyKey,
+    public void markPublishState(String tenantId,
+                                 String idempotencyKey,
                                  String requestId,
                                  String fingerprint,
                                  PublishState publishState) {
         String value = writeReservation(
                 new IdempotencyReservation(requestId, fingerprint, publishState, leaseDeadline()));
         try {
-            commands().set(IDEM_PREFIX + idempotencyKey, value, SetArgs.Builder.xx().keepttl());
+            commands().set(idemKey(tenantId, idempotencyKey), value, SetArgs.Builder.xx().keepttl());
         } catch (RedisException e) {
             throw new StoreUnavailableException("Failed to mark publish state for " + requestId, e);
         }
@@ -216,5 +220,9 @@ public class RedisStatusStore {
 
     private static String statusKey(String requestId) {
         return STATUS_PREFIX + requestId;
+    }
+
+    private static String idemKey(String tenantId, String idempotencyKey) {
+        return IDEM_PREFIX + tenantId + ":" + idempotencyKey;
     }
 }

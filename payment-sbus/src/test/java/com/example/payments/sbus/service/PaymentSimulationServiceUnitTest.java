@@ -65,7 +65,9 @@ class PaymentSimulationServiceUnitTest {
         freshTerminalOriginal.setResult("{\"simulationId\":\"sim-1\"}");
 
         when(messageRepository.findByRequestId(replayRequestId)).thenReturn(Optional.empty());
-        when(persistence.findReplayTarget(eq(idempotencyKey), eq(replayRequestId), anyString()))
+        // replayEnv carries no tenantId (built via the tenant-less EventEnvelope.create overload),
+        // so the service resolves it to the "legacy" fallback (TEN-06 edge case) before calling in.
+        when(persistence.findReplayTarget(eq("legacy"), eq(idempotencyKey), eq(replayRequestId), anyString()))
                 .thenReturn(Optional.of(staleOriginal));
         when(persistence.registerReplayInFlight(eq(replayEnv), eq(idempotencyKey), eq(staleOriginal)))
                 .thenReturn(Optional.of(freshTerminalOriginal));

@@ -61,7 +61,7 @@ class PaymentResponseConsumerUnitTest {
         SimulationResultPayload payload = new SimulationResultPayload(
                 "sim-1", "req-1", "APPROVED", "123456", "125.50", "BRL", 1, null, null, null, null);
         return new PaymentSimulationCompleted(
-                "event-1", "PaymentSimulationCompleted", "1", 0L, "req-1", "corr-1", null, null, "sbus", payload);
+                "event-1", "PaymentSimulationCompleted", "1", 0L, "req-1", "corr-1", null, null, "sbus", "", payload);
     }
 
     @Test

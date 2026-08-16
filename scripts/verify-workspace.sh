@@ -54,6 +54,11 @@ stage_async_redis_failures() {
   scripts/e2e/async-redis-failures/run.sh
 }
 
+stage_internal_contract() {
+  echo "=== internal-contract: Edge<->Sbus internal status fixture stays identical on both sides (API-03) ==="
+  python3 scripts/e2e/check_internal_contract.py --root .
+}
+
 stage_hygiene() {
   echo "=== hygiene: git diff --check ==="
   git diff --check
@@ -67,6 +72,7 @@ case "$STAGE" in
   e2e-async-redis) stage_e2e_async_redis ;;
   payment-failures) stage_payment_failures ;;
   async-redis-failures) stage_async_redis_failures ;;
+  internal-contract) stage_internal_contract ;;
   hygiene) stage_hygiene ;;
   all)
     stage_equivalence
@@ -76,6 +82,7 @@ case "$STAGE" in
     stage_e2e_async_redis
     stage_payment_failures
     stage_async_redis_failures
+    stage_internal_contract
     stage_hygiene
     ;;
   *)

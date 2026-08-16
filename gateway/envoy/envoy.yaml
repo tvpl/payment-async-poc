@@ -1,0 +1,299 @@
+# Envoy como guardrail de borda do workspace (NON_PRODUCTION).
+#
+# Responsabilidades desta camada, e somente elas:
+#   - autenticação OIDC/JWT (tokens emitidos pelo Keycloak local, validados via JWKS)
+#   - rate limit global (Rate Limit Service + Redis privado)
+#   - circuit breaking, outlier detection, retries e timeouts na direção do Edge
+#   - mTLS opcional no listener 10443 (certificados gerados pelo certs-init)
+#   - logs de acesso JSON, métricas Prometheus no admin (9901) e traces OTLP
+#
+# O que ela NÃO faz de propósito: autorização fina (RBAC/OPA fica como extension
+# point documentado em docs/security.md) e qualquer lógica de negócio. O Edge
+# continua dono da autenticação de aplicação (X-API-Key) e da idempotência.
+#
+# Só a superfície pública do Edge é exposta: /payment-simulations, /v0/... e
+# /health. /admin, /auth (emissor de token dev) e /prometheus ficam fora do
+# gateway de propósito — são superfícies de operador, acessadas direto no Edge.
+
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+  listeners:
+    - name: edge_http
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 10000 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: edge_http
+                use_remote_address: true
+                generate_request_id: true
+                normalize_path: true
+                merge_slashes: true
+                path_with_escaped_slashes_action: REJECT_REQUEST
+                stream_idle_timeout: 30s
+                request_timeout: 15s
+                common_http_protocol_options:
+                  idle_timeout: 60s
+                  max_headers_count: 64
+                tracing: &tracing
+                  random_sampling: { value: 100 }
+                  provider:
+                    name: envoy.tracers.opentelemetry
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.config.trace.v3.OpenTelemetryConfig
+                      grpc_service:
+                        envoy_grpc: { cluster_name: otel_collector }
+                        timeout: 0.25s
+                      service_name: payment-gateway
+                access_log: &access_log
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+                      log_format:
+                        json_format:
+                          start_time: "%START_TIME%"
+                          method: "%REQ(:METHOD)%"
+                          path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
+                          protocol: "%PROTOCOL%"
+                          response_code: "%RESPONSE_CODE%"
+                          response_flags: "%RESPONSE_FLAGS%"
+                          duration_ms: "%DURATION%"
+                          upstream_host: "%UPSTREAM_HOST%"
+                          upstream_cluster: "%UPSTREAM_CLUSTER%"
+                          request_id: "%REQ(X-REQUEST-ID)%"
+                          client_address: "%DOWNSTREAM_REMOTE_ADDRESS%"
+                          user_agent: "%REQ(USER-AGENT)%"
+                          jwt_subject: "%DYNAMIC_METADATA(envoy.filters.http.jwt_authn:jwt_payload:sub)%"
+                          route: "%ROUTE_NAME%"
+                http_filters: &http_filters
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        keycloak:
+                          # Issuer fixado pelo KC_HOSTNAME do compose. Se mudar
+                          # KEYCLOAK_HOST_PORT no .env, ajuste o issuer aqui.
+                          issuer: http://localhost:8086/realms/payments
+                          audiences: ["payment-gateway"]
+                          # forward default (false): o Bearer é removido após a
+                          # validação. O Edge nunca recebe o token do Keycloak e
+                          # segue usando X-API-Key como autenticação de aplicação.
+                          payload_in_metadata: jwt_payload
+                          remote_jwks:
+                            http_uri:
+                              uri: http://keycloak:8080/realms/payments/protocol/openid-connect/certs
+                              cluster: keycloak
+                              timeout: 5s
+                            cache_duration: 300s
+                            async_fetch: {}
+                            retry_policy:
+                              num_retries: 10
+                      rules:
+                        # Health passa sem token (probes e smoke rápido).
+                        - match: { prefix: "/health" }
+                        # Todo o resto exige JWT válido do realm payments.
+                        - match: { prefix: "/" }
+                          requires: { provider_name: keycloak }
+                  - name: envoy.filters.http.ratelimit
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+                      domain: payment-gateway
+                      # fail-open: se o Rate Limit Service cair, o tráfego passa e o
+                      # limite de admissão do próprio Edge continua protegendo o core.
+                      failure_mode_deny: false
+                      timeout: 0.25s
+                      enable_x_ratelimit_headers: DRAFT_VERSION_03
+                      rate_limit_service:
+                        transport_api_version: V3
+                        grpc_service:
+                          envoy_grpc: { cluster_name: ratelimit }
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+                route_config: &route_config
+                  name: edge_routes
+                  virtual_hosts:
+                    - name: payment_edge
+                      domains: ["*"]
+                      routes:
+                        - name: health
+                          match: { prefix: "/health/" }
+                          route:
+                            cluster: payment_api
+                            timeout: 3s
+                        # GET de status é idempotente: retry agressivo é seguro.
+                        - name: payment_status_get
+                          match:
+                            prefix: "/payment-simulations/"
+                            headers:
+                              - name: ":method"
+                                string_match: { exact: "GET" }
+                          route:
+                            cluster: payment_api
+                            timeout: 5s
+                            retry_policy:
+                              retry_on: "5xx,reset,connect-failure,refused-stream"
+                              num_retries: 2
+                              per_try_timeout: 2s
+                          rate_limits:
+                            - actions: [ { remote_address: {} } ]
+                            - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
+                        # POST só re-tenta falhas que garantidamente não chegaram ao
+                        # upstream (conexão recusada). Reenvio de 5xx fica proibido no
+                        # gateway: a idempotência é do Edge, não desta camada.
+                        - name: payment_submit
+                          match: { prefix: "/payment-simulations" }
+                          route:
+                            cluster: payment_api
+                            # > wait-timeout de 3s do Edge + margem: o 202 degradado
+                            # deve vir do Edge, nunca um 504 do gateway.
+                            timeout: 6s
+                            retry_policy:
+                              retry_on: "connect-failure,refused-stream"
+                              num_retries: 2
+                          rate_limits:
+                            - actions: [ { remote_address: {} } ]
+                            - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
+                        - name: v0_payment_simulations
+                          match: { prefix: "/v0/payment-simulations" }
+                          route:
+                            cluster: payment_api
+                            timeout: 6s
+                            retry_policy:
+                              retry_on: "connect-failure,refused-stream"
+                              num_retries: 2
+                          rate_limits:
+                            - actions: [ { remote_address: {} } ]
+                            - actions: [ { generic_key: { descriptor_value: "v0-payment-simulations" } } ]
+                        # Allowlist explícita: o que não está acima não existe através
+                        # do gateway (/admin, /auth, /prometheus são só do operador).
+                        - name: not_exposed
+                          match: { prefix: "/" }
+                          response_headers_to_add:
+                            - header:
+                                key: content-type
+                                value: application/problem+json
+                          direct_response:
+                            status: 404
+                            body:
+                              inline_string: '{"type":"about:blank","title":"Not Found","status":404,"detail":"path is not exposed through the gateway"}'
+
+    # Mesmo pipeline, com mTLS obrigatório (certificados do volume gateway-certs).
+    - name: edge_mtls
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 10443 }
+      filter_chains:
+        - transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              require_client_certificate: true
+              common_tls_context:
+                tls_params:
+                  tls_minimum_protocol_version: TLSv1_2
+                tls_certificates:
+                  - certificate_chain: { filename: /certs/server.crt }
+                    private_key: { filename: /certs/server.key }
+                validation_context:
+                  trusted_ca: { filename: /certs/ca.crt }
+          filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: edge_mtls
+                use_remote_address: true
+                generate_request_id: true
+                normalize_path: true
+                merge_slashes: true
+                path_with_escaped_slashes_action: REJECT_REQUEST
+                stream_idle_timeout: 30s
+                request_timeout: 15s
+                common_http_protocol_options:
+                  idle_timeout: 60s
+                  max_headers_count: 64
+                tracing: *tracing
+                access_log: *access_log
+                http_filters: *http_filters
+                route_config: *route_config
+
+  clusters:
+    - name: payment_api
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      connect_timeout: 1s
+      lb_policy: ROUND_ROBIN
+      # Circuit breaking na direção do Edge: limites explícitos em vez dos defaults.
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 512
+            max_pending_requests: 256
+            max_requests: 512
+            max_retries: 3
+      # Ejeção de host que devolve 5xx consecutivos (com uma instância única de
+      # payment-api a ejeção equivale a abrir o circuito por 30s).
+      outlier_detection:
+        consecutive_5xx: 5
+        interval: 10s
+        base_ejection_time: 30s
+        max_ejection_percent: 100
+      load_assignment:
+        cluster_name: payment_api
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: api, port_value: 8080 }
+
+    - name: keycloak
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      connect_timeout: 2s
+      load_assignment:
+        cluster_name: keycloak
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: keycloak, port_value: 8080 }
+
+    - name: ratelimit
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      connect_timeout: 1s
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      load_assignment:
+        cluster_name: ratelimit
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: ratelimit, port_value: 8081 }
+
+    # Só resolve quando o profile observability do sandbox está de pé; sem ele o
+    # Envoy loga falha de DNS e segue operando sem exportar traces.
+    - name: otel_collector
+      type: STRICT_DNS
+      dns_lookup_family: V4_ONLY
+      connect_timeout: 1s
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      load_assignment:
+        cluster_name: otel_collector
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: { address: otel-collector, port_value: 4317 }

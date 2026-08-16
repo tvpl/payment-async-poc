@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PublishStateReservationIT {
 
+    private static final String TENANT = "tenant-a";
     private static final String IDEMPOTENCY_TTL = "6s";
     private static final long IDEMPOTENCY_TTL_MILLIS = 6_000L;
     private static final long PUBLISH_LEASE_MILLIS = 1_000L;
@@ -78,8 +79,8 @@ class PublishStateReservationIT {
         String key = newKey();
         String owner = UUID.randomUUID().toString();
 
-        store.reserve(key, owner, "fp-a");
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-a");
+        store.reserve(TENANT, key, owner, "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT, key, UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.Replay.class, outcome);
         assertEquals(owner, ((IdempotencyOutcome.Replay) outcome).requestId());
@@ -91,9 +92,9 @@ class PublishStateReservationIT {
         String key = newKey();
         String owner = UUID.randomUUID().toString();
 
-        store.reserve(key, owner, "fp-a");
+        store.reserve(TENANT, key, owner, "fp-a");
         Thread.sleep(PUBLISH_LEASE_MILLIS + 300);
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT, key, UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.ResumePublish.class, outcome);
         assertEquals(owner, ((IdempotencyOutcome.ResumePublish) outcome).requestId());
@@ -104,9 +105,9 @@ class PublishStateReservationIT {
         String key = newKey();
         String owner = UUID.randomUUID().toString();
 
-        store.reserve(key, owner, "fp-a");
-        store.markPublishState(key, owner, "fp-a", PublishState.PUBLISH_FAILED);
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-a");
+        store.reserve(TENANT, key, owner, "fp-a");
+        store.markPublishState(TENANT, key, owner, "fp-a", PublishState.PUBLISH_FAILED);
+        IdempotencyOutcome outcome = store.reserve(TENANT, key, UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.ResumePublish.class, outcome);
         assertEquals(owner, ((IdempotencyOutcome.ResumePublish) outcome).requestId());
@@ -117,10 +118,10 @@ class PublishStateReservationIT {
         String key = newKey();
         String owner = UUID.randomUUID().toString();
 
-        store.reserve(key, owner, "fp-a");
-        store.markPublishState(key, owner, "fp-a", PublishState.PUBLISHED);
+        store.reserve(TENANT, key, owner, "fp-a");
+        store.markPublishState(TENANT, key, owner, "fp-a", PublishState.PUBLISHED);
         Thread.sleep(PUBLISH_LEASE_MILLIS + 300);
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT, key, UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.Replay.class, outcome);
         assertEquals(owner, ((IdempotencyOutcome.Replay) outcome).requestId());
@@ -131,9 +132,9 @@ class PublishStateReservationIT {
         String key = newKey();
         String owner = UUID.randomUUID().toString();
 
-        store.reserve(key, owner, "fp-a");
-        store.markPublishState(key, owner, "fp-a", PublishState.PUBLISH_FAILED);
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-b");
+        store.reserve(TENANT, key, owner, "fp-a");
+        store.markPublishState(TENANT, key, owner, "fp-a", PublishState.PUBLISH_FAILED);
+        IdempotencyOutcome outcome = store.reserve(TENANT, key, UUID.randomUUID().toString(), "fp-b");
 
         assertInstanceOf(IdempotencyOutcome.Conflict.class, outcome);
         assertEquals(owner, ((IdempotencyOutcome.Conflict) outcome).requestId());
@@ -144,11 +145,11 @@ class PublishStateReservationIT {
         String key = newKey();
         String owner = UUID.randomUUID().toString();
 
-        store.reserve(key, owner, "fp-a");
+        store.reserve(TENANT, key, owner, "fp-a");
         Thread.sleep(1_500);
-        store.markPublishState(key, owner, "fp-a", PublishState.PUBLISHED);
+        store.markPublishState(TENANT, key, owner, "fp-a", PublishState.PUBLISHED);
 
-        long remaining = inspector.sync().pttl("idem:" + key);
+        long remaining = inspector.sync().pttl("idem:" + TENANT + ":" + key);
         assertTrue(remaining > 0, "reservation must survive the mark, was " + remaining);
         assertTrue(remaining <= IDEMPOTENCY_TTL_MILLIS - 1_400,
                 "mark must keep the original expiry, remaining was " + remaining);
@@ -158,9 +159,9 @@ class PublishStateReservationIT {
     void recordingThePublishOutcomeNeverResurrectsAnExpiredReservation() {
         String key = newKey();
 
-        store.markPublishState(key, UUID.randomUUID().toString(), "fp-a", PublishState.PUBLISHED);
+        store.markPublishState(TENANT, key, UUID.randomUUID().toString(), "fp-a", PublishState.PUBLISHED);
 
-        assertEquals(0L, inspector.sync().exists("idem:" + key));
+        assertEquals(0L, inspector.sync().exists("idem:" + TENANT + ":" + key));
     }
 
     private static String newKey() {

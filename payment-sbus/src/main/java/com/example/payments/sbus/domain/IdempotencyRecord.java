@@ -18,6 +18,14 @@ public class IdempotencyRecord {
     @GeneratedValue(GeneratedValue.Type.IDENTITY)
     private Long id;
 
+    /**
+     * TEN-06: scopes the idempotency key so uniqueness is per-tenant, never global. Micronaut
+     * Data always writes every mapped column explicitly (it never relies on the schema's own
+     * {@code DEFAULT}), so this field mirrors the migration's {@code DEFAULT 'legacy'} in Java —
+     * a caller that never calls {@link #setTenantId} still persists a valid, non-null value.
+     */
+    private String tenantId = "legacy";
+
     private String idempotencyKey;
     private String requestId;
     private String status;
@@ -44,6 +52,14 @@ public class IdempotencyRecord {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     public String getIdempotencyKey() {

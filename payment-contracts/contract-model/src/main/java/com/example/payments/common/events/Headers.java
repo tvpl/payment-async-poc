@@ -13,6 +13,7 @@ public final class Headers {
     public static final String EVENT_TYPE = "x-event-type";
     public static final String EVENT_VERSION = "x-event-version";
     public static final String TRACEPARENT = "traceparent";
+    public static final String TENANT_ID = "x-tenant-id";
 
     /** Retry-topic bookkeeping headers. */
     public static final String RETRY_ATTEMPT = "x-retry-attempt";

@@ -27,13 +27,37 @@ class EventEnvelopeUnitTest {
         assertNotNull(env.occurredAt());
     }
 
+    /** Callers that predate tenant scoping (TEN-05) still compile and get an empty tenantId. */
+    @Test
+    void createWithoutATenantDefaultsTenantIdToEmpty() {
+        var payload = new PaymentSimulationRequestPayload(
+                "MERCHANT-001", new BigDecimal("10.00"), "BRL", "CREDIT_CARD", "VISA", 1, "AUTHORIZE");
+        var env = EventEnvelope.create(
+                EventTypes.PAYMENT_SIMULATION_REQUESTED,
+                "req-1", "corr-1", "req-1", "trace-1", Sources.API, payload);
+
+        assertEquals("", env.tenantId());
+    }
+
+    /** The tenant-aware overload (TEN-05) carries the caller's tenant on the envelope. */
+    @Test
+    void createWithATenantCarriesItOnTheEnvelope() {
+        var payload = new PaymentSimulationRequestPayload(
+                "MERCHANT-001", new BigDecimal("10.00"), "BRL", "CREDIT_CARD", "VISA", 1, "AUTHORIZE");
+        var env = EventEnvelope.create(
+                EventTypes.PAYMENT_SIMULATION_REQUESTED,
+                "req-1", "corr-1", "req-1", "trace-1", Sources.API, "tenant-a", payload);
+
+        assertEquals("tenant-a", env.tenantId());
+    }
+
     @Test
     void deriveKeepsCorrelationAndChainsCausation() {
         var payload = new PaymentSimulationRequestPayload(
                 "MERCHANT-001", new BigDecimal("10.00"), "BRL", "CREDIT_CARD", "VISA", 1, "AUTHORIZE");
         var requested = EventEnvelope.create(
                 EventTypes.PAYMENT_SIMULATION_REQUESTED,
-                "req-1", "corr-1", "req-1", "trace-1", Sources.API, payload);
+                "req-1", "corr-1", "req-1", "trace-1", Sources.API, "tenant-a", payload);
 
         var command = requested.deriveAs(
                 EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND,
@@ -48,5 +72,7 @@ class EventEnvelopeUnitTest {
         assertEquals(requested.eventId(), command.causationId());
         assertNotEquals(requested.eventId(), command.eventId());
         assertEquals(EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND, command.eventType());
+        // Tenant scope is also preserved end to end (TEN-05).
+        assertEquals("tenant-a", command.tenantId());
     }
 }

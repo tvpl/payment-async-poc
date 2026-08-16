@@ -1,6 +1,6 @@
 # Arquitetura do workspace
 
-Como as sete raízes se relacionam. Arquitetura interna de uma fronteira (classes, pacotes, caminho de uma requisição) pertence ao `architecture.md` daquela fronteira; este documento cobre só a relação entre fronteiras.
+Como as oito raízes se relacionam. Arquitetura interna de uma fronteira (classes, pacotes, caminho de uma requisição) pertence ao `architecture.md` daquela fronteira; este documento cobre só a relação entre fronteiras.
 
 ## Raízes e responsabilidades
 
@@ -13,6 +13,7 @@ Como as sete raízes se relacionam. Arquitetura interna de uma fronteira (classe
 | `feature-control` | Biblioteca de feature flags e seus exemplos locais (`feature-demo`, `pilot-app`) |
 | `async-redis-service` | Exemplo Redis independente de async-to-sync sem Kafka |
 | `sandbox` | Infraestrutura local compartilhada: compose, observabilidade, deploy |
+| `gateway` | Guardrail opcional de borda (`NON_PRODUCTION`): Envoy com OIDC/JWT via Keycloak, mTLS, rate limit global e circuit breaking na frente do `payment-api` |
 
 `feature-demo` e `pilot-app` são exemplos internos de `feature-control`, não fronteiras novas. Os três permanecem `NON_PRODUCTION`, junto com `payment-core-mock`.
 
@@ -22,6 +23,15 @@ O workspace reúne três capacidades independentes. O fluxo de pagamento via Kaf
 
 ```mermaid
 flowchart TB
+    subgraph edge[Borda opcional]
+        gw[gateway: Envoy]
+        kc[Keycloak]
+        rls[(Rate Limit Service + Redis)]
+
+        gw <--> kc
+        gw <--> rls
+    end
+
     subgraph payment[Fluxo principal de pagamento]
         api[payment-api]
         sbus[payment-sbus]
@@ -41,6 +51,8 @@ flowchart TB
         contracts -. "contratos Avro" .-> sbus
         contracts -. "contratos Avro" .-> core
     end
+
+    gw -. "proxy opcional (JWT, rate limit, circuit breaking)" .-> api
 
     subgraph flags[Capacidade transversal de feature control]
         lib[feature-control]
@@ -93,6 +105,7 @@ Essa raiz não usa `payment-contracts`, Kafka, `payment-sbus` ou Postgres. Ela e
 | Resultado durável no Postgres (`payment-sbus`) | `GET` de `payment-api` nunca perde resultado por TTL ou troca de instância | Mais um caminho de leitura (fallback) |
 | Virtual threads para a espera em `payment-api` | Milhares de requisições aguardando I/O sem custo de threads de plataforma | Não substituem rate limit/backpressure, ver [Contratos de resiliência](resilience-contracts.md) |
 | Composite build opcional entre raízes | Cada raiz standalone compila e testa isolada | Gates de release não usam substitution; consomem artefato publicado |
+| Gateway de borda opcional e fora do caminho dos testes | Demonstra a separação canal (OIDC/mTLS/rate limit no Envoy) vs. aplicação (`X-API-Key`, idempotência no Edge) sem tocar código; testes rápidos continuam indo direto ao Edge | Duas camadas de auth para manter coerentes; E2E completo exige subir mais um compose ([ADR 0001 do gateway](../gateway/docs/adr/0001-envoy-as-nonproduction-guardrail.md)) |
 
 ## Ver também
 - [Visão geral do workspace](workspace-overview.md) · [Fluxo de pagamento](payment-flow.md) · [Ownership de dados](data-ownership.md) · [Contratos de resiliência](resilience-contracts.md)

@@ -17,12 +17,19 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Real-Redis proof of the atomic reserve/replay/conflict contract (PAY-01/PAY-02). */
+/**
+ * Real-Redis proof of the atomic reserve/replay/conflict contract, scoped per tenant
+ * (PAY-01/PAY-02, TEN-04, TEN-05, IDEM-03).
+ */
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RedisStatusStoreIdempotencyIT {
+
+    private static final String TENANT_A = "tenant-a";
+    private static final String TENANT_B = "tenant-b";
 
     private static final KafkaContainer KAFKA =
             new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
@@ -58,7 +65,7 @@ class RedisStatusStoreIdempotencyIT {
 
     @Test
     void firstUseOfAKeyIsReserved() {
-        IdempotencyOutcome outcome = store.reserve(newKey(), UUID.randomUUID().toString(), "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT_A, newKey(), UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.Reserved.class, outcome);
     }
@@ -68,8 +75,8 @@ class RedisStatusStoreIdempotencyIT {
         String key = newKey();
         String firstRequestId = UUID.randomUUID().toString();
 
-        store.reserve(key, firstRequestId, "fp-a");
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-a");
+        store.reserve(TENANT_A, key, firstRequestId, "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.Replay.class, outcome);
         assertEquals(firstRequestId, ((IdempotencyOutcome.Replay) outcome).requestId());
@@ -80,8 +87,8 @@ class RedisStatusStoreIdempotencyIT {
         String key = newKey();
         String firstRequestId = UUID.randomUUID().toString();
 
-        store.reserve(key, firstRequestId, "fp-a");
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-b");
+        store.reserve(TENANT_A, key, firstRequestId, "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-b");
 
         assertInstanceOf(IdempotencyOutcome.Conflict.class, outcome);
         assertEquals(firstRequestId, ((IdempotencyOutcome.Conflict) outcome).requestId());
@@ -92,9 +99,9 @@ class RedisStatusStoreIdempotencyIT {
         String key = newKey();
         String firstRequestId = UUID.randomUUID().toString();
 
-        store.reserve(key, firstRequestId, "fp-a");
-        store.reserve(key, UUID.randomUUID().toString(), "fp-b");
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-c");
+        store.reserve(TENANT_A, key, firstRequestId, "fp-a");
+        store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-b");
+        IdempotencyOutcome outcome = store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-c");
 
         assertInstanceOf(IdempotencyOutcome.Conflict.class, outcome);
         assertEquals(firstRequestId, ((IdempotencyOutcome.Conflict) outcome).requestId());
@@ -105,19 +112,55 @@ class RedisStatusStoreIdempotencyIT {
         String key = newKey();
         String firstRequestId = UUID.randomUUID().toString();
 
-        store.reserve(key, firstRequestId, "fp-a");
+        store.reserve(TENANT_A, key, firstRequestId, "fp-a");
         Thread.sleep(2500);
-        IdempotencyOutcome outcome = store.reserve(key, UUID.randomUUID().toString(), "fp-a");
+        IdempotencyOutcome outcome = store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-a");
 
         assertInstanceOf(IdempotencyOutcome.Reserved.class, outcome);
     }
 
     @Test
     void distinctKeysReserveIndependently() {
-        IdempotencyOutcome first = store.reserve(newKey(), UUID.randomUUID().toString(), "fp-a");
-        IdempotencyOutcome second = store.reserve(newKey(), UUID.randomUUID().toString(), "fp-a");
+        IdempotencyOutcome first = store.reserve(TENANT_A, newKey(), UUID.randomUUID().toString(), "fp-a");
+        IdempotencyOutcome second = store.reserve(TENANT_A, newKey(), UUID.randomUUID().toString(), "fp-a");
 
         assertTrue(first instanceof IdempotencyOutcome.Reserved && second instanceof IdempotencyOutcome.Reserved);
+    }
+
+    /**
+     * TEN-04: the same key and the same payload fingerprint from two different tenants must
+     * never collide - each tenant gets its own reservation and its own requestId, never a
+     * result, requestId, or 409 derived from the other tenant.
+     */
+    @Test
+    void sameKeyAndFingerprintAcrossTenantsReserveIndependently() {
+        String key = newKey();
+        String requestIdA = UUID.randomUUID().toString();
+        String requestIdB = UUID.randomUUID().toString();
+
+        IdempotencyOutcome outcomeA = store.reserve(TENANT_A, key, requestIdA, "fp-shared");
+        IdempotencyOutcome outcomeB = store.reserve(TENANT_B, key, requestIdB, "fp-shared");
+
+        assertInstanceOf(IdempotencyOutcome.Reserved.class, outcomeA);
+        assertInstanceOf(IdempotencyOutcome.Reserved.class, outcomeB);
+        assertNotEquals(requestIdA, requestIdB);
+
+        // A replay against each tenant only ever returns that tenant's own owner.
+        IdempotencyOutcome replayA = store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-shared");
+        IdempotencyOutcome replayB = store.reserve(TENANT_B, key, UUID.randomUUID().toString(), "fp-shared");
+        assertEquals(requestIdA, ((IdempotencyOutcome.Replay) replayA).requestId());
+        assertEquals(requestIdB, ((IdempotencyOutcome.Replay) replayB).requestId());
+    }
+
+    /** TEN-04: a divergent payload on tenant B never conflicts against tenant A's reservation. */
+    @Test
+    void divergentPayloadOnOneTenantNeverConflictsAgainstAnotherTenantsReservation() {
+        String key = newKey();
+        store.reserve(TENANT_A, key, UUID.randomUUID().toString(), "fp-a");
+
+        IdempotencyOutcome outcome = store.reserve(TENANT_B, key, UUID.randomUUID().toString(), "fp-b");
+
+        assertInstanceOf(IdempotencyOutcome.Reserved.class, outcome);
     }
 
     private static String newKey() {

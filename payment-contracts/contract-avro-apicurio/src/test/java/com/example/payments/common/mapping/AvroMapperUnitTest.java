@@ -98,7 +98,8 @@ class AvroMapperUnitTest {
     }
 
     private static <T> EventEnvelope<T> envelope(String eventType, String source, T payload) {
-        return EventEnvelope.create(eventType, "request-1", "correlation-1", "cause-1", "trace-1", source, payload);
+        return EventEnvelope.create(
+                eventType, "request-1", "correlation-1", "cause-1", "trace-1", source, "tenant-42", payload);
     }
 
     private static void assertEnvelope(EventEnvelope<?> expected, EventEnvelope<?> actual) {
@@ -111,6 +112,7 @@ class AvroMapperUnitTest {
         assertEquals(expected.causationId(), actual.causationId());
         assertEquals(expected.traceId(), actual.traceId());
         assertEquals(expected.source(), actual.source());
+        assertEquals(expected.tenantId(), actual.tenantId());
     }
 
     private static void assertRequest(

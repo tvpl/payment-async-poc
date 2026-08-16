@@ -1,0 +1,6 @@
+# Certificados exportados do volume para teste local (make certs-export).
+# Nada além do script gerador é versionado.
+local/
+*.crt
+*.key
+*.srl

@@ -32,8 +32,8 @@ REQUIRED_CONTENT = {
         "## Fontes de verdade",
         "## Dependências externas",
         "## Status",
-        "com.example.payments:payment-contract-model:0.1.0",
-        "com.example.payments:payment-contract-avro-apicurio:0.1.0",
+        "com.example.payments:payment-contract-model:0.2.0",
+        "com.example.payments:payment-contract-avro-apicurio:0.2.0",
     ),
     "AGENTS.md": (
         "## Fontes de verdade",
@@ -104,8 +104,8 @@ def validate(root: Path) -> list[str]:
 
     readme = (root / "README.md").read_text(encoding="utf-8") if (root / "README.md").is_file() else ""
     for gav in (
-        "com.example.payments:payment-contract-model:0.1.0",
-        "com.example.payments:payment-contract-avro-apicurio:0.1.0",
+        "com.example.payments:payment-contract-model:0.2.0",
+        "com.example.payments:payment-contract-avro-apicurio:0.2.0",
     ):
         if gav not in readme:
             errors.append(f"README missing GAV: {gav}")

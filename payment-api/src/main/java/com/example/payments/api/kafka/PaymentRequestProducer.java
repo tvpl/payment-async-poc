@@ -21,5 +21,6 @@ public interface PaymentRequestProducer {
               @MessageHeader(Headers.REQUEST_ID) String reqId,
               @MessageHeader(Headers.CORRELATION_ID) String correlationId,
               @MessageHeader(Headers.IDEMPOTENCY_KEY) @Nullable String idempotencyKey,
+              @MessageHeader(Headers.TENANT_ID) String tenantId,
               byte[] value);
 }

@@ -69,13 +69,17 @@ public class PaymentPersistenceService {
      * operations that happen to share a key. A divergent fingerprint — or a legacy record whose
      * fingerprint predates this column (null) — means "not a replay"; the caller processes the
      * request as a brand-new simulation instead of copying another operation's result.
+     *
+     * <p>{@code tenantId} (TEN-06) scopes the lookup: post-migration, {@code idempotency_key} is
+     * unique only per tenant, so a key reused by a DIFFERENT tenant must never resolve as a
+     * replay of this one's operation — it is that other tenant's own, independent key.
      */
-    public Optional<PaymentSbusMessage> findReplayTarget(String idempotencyKey, String currentRequestId,
-                                                          String currentFingerprint) {
+    public Optional<PaymentSbusMessage> findReplayTarget(String tenantId, String idempotencyKey,
+                                                          String currentRequestId, String currentFingerprint) {
         if (idempotencyKey == null) {
             return Optional.empty();
         }
-        return idempotencyRepository.findByIdempotencyKey(idempotencyKey)
+        return idempotencyRepository.findByTenantIdAndIdempotencyKey(tenantId, idempotencyKey)
                 .filter(record -> !record.getRequestId().equals(currentRequestId))
                 .filter(record -> record.getFingerprint() != null
                         && record.getFingerprint().equals(currentFingerprint))
@@ -100,7 +104,8 @@ public class PaymentPersistenceService {
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
             return;
         }
-        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId());
+        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId(),
+                original.getTenantId());
         replica.setStatus(original.getStatus());
         replica.setErrorCode(original.getErrorCode());
         replica.setErrorMessage(original.getErrorMessage());
@@ -148,7 +153,8 @@ public class PaymentPersistenceService {
                     original.getRequestId(), original.getSimulationId());
             return Optional.of(fresh);
         }
-        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId());
+        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId(),
+                original.getTenantId());
         replica.setStatus(SbusMessageStatus.PROCESSING);
         messageRepository.save(replica);
         LOG.info("Registered idempotency replay requestId={} against in-flight original={} "
@@ -157,11 +163,12 @@ public class PaymentPersistenceService {
     }
 
     private PaymentSbusMessage newReplicaRow(EventEnvelope<PaymentSimulationRequestPayload> env,
-                                             String idempotencyKey, String simulationId) {
+                                             String idempotencyKey, String simulationId, String tenantId) {
         PaymentSbusMessage replica = new PaymentSbusMessage();
         replica.setRequestId(env.requestId());
         replica.setCorrelationId(env.correlationId());
         replica.setCausationId(env.causationId());
+        replica.setTenantId(tenantId);
         replica.setIdempotencyKey(idempotencyKey);
         replica.setSimulationId(simulationId);
         replica.setPayload(json.toJson(env.payload()));
@@ -169,7 +176,7 @@ public class PaymentPersistenceService {
     }
 
     @Transactional
-    public void persistRequested(EventEnvelope<PaymentSimulationRequestPayload> env,
+    public void persistRequested(EventEnvelope<PaymentSimulationRequestPayload> env, String tenantId,
                                  String idempotencyKey, String simulationId, String fingerprint,
                                  String eventType, String topic, byte[] commandBytes, String headers) {
         // Authoritative idempotency inside the tx (request_id UNIQUE is the backstop).
@@ -177,7 +184,8 @@ public class PaymentPersistenceService {
             return;
         }
         Optional<IdempotencyRecord> existingKeyRecord = idempotencyKey == null
-                ? Optional.empty() : idempotencyRepository.findByIdempotencyKey(idempotencyKey);
+                ? Optional.empty()
+                : idempotencyRepository.findByTenantIdAndIdempotencyKey(tenantId, idempotencyKey);
         if (existingKeyRecord.isPresent()
                 && fingerprint.equals(existingKeyRecord.get().getFingerprint())) {
             // The SAME operation raced ahead of us between findReplayTarget's read and this
@@ -187,14 +195,16 @@ public class PaymentPersistenceService {
             return;
         }
         // existingKeyRecord present with a DIFFERENT (or legacy-null) fingerprint is not this
-        // case: idempotencyKey is unique, so we cannot insert a second idempotency_record row for
-        // it, but the message itself still gets processed as its own new, independent simulation
-        // (AUD-01) — it is simply not tracked for future replay dedup under this key.
+        // case: idempotencyKey is unique PER TENANT (TEN-06), so we cannot insert a second
+        // idempotency_record row for this (tenantId, idempotencyKey) pair, but the message itself
+        // still gets processed as its own new, independent simulation (AUD-01) — it is simply not
+        // tracked for future replay dedup under this key.
 
         PaymentSbusMessage message = new PaymentSbusMessage();
         message.setRequestId(env.requestId());
         message.setCorrelationId(env.correlationId());
         message.setCausationId(env.causationId());
+        message.setTenantId(tenantId);
         message.setIdempotencyKey(idempotencyKey);
         message.setSimulationId(simulationId);
         message.setStatus(SbusMessageStatus.PROCESSING);
@@ -203,6 +213,7 @@ public class PaymentPersistenceService {
 
         if (idempotencyKey != null && existingKeyRecord.isEmpty()) {
             IdempotencyRecord record = new IdempotencyRecord();
+            record.setTenantId(tenantId);
             record.setIdempotencyKey(idempotencyKey);
             record.setRequestId(env.requestId());
             record.setStatus(SbusMessageStatus.PROCESSING.name());

@@ -26,6 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,8 @@ class PublishFailureIT {
 
     private static final String API_KEY = "test-only-api-key";
     private static final String TEST_JWT_SECRET = "test-only-api-signing-secret-with-at-least-32-bytes";
+    private static final Duration WAIT_TIMEOUT = Duration.ofSeconds(1);
+    private static final Duration PUBLISH_BUDGET = Duration.ofMillis(500);
 
     private static final PaymentSimulationRequest REQUEST = new PaymentSimulationRequest(
             "MERCHANT-001", new BigDecimal("125.50"), "BRL", "CREDIT_CARD", "VISA", 3, "AUTHORIZE_AND_CAPTURE");
@@ -98,6 +101,21 @@ class PublishFailureIT {
         assertEquals(Problem.MEDIA_TYPE,
                 failure.getResponse().getContentType().orElseThrow().toString());
         assertTrue(failure.getResponse().getBody(String.class).orElseThrow().contains("\"status\":503"));
+    }
+
+    /**
+     * BUDG-01/BUDG-02: with a dead broker, the derived publish budget (not Kafka's multi-tens-of
+     * -seconds defaults) must bound the producer, so the 503 lands within wait-timeout + 1s.
+     */
+    @Test
+    void aFailedPublishRespondsWithin503WithinTheWaitTimeoutPlusOneSecond() {
+        long start = System.nanoTime();
+        assertThrows(HttpClientResponseException.class, () -> submit(UUID.randomUUID().toString()));
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+        Duration bound = WAIT_TIMEOUT.plusSeconds(1);
+        assertTrue(elapsed.compareTo(bound) < 0,
+                "503 took " + elapsed + ", which exceeds wait-timeout + 1s (" + bound + ")");
     }
 
     @Test
@@ -155,7 +173,10 @@ class PublishFailureIT {
     }
 
     private IdempotencyReservation reservation(String idempotencyKey) {
-        String raw = inspector.sync().get("idem:" + idempotencyKey);
+        // The API key above has no payment.security.tenants entry, so TenantResolver falls back
+        // to the implicit "default" tenant (see TenantResolver javadoc), and the reservation is
+        // keyed accordingly.
+        String raw = inspector.sync().get("idem:default:" + idempotencyKey);
         assertNotNull(raw, "no reservation stored for " + idempotencyKey);
         try {
             return objectMapper.readValue(raw, IdempotencyReservation.class);
@@ -178,13 +199,13 @@ class PublishFailureIT {
         Map<String, Object> properties = new HashMap<>();
         properties.put("kafka.bootstrap.servers", KAFKA.getBootstrapServers());
         properties.put("kafka.health.enabled", false);
-        properties.put("kafka.producers.default.max.block.ms", 3_000);
-        properties.put("kafka.producers.default.request.timeout.ms", 2_000);
-        properties.put("kafka.producers.default.delivery.timeout.ms", 3_000);
+        // BUDG-01: max.block.ms/request.timeout.ms/delivery.timeout.ms are derived from this
+        // single budget (PublishBudgetProducerCustomizer), not set directly.
+        properties.put("payment.publish-budget", PUBLISH_BUDGET.toMillis() + "ms");
         properties.put("redis.uri", REDIS.getRedisURI());
         properties.put("apicurio.registry.url", registryUrl());
         properties.put("otel.traces.exporter", "none");
-        properties.put("payment.simulation.wait-timeout", "1s");
+        properties.put("payment.simulation.wait-timeout", WAIT_TIMEOUT.toMillis() + "ms");
         properties.put("payment.simulation.publish-lease", "30s");
         properties.put("payment.security.api-keys", List.of(API_KEY));
         properties.put("micronaut.security.token.jwt.signatures.secret.generator.secret", TEST_JWT_SECRET);

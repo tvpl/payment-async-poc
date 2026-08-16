@@ -72,9 +72,9 @@ class V0GatingTest {
     void eligibleCallerReachesPipelineWithV0Header() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
 
-        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "");
+        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key");
 
         assertEquals(HttpStatus.OK, response.getStatus());
         assertEquals("v0", response.getHeaders().get("X-Api-Version"));
@@ -89,10 +89,21 @@ class V0GatingTest {
     void v0ResponseNeverAnnouncesARoutedTopic() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+
+        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key");
+
+        assertNull(response.getHeaders().get("X-Routed-Topic"));
+    }
+
+    /** IDEM-01/IDEM-02: eligible caller, but no Idempotency-Key -> 400, service never touched. */
+    @Test
+    void eligibleCallerWithoutIdempotencyKeyIsRejectedBeforeAnyDomainIO() {
+        ApiPaymentService service = mock(ApiPaymentService.class);
 
         HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "");
 
-        assertNull(response.getHeaders().get("X-Routed-Topic"));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
+        org.mockito.Mockito.verifyNoInteractions(service);
     }
 }

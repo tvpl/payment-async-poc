@@ -37,7 +37,8 @@ class ContractConstantsUnitTest {
                 "traceparent",
                 "x-retry-attempt",
                 "x-retry-not-before",
-                "x-orig-topic"
+                "x-orig-topic",
+                "x-tenant-id"
         ), Set.of(
                 Headers.REQUEST_ID,
                 Headers.CORRELATION_ID,
@@ -48,7 +49,8 @@ class ContractConstantsUnitTest {
                 Headers.TRACEPARENT,
                 Headers.RETRY_ATTEMPT,
                 Headers.RETRY_NOT_BEFORE,
-                Headers.ORIGIN_TOPIC
+                Headers.ORIGIN_TOPIC,
+                Headers.TENANT_ID
         ));
     }
 

@@ -1,6 +1,6 @@
 # Payment Async Workspace
 
-Este repositório é um workspace de sete fronteiras autossuficientes. A raiz é um mapa de workspace e um ponto de integração. Ela não é documentação de produto nem representa um único deploy.
+Este repositório é um workspace de oito fronteiras autossuficientes. A raiz é um mapa de workspace e um ponto de integração. Ela não é documentação de produto nem representa um único deploy.
 
 O estado atual continua sendo uma PoC. Nenhum componente deve ser tratado como pronto para produção sem os gates e relatórios datados definidos na [especificação de segregação](.specs/features/repository-segregation-production-hardening/spec.md).
 
@@ -15,15 +15,17 @@ O estado atual continua sendo uma PoC. Nenhum componente deve ser tratado como p
 | `feature-control` | biblioteca de controle de features e exemplos | produtiva (exemplos `NON_PRODUCTION`) |
 | `async-redis-service` | exemplo async-to-sync baseado em Redis | produtiva |
 | `sandbox` | infraestrutura local compartilhada e observabilidade | infraestrutura local |
+| `gateway` | guardrail opcional de borda (Envoy + Keycloak): OIDC/JWT, mTLS, rate limit, circuit breaking | `NON_PRODUCTION`, opcional |
 
 Cada fronteira tem build, documentação, CI e instruções de IA locais. Aplicações têm também imagem e Compose próprios. `payment-contracts` e `feature-control` são publicadas como artefatos Maven e não recebem containers artificiais.
 
 ## Regras do workspace
 
 - Dependências cross-boundary usam coordenadas Maven versionadas. Composite Gradle é uma conveniência local explícita, nunca um requisito de release.
-- Somente `sandbox` cria Kafka, Redis, PostgreSQL, Schema Registry e observabilidade local. Composes de aplicação conectam à rede externa do sandbox.
+- Somente `sandbox` cria Kafka, Redis, PostgreSQL, Schema Registry e observabilidade local. Composes de aplicação conectam à rede externa do sandbox. O `gateway` cria apenas os componentes privados da sua própria camada (Envoy, Keycloak, Rate Limit Service) numa rede própria e nunca infraestrutura compartilhada.
 - Contratos HTTP, Kafka, Avro e migrations permanecem compatíveis entre versões sem uma decisão registrada.
-- `payment-core-mock`, `feature-demo` e `pilot-app` são `NON_PRODUCTION`.
+- `payment-core-mock`, `feature-demo`, `pilot-app` e `gateway` são `NON_PRODUCTION`.
+- O `gateway` é opcional por contrato: nenhum teste ou fronteira depende dele. Suba-o apenas para exercitar o fluxo End-to-End com autenticação de borda (ver [gateway/README.md](gateway/README.md)); da camada Edge em diante tudo funciona sem ele.
 
 As decisões transversais estão em [.specs/STATE.md](.specs/STATE.md). O plano de segregação está em [design.md](.specs/features/repository-segregation-production-hardening/design.md) e [tasks.md](.specs/features/repository-segregation-production-hardening/tasks.md).
 
@@ -50,5 +52,7 @@ O inventário histórico e seu uso estão documentados no [gate de equivalência
 ## Documentação
 
 A documentação de workspace vive em [docs](docs/workspace-overview.md): visão geral, arquitetura cross-boundary, fluxo de pagamento ponta a ponta, ownership de dados, contratos de resiliência entre fronteiras, política de tecnologia e política de testes compartilhada. Documentação específica de cada fronteira (arquitetura interna, contratos, configuração, segurança, operação, observabilidade) vive no `docs/` local dessa fronteira.
+
+A [revisão de arquitetura de 2026-08](docs/architecture-review-2026-08.md) registra as oportunidades de melhoria encontradas com a lente de produção bancária em grande escala (idempotência com tenant, orçamentos de tempo, housekeeping, readiness) e a ordem sugerida de ataque — sem mudança de código associada.
 
 Agentes de IA devem começar por [AGENTS.md](AGENTS.md) e seguir primeiro o `AGENTS.md` local de cada fronteira.

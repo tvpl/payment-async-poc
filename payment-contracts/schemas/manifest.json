@@ -54,6 +54,7 @@
     "traceparent",
     "x-retry-attempt",
     "x-retry-not-before",
-    "x-orig-topic"
+    "x-orig-topic",
+    "x-tenant-id"
   ]
 }

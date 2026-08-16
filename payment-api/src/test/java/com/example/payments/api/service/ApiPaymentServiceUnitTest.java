@@ -71,7 +71,7 @@ class ApiPaymentServiceUnitTest {
 
         when(avroSerde.serialize(anyString(), any())).thenReturn(new byte[]{1});
         when(coordinator.register(anyString())).thenReturn(new CompletableFuture<>());
-        when(store.reserve(anyString(), anyString(), anyString()))
+        when(store.reserve(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new IdempotencyOutcome.Reserved());
     }
 
@@ -82,13 +82,13 @@ class ApiPaymentServiceUnitTest {
             return Optional.of(new StatusEntry(requestId, SimulationStatus.COMPLETED, null));
         });
 
-        ApiPaymentService.SubmitResult result = service.submit(REQUEST, null);
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, null, "tenant-a");
 
         assertFalse(result.timedOut());
         assertFalse(result.duplicate());
         assertEquals(SimulationStatus.COMPLETED, result.entry().status());
         verify(metrics).recordRequest(anyString());
-        verify(producer).send(anyString(), anyString(), anyString(), any(), any());
+        verify(producer).send(anyString(), anyString(), anyString(), any(), any(), any());
     }
 
     /**
@@ -105,11 +105,27 @@ class ApiPaymentServiceUnitTest {
         doAnswer(inv -> {
             causationIdDuringPublish.set(MDC.get("causationId"));
             return null;
-        }).when(producer).send(requestId.capture(), anyString(), anyString(), any(), any());
+        }).when(producer).send(requestId.capture(), anyString(), anyString(), any(), any(), any());
 
-        service.submit(REQUEST, null);
+        service.submit(REQUEST, null, "tenant-a");
 
         assertEquals(requestId.getValue(), causationIdDuringPublish.get());
+    }
+
+    /** TEN-05: tenantId reaches the MDC (and therefore the logs) while publishing. */
+    @Test
+    void populatesTenantIdInMdcWhilePublishing() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+        AtomicReference<String> tenantIdDuringPublish = new AtomicReference<>();
+        doAnswer(inv -> {
+            tenantIdDuringPublish.set(MDC.get("tenantId"));
+            return null;
+        }).when(producer).send(anyString(), anyString(), anyString(), any(), any(), any());
+
+        service.submit(REQUEST, null, "tenant-a");
+
+        assertEquals("tenant-a", tenantIdDuringPublish.get());
     }
 
     @Test
@@ -118,7 +134,7 @@ class ApiPaymentServiceUnitTest {
         when(store.get(anyString())).thenAnswer(inv ->
                 Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.SENT_TO_SBUS, null)));
 
-        ApiPaymentService.SubmitResult result = service.submit(REQUEST, null);
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, null, "tenant-a");
 
         assertTrue(result.timedOut());
         verify(metrics).recordTimeout();
@@ -131,20 +147,20 @@ class ApiPaymentServiceUnitTest {
         when(coordinator.await(anyString(), any()))
                 .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
 
-        service.submit(REQUEST, null);
+        service.submit(REQUEST, null, "tenant-a");
 
         verify(coordinator).completeFromStore(anyString());
     }
 
     @Test
     void replaysOnDuplicateIdempotencyKey() {
-        when(store.reserve(anyString(), anyString(), anyString()))
+        when(store.reserve(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new IdempotencyOutcome.Replay("original-request-id"));
         when(store.get("original-request-id"))
                 .thenReturn(Optional.of(new StatusEntry(
                         "original-request-id", SimulationStatus.COMPLETED, null)));
 
-        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key", "tenant-a");
 
         assertTrue(result.duplicate());
         assertFalse(result.timedOut());
@@ -156,10 +172,10 @@ class ApiPaymentServiceUnitTest {
         when(coordinator.await(anyString(), any()))
                 .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
 
-        service.submit(REQUEST, "the-key");
+        service.submit(REQUEST, "the-key", "tenant-a");
 
         ArgumentCaptor<PublishState> state = ArgumentCaptor.forClass(PublishState.class);
-        verify(store).markPublishState(eq("the-key"), anyString(), anyString(), state.capture());
+        verify(store).markPublishState(anyString(), eq("the-key"), anyString(), anyString(), state.capture());
         assertEquals(PublishState.PUBLISHED, state.getValue());
 
         ArgumentCaptor<StatusEntry> saved = ArgumentCaptor.forClass(StatusEntry.class);
@@ -170,12 +186,12 @@ class ApiPaymentServiceUnitTest {
     @Test
     void marksTheReservationPublishFailedWhenTheBrokerRejectsTheSend() {
         doThrow(new RuntimeException("broker down"))
-                .when(producer).send(anyString(), anyString(), anyString(), any(), any());
+                .when(producer).send(anyString(), anyString(), anyString(), any(), any(), any());
 
-        assertThrows(PublishFailedException.class, () -> service.submit(REQUEST, "the-key"));
+        assertThrows(PublishFailedException.class, () -> service.submit(REQUEST, "the-key", "tenant-a"));
 
         ArgumentCaptor<PublishState> state = ArgumentCaptor.forClass(PublishState.class);
-        verify(store).markPublishState(eq("the-key"), anyString(), anyString(), state.capture());
+        verify(store).markPublishState(anyString(), eq("the-key"), anyString(), anyString(), state.capture());
         assertEquals(PublishState.PUBLISH_FAILED, state.getValue());
 
         ArgumentCaptor<StatusEntry> saved = ArgumentCaptor.forClass(StatusEntry.class);
@@ -200,9 +216,9 @@ class ApiPaymentServiceUnitTest {
         ApiPaymentService realService =
                 new ApiPaymentService(store, realCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
         doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
-                .when(store).markPublishState(anyString(), anyString(), anyString(), eq(PublishState.PUBLISHED));
+                .when(store).markPublishState(anyString(), anyString(), anyString(), anyString(), eq(PublishState.PUBLISHED));
 
-        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key", "tenant-a"));
 
         assertEquals(0, realCoordinator.pendingCount(),
                 "the waiter must be unregistered even though markPublishState threw after register()");
@@ -218,7 +234,7 @@ class ApiPaymentServiceUnitTest {
         doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
                 .when(store).save(argThat(entry -> entry.status() == SimulationStatus.SENT_TO_SBUS));
 
-        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key", "tenant-a"));
 
         assertEquals(0, realCoordinator.pendingCount(),
                 "the waiter must be unregistered even though store.save(SENT_TO_SBUS) threw after register()");
@@ -233,7 +249,7 @@ class ApiPaymentServiceUnitTest {
         ApiPaymentService realService =
                 new ApiPaymentService(store, spyCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
 
-        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key", "tenant-a"));
 
         assertEquals(0, spyCoordinator.pendingCount(),
                 "the waiter must be unregistered even though completeFromStore threw after register()");
@@ -241,31 +257,31 @@ class ApiPaymentServiceUnitTest {
 
     @Test
     void resumesAnUnpublishedReservationUnderTheSameRequestId() {
-        when(store.reserve(anyString(), anyString(), anyString()))
+        when(store.reserve(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new IdempotencyOutcome.ResumePublish("original-request-id"));
         when(coordinator.await(anyString(), any()))
                 .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
 
-        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key", "tenant-a");
 
         assertEquals("original-request-id", result.entry().requestId());
         verify(producer).send(eq("original-request-id"), eq("original-request-id"),
-                anyString(), eq("the-key"), any());
-        verify(store).markPublishState("the-key", "original-request-id",
+                anyString(), eq("the-key"), eq("tenant-a"), any());
+        verify(store).markPublishState("tenant-a", "the-key", "original-request-id",
                 IdempotencyFingerprint.of(REQUEST), PublishState.PUBLISHED);
     }
 
     @Test
     void replayWithoutAStoredStatusNeverReportsDownstreamProcessing() {
-        when(store.reserve(anyString(), anyString(), anyString()))
+        when(store.reserve(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new IdempotencyOutcome.Replay("original-request-id"));
         when(store.get("original-request-id")).thenReturn(Optional.empty());
 
-        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key", "tenant-a");
 
         assertEquals("original-request-id", result.entry().requestId());
         assertEquals(SimulationStatus.TIMEOUT, result.entry().status());
-        verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any());
+        verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -273,10 +289,10 @@ class ApiPaymentServiceUnitTest {
         when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
         when(store.get(anyString())).thenReturn(Optional.empty());
 
-        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key");
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, "the-key", "tenant-a");
 
         ArgumentCaptor<String> published = ArgumentCaptor.forClass(String.class);
-        verify(producer).send(published.capture(), anyString(), anyString(), any(), any());
+        verify(producer).send(published.capture(), anyString(), anyString(), any(), any(), any());
         assertEquals(published.getValue(), result.entry().requestId());
         assertEquals(SimulationStatus.SENT_TO_SBUS, result.entry().status());
         assertTrue(result.timedOut());
@@ -287,12 +303,13 @@ class ApiPaymentServiceUnitTest {
         when(coordinator.await(anyString(), any()))
                 .thenAnswer(inv -> Optional.of(new StatusEntry(inv.getArgument(0), SimulationStatus.COMPLETED, null)));
 
-        service.submit(REQUEST, "the-key");
+        service.submit(REQUEST, "the-key", "tenant-a");
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
         assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
+        assertNull(MDC.get("tenantId"));
     }
 
     @Test
@@ -300,25 +317,27 @@ class ApiPaymentServiceUnitTest {
         when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
         when(store.get(anyString())).thenReturn(Optional.empty());
 
-        service.submit(REQUEST, "the-key");
+        service.submit(REQUEST, "the-key", "tenant-a");
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
         assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
+        assertNull(MDC.get("tenantId"));
     }
 
     @Test
     void leavesNoMdcBehindWhenThePublishFails() {
         doThrow(new RuntimeException("broker down"))
-                .when(producer).send(anyString(), anyString(), anyString(), any(), any());
+                .when(producer).send(anyString(), anyString(), anyString(), any(), any(), any());
 
-        assertThrows(PublishFailedException.class, () -> service.submit(REQUEST, "the-key"));
+        assertThrows(PublishFailedException.class, () -> service.submit(REQUEST, "the-key", "tenant-a"));
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
         assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
+        assertNull(MDC.get("tenantId"));
     }
 
     @Test
@@ -326,25 +345,26 @@ class ApiPaymentServiceUnitTest {
         when(coordinator.await(anyString(), any()))
                 .thenThrow(new IllegalStateException("API shutting down"));
 
-        assertThrows(IllegalStateException.class, () -> service.submit(REQUEST, "the-key"));
+        assertThrows(IllegalStateException.class, () -> service.submit(REQUEST, "the-key", "tenant-a"));
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
         assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
+        assertNull(MDC.get("tenantId"));
     }
 
     @Test
     void rejectsDivergentPayloadOnSameIdempotencyKeyWithoutPublishing() {
-        when(store.reserve(anyString(), anyString(), anyString()))
+        when(store.reserve(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new IdempotencyOutcome.Conflict("original-request-id"));
 
         IdempotencyConflictException exception = assertThrows(IdempotencyConflictException.class,
-                () -> service.submit(REQUEST, "the-key"));
+                () -> service.submit(REQUEST, "the-key", "tenant-a"));
 
         assertEquals("the-key", exception.idempotencyKey());
         assertEquals("original-request-id", exception.originalRequestId());
-        verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any());
+        verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any(), any());
     }
 
     @Test

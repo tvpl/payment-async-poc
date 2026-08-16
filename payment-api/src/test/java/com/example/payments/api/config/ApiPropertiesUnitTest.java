@@ -6,9 +6,16 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ApiPropertiesUnitTest {
+
+    /** IDEM-03: the idempotency window published in the contract defaults to 24h at the Edge. */
+    @Test
+    void defaultIdempotencyTtlIsTheTwentyFourHourContractWindow() {
+        assertEquals(Duration.ofHours(24), new ApiProperties().getIdempotencyTtl());
+    }
 
     private static ApiProperties properties(Duration waitTimeout, Duration statusTtl, Duration idempotencyTtl) {
         ApiProperties properties = new ApiProperties();

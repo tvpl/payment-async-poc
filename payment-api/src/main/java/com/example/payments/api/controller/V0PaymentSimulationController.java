@@ -46,6 +46,12 @@ import jakarta.validation.Valid;
 public class V0PaymentSimulationController {
 
     private static final String V0_FLAG = "payment-api-v0";
+    /**
+     * v0 is anonymous by design (no {@code X-API-Key}, see the class javadoc and
+     * {@code ConcurrencyLimitFilter}'s identical convention) so it never resolves a tenant from a
+     * binding; every v0 caller shares this fixed scope for idempotency/envelope purposes.
+     */
+    private static final String V0_TENANT = "anonymous";
 
     private final ApiPaymentService service;
     private final FeatureResolver features;
@@ -72,7 +78,14 @@ public class V0PaymentSimulationController {
                     .body(Problem.of(404, "Not Found", "No such resource"));
         }
 
-        ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey);
+        if (!IdempotencyKeyValidation.isValid(idempotencyKey)) {
+            return HttpResponse.status(HttpStatus.BAD_REQUEST)
+                    .contentType(Problem.MEDIA_TYPE)
+                    .body(Problem.of(400, "Invalid request",
+                            "Idempotency-Key header is required and must match [A-Za-z0-9_-]{1,128}"));
+        }
+
+        ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey, V0_TENANT);
         var entry = result.entry();
         StatusResponse body = new StatusResponse(
                 entry.requestId(), entry.status(), statusUrl(entry.requestId()), entry.result());

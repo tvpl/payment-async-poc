@@ -123,11 +123,11 @@ class SchemaCompatibilityContractTest {
                         "PaymentSimulationFailed.avsc",
                         "com.example.payments.common.avro.PaymentSimulationFailed")
         ), events);
-        assertEquals(10, manifest.get("headers").size());
+        assertEquals(11, manifest.get("headers").size());
         assertEquals(Set.of(
                 "x-request-id", "x-correlation-id", "x-causation-id", "Idempotency-Key",
                 "x-event-type", "x-event-version", "traceparent", "x-retry-attempt",
-                "x-retry-not-before", "x-orig-topic"
+                "x-retry-not-before", "x-orig-topic", "x-tenant-id"
         ), headers);
     }
 

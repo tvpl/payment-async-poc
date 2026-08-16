@@ -1,0 +1,145 @@
+name: payment-gateway
+
+# Camada opcional de guardrail na frente do payment-api (Edge).
+# NON_PRODUCTION: valores de desenvolvimento (realm importado, certificados gerados
+# localmente, HTTP sem TLS até o Keycloak). Suba somente quando quiser exercitar o
+# fluxo End-to-End com autenticação OIDC/JWT, mTLS, rate limit global e circuit
+# breaking. O fluxo Edge -> Sbus -> serviços continua funcionando sem esta camada.
+#
+# Ordem de subida: sandbox (make up) -> payment-api/sbus/core-mock -> gateway.
+
+services:
+  envoy:
+    image: envoyproxy/envoy:v1.38.3@sha256:5f7c43e1147412fdb3af578c651c67478a3df818eae89d2261e707e06c209cdb
+    command: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+    environment:
+      # O entrypoint oficial troca para este UID antes de iniciar o processo.
+      ENVOY_UID: "101"
+      ENVOY_GID: "101"
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - gateway-certs:/certs:ro
+    ports:
+      - "${GATEWAY_HOST_PORT:-10000}:10000"
+      - "${GATEWAY_MTLS_HOST_PORT:-10443}:10443"
+      - "${GATEWAY_ADMIN_HOST_PORT:-9901}:9901"
+    depends_on:
+      certs-init:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      ratelimit:
+        condition: service_started
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      # A imagem não traz curl/wget; /dev/tcp do bash cobre o probe do admin /ready.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9901 && printf 'GET /ready HTTP/1.1\r\nHost: envoy\r\nConnection: close\r\n\r\n' >&3 && grep -q LIVE <&3"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - gateway
+      - sandbox
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.1@sha256:f1f1f01e472c8a78df40d8f2a49a925274eda4d3d80d5f6edbb5c880ee3c01c6
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      # `:?` e não `:-`: um segredo ausente deve derrubar o stack, nunca subir em
+      # silêncio com um valor commitado (mesma regra dos demais composes do workspace).
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD in .env}
+      KC_HEALTH_ENABLED: "true"
+      # Fixa o issuer dos tokens em http://localhost:8086 independentemente de o token
+      # ser pedido do host ou de dentro da rede. O provider JWT do envoy.yaml valida
+      # exatamente esse issuer; se mudar KEYCLOAK_HOST_PORT, ajuste lá também.
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_HOST_PORT:-8086}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    volumes:
+      - ./keycloak/realm-payments.json:/opt/keycloak/data/import/realm-payments.json:ro
+    ports:
+      - "${KEYCLOAK_HOST_PORT:-8086}:8080"
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      # Health fica na porta de management 9000 no Keycloak 26; a imagem não traz curl.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\r\nHost: keycloak\r\nConnection: close\r\n\r\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+    networks:
+      - gateway
+
+  ratelimit:
+    image: envoyproxy/ratelimit:17b1956c@sha256:871098f54d99ad612abdd455e39632be6d990937be2e46eecf4e39f65d948a94
+    command: ["/bin/ratelimit"]
+    environment:
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+      USE_STATSD: "false"
+      REDIS_SOCKET_TYPE: tcp
+      REDIS_URL: redis-ratelimit:6379
+      RUNTIME_ROOT: /data
+      RUNTIME_SUBDIRECTORY: ratelimit
+      RUNTIME_WATCH_ROOT: "false"
+      RUNTIME_IGNOREDOTFILES: "true"
+    volumes:
+      - ./ratelimit/config.yaml:/data/ratelimit/config/config.yaml:ro
+    depends_on:
+      redis-ratelimit:
+        condition: service_healthy
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - gateway
+
+  # Redis privado do Rate Limit Service (contadores voláteis de janela).
+  # Não é o Redis do sandbox: aquele pertence ao payment-api (docs/data-ownership.md)
+  # e este não guarda nenhum estado de negócio — pode ser descartado a qualquer momento.
+  redis-ratelimit:
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - gateway
+
+  # Gera CA + certificado de servidor + certificado de cliente para o listener mTLS
+  # (idempotente: só gera se o volume ainda não tiver certificados).
+  certs-init:
+    image: alpine/openssl:3.5.7@sha256:47f40fac08a77cbdfb02444e543808aa36b9e31e21a261f4d94ffaf0c5c73832
+    entrypoint: ["/bin/sh", "/scripts/generate-certs.sh"]
+    volumes:
+      - ./certs/generate-certs.sh:/scripts/generate-certs.sh:ro
+      - gateway-certs:/certs
+    restart: "no"
+    networks:
+      - gateway
+
+volumes:
+  gateway-certs:
+
+networks:
+  gateway:
+    name: payment-gateway
+  sandbox:
+    external: true
+    name: ${SANDBOX_NETWORK:-payment-sandbox}

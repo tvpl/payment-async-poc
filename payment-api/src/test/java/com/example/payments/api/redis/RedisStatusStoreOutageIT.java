@@ -82,13 +82,13 @@ class RedisStatusStoreOutageIT {
     @Test
     void reserveFailsClosedWhenRedisIsUnreachable() {
         assertThrows(StoreUnavailableException.class,
-                () -> store.reserve(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "fp"));
+                () -> store.reserve("tenant-a", UUID.randomUUID().toString(), UUID.randomUUID().toString(), "fp"));
     }
 
     @Test
     void markPublishStateFailsClosedWhenRedisIsUnreachable() {
         assertThrows(StoreUnavailableException.class, () -> store.markPublishState(
-                UUID.randomUUID().toString(), UUID.randomUUID().toString(), "fp", PublishState.PUBLISHED));
+                "tenant-a", UUID.randomUUID().toString(), UUID.randomUUID().toString(), "fp", PublishState.PUBLISHED));
     }
 
     @Test
