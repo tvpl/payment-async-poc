@@ -37,16 +37,18 @@ jobs:
             command: cd async-redis-service && ./gradlew build --no-daemon
           - boundary: sandbox
             command: cd sandbox && make config
+          - boundary: gateway
+            command: cd gateway && make config
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
-        if: matrix.boundary != 'sandbox'
+        if: ${{ !contains(fromJSON('["sandbox","gateway"]'), matrix.boundary) }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
       - name: Set up Gradle
-        if: matrix.boundary != 'sandbox'
+        if: ${{ !contains(fromJSON('["sandbox","gateway"]'), matrix.boundary) }}
         uses: gradle/actions/setup-gradle@v4
       # Cross-boundary deps resolve by GAV from a sibling boundary's build output, which a fresh
       # checkout does not have (build/ is gitignored). Without this, payment-api/payment-sbus/
@@ -82,7 +84,7 @@ jobs:
           CI_GATE_RESULT: ${{ steps.gate.outputs.result || 'NOT_RUN' }}
         run: test "$CI_GATE_RESULT" = PASS
       - name: Upload test reports
-        if: always() && matrix.boundary != 'sandbox'
+        if: ${{ always() && !contains(fromJSON('["sandbox","gateway"]'), matrix.boundary) }}
         uses: actions/upload-artifact@v4
         with:
           name: unit-${{ matrix.boundary }}

@@ -4,7 +4,7 @@ Este arquivo governa apenas mudanças cross-boundary. Detalhes de produto perten
 
 ## Estado e objetivo
 
-O workspace é composto por sete raízes autossuficientes, cada uma com build, testes, documentação, CI e instruções de IA locais.
+O workspace é composto por oito raízes autossuficientes, cada uma com build, testes, documentação, CI e instruções de IA locais.
 
 | Fronteira | Escopo |
 | --- | --- |
@@ -15,8 +15,9 @@ O workspace é composto por sete raízes autossuficientes, cada uma com build, t
 | `feature-control` | biblioteca de controle de features e exemplos locais |
 | `async-redis-service` | exemplo async-to-sync baseado em Redis |
 | `sandbox` | infraestrutura local compartilhada e observabilidade |
+| `gateway` | guardrail opcional de borda (Envoy + Keycloak), nunca dependência de outra fronteira |
 
-`feature-demo` e `pilot-app` são exemplos internos de `feature-control`, não fronteiras próprias. Os três permanecem `NON_PRODUCTION` junto com `payment-core-mock`.
+`feature-demo` e `pilot-app` são exemplos internos de `feature-control`, não fronteiras próprias. Os três permanecem `NON_PRODUCTION` junto com `payment-core-mock` e `gateway`.
 
 ## Fontes de verdade
 

@@ -1,0 +1,27 @@
+# Descritores do Rate Limit Service (envoyproxy/ratelimit), domínio payment-gateway.
+# Os descritores correspondem 1:1 às actions declaradas nas rotas do envoy.yaml.
+#
+# Estes limites são um guardrail de borda contra abuso, deliberadamente mais
+# frouxos que a admissão do próprio Edge (20/s por rota e por tenant): o gateway
+# corta rajadas anômalas, o Edge continua sendo quem protege o Core.
+domain: payment-gateway
+descriptors:
+  # Por endereço de origem (todas as rotas expostas).
+  - key: remote_address
+    rate_limit:
+      unit: minute
+      requests_per_unit: 600
+
+  # Orçamento global da rota estável.
+  - key: generic_key
+    value: payment-simulations
+    rate_limit:
+      unit: second
+      requests_per_unit: 100
+
+  # Orçamento global da rota beta v0 (mais restrito: superfície anônima no Edge).
+  - key: generic_key
+    value: v0-payment-simulations
+    rate_limit:
+      unit: second
+      requests_per_unit: 25

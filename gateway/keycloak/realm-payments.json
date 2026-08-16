@@ -1,0 +1,97 @@
+{
+  "realm": "payments",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 600,
+  "registrationAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      { "name": "payments-user", "description": "Pode submeter e consultar simulacoes de pagamento" },
+      { "name": "payments-admin", "description": "Perfil administrativo do realm de testes" }
+    ]
+  },
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "firstName": "Alice",
+      "lastName": "Tester",
+      "email": "alice@example.local",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "alice-change-me", "temporary": false }
+      ],
+      "realmRoles": ["payments-user"]
+    },
+    {
+      "username": "ops-admin",
+      "enabled": true,
+      "firstName": "Ops",
+      "lastName": "Admin",
+      "email": "ops-admin@example.local",
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "ops-admin-change-me", "temporary": false }
+      ],
+      "realmRoles": ["payments-admin", "payments-user"]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "payment-gateway-aud",
+      "description": "Adiciona a audience payment-gateway esperada pelo provider JWT do Envoy",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "payment-gateway-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "payment-gateway",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "payments-cli",
+      "name": "CLI de testes (password grant)",
+      "description": "Cliente publico para obter tokens em smoke tests e testes manuais",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["payment-gateway-aud", "profile", "email", "roles"],
+      "optionalClientScopes": []
+    },
+    {
+      "clientId": "payments-m2m",
+      "name": "Cliente machine-to-machine (client credentials)",
+      "description": "Cliente confidencial de exemplo para integracao servico-a-servico",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "dev-m2m-secret-change-me",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": true,
+      "defaultClientScopes": ["payment-gateway-aud", "profile", "email", "roles"],
+      "optionalClientScopes": []
+    }
+  ]
+}

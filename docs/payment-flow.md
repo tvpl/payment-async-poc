@@ -2,6 +2,8 @@
 
 Como uma simulação atravessa as fronteiras, hop a hop, e quando cada resposta HTTP acontece. Esta é a visão cross-boundary: cada fronteira documenta seu próprio funcionamento interno em seu `docs/architecture.md`.
 
+Opcionalmente existe um salto **antes** do primeiro hop abaixo: com a fronteira [`gateway`](../gateway/README.md) de pé, o cliente chega via Envoy (JWT do Keycloak validado e descartado, rate limit global, circuit breaking) e só então a requisição alcança o `payment-api` exatamente como descrito aqui. Sem o gateway, o cliente chama o `payment-api` direto — o fluxo abaixo é idêntico nos dois casos, e é por isso que o gateway não aparece na sequência.
+
 ## Sequência completa
 
 ```mermaid

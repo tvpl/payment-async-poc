@@ -51,7 +51,7 @@ flowchart TB
 
 ## Escopo do workspace
 
-Este documento e os demais arquivos deste `docs/` cobrem só as decisões cross-boundary e a orquestração entre as sete raízes: `payment-contracts`, `payment-api`, `payment-sbus`, `payment-core-mock`, `feature-control` (com `feature-demo` e `pilot-app`), `async-redis-service` e `sandbox`. Arquitetura, contratos, configuração, segurança, operação, observabilidade, testes e performance de uma raiz específica pertencem ao `docs/` daquela raiz, não a este workspace (ver [AGENTS.md](../AGENTS.md)).
+Este documento e os demais arquivos deste `docs/` cobrem só as decisões cross-boundary e a orquestração entre as oito raízes: `payment-contracts`, `payment-api`, `payment-sbus`, `payment-core-mock`, `feature-control` (com `feature-demo` e `pilot-app`), `async-redis-service`, `sandbox` e `gateway` (guardrail opcional de borda com Envoy e Keycloak — ver [gateway/README.md](../gateway/README.md)). Arquitetura, contratos, configuração, segurança, operação, observabilidade, testes e performance de uma raiz específica pertencem ao `docs/` daquela raiz, não a este workspace (ver [AGENTS.md](../AGENTS.md)).
 
 O foco do fluxo principal é `payment-api` e `payment-sbus`. O Core é tratado como dependência externa simulada por `payment-core-mock`. É uma PoC profissional: base para evoluir, com decisões e trade-offs explícitos, ver [Contratos de resiliência](resilience-contracts.md).
 

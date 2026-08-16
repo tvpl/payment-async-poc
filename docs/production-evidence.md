@@ -29,8 +29,8 @@ Resumo dos gaps de hardening já tratados no código, as garantias que resultam 
 ## Responsabilidade de deploy/operação (checklist)
 
 - [ ] Kafka multi-broker: fator de replicação 3, `min.insync.replicas=2`, eleição de líder não limpa desabilitada. Exemplo ilustrativo em [`sandbox/deploy/docker-compose.kafka-cluster.example.yml`](../sandbox/deploy/docker-compose.kafka-cluster.example.yml), mantido pela fronteira `sandbox` (não testado neste repositório como cluster real).
-- [ ] TLS: terminar em gateway/service mesh (recomendado) ou habilitar TLS na aplicação e SASL/SSL no Kafka. Hoje os listeners locais são texto plano, apenas para desenvolvimento.
-- [ ] AuthN/AuthZ: trocar a API key por JWT/OAuth2 mais mTLS entre fronteiras. A API key é um exemplo funcional, não o alvo de produção.
+- [ ] TLS: terminar em gateway/service mesh (recomendado) ou habilitar TLS na aplicação e SASL/SSL no Kafka. Hoje os listeners locais são texto plano, apenas para desenvolvimento. A fronteira [`gateway`](../gateway/README.md) demonstra a terminação de borda (mTLS + OIDC/JWT no Envoy) em modo `NON_PRODUCTION`; TLS interno (gateway→Edge, Kafka, Redis, Postgres) segue pendente.
+- [ ] AuthN/AuthZ: trocar a API key por JWT/OAuth2 mais mTLS entre fronteiras. A API key é um exemplo funcional, não o alvo de produção. O desenho de borda (canal via Envoy/Keycloak, aplicação via API key) está demonstrado no [`gateway`](../gateway/README.md); a autenticação **entre fronteiras internas** continua pendente.
 - [ ] Segredos: senhas de Postgres/Redis e chaves de API via secret manager, nunca em YAML versionado.
 - [ ] Dimensionamento: ajustar pool de conexões, concorrência dos consumers e limite do rate limiter à capacidade real do Core.
 - [ ] Schema Registry: definir regra de compatibilidade (por exemplo `BACKWARD`) e testes de contrato, ver [payment-contracts/docs/contracts.md](../payment-contracts/docs/contracts.md).
