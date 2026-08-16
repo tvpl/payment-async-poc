@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 GROUP = "com.example.payments"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 ARTIFACTS = ("payment-contract-model", "payment-contract-avro-apicurio")
 
 

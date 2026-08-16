@@ -6,8 +6,8 @@ Owner dos contratos de evento do fluxo de pagamento. Esta fronteira publica o mo
 
 | GAV | Conteúdo |
 | --- | --- |
-| `com.example.payments:payment-contract-model:0.1.0` | envelope, modelos, constantes e classes Avro geradas |
-| `com.example.payments:payment-contract-avro-apicurio:0.1.0` | mapper e pool limitado de codecs Apicurio |
+| `com.example.payments:payment-contract-model:0.2.0` | envelope, modelos, constantes e classes Avro geradas |
+| `com.example.payments:payment-contract-avro-apicurio:0.2.0` | mapper e pool limitado de codecs Apicurio |
 
 Consumidores declaram versões publicadas. Dependência `project()` entre fronteiras é proibida.
 

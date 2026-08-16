@@ -38,7 +38,7 @@ class ConsumerFixtureTest(unittest.TestCase):
                 pom_artifact = "wrong-artifact" if artifact == consumer_fixture.ARTIFACTS[0] else artifact
                 (target / f"{prefix}.pom").write_text(
                     "<project><groupId>com.example.payments</groupId>"
-                    f"<artifactId>{pom_artifact}</artifactId><version>0.1.0</version></project>",
+                    f"<artifactId>{pom_artifact}</artifactId><version>0.2.0</version></project>",
                     encoding="utf-8",
                 )
                 (target / f"{prefix}.jar").write_bytes(b"jar")
@@ -59,7 +59,7 @@ class ConsumerFixtureTest(unittest.TestCase):
                 prefix = f"{artifact}-{consumer_fixture.VERSION}"
                 (target / f"{prefix}.pom").write_text(
                     "<project><groupId>com.example.payments</groupId>"
-                    f"<artifactId>{artifact}</artifactId><version>0.1.0</version></project>",
+                    f"<artifactId>{artifact}</artifactId><version>0.2.0</version></project>",
                     encoding="utf-8",
                 )
                 (target / f"{prefix}.jar").write_bytes(b"jar")

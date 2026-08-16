@@ -160,8 +160,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `./gradlew build` e gate de compatibilidade verdes
-- [ ] Artefato 0.2.0 resolvível por GAV pelas fronteiras
+- [x] `./gradlew build` e gate de compatibilidade verdes
+- [x] Artefato 0.2.0 resolvível por GAV pelas fronteiras
 
 **Tests**: none
 **Gate**: build
