@@ -43,6 +43,7 @@ public final class AvroMapper {
                 .setCausationId(e.causationId())
                 .setTraceId(e.traceId())
                 .setSource(e.source())
+                .setTenantId(e.tenantId())
                 .setPayload(toAvro(e.payload()))
                 .build();
     }
@@ -50,7 +51,7 @@ public final class AvroMapper {
     public static EventEnvelope<PaymentSimulationRequestPayload> fromAvro(PaymentSimulationRequested a) {
         return new EventEnvelope<>(a.getEventId(), a.getEventType(), a.getEventVersion(),
                 Instant.ofEpochMilli(a.getOccurredAt()), a.getRequestId(), a.getCorrelationId(),
-                a.getCausationId(), a.getTraceId(), a.getSource(), fromAvro(a.getPayload()));
+                a.getCausationId(), a.getTraceId(), a.getSource(), a.getTenantId(), fromAvro(a.getPayload()));
     }
 
     // ------------------------------------------------------------------ Command
@@ -70,6 +71,7 @@ public final class AvroMapper {
                 .setCausationId(e.causationId())
                 .setTraceId(e.traceId())
                 .setSource(e.source())
+                .setTenantId(e.tenantId())
                 .setPayload(payload)
                 .build();
     }
@@ -79,7 +81,7 @@ public final class AvroMapper {
         var payload = new ProcessPaymentSimulationCommandPayload(p.getSimulationId(), fromAvro(p.getRequest()));
         return new EventEnvelope<>(a.getEventId(), a.getEventType(), a.getEventVersion(),
                 Instant.ofEpochMilli(a.getOccurredAt()), a.getRequestId(), a.getCorrelationId(),
-                a.getCausationId(), a.getTraceId(), a.getSource(), payload);
+                a.getCausationId(), a.getTraceId(), a.getSource(), a.getTenantId(), payload);
     }
 
     // ------------------------------------------------------------- Core response
@@ -107,6 +109,7 @@ public final class AvroMapper {
                 .setCausationId(e.causationId())
                 .setTraceId(e.traceId())
                 .setSource(e.source())
+                .setTenantId(e.tenantId())
                 .setPayload(payload)
                 .build();
     }
@@ -119,7 +122,7 @@ public final class AvroMapper {
                 p.getErrorCode(), p.getErrorMessage());
         return new EventEnvelope<>(a.getEventId(), a.getEventType(), a.getEventVersion(),
                 Instant.ofEpochMilli(a.getOccurredAt()), a.getRequestId(), a.getCorrelationId(),
-                a.getCausationId(), a.getTraceId(), a.getSource(), payload);
+                a.getCausationId(), a.getTraceId(), a.getSource(), a.getTenantId(), payload);
     }
 
     // ----------------------------------------------------------- Completed/Failed
@@ -128,7 +131,7 @@ public final class AvroMapper {
                 .setEventId(e.eventId()).setEventType(e.eventType()).setEventVersion(e.eventVersion())
                 .setOccurredAt(e.occurredAt().toEpochMilli()).setRequestId(e.requestId())
                 .setCorrelationId(e.correlationId()).setCausationId(e.causationId()).setTraceId(e.traceId())
-                .setSource(e.source()).setPayload(toAvro(e.payload())).build();
+                .setSource(e.source()).setTenantId(e.tenantId()).setPayload(toAvro(e.payload())).build();
     }
 
     public static PaymentSimulationFailed toAvroFailed(EventEnvelope<SimulationResult> e) {
@@ -136,19 +139,19 @@ public final class AvroMapper {
                 .setEventId(e.eventId()).setEventType(e.eventType()).setEventVersion(e.eventVersion())
                 .setOccurredAt(e.occurredAt().toEpochMilli()).setRequestId(e.requestId())
                 .setCorrelationId(e.correlationId()).setCausationId(e.causationId()).setTraceId(e.traceId())
-                .setSource(e.source()).setPayload(toAvro(e.payload())).build();
+                .setSource(e.source()).setTenantId(e.tenantId()).setPayload(toAvro(e.payload())).build();
     }
 
     public static EventEnvelope<SimulationResult> fromAvro(PaymentSimulationCompleted a) {
         return resultEnvelope(a.getEventId(), a.getEventType(), a.getEventVersion(), a.getOccurredAt(),
                 a.getRequestId(), a.getCorrelationId(), a.getCausationId(), a.getTraceId(), a.getSource(),
-                a.getPayload());
+                a.getTenantId(), a.getPayload());
     }
 
     public static EventEnvelope<SimulationResult> fromAvro(PaymentSimulationFailed a) {
         return resultEnvelope(a.getEventId(), a.getEventType(), a.getEventVersion(), a.getOccurredAt(),
                 a.getRequestId(), a.getCorrelationId(), a.getCausationId(), a.getTraceId(), a.getSource(),
-                a.getPayload());
+                a.getTenantId(), a.getPayload());
     }
 
     // ------------------------------------------------------------ payload records
@@ -188,12 +191,12 @@ public final class AvroMapper {
     private static EventEnvelope<SimulationResult> resultEnvelope(
             String eventId, String eventType, String eventVersion, long occurredAt,
             String requestId, String correlationId, String causationId, String traceId, String source,
-            SimulationResultPayload p) {
+            String tenantId, SimulationResultPayload p) {
         var result = new SimulationResult(p.getSimulationId(), p.getRequestId(), p.getStatus(),
                 p.getAuthorizationCode(), dec(p.getAmount()), p.getCurrency(), p.getInstallments(),
                 fromAvro(p.getFees()), fromAvro(p.getSettlement()), p.getErrorCode(), p.getErrorMessage());
         return new EventEnvelope<>(eventId, eventType, eventVersion, Instant.ofEpochMilli(occurredAt),
-                requestId, correlationId, causationId, traceId, source, result);
+                requestId, correlationId, causationId, traceId, source, tenantId, result);
     }
 
     private static com.example.payments.common.avro.Fees toAvro(Fees f) {

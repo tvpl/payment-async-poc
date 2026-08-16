@@ -114,9 +114,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Campo aditivo com default passa no gate de compatibilidade local
-- [ ] `assertKnownMajor` lança exceção tipada para major ≠ 1
-- [ ] Gate check passes: `cd payment-contracts && ./gradlew test --no-daemon`
+- [x] Campo aditivo com default passa no gate de compatibilidade local
+- [x] `assertKnownMajor` lança exceção tipada para major ≠ 1
+- [x] Gate check passes: `cd payment-contracts && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

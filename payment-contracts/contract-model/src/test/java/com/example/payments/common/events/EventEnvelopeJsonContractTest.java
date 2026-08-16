@@ -29,6 +29,7 @@ class EventEnvelopeJsonContractTest {
                 "cause-1",
                 "trace-1",
                 Sources.API,
+                "tenant-1",
                 new PaymentSimulationRequestPayload(
                         "merchant-1",
                         new BigDecimal("125.50"),
@@ -46,9 +47,10 @@ class EventEnvelopeJsonContractTest {
 
         assertEquals(Set.of(
                 "eventId", "eventType", "eventVersion", "occurredAt", "requestId",
-                "correlationId", "causationId", "traceId", "source", "payload"
+                "correlationId", "causationId", "traceId", "source", "tenantId", "payload"
         ), fieldNames);
         assertEquals("request-1", json.get("requestId").asText());
+        assertEquals("tenant-1", json.get("tenantId").asText());
         var amount = json.get("payload").get("amount");
         assertTrue(amount.isNumber());
         assertEquals(0, new BigDecimal("125.50").compareTo(amount.decimalValue()));

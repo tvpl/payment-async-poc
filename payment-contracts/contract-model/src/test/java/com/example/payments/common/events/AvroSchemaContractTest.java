@@ -54,7 +54,7 @@ class AvroSchemaContractTest {
     void preservesEnvelopeFieldOrderOnEveryEvent() {
         List<String> expected = List.of(
                 "eventId", "eventType", "eventVersion", "occurredAt", "requestId",
-                "correlationId", "causationId", "traceId", "source", "payload"
+                "correlationId", "causationId", "traceId", "source", "tenantId", "payload"
         );
 
         for (Schema schema : List.of(
