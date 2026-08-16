@@ -408,8 +408,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Teste falha ao renomear campo do view (provado e revertido)
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
+- [x] Teste falha ao renomear campo do view (provado e revertido)
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

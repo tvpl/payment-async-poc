@@ -312,7 +312,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | K8S-05 | P2: Envoy Gateway em Kubernetes | Design | Pending |
 | API-01 | P3: Contrato e versionamento | Design | Pending |
 | API-02 | P3: Contrato e versionamento | Design | Verified |
-| API-03 | P3: Contrato e versionamento | Design | Pending |
+| API-03 | P3: Contrato e versionamento | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
