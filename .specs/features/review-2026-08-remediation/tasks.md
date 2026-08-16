@@ -498,8 +498,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Liveness medido < 500ms com admissão degradando (429/fração) em paralelo
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] Liveness medido < 500ms com admissão degradando (429/fração) em paralelo
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

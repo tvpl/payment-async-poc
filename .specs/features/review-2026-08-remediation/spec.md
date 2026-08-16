@@ -279,7 +279,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | BUDG-01 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-02 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-03 | P1: Orçamentos de tempo | Design | Verified |
-| BUDG-04 | P1: Orçamentos de tempo | Design | Pending |
+| BUDG-04 | P1: Orçamentos de tempo | Design | Verified |
 | SEC-01 | P1: Segurança e governança | Design | Pending |
 | SEC-02 | P1: Segurança e governança | Design | Pending |
 | SEC-03 | P1: Segurança e governança | Design | Pending |
