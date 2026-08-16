@@ -318,9 +318,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT de migration: base V11 com dados migra limpa para V12
-- [ ] Unicidade composta provada (mesma chave, tenants distintos, ambas inserem)
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT de migration: base V11 com dados migra limpa para V12
+- [x] Unicidade composta provada (mesma chave, tenants distintos, ambas inserem)
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

@@ -14,6 +14,13 @@ public interface IdempotencyRecordRepository extends CrudRepository<IdempotencyR
 
     Optional<IdempotencyRecord> findByIdempotencyKey(String idempotencyKey);
 
+    /**
+     * TEN-06: post-migration, {@code idempotency_key} is unique only within a tenant — the same
+     * key legitimately exists for more than one tenant. Callers resolving replay/dedup MUST scope
+     * by {@code (tenantId, idempotencyKey)}, never by key alone.
+     */
+    Optional<IdempotencyRecord> findByTenantIdAndIdempotencyKey(String tenantId, String idempotencyKey);
+
     /** Retention: purge old idempotency records (bounded batch keeps locks short). */
     @Query(value = """
             DELETE FROM idempotency_record

@@ -22,6 +22,15 @@ public class PaymentSbusMessage {
     private String requestId;
     private String correlationId;
     private String causationId;
+
+    /**
+     * TEN-06: scopes replay/idempotency resolution so it is per-tenant, never global. Micronaut
+     * Data always writes every mapped column explicitly (it never relies on the schema's own
+     * {@code DEFAULT}), so this field mirrors the migration's {@code DEFAULT 'legacy'} in Java —
+     * a caller that never calls {@link #setTenantId} still persists a valid, non-null value.
+     */
+    private String tenantId = "legacy";
+
     private String idempotencyKey;
     private String simulationId;
 
@@ -78,6 +87,14 @@ public class PaymentSbusMessage {
 
     public void setCausationId(String causationId) {
         this.causationId = causationId;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     public String getIdempotencyKey() {
