@@ -296,8 +296,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Nenhum chamador do workspace envia requisição sem os novos headers
-- [ ] `python3 scripts/docs/validate_docs.py` verde (variáveis novas documentadas)
+- [x] Nenhum chamador do workspace envia requisição sem os novos headers
+- [x] `python3 scripts/docs/validate_docs.py` verde (variáveis novas documentadas)
 
 **Tests**: none
 **Gate**: build
