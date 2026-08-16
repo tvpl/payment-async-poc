@@ -2,10 +2,12 @@ package com.example.payments.api.redis;
 
 import com.example.payments.api.config.ApiProperties;
 import com.example.payments.api.dto.StatusEntry;
+import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.idempotency.IdempotencyReservation;
 import com.example.payments.api.idempotency.PublishState;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -25,6 +27,12 @@ import java.util.Optional;
  * <p>The connection is obtained <strong>lazily</strong> from {@link RedisClient} (and
  * re-established if dropped), so the application boots even when Redis is briefly
  * unavailable instead of crashing at startup.
+ *
+ * <p>Every public method fails closed: a {@link RedisException} (connection lost, command
+ * timeout, or a fresh connect attempt failing outright) is translated to
+ * {@link StoreUnavailableException} rather than escaping as a raw driver exception. Idempotency
+ * has no local substitute — without Redis there is no way to guarantee a request is not
+ * duplicated — so a store outage must reject the caller, not silently degrade.
  */
 @Singleton
 public class RedisStatusStore {
@@ -60,17 +68,27 @@ public class RedisStatusStore {
     }
 
     public void save(StatusEntry entry) {
+        String json;
         try {
-            String json = objectMapper.writeValueAsString(entry);
-            commands().set(statusKey(entry.requestId()), json,
-                    SetArgs.Builder.px(properties.getStatusTtl().toMillis()));
+            json = objectMapper.writeValueAsString(entry);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to save status for " + entry.requestId(), e);
+        }
+        try {
+            commands().set(statusKey(entry.requestId()), json,
+                    SetArgs.Builder.px(properties.getStatusTtl().toMillis()));
+        } catch (RedisException e) {
+            throw new StoreUnavailableException("Failed to save status for " + entry.requestId(), e);
         }
     }
 
     public Optional<StatusEntry> get(String requestId) {
-        String json = commands().get(statusKey(requestId));
+        String json;
+        try {
+            json = commands().get(statusKey(requestId));
+        } catch (RedisException e) {
+            throw new StoreUnavailableException("Failed to read status for " + requestId, e);
+        }
         if (json == null) {
             return Optional.empty();
         }
@@ -100,25 +118,30 @@ public class RedisStatusStore {
         String value = writeReservation(new IdempotencyReservation(
                 requestId, fingerprint, PublishState.PENDING_PUBLISH, leaseDeadline()));
         long ttlMillis = properties.getIdempotencyTtl().toMillis();
-        // Two attempts: a SET NX can lose the race to a reservation that expires between the
-        // failed NX and the follow-up GET; retrying once claims the now-free key deterministically
-        // instead of surfacing a spurious failure for an astronomically narrow window.
-        for (int attempt = 0; attempt < 2; attempt++) {
-            String result = commands().set(key, value, SetArgs.Builder.nx().px(ttlMillis));
-            if ("OK".equals(result)) {
-                return new IdempotencyOutcome.Reserved();
+        try {
+            // Two attempts: a SET NX can lose the race to a reservation that expires between the
+            // failed NX and the follow-up GET; retrying once claims the now-free key
+            // deterministically instead of surfacing a spurious failure for an astronomically
+            // narrow window.
+            for (int attempt = 0; attempt < 2; attempt++) {
+                String result = commands().set(key, value, SetArgs.Builder.nx().px(ttlMillis));
+                if ("OK".equals(result)) {
+                    return new IdempotencyOutcome.Reserved();
+                }
+                String existingValue = commands().get(key);
+                if (existingValue == null) {
+                    continue;
+                }
+                IdempotencyReservation existing = readReservation(existingValue);
+                if (!fingerprint.equals(existing.fingerprint())) {
+                    return new IdempotencyOutcome.Conflict(existing.requestId());
+                }
+                return isResumable(existing)
+                        ? new IdempotencyOutcome.ResumePublish(existing.requestId())
+                        : new IdempotencyOutcome.Replay(existing.requestId());
             }
-            String existingValue = commands().get(key);
-            if (existingValue == null) {
-                continue;
-            }
-            IdempotencyReservation existing = readReservation(existingValue);
-            if (!fingerprint.equals(existing.fingerprint())) {
-                return new IdempotencyOutcome.Conflict(existing.requestId());
-            }
-            return isResumable(existing)
-                    ? new IdempotencyOutcome.ResumePublish(existing.requestId())
-                    : new IdempotencyOutcome.Replay(existing.requestId());
+        } catch (RedisException e) {
+            throw new StoreUnavailableException("Failed to reserve idempotency key: " + idempotencyKey, e);
         }
         throw new IllegalStateException("Failed to reserve idempotency key: " + idempotencyKey);
     }
@@ -136,7 +159,11 @@ public class RedisStatusStore {
                                  PublishState publishState) {
         String value = writeReservation(
                 new IdempotencyReservation(requestId, fingerprint, publishState, leaseDeadline()));
-        commands().set(IDEM_PREFIX + idempotencyKey, value, SetArgs.Builder.xx().keepttl());
+        try {
+            commands().set(IDEM_PREFIX + idempotencyKey, value, SetArgs.Builder.xx().keepttl());
+        } catch (RedisException e) {
+            throw new StoreUnavailableException("Failed to mark publish state for " + requestId, e);
+        }
     }
 
     /**
@@ -173,7 +200,11 @@ public class RedisStatusStore {
     }
 
     public void publishResponse(String requestId) {
-        commands().publish(properties.getResponseChannel(), requestId);
+        try {
+            commands().publish(properties.getResponseChannel(), requestId);
+        } catch (RedisException e) {
+            throw new StoreUnavailableException("Failed to publish response for " + requestId, e);
+        }
     }
 
     @PreDestroy

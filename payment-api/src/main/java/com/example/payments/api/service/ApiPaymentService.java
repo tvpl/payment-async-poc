@@ -7,6 +7,7 @@ import com.example.payments.api.client.SbusStatusResponse;
 import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
+import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.idempotency.IdempotencyFingerprint;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.idempotency.PublishState;
@@ -112,6 +113,11 @@ public class ApiPaymentService {
         String traceId = currentTraceId();
         MDC.put("requestId", requestId);
         MDC.put("correlationId", correlationId);
+        // The first event in the chain: causationId is its own requestId (EventEnvelope's own
+        // javadoc convention), matching the envelope built below (EventEnvelope.create(...,
+        // requestId, correlationId, requestId, traceId, ...) — requestId is also the 3rd,
+        // causationId, argument).
+        MDC.put("causationId", requestId);
         MDC.put("traceId", traceId);
         // Every exit from here on — result, timeout, interruption, shutdown or publish failure —
         // leaves the thread's MDC clean; a request thread is reused (PAY-10).
@@ -130,58 +136,86 @@ public class ApiPaymentService {
                                                String traceId) {
         store.save(new StatusEntry(requestId, SimulationStatus.PENDING, null));
         CompletableFuture<StatusEntry> future = coordinator.register(requestId);
-
-        EventEnvelope<PaymentSimulationRequestPayload> envelope = EventEnvelope.create(
-                EventTypes.PAYMENT_SIMULATION_REQUESTED,
-                requestId, correlationId, requestId, traceId, Sources.API,
-                request.toPayload());
-
+        // coordinator.await() below always unregisters the waiter itself (in its own finally),
+        // on every one of its exit paths. Everything between register() and that call is not
+        // covered by that guarantee, though: markPublishState/save/completeFromStore can each
+        // throw, and an exception there used to leak the waiter forever (AUD-06). reachedAwait
+        // tracks whether control actually made it to await(); if not, this finally is the only
+        // thing that ever cleans the registration up.
+        boolean reachedAwait = false;
         try {
-            byte[] bytes = avroSerde.serialize(Topics.REQUESTED, AvroMapper.toAvroRequested(envelope));
-            producer.send(requestId, requestId, correlationId, idempotencyKey, bytes);
-        } catch (Exception e) {
-            // Keep the identity, mark it unpublished: the caller gets an honest failure and a
-            // retry with the same key resumes this requestId instead of waiting out an orphan.
-            store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISH_FAILED);
-            coordinator.unregister(requestId);
-            throw new PublishFailedException("Failed to publish PaymentSimulationRequested", e);
+            EventEnvelope<PaymentSimulationRequestPayload> envelope = EventEnvelope.create(
+                    EventTypes.PAYMENT_SIMULATION_REQUESTED,
+                    requestId, correlationId, requestId, traceId, Sources.API,
+                    request.toPayload());
+
+            try {
+                byte[] bytes = avroSerde.serialize(Topics.REQUESTED, AvroMapper.toAvroRequested(envelope));
+                producer.send(requestId, requestId, correlationId, idempotencyKey, bytes);
+            } catch (Exception e) {
+                // Keep the identity, mark it unpublished: the caller gets an honest failure and a
+                // retry with the same key resumes this requestId instead of waiting out an orphan.
+                store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISH_FAILED);
+                throw new PublishFailedException("Failed to publish PaymentSimulationRequested", e);
+            }
+            // Broker acknowledged. A crash in this window republishes the same requestId on retry,
+            // which downstream consumers absorb without changing a chosen outcome (PAY-06).
+            store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISHED);
+            store.save(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
+            LOG.info("Published PaymentSimulationRequested requestId={}", requestId);
+
+            // Read-after-register: a very fast response (or a replay) may have completed in
+            // Redis before our waiter was wired up; pick it up so we don't wait needlessly.
+            coordinator.completeFromStore(requestId);
+
+            long start = System.nanoTime();
+            reachedAwait = true;
+            Optional<StatusEntry> result = coordinator.await(requestId, future);
+            metrics.recordWait(Duration.ofNanos(System.nanoTime() - start));
+
+            if (result.isPresent()) {
+                return new SubmitResult(result.get(), false, false);
+            }
+            metrics.recordTimeout();
+            StatusEntry current = store.get(requestId)
+                    .orElse(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
+            return new SubmitResult(current, true, false);
+        } finally {
+            if (!reachedAwait) {
+                coordinator.unregister(requestId);
+            }
         }
-        // Broker acknowledged. A crash in this window republishes the same requestId on retry,
-        // which downstream consumers absorb without changing a chosen outcome (PAY-06).
-        store.markPublishState(idempotencyKey, requestId, fingerprint, PublishState.PUBLISHED);
-        store.save(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
-        LOG.info("Published PaymentSimulationRequested requestId={}", requestId);
-
-        // Read-after-register: a very fast response (or a replay) may have completed in
-        // Redis before our waiter was wired up; pick it up so we don't wait needlessly.
-        coordinator.completeFromStore(requestId);
-
-        long start = System.nanoTime();
-        Optional<StatusEntry> result = coordinator.await(requestId, future);
-        metrics.recordWait(Duration.ofNanos(System.nanoTime() - start));
-
-        if (result.isPresent()) {
-            return new SubmitResult(result.get(), false, false);
-        }
-        metrics.recordTimeout();
-        StatusEntry current = store.get(requestId)
-                .orElse(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
-        return new SubmitResult(current, true, false);
     }
 
     /**
      * Status lookup with durable fallback: Redis first; if absent or not yet terminal,
      * consult the SBUS (Postgres-backed) so a finished result is never lost when the
      * Redis entry expired or was never written by this set of instances.
+     *
+     * <p>A Redis outage does not, by itself, turn into an error here: the SBUS fallback is
+     * still consulted, so a caller polling for a request whose Redis entry can't be read gets
+     * the durable answer instead of losing it to an infrastructure blip. Only when SBUS also
+     * has nothing (unknown request, or its own circuit is open) does the original Redis
+     * failure surface — as {@link com.example.payments.api.error.StoreUnavailableException},
+     * never as an empty result that the caller would read as "no such request" (RES-02/RES-03).
      */
     public Optional<StatusEntry> getStatus(String requestId) {
-        Optional<StatusEntry> local = store.get(requestId);
+        Optional<StatusEntry> local = Optional.empty();
+        StoreUnavailableException storeFailure = null;
+        try {
+            local = store.get(requestId);
+        } catch (StoreUnavailableException e) {
+            storeFailure = e;
+        }
         if (local.isPresent() && isTerminal(local.get().status())) {
             return local;
         }
         Optional<StatusEntry> durable = fromSbus(requestId);
         if (durable.isPresent()) {
             return durable;
+        }
+        if (storeFailure != null) {
+            throw storeFailure;
         }
         return local;
     }

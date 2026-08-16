@@ -31,7 +31,7 @@ FORBIDDEN_CLAIMS = (
     re.compile(r"\bequivalente (?:a|à) produ[cç][aã]o\b", re.IGNORECASE),
     re.compile(r"\bsimula fielmente\b", re.IGNORECASE),
 )
-FORBIDDEN_OWNERSHIP = ("project(':common')", "project(\":common\")", "common/src/main", "../core-mock")
+FORBIDDEN_OWNERSHIP = ("common/src/main", "project(':", 'project(":', "payment-contracts/src", "payment-api/src", "payment-sbus/src", "feature-control/src", "async-redis-service/src")
 ADR_HEADINGS = (
     "## Contexto",
     "## Decisão",

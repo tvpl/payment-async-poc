@@ -35,4 +35,32 @@ class AsyncRateLimiterUnitTest {
         assertTrue(limiter.tryAcquire());
         assertFalse(limiter.tryAcquire(), "4th request in the same window must be rejected");
     }
+
+    @Test
+    void localFallbackDividesTheBudgetSoAFleetDoesNotMultiplyTheApprovedBurst() {
+        AsyncRedisProperties props = new AsyncRedisProperties();
+        props.setAdmissionLimitPerSec(9);
+        props.setInstances(3);
+        AsyncRateLimiter limiter = new AsyncRateLimiter(failingRedis(props), props);
+
+        // Each of the 3 instances may admit 9/3 = 3, so the fleet still admits 9 — not 27.
+        assertTrue(limiter.tryAcquire());
+        assertTrue(limiter.tryAcquire());
+        assertTrue(limiter.tryAcquire());
+        assertFalse(limiter.tryAcquire(),
+                "a single instance must not admit the whole fleet budget while Redis is down");
+    }
+
+    @Test
+    void degradedBudgetNeverDropsBelowOne() {
+        AsyncRedisProperties props = new AsyncRedisProperties();
+        props.setAdmissionLimitPerSec(2);
+        props.setInstances(8);
+        AsyncRateLimiter limiter = new AsyncRateLimiter(failingRedis(props), props);
+
+        // 2/8 truncates to 0; the floor keeps the service admitting at least one request rather
+        // than turning a Redis outage into a total outage.
+        assertTrue(limiter.tryAcquire());
+        assertFalse(limiter.tryAcquire());
+    }
 }

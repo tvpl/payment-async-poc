@@ -29,6 +29,19 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     List<OutboxEvent> lockPendingBatch(Instant now, int limit);
 
+    /**
+     * Renews the lease of a row still owned by the current claim (AUD-07): called for every
+     * remaining claimed row after each row's own publish turn completes, so a slow batch never
+     * outlives its own lease mid-way through. Fenced the same way as every other claim-owner
+     * mutation here — a stale token (something else already reclaimed the row) affects zero rows.
+     */
+    @Query(value = """
+            UPDATE outbox_event
+            SET claimed_at = :now
+            WHERE id = :id AND claim_token = :claimToken AND status = 'IN_PROGRESS'
+            """, nativeQuery = true)
+    int renewClaim(long id, UUID claimToken, Instant now);
+
     /** Fenced completion: only the current lease owner may publish the row. */
     @Query(value = """
             UPDATE outbox_event
@@ -63,22 +76,38 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     int releaseClaim(long id, UUID claimToken, String status, Instant nextAttemptAt);
 
-    /** Reclaims rows stuck IN_PROGRESS to their normal or DLQ pending queue. */
+    /**
+     * Locks a bounded batch of rows stuck IN_PROGRESS past their claim lease, for
+     * {@code OutboxReaper} to reclaim one by one — each reclaim goes through
+     * {@code OutboxClaimService#markFailure} exactly like a real publish failure would (AUD-08:
+     * {@code attempts} incremented, backoff applied, exhaustion routes to the DLQ), instead of a
+     * blind reset that let a permanently-stuck row loop hot forever. {@code FOR UPDATE SKIP
+     * LOCKED} lets multiple SBUS instances reclaim concurrently without stepping on each other,
+     * same discipline as {@link #lockPendingBatch}.
+     */
     @Query(value = """
-            UPDATE outbox_event
-            SET status = CASE WHEN topic = 'payment.simulation.dlq'
-                              THEN 'DLQ_PENDING' ELSE 'PENDING' END,
-                claimed_at = NULL, claim_token = NULL
+            SELECT * FROM outbox_event
             WHERE status = 'IN_PROGRESS' AND claimed_at < :threshold
+            ORDER BY claimed_at
+            LIMIT :limit
+            FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
-    int reclaimStuck(Instant threshold);
+    List<OutboxEvent> findStuckBatch(Instant threshold, int limit);
 
-    /** Housekeeping: purge successfully published rows older than the retention window. */
+    /**
+     * Housekeeping: purge successfully published rows older than the retention window, in a
+     * bounded batch (AUD-24) — same discipline as {@link IdempotencyRecordRepository} and
+     * {@link PaymentSbusMessageRepository}'s own retention purges, so a table that has grown
+     * large never holds a delete lock for as long as an unbounded scan would take.
+     */
     @Query(value = """
             DELETE FROM outbox_event
-            WHERE status IN ('PUBLISHED', 'DLQ_PUBLISHED') AND published_at < :threshold
+            WHERE id IN (
+                SELECT id FROM outbox_event
+                WHERE status IN ('PUBLISHED', 'DLQ_PUBLISHED') AND published_at < :threshold
+                LIMIT :limit)
             """, nativeQuery = true)
-    int deletePublishedBefore(Instant threshold);
+    int deletePublishedBefore(Instant threshold, int limit);
 
     long countByStatus(OutboxStatus status);
 

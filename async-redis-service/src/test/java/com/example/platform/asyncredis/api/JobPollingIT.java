@@ -33,6 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @Property(name = "async.redis.wait-timeout", value = "200ms")
 @Property(name = "async.redis.result-ttl", value = "1s")
 @Property(name = "async.redis.status-ttl", value = "30s")
+// AUD-20: status-ttl must be >= idempotency-ttl; the 24h default would otherwise fail this
+// context's own startup validation now that it exists.
+@Property(name = "async.redis.idempotency-ttl", value = "30s")
 @Property(name = "async.redis.process-latency-min-ms", value = "600")
 @Property(name = "async.redis.process-latency-max-ms", value = "600")
 class JobPollingIT {

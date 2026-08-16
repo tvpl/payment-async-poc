@@ -1,0 +1,135 @@
+# T57 capacity gate — versioned reference environment.
+#
+# Fixes the inputs the design (design.md §6) requires before a load number means anything:
+# hardware, image versions, container resources, pool/timeout config, payload, and mass.
+# Regenerate this file (by hand) whenever one of these inputs changes; a load report without
+# a matching manifest revision is not comparable to a prior one.
+
+host:
+  # Docker Desktop VM, not the physical host — this is what containers actually get.
+  docker_cpus: 12
+  docker_memory_bytes: 8216776704 # ~7.65 GiB
+  note: >
+    Local single-node Docker Desktop, not certified/dedicated hardware. Numbers below prove the
+    gate is reproducible and thresholds fail correctly; they are not a production SLO claim
+    (design.md §6.2: "Thresholds de latência não serão inventados antes de uma execução baseline").
+
+images:
+  payment-api: payment-api:local
+  payment-sbus: payment-sbus:local
+  payment-core-mock: payment-core-mock:local
+  # async-redis-service is out of scope for this gate — CAP-01..07 target the payment-simulation
+  # pipeline (API -> Kafka -> SBUS -> Core) per design.md's "Wait HTTP" budget table (§6.1) and
+  # tasks.md's Test Coverage Matrix ("Cross-boundary workflow" row: "Duas APIs/SBUS"). The async
+  # Redis path's admission/backpressure controls were already proved live in T56.
+
+topology:
+  payment-api: 2 # payment-api-1 (host 8080), payment-api-2 (host 8090) — CAP-05
+  payment-sbus: 2 # payment-sbus-1 (host 8081), payment-sbus-2 (host 8091) — CAP-05
+  payment-core-mock: 1
+  kafka_topic_partitions: 1 # broker default (num.partitions), auto-created — bounds SBUS consumer
+    # parallelism to 1 thread/topic/broker; ordering per requestId is trivially preserved as a
+    # result. Not something `load/` can change (AD-003: sandbox owns Kafka config).
+
+resources:
+  # Applied via `docker run --cpus --memory` in bring_up.sh, identical for every payment-api /
+  # payment-sbus / payment-core-mock container (primary and secondary instance alike).
+  payment-api: { cpus: 2.0, memory: 768m }
+  payment-sbus: { cpus: 2.0, memory: 768m }
+  payment-core-mock: { cpus: 0.5, memory: 384m }
+  # Sandbox infra (kafka/redis/postgres/registry) keeps its own compose defaults (AD-003: only
+  # /sandbox owns that infra) — unbounded relative to the Docker Desktop VM ceiling above.
+  #
+  # First full run used 1.0 CPU/container and hit client-side (60s) timeouts under steady/soak/
+  # spike; raising this to 2.0 did NOT fix it (reproduced identically in a targeted 90s/167rps
+  # recheck) — it is not a resource-budget issue. Root cause: payment-api's ResponseCoordinator
+  # (payment-api/src/main/java/com/example/payments/api/coordination/ResponseCoordinator.java:119)
+  # calls RedisStatusStore.get() (payment-api/.../redis/RedisStatusStore.java:73) synchronously
+  # from inside the Lettuce PubSub message-listener callback. RedisStatusStore holds a single
+  # unpooled Lettuce connection with no custom command timeout; under sustained concurrent load
+  # that connection's command queue backs up until Lettuce's default 60s command timeout fires
+  # (`RedisCommandTimeoutException: Command timed out after 1 minute(s)`), and because the call
+  # blocks the PubSub connection's single Netty event-loop thread, no completion notification can
+  # be delivered on that instance until it clears — repeating on a ~60s cadence once triggered
+  # (real evidence: load/reports/certified-target/cpucheck.redis-timeout-evidence.txt). This is a
+  # pre-existing payment-api gap, out of scope for `load/` to fix — tracked as task_3801253b.
+  # Total explicit app-tier ceiling: 2x2.0(api) + 2x2.0(sbus) + 0.5(core) = 8.5 of the Docker
+  # Desktop VM's 12 CPUs, leaving headroom for kafka/redis/postgres/registry/k6 + host overhead.
+
+jvm:
+  # None set beyond the image default (JAVA_TOOL_OPTIONS unset) — design.md §5.3 says GC choice
+  # depends on this gate's report, not a hard-coded prior. The report's GC section is the input
+  # to that follow-up decision, not a decision itself.
+  java_tool_options: ""
+
+app_config:
+  payment-api:
+    wait_timeout: 3s # payment-api/src/main/resources/application.yml:89
+    # AD-007 (2026-08-14): recalibrated from limit_for_period 200 / tenant_limit_for_period 50 —
+    # see .specs/STATE.md AD-007. The prior numbers matched AD-006's 10,000 req/min target; this
+    # gate now runs against a 1,000 req/min target with 2 tenant API keys (AUD-30), not one.
+    response_consumer_rate_limit: { limit_for_period: 20, tenant_limit_for_period: 10, refresh_period: 1s }
+    sbus_client: { connect_timeout: 500ms, read_timeout: 800ms }
+  payment-sbus:
+    db_pool_max_size: 10 # payment-sbus/src/main/resources/application.yml:80
+    outbox_lease: 1m
+  payment-core-mock:
+    # CoreSimulationConsumer (payment-core-mock) is single-partition (kafka_topic_partitions
+    # above), SYNC_PER_RECORD, blocking `Thread.sleep(latencyMs)` per message
+    # (CoreSimulationConsumer.java:63-71) — one message fully processed before the next is
+    # polled. Effective throughput is therefore capped at ~1000/latency_ms deterministically,
+    # for EVERY profile, not just constrained-core: the first live run of this gate used
+    # 50-150ms here for certified-target (assuming "above target" meant leaving latency near the
+    # compose default) and that capped real throughput at ~10 msg/s against a 167 req/s steady
+    # target — the backlog never stopped growing and reconciliation hung for hours polling
+    # stragglers that were never going to resolve in the observation window. Fixed: certified-
+    # target now uses a latency low enough that the single-partition cap sits comfortably above
+    # the 333 req/s spike target, so it actually certifies "the platform meets the target"
+    # instead of accidentally re-running a second constrained-core scenario under a different name.
+    certified-target: { latency_min_ms: 1, latency_max_ms: 2, decline_pct: 10, fail_pct: 0 } # cap ~666 msg/s
+    constrained-core: { latency_min_ms: 20, latency_max_ms: 20, decline_pct: 10, fail_pct: 0, effective_rate_cap_per_sec: 50 }
+    seed: 20260808
+
+payload:
+  # Same body scripts/e2e/payment-failures/lib.sh#submit_payment already uses (T55) — one
+  # realistic payment-simulation request, ~180 bytes JSON.
+  body: '{"merchantId":"MERCHANT-001","amount":125.50,"currency":"BRL","paymentMethod":"CREDIT_CARD","brand":"VISA","installments":3,"captureMode":"AUTHORIZE_AND_CAPTURE"}'
+  idempotency_key: unique per request (uuid), except the CAP-05 duplicate-key probe
+
+scenarios:
+  # steady/spike numbers are AD-007's literal target (supersedes AD-006 — see .specs/STATE.md).
+  # soak/slowdown/recovery durations are not spec-mandated numbers — sized to demonstrate the
+  # behavior within this run's time budget, not to claim a certified duration. Concurrency
+  # (pre/max VUs) derives from design.md §6.1's own "Wait HTTP" table: rate x wait_timeout(3s)
+  # concurrent in-flight requests, with headroom for the AD-007 p99<=10s ceiling if latency spikes.
+  # Load is split across 2 tenant API keys (AUD-30, ~half the rate each) instead of the single
+  # tenant load/k6/capacity.js used before the recalibration.
+  steady: { rate_per_sec: 17, duration: 15m, pre_vus: 100, max_vus: 300 } # 1,020/min, ~8.5/s/tenant
+  spike: { rate_per_sec: 33, duration: 60s, pre_vus: 150, max_vus: 500 } # 1,980/min, ~16.5/s/tenant
+  soak: { rate_per_sec: 133, duration: 10m, pre_vus: 210, max_vus: 610 } # drift/leak check beyond steady's window
+  slowdown: { rate_per_sec: 2, duration: 90s, pre_vus: 20, max_vus: 40, core_latency_min_ms: 1500, core_latency_max_ms: 3500 }
+  # rate deliberately low, not the usual scenario rate: with core-mock's single-partition
+  # SYNC_PER_RECORD consumer (see payment-core-mock notes below), a 1.5-3.5s injected latency
+  # caps Core at ~0.3-0.7 msg/s regardless of profile — the first attempt offered 100 req/s for
+  # 4m and built a ~24,000-message backlog that would have taken hours to drain at that capped
+  # rate, never observable within `recovery`'s window. See scenarios/slowdown.sh for the sizing.
+  recovery: { observe_window: 3m, sample_interval: 10s } # no new load; drains what slowdown/spike left behind
+
+thresholds:
+  # Spec-defined (design.md §6.2, AD-007), enforced unconditionally by generate_report.py:
+  technical_error_rate_max: 0.001 # CAP-02 "<0,1%"
+  sampled_reconciliation_loss_max: 0 # CAP-02 "zero perda silenciosa" (sampled, see report methodology)
+  # AUD-30: 429s are admission-control rejections, not technical errors — but a PASS with a high
+  # 429 rate is exactly how the 2026-08-12 report certified the wrong thing (70% 429, single
+  # tenant). Enforced only on the steady scenario (spec.md P3 AC3): spike is deliberately offered
+  # above the admitted rate and is judged on boundedness, not on a 429 ceiling.
+  steady_429_rate_max: 0.01 # CAP-02/AUD-30 "429 <= 1% do total em steady"
+  # AD-007 targets, enforced as k6 thresholds directly in load/k6/capacity.js (not invented here):
+  latency_avg_ms_max: 300
+  latency_p99_ms_max: 10000
+
+report:
+  # generate_report.py fills these in from k6 --summary-export JSON + collect_metrics.sh
+  # snapshots: version, hardware, container resources, config, mass, duration, percentiles,
+  # throughput, error rate, Kafka consumer lag, SBUS outbox backlog, JVM GC, DB/connection pools.
+  output_dir: load/reports

@@ -1,5 +1,6 @@
 package com.example.platform.asyncredis.worker;
 
+import com.example.platform.asyncredis.api.JobStatusStore;
 import com.example.platform.asyncredis.config.AsyncRedisProperties;
 import com.example.platform.asyncredis.dlq.DeadLetterWriter;
 import com.example.platform.asyncredis.dto.JobResult;
@@ -58,6 +59,7 @@ public class JobWorker {
     private final ReclaimCoordinator coordinator;
     private final WorkerReadiness readiness;
     private final DeadLetterWriter deadLetterWriter;
+    private final JobStatusStore statusStore;
     @Nullable
     private final AsyncMetrics metrics;
 
@@ -67,7 +69,7 @@ public class JobWorker {
     public JobWorker(RedisConnections redis, JobQueue queue, AsyncRedisProperties props,
                      WorkerIdentity identity, ReclaimCoordinator coordinator,
                      WorkerReadiness readiness, DeadLetterWriter deadLetterWriter,
-                     @Nullable AsyncMetrics metrics) {
+                     JobStatusStore statusStore, @Nullable AsyncMetrics metrics) {
         this.redis = redis;
         this.queue = queue;
         this.props = props;
@@ -75,6 +77,7 @@ public class JobWorker {
         this.coordinator = coordinator;
         this.readiness = readiness;
         this.deadLetterWriter = deadLetterWriter;
+        this.statusStore = statusStore;
         this.metrics = metrics;
         this.threads = new Thread[Math.max(1, props.getWorkerConcurrency())];
     }
@@ -179,6 +182,13 @@ public class JobWorker {
     /**
      * Inspects the group's pending entries: poison jobs (delivered too many times) go to the DLQ;
      * entries idle beyond {@code reclaim-idle} are claimed by this worker and re-processed.
+     *
+     * <p>The turn was claimed once, before this method was called (see {@link #consume}). A scan
+     * of many entries can outlive that single lease, so the turn is renewed after every entry
+     * processed here (AUD-12): if a renewal is ever denied — the lease lapsed and a second worker
+     * already fenced ahead — the scan aborts immediately rather than keep processing entries under
+     * a turn it may no longer hold, which is what let two workers both {@code XCLAIM} the same
+     * entries and inflate their delivery counts.
      */
     private void reclaim(RedisCommands<String, String> c, String consumerName) {
         try {
@@ -194,6 +204,11 @@ public class JobWorker {
                     for (StreamMessage<String, String> message : claimed) {
                         handle(c, message);
                     }
+                }
+                if (!coordinator.claimTurn(consumerName)) {
+                    LOG.debug("reclaim turn lost mid-scan for {}; aborting with entries remaining",
+                            consumerName);
+                    return;
                 }
             }
         } catch (Exception e) {
@@ -212,6 +227,7 @@ public class JobWorker {
             List<StreamMessage<String, String>> msgs = c.xrange(props.getStream(), Range.create(id, id));
             Map<String, String> body = msgs.isEmpty() ? Map.of("streamId", id) : msgs.get(0).getBody();
             deadLetterWriter.write(c, body, DeadLetterWriter.REASON_MAX_DELIVERIES_EXCEEDED);
+            markFailed(body);
             c.xack(props.getStream(), props.getGroup(), id);
             LOG.warn("moved poison job {} to DLQ {}", id, props.getDlqStream());
         } catch (Exception e) {
@@ -225,11 +241,24 @@ public class JobWorker {
                                      String reason) {
         try {
             deadLetterWriter.write(c, body, reason);
+            markFailed(body);
             c.xack(props.getStream(), props.getGroup(), id);
             LOG.warn("moved malformed job {} to DLQ {} ({})", id, props.getDlqStream(), reason);
         } catch (Exception e) {
             // Left un-acked: still pending, so the next redelivery retries the DLQ write.
             LOG.debug("dead-letter of malformed {} skipped: {}", id, e.getMessage());
+        }
+    }
+
+    /**
+     * Marks the job {@code FAILED} (AUD-13) so a poll reports a terminal state instead of the job
+     * silently aging out to UNKNOWN. A body with no {@code jobId} (the missing-job-id malformed
+     * case) has no status key to mark — nothing was ever accepted under that id.
+     */
+    private void markFailed(Map<String, String> body) {
+        String jobId = body.get(JobQueue.FIELD_JOB_ID);
+        if (jobId != null && !jobId.isBlank()) {
+            statusStore.markFailed(jobId);
         }
     }
 

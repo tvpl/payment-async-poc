@@ -124,6 +124,73 @@ class AdmissionControlIT {
         assertEquals(HttpStatus.ACCEPTED, submit(quiet).getStatus());
     }
 
+    /**
+     * task_T5 (AUD-05): the old admission check was two sequential {@code tryAcquire} calls
+     * (route, then tenant) with no rollback - a tenant over its own budget still consumed a
+     * route token on every denied attempt, letting a single bursting tenant drain the shared
+     * route budget for everyone else. The fix is one atomic Lua script that rolls the route
+     * token back when the tenant check denies.
+     */
+    @Test
+    void aBurstingTenantDoesNotConsumeTheRouteBudgetForAnother() {
+        String noisy = TENANTS.get(0);
+        String quiet = TENANTS.get(1);
+
+        for (int attempt = 0; attempt < RESOURCE_BUDGET; attempt++) {
+            try {
+                submit(noisy);
+            } catch (HttpClientResponseException ignored) {
+                // expected once noisy's own tenant budget is exhausted
+            }
+        }
+
+        // quiet must still be admitted for its own full tenant budget: if noisy's denied
+        // attempts had drained the shared route budget (the un-fixed bug), this would 429
+        // immediately instead.
+        for (int admitted = 0; admitted < TENANT_BUDGET; admitted++) {
+            assertEquals(HttpStatus.ACCEPTED, submit(quiet).getStatus(),
+                    "quiet tenant should still be admitted up to its own tenant budget; "
+                            + "the noisy tenant's denied attempts must not have consumed the route budget");
+        }
+    }
+
+    /**
+     * task_T6 (AUD-05): {@code ConcurrencyLimitFilter} used to fingerprint whatever
+     * {@code X-API-Key} a v0 caller supplied, even though v0 is unauthenticated and that
+     * header is never validated - a rotating key minted a brand-new tenant bucket per request,
+     * each starting with a full budget, bypassing admission control entirely. Every v0 caller
+     * must now land in the same fixed anonymous bucket regardless of the header.
+     */
+    @Test
+    void aBurstOnV0WithRotatingApiKeysStillLandsInTheSameAnonymousTenantBucket() {
+        // v0 callers here carry no eligible JWT, so a request that clears admission still 404s
+        // at the controller (see statusOfV0Attempt()'s own note below) - "admitted" therefore
+        // means "not rejected by the limiter (429)", the same convention every other v0 test in
+        // this class already uses.
+        int pastAdmission = 0;
+        for (int attempt = 0; attempt < RESOURCE_BUDGET + TENANT_BUDGET; attempt++) {
+            if (statusOfV0AttemptWithRotatingKey() != HttpStatus.TOO_MANY_REQUESTS) {
+                pastAdmission++;
+            }
+        }
+
+        org.junit.jupiter.api.Assertions.assertTrue(pastAdmission <= TENANT_BUDGET,
+                "rotating X-API-Key on /v0 must not mint a fresh tenant bucket per request; "
+                        + pastAdmission + " requests cleared admission, past the tenant budget of "
+                        + TENANT_BUDGET);
+    }
+
+    private HttpStatus statusOfV0AttemptWithRotatingKey() {
+        try {
+            return client.toBlocking().exchange(
+                    HttpRequest.POST("/v0/payment-simulations", REQUEST)
+                            .header("X-API-Key", UUID.randomUUID().toString())
+                            .header("Idempotency-Key", UUID.randomUUID().toString())).getStatus();
+        } catch (HttpClientResponseException e) {
+            return e.getStatus();
+        }
+    }
+
     @Test
     void theResourceBudgetCapsTheRouteAcrossTenants() {
         int admitted = 0;
@@ -140,6 +207,47 @@ class AdmissionControlIT {
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, lastRejection);
         org.junit.jupiter.api.Assertions.assertTrue(admitted <= RESOURCE_BUDGET,
                 "route admitted " + admitted + " requests, above its budget of " + RESOURCE_BUDGET);
+    }
+
+    /**
+     * task_9b6bb521: {@code ConcurrencyLimitFilter} used to match only the literal
+     * {@code /payment-simulations} path — {@code /v0/payment-simulations} (anonymous by design,
+     * see {@code V0PaymentSimulationController}) had zero admission budget of its own. A burst
+     * against it must now be capped the same way, not sail through unbounded just because it
+     * carries no {@code X-API-Key}.
+     */
+    @Test
+    void aBurstAgainstTheV0RouteIsCappedByAdmissionControlTooNotJustTheMainRoute() {
+        boolean sawRejection = false;
+        int admitted = 0;
+        for (int attempt = 0; attempt < RESOURCE_BUDGET + TENANT_BUDGET; attempt++) {
+            HttpStatus status = statusOfV0Attempt();
+            if (status == HttpStatus.TOO_MANY_REQUESTS) {
+                sawRejection = true;
+            } else {
+                admitted++;
+            }
+        }
+
+        org.junit.jupiter.api.Assertions.assertTrue(sawRejection,
+                "/v0/payment-simulations must eventually be rejected with 429 under a burst, "
+                        + "same as /payment-simulations");
+        org.junit.jupiter.api.Assertions.assertTrue(admitted <= RESOURCE_BUDGET,
+                "v0 route admitted " + admitted + " requests past the filter, above its resource budget of "
+                        + RESOURCE_BUDGET);
+    }
+
+    @Test
+    void theV0RouteGetsItsOwnResourceBudgetSeparateFromTheMainRoute() {
+        for (int i = 0; i < RESOURCE_BUDGET; i++) {
+            statusOfV0Attempt();
+        }
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, statusOfV0Attempt(),
+                "v0's own resource budget should now be exhausted");
+
+        // A distinct resource key ("POST:/payment-simulations" vs "POST:/v0/payment-simulations"):
+        // v0 running its budget dry must not starve the main route.
+        assertEquals(HttpStatus.ACCEPTED, submit(TENANTS.get(0)).getStatus());
     }
 
     @Test
@@ -165,6 +273,21 @@ class AdmissionControlIT {
                         .header("X-API-Key", apiKey)
                         .header("Idempotency-Key", UUID.randomUUID().toString()),
                 StatusResponse.class);
+    }
+
+    /**
+     * v0 is anonymous by design (no {@code X-API-Key}); what matters here is only whether
+     * {@code ConcurrencyLimitFilter} let the request through (any non-429 status, since an
+     * admitted-but-ineligible request 404s on the feature flag) or rejected it with 429.
+     */
+    private HttpStatus statusOfV0Attempt() {
+        try {
+            return client.toBlocking().exchange(
+                    HttpRequest.POST("/v0/payment-simulations", REQUEST)
+                            .header("Idempotency-Key", UUID.randomUUID().toString())).getStatus();
+        } catch (HttpClientResponseException e) {
+            return e.getStatus();
+        }
     }
 
     private Map<String, Object> properties() {

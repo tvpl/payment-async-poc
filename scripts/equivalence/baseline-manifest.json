@@ -1,207 +1,153 @@
 {
   "counts": {
     "dashboards": 10,
-    "documents": 22,
-    "migrations": 9,
+    "documents": 11,
+    "migrations": 11,
     "schemas": 11,
-    "scripts": 44,
-    "sources": 199,
-    "test_cases": 496,
-    "tests": 106,
+    "scripts": 47,
+    "sources": 211,
+    "test_cases": 592,
+    "tests": 127,
     "topics": 8
   },
   "entries": [
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/api-overview.json",
-      "path": "observability/grafana/dashboards/api-overview.json",
-      "sha256": "f2d83741efa89b44d912c44a6913c04b03bed3124f30788e049e14327acdf6ae"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/async-redis.json",
-      "path": "observability/grafana/dashboards/async-redis.json",
+      "id": "async-redis-service/ops/dashboards/async-redis.json",
+      "path": "async-redis-service/ops/dashboards/async-redis.json",
       "sha256": "9509e6e02baaeff0db8c5a9f72998fefbe98b0d755323f762b74538c5949b690"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/feature-decisions.json",
-      "path": "observability/grafana/dashboards/feature-decisions.json",
+      "id": "feature-control/ops/dashboards/feature-decisions.json",
+      "path": "feature-control/ops/dashboards/feature-decisions.json",
       "sha256": "3bcba2812e62a78f88af35376d770753ca4cda2b71096dbd72a307a4d55740fc"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/infra-exporters.json",
-      "path": "observability/grafana/dashboards/infra-exporters.json",
-      "sha256": "9c2780bdbdfa60ba10f62a635fb4b6c5748ac86de19d974b63c1f8d109ddb465"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/k6-load.json",
-      "path": "observability/grafana/dashboards/k6-load.json",
+      "id": "load/dashboards/k6-load.json",
+      "path": "load/dashboards/k6-load.json",
       "sha256": "6a1a3334fc0e3ae3c1a653a78394be1285ce0318b35b386e76d7d7b13a60e032"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/kafka-overview.json",
-      "path": "observability/grafana/dashboards/kafka-overview.json",
-      "sha256": "91c4e12861d732faa3bc7bc870e9288367b5e00f1fe9a429583af5bfa7f6a438"
+      "id": "payment-api/ops/dashboards/api-overview.json",
+      "path": "payment-api/ops/dashboards/api-overview.json",
+      "sha256": "f2d83741efa89b44d912c44a6913c04b03bed3124f30788e049e14327acdf6ae"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/outbox-overview.json",
-      "path": "observability/grafana/dashboards/outbox-overview.json",
-      "sha256": "73f61311f6155d73cd9698c3d85d8ca8a54e9685c060737d9b99b2477162eb77"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/postgres-overview.json",
-      "path": "observability/grafana/dashboards/postgres-overview.json",
-      "sha256": "0cc8a3e1c8bc79734472c78fa17d07e821da6658275bbe847a612df7695e9644"
-    },
-    {
-      "category": "dashboards",
-      "id": "observability/grafana/dashboards/redis-overview.json",
-      "path": "observability/grafana/dashboards/redis-overview.json",
+      "id": "payment-api/ops/dashboards/api-waiters.json",
+      "path": "payment-api/ops/dashboards/api-waiters.json",
       "sha256": "bd2d2777427809e2e64f1085b05e2de3a9bb808bb024252da93e0dbf4b494979"
     },
     {
       "category": "dashboards",
-      "id": "observability/grafana/dashboards/sbus-overview.json",
-      "path": "observability/grafana/dashboards/sbus-overview.json",
+      "id": "payment-sbus/ops/dashboards/outbox-overview.json",
+      "path": "payment-sbus/ops/dashboards/outbox-overview.json",
+      "sha256": "73f61311f6155d73cd9698c3d85d8ca8a54e9685c060737d9b99b2477162eb77"
+    },
+    {
+      "category": "dashboards",
+      "id": "payment-sbus/ops/dashboards/postgres-pool.json",
+      "path": "payment-sbus/ops/dashboards/postgres-pool.json",
+      "sha256": "0cc8a3e1c8bc79734472c78fa17d07e821da6658275bbe847a612df7695e9644"
+    },
+    {
+      "category": "dashboards",
+      "id": "payment-sbus/ops/dashboards/sbus-overview.json",
+      "path": "payment-sbus/ops/dashboards/sbus-overview.json",
       "sha256": "5ec3437fd2683367a91f23e2b8c43ee28bb2d56723f83758bf65a298745a6a6b"
+    },
+    {
+      "category": "dashboards",
+      "id": "sandbox/observability/dashboards/infra-exporters.json",
+      "path": "sandbox/observability/dashboards/infra-exporters.json",
+      "sha256": "9c2780bdbdfa60ba10f62a635fb4b6c5748ac86de19d974b63c1f8d109ddb465"
+    },
+    {
+      "category": "dashboards",
+      "id": "sandbox/observability/dashboards/kafka-overview.json",
+      "path": "sandbox/observability/dashboards/kafka-overview.json",
+      "sha256": "91c4e12861d732faa3bc7bc870e9288367b5e00f1fe9a429583af5bfa7f6a438"
     },
     {
       "category": "documents",
       "id": "AGENTS.md",
       "path": "AGENTS.md",
-      "sha256": "48b4e34972028714bb237a5533dc9674badc71112ac3a046df7e132bed370b8d"
+      "sha256": "6d9e1ea7cb15e4fb64be6951455744174071fc850b692fcfb8380aa567f922f0"
     },
     {
       "category": "documents",
       "id": "README.md",
       "path": "README.md",
-      "sha256": "4bff58a408de56000dc3a2ca6f6ba757c85686a7597affe5dcb3484c750c4922"
+      "sha256": "1c81feb616b3f6f8a7d37c69a64855491e9409d28d0763445a088e05d22e573a"
     },
     {
       "category": "documents",
-      "id": "docs/01-visao-geral.md",
-      "path": "docs/01-visao-geral.md",
-      "sha256": "3ecfe5aa1844967b05a34f50127a074b9a065b5899db51b17a1d823b5a553512"
+      "id": "docs/data-ownership.md",
+      "path": "docs/data-ownership.md",
+      "sha256": "0ef208428e7477c828340d57dbba0c231a16a946fad1d954d069cc374135facc"
     },
     {
       "category": "documents",
-      "id": "docs/02-arquitetura.md",
-      "path": "docs/02-arquitetura.md",
-      "sha256": "1ca0cdbec56554ff686b3830e271c4cb1f2d2f32252ac588547b52bded9c817f"
+      "id": "docs/glossary.md",
+      "path": "docs/glossary.md",
+      "sha256": "62e56f6f931fba0d12790d47981338615f3fea64c43c12af9cbeaecbdf797e2a"
     },
     {
       "category": "documents",
-      "id": "docs/03-tecnologias.md",
-      "path": "docs/03-tecnologias.md",
-      "sha256": "a873ae3063f38ec8a36e6693e1d272c32dbc604854dcaf8cca95ac063964d210"
+      "id": "docs/payment-flow.md",
+      "path": "docs/payment-flow.md",
+      "sha256": "f653eaed4d731de0a14fdba53ed86baf3aa5a865b4ffd07cf1cdbbd0a78e1a4a"
     },
     {
       "category": "documents",
-      "id": "docs/04-fluxo-ponta-a-ponta.md",
-      "path": "docs/04-fluxo-ponta-a-ponta.md",
-      "sha256": "e0a10396acbfb80df4896503257215c480b8f6dab492bdd6c6118e5763a78ccb"
+      "id": "docs/production-evidence.md",
+      "path": "docs/production-evidence.md",
+      "sha256": "cb01923474e897a2c77e25c982dbb10d6d4857162d73c7a2dbe114289c2789c4"
     },
     {
       "category": "documents",
-      "id": "docs/05-api-service.md",
-      "path": "docs/05-api-service.md",
-      "sha256": "905145848328e96d15c47b33a4076561cfce5a032e9d60bfa9f1955d28bc4280"
+      "id": "docs/resilience-contracts.md",
+      "path": "docs/resilience-contracts.md",
+      "sha256": "4961c4a8e25844b1451f936c334d7d414e20b1ee5c9d57979db5039ba94c2c35"
     },
     {
       "category": "documents",
-      "id": "docs/06-sbus-service.md",
-      "path": "docs/06-sbus-service.md",
-      "sha256": "e3c233a98be4da04f19115eb0c2a9873a75516e7fee57aec6e6cf65c381736fa"
+      "id": "docs/technology-policy.md",
+      "path": "docs/technology-policy.md",
+      "sha256": "3b9df4f2bc4a974e1599e9e21c736f81481172da70c9afceb7fe61a0f51a1495"
     },
     {
       "category": "documents",
-      "id": "docs/07-core-mock.md",
-      "path": "docs/07-core-mock.md",
-      "sha256": "8202ceb356684733294188711f37784a99034c02fb04078a6206b2bdeba60465"
+      "id": "docs/testing-policy.md",
+      "path": "docs/testing-policy.md",
+      "sha256": "4147f29c189c7b57f6faba720284c29fce3182b4567c4a0485171b74bd03f113"
     },
     {
       "category": "documents",
-      "id": "docs/08-eventos-e-contratos.md",
-      "path": "docs/08-eventos-e-contratos.md",
-      "sha256": "b8c5bbf72b14e021bb761465457fa6eef45cb85b936f8f3becbb2dbc082f7162"
+      "id": "docs/workspace-architecture.md",
+      "path": "docs/workspace-architecture.md",
+      "sha256": "ab4bbabdf221e51bde082394d20ad9ec204f75ad5a21f63e32e0a9c3d2825d71"
     },
     {
       "category": "documents",
-      "id": "docs/09-dados-redis-postgres.md",
-      "path": "docs/09-dados-redis-postgres.md",
-      "sha256": "8247478a70cc0073ddd23dd4866ee9a3a3a1d6949150ff3bbf79d1ec00ed39eb"
+      "id": "docs/workspace-overview.md",
+      "path": "docs/workspace-overview.md",
+      "sha256": "1df08beafbc2e7366dd5667edfd5bb8a1fff26a41e1ae21c83c73f0bc4f865f4"
     },
     {
-      "category": "documents",
-      "id": "docs/10-observabilidade.md",
-      "path": "docs/10-observabilidade.md",
-      "sha256": "26c493615a4d6fc568f852c0577cd503f79975275085d04fbbf89a1ec9243c09"
+      "category": "migrations",
+      "id": "payment-sbus/src/main/resources/db/migration/V10__idempotency_fingerprint.sql",
+      "path": "payment-sbus/src/main/resources/db/migration/V10__idempotency_fingerprint.sql",
+      "sha256": "9605421edde34d250e755ca553149c2a380507ec9b78fa98fedb07d3ef230b28"
     },
     {
-      "category": "documents",
-      "id": "docs/11-resiliencia-e-tradeoffs.md",
-      "path": "docs/11-resiliencia-e-tradeoffs.md",
-      "sha256": "cb69328709e2fb83b2b5bca4061cfd27c9b38817467096d9000264a980dd52a0"
-    },
-    {
-      "category": "documents",
-      "id": "docs/12-execucao-e-operacao.md",
-      "path": "docs/12-execucao-e-operacao.md",
-      "sha256": "9dbc10bc3dd4730421150bf45e9b205038df4203c9befc1b634c8bcecf267bd0"
-    },
-    {
-      "category": "documents",
-      "id": "docs/13-testes.md",
-      "path": "docs/13-testes.md",
-      "sha256": "7baa40905aa508564494859bd59ef1592b4b062b9115f49cc5ae3dd7d0a6cefb"
-    },
-    {
-      "category": "documents",
-      "id": "docs/14-glossario.md",
-      "path": "docs/14-glossario.md",
-      "sha256": "4e249c3c1e04ffb5a2ba50669da35b622d26405fe96eaaa532690e20dda76242"
-    },
-    {
-      "category": "documents",
-      "id": "docs/15-prontidao-producao.md",
-      "path": "docs/15-prontidao-producao.md",
-      "sha256": "29fc3c1c9d2ebc915c27e0e89ced30bc064e312ea44dccca6bf18793eff07732"
-    },
-    {
-      "category": "documents",
-      "id": "docs/16-feature-control-lib.md",
-      "path": "docs/16-feature-control-lib.md",
-      "sha256": "fa8fd647e6252d9d04499652bdd65b7878d1c4027eac53e3cfd608625b528e17"
-    },
-    {
-      "category": "documents",
-      "id": "docs/17-async-sync-redis.md",
-      "path": "docs/17-async-sync-redis.md",
-      "sha256": "bc0177ade02560e3e06245b3dc780e4a2439f55ddf55553ab1eb594bf5a136b4"
-    },
-    {
-      "category": "documents",
-      "id": "docs/18-operacao-features.md",
-      "path": "docs/18-operacao-features.md",
-      "sha256": "7a591b40ee037a92faf300a88a672b4d3d9d8d2251348ab9aacda754e5269730"
-    },
-    {
-      "category": "documents",
-      "id": "docs/19-adocao.md",
-      "path": "docs/19-adocao.md",
-      "sha256": "3085aef84b87f113a9f3120ad4593fa908373a4790b4daf54c7c22424b6f89c1"
-    },
-    {
-      "category": "documents",
-      "id": "docs/README.md",
-      "path": "docs/README.md",
-      "sha256": "568aad4c9a2b86f1e884f332d7fe7b48a4d65a4d9678d024e5c2f1dff1cb8978"
+      "category": "migrations",
+      "id": "payment-sbus/src/main/resources/db/migration/V11__outbox_pending_claim_index.sql",
+      "path": "payment-sbus/src/main/resources/db/migration/V11__outbox_pending_claim_index.sql",
+      "sha256": "338e8e0aed297bbe21e1a95fc95e200f471545e1d47cd91f252174f935806571"
     },
     {
       "category": "migrations",
@@ -325,33 +271,9 @@
     },
     {
       "category": "scripts",
-      "id": "Makefile",
-      "path": "Makefile",
-      "sha256": "76f5fa36f0785a0578d4303921aec943c4dcf34103f7bc81174e39c2eebafea2"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-async-redis.js",
-      "path": "load/k6-async-redis.js",
-      "sha256": "85c2a11c99bb98c1388a0cdc2551dbf8d1a571bf60d328dff0782270649ae849"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-feature.js",
-      "path": "load/k6-feature.js",
-      "sha256": "f1955c4de12ee8b77e3fffb2ecbae0634a9748976c2d56cd77a776387ea8d2ba"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-poll.js",
-      "path": "load/k6-poll.js",
-      "sha256": "ac83cac42dbcbf36a9cf59c9cdfbf6e81197da44b6a8e4ad84f9f67d82aa5da6"
-    },
-    {
-      "category": "scripts",
-      "id": "load/k6-simulations.js",
-      "path": "load/k6-simulations.js",
-      "sha256": "d7f6746d7cbdd20cca412f66bd11740a84ed2137f1fa01506aab0f7a42c3376a"
+      "id": "load/k6/capacity.js",
+      "path": "load/k6/capacity.js",
+      "sha256": "3868708b382d16d6e2167fe1d1fc446f5e2b2b13032e97adcf9bee43b4a55de0"
     },
     {
       "category": "scripts",
@@ -361,21 +283,15 @@
     },
     {
       "category": "scripts",
-      "id": "scripts/artifacts/run-with-composite.sh",
-      "path": "scripts/artifacts/run-with-composite.sh",
-      "sha256": "c1e483d63b9a82dae86644e1cfd559a9f9d7bcdece3ef4a0433f03589a1e65bd"
-    },
-    {
-      "category": "scripts",
       "id": "scripts/artifacts/test_artifact_flow.py",
       "path": "scripts/artifacts/test_artifact_flow.py",
-      "sha256": "1f3d75e06cecaa7c74c3f4976725141f91bd9ad902504f56e68f2216b6a0a671"
+      "sha256": "89ec02fb85e4649b5da8ad08fe73ba7a573fe2b739885ed0ed3972b86d4d96dc"
     },
     {
       "category": "scripts",
       "id": "scripts/artifacts/verify-artifact-only.sh",
       "path": "scripts/artifacts/verify-artifact-only.sh",
-      "sha256": "98c1791d9256b7491a97f8648ee72aa5b68223fcff3ca514b9bff45d3f57afed"
+      "sha256": "ad213a8de80cd115cf5dfefa57337df94d34396aeaa6809232a74c2ea3188d94"
     },
     {
       "category": "scripts",
@@ -387,19 +303,19 @@
       "category": "scripts",
       "id": "scripts/docs/build_relocation_manifest.py",
       "path": "scripts/docs/build_relocation_manifest.py",
-      "sha256": "babca53ce1032c22875217cfa8443d6a423ab8d9d5ccdc1c9d9e8457b78289ca"
+      "sha256": "96aff357bbb96b91e70b2aa1b9e00f1e656d379eb83b4dbea6cde2c8378fbfd7"
     },
     {
       "category": "scripts",
       "id": "scripts/docs/test_validate_docs.py",
       "path": "scripts/docs/test_validate_docs.py",
-      "sha256": "1c472ad5ea2dc1da3798b1765bb264d7124bc0bba679061e5052f925644117bf"
+      "sha256": "7dca25cafd2a1f88a5dddc2836d28add622e5f6c9dfb3137bb160cfa91efdaf8"
     },
     {
       "category": "scripts",
       "id": "scripts/docs/validate_docs.py",
       "path": "scripts/docs/validate_docs.py",
-      "sha256": "8c6461f903b33a0d03b434808b11a7a9b6d94352c7dc2d5a8afdec8d0f648c46"
+      "sha256": "3f64434f9d33da46d0499b67049177d9d50f08bd1cbb8b1e338e68b8768b4b0e"
     },
     {
       "category": "scripts",
@@ -471,7 +387,7 @@
       "category": "scripts",
       "id": "scripts/e2e/async-redis-failures/scenarios/status_lifecycle.sh",
       "path": "scripts/e2e/async-redis-failures/scenarios/status_lifecycle.sh",
-      "sha256": "2ad7b7ae078e72a117896d16daa1e2a64ce3e3524eafb20da764afce7e455885"
+      "sha256": "3514781afa5f8e759f12bde464d476bd12ad34e9bab7c3776f37bf24926167e1"
     },
     {
       "category": "scripts",
@@ -519,7 +435,7 @@
       "category": "scripts",
       "id": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
       "path": "scripts/e2e/payment-failures/scenarios/crash_recovery.sh",
-      "sha256": "7ca103c4c1c263ae4255539fcaebeb03af6235ae6a5aae8398b6f86fbb75f5ef"
+      "sha256": "9fa2a9a3fbc21966fa076c13b2932389cacf6602602509f7b08c18b60182a1b3"
     },
     {
       "category": "scripts",
@@ -543,19 +459,67 @@
       "category": "scripts",
       "id": "scripts/equivalence/equivalence.py",
       "path": "scripts/equivalence/equivalence.py",
-      "sha256": "eae1d75c8750f6db804c3c7c412272fa566d9b03d6706b3cb9c0c95f4cd53461"
+      "sha256": "efd4da8fc6ea4825619e7840f5a4bf0b07256d000198e9cea07160ee07cebde8"
     },
     {
       "category": "scripts",
       "id": "scripts/equivalence/test_equivalence.py",
       "path": "scripts/equivalence/test_equivalence.py",
-      "sha256": "54d7d2454c232e9ed45ff0643316ccca44d908cdb0b2b4c4f690241596301744"
+      "sha256": "37b844d42c78362778164f20db6487c7284c09e69b7b79c628bd51eff657f21c"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/checks/alert_fires.sh",
+      "path": "scripts/observability/checks/alert_fires.sh",
+      "sha256": "5f43e20b61e1c83d40f8a0f87dc0594c2c7d2804fc645f5fc08a896699855665"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/checks/assets_manifest.sh",
+      "path": "scripts/observability/checks/assets_manifest.sh",
+      "sha256": "91d0b599f4ca370172d076f9b46c21d8e8a038b820e86012fb834098f6f040df"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/checks/correlation_ids.sh",
+      "path": "scripts/observability/checks/correlation_ids.sh",
+      "sha256": "8121b6ad1d98b41b6ef71d6a4c2b162a52b433a1a76c60c14edaca8f98d0fec4"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/checks/dashboard_validator.sh",
+      "path": "scripts/observability/checks/dashboard_validator.sh",
+      "sha256": "efac3af2a9d6a2a91529aeb7324cf1661154c4361701df7a3c8fbb5df0748ee5"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/checks/metrics_scrape.sh",
+      "path": "scripts/observability/checks/metrics_scrape.sh",
+      "sha256": "7921556029a6e19a9523bbd1a1a42cb87b29c56a2453e96462a8deb74dda6369"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/checks/trace_in_jaeger.sh",
+      "path": "scripts/observability/checks/trace_in_jaeger.sh",
+      "sha256": "f82a7fa9d2a0c60e5dd41f70cdc7d94ece0d86686789f6e75800472089ec7896"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/lib.sh",
+      "path": "scripts/observability/lib.sh",
+      "sha256": "25cf7dbe182dbd1d4bf5cedcf96c73c3c6d2ade59cc2241fcd14c5ac9bdd0c27"
+    },
+    {
+      "category": "scripts",
+      "id": "scripts/observability/verify.sh",
+      "path": "scripts/observability/verify.sh",
+      "sha256": "4491cf602b372060da92086f75782c53a03466502d469b6113722e1900dcd2e9"
     },
     {
       "category": "scripts",
       "id": "scripts/security/check_repository_secrets.py",
       "path": "scripts/security/check_repository_secrets.py",
-      "sha256": "bc5959b736af8295c8ad1f82510b69ad338960a698e8ab25153000965f54ff99"
+      "sha256": "b5a175039ca98a55aaec027843ac656ad570a0e6f7e862d1c5ba82d9fb968064"
     },
     {
       "category": "scripts",
@@ -591,7 +555,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/Application.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/Application.java",
-      "sha256": "3eafdde139a176418f7d70cf5664ce944ad751eb5217ffb4561b330777efc530"
+      "sha256": "bb90424e90d3d7f15529a1766c5489cfc3e761fefcd92a01ff9b346f6d0b4358"
     },
     {
       "category": "sources",
@@ -615,7 +579,19 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobAcceptanceService.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobAcceptanceService.java",
-      "sha256": "6705e58f54a3155ef9e209241851566cdde1a2c1f3c24f1caadf2cc054e0120a"
+      "sha256": "ef41a52fddba908a2ce41c15595157498fdd95e4cd6fcc9779dde638ec9b5325"
+    },
+    {
+      "category": "sources",
+      "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueException.java",
+      "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueException.java",
+      "sha256": "03e5bbb95e489450fbe7519df4b974b546555ec802f978b6d6460f546b02f701"
+    },
+    {
+      "category": "sources",
+      "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueExceptionHandler.java",
+      "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobEnqueueExceptionHandler.java",
+      "sha256": "d61b99ab08ca3ec3ee18fcd8bd947bef1302d5ebd3ecde4e0863da1351ac407a"
     },
     {
       "category": "sources",
@@ -639,7 +615,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobState.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobState.java",
-      "sha256": "a45f1e8bb373680cd1d70f49787159581f9962b8c8583041afdbffc0a22e79f3"
+      "sha256": "92fb40d23b7003dccf249eca4cd02517ee51b87129e75fe6f76d1ddfc99b3886"
     },
     {
       "category": "sources",
@@ -651,13 +627,13 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusStore.java",
-      "sha256": "3b5fc863cb919b2b3357ab1ae29af475a68760807640c5999206eddc5ef97f04"
+      "sha256": "e4f9930a86d20193e4979253aab77f1fd42f4ed89f48e785a09dfe5adfba306b"
     },
     {
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusView.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/api/JobStatusView.java",
-      "sha256": "b705635839bcad89b9d2c0dfefee3dec3ba07943fdcb9fa42ea63cd263eec61b"
+      "sha256": "597872b657da265dbe6c399176f6cd38ecaa422a6a6ce642617f7a8b6279424e"
     },
     {
       "category": "sources",
@@ -669,13 +645,13 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/config/AsyncRedisProperties.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/config/AsyncRedisProperties.java",
-      "sha256": "42b730ef3fd7375fc799ba21d2733430f45f7593ab4b6d96b7a99b18e6f026f1"
+      "sha256": "2bddc559c63bf8044484a61c1f02b95f5c25bb8903f4f07c3a5420b9c6390cb2"
     },
     {
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/controller/AsyncJobController.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/controller/AsyncJobController.java",
-      "sha256": "69dd193a1105937c6fd2fc032dd4e4364ead2e95ebf004f91feb2731c5c5133c"
+      "sha256": "4b608c49fa525208cba7856915a1b3f79fac86299fdcde88a0663e20982c7f08"
     },
     {
       "category": "sources",
@@ -729,13 +705,13 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiter.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiter.java",
-      "sha256": "6c352f39d6b442002cc26d91486acc682fe68e27f868b66d686658a9d1480fb6"
+      "sha256": "2f8912ebc50a75ea14b925d5ea0d75c666a83f5772db14c5f1bebc8adcbc7548"
     },
     {
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/redis/RedisConnections.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/redis/RedisConnections.java",
-      "sha256": "1972b6c873949229bf63a3bccce635d72112084d60604a0949766a7c1b7a9274"
+      "sha256": "6a71ea10da99f24911c1ed8837a60fc2d0b2263ffed1449a416332205443f94f"
     },
     {
       "category": "sources",
@@ -759,7 +735,7 @@
       "category": "sources",
       "id": "async-redis-service/src/main/java/com/example/platform/asyncredis/worker/JobWorker.java",
       "path": "async-redis-service/src/main/java/com/example/platform/asyncredis/worker/JobWorker.java",
-      "sha256": "6cc703143f4e59271e502e7129c779885b91f941cd9076e22714b78d56aaf803"
+      "sha256": "c8877c155370a35e7f0524e2035a8551a1cebe1e0b004cf8c6cee898f93c2945"
     },
     {
       "category": "sources",
@@ -789,7 +765,7 @@
       "category": "sources",
       "id": "feature-control/examples/feature-demo/src/main/java/com/example/platform/featuredemo/Application.java",
       "path": "feature-control/examples/feature-demo/src/main/java/com/example/platform/featuredemo/Application.java",
-      "sha256": "409843c962506f42ff9c00658001b3f66f4390c395ac83d134cc290bf7a6c85c"
+      "sha256": "9c3af542fdd00648083d41a9aa361b10f10f21fbb2cc20ac4b915bf6a8c728e1"
     },
     {
       "category": "sources",
@@ -831,7 +807,7 @@
       "category": "sources",
       "id": "feature-control/examples/pilot-app/src/main/java/com/example/platform/pilot/Application.java",
       "path": "feature-control/examples/pilot-app/src/main/java/com/example/platform/pilot/Application.java",
-      "sha256": "fe6b1e5f8ee7ea8cedd40ba9084fefc11488d28f9c81c05aeba43f395a4ca7c8"
+      "sha256": "ecdb0483b64a68522148ba250087e8693006cded1f8db0fd3e6047629da7b265"
     },
     {
       "category": "sources",
@@ -891,13 +867,13 @@
       "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/bucketing/Bucketer.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/bucketing/Bucketer.java",
-      "sha256": "f584dcf9d8eca12bb28033ea2aab2c07134d28e74a660e9af173daa5f9790c30"
+      "sha256": "be83c125ce29070bad05b274e0bf589068ccfec00600dc3aef045891d510dfd4"
     },
     {
       "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/config/FeatureSettings.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/config/FeatureSettings.java",
-      "sha256": "3bb255112c9e9bd44279feff4adf5b21d24c0c5ec29fb358353204a325f93ea5"
+      "sha256": "4d59f11bde11f70438ad94ce88b0b4e4033cbab06d003c0ea90b0192d039d3f1"
     },
     {
       "category": "sources",
@@ -1005,13 +981,13 @@
       "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/resolver/FeatureResolver.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/resolver/FeatureResolver.java",
-      "sha256": "c0e2a031e380d356bab9007673ea10006e479f3e420649a139cba44c9b8ad1d5"
+      "sha256": "5bce412ad93ed0e6b78ef71e599f27ab2d2557526e2ee15b357438121daf7d2e"
     },
     {
       "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/resolver/MasterSwitch.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/resolver/MasterSwitch.java",
-      "sha256": "ebbd592476b06094728a8ed37ceb88d5db68a73031bbdb5956434fb84f305071"
+      "sha256": "2e8196be87735cdb5249f68161a05d7708ce892eed22b73a6ef8f662c15f6635"
     },
     {
       "category": "sources",
@@ -1053,7 +1029,7 @@
       "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/CompositeFlagSource.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/CompositeFlagSource.java",
-      "sha256": "51bb4959cdf613637543d5775bb0854223d7055e0858887a5512c25ed18e0c9d"
+      "sha256": "24eb6167a28b3c94678285744e604d0df5397bbadb22e6265d272e41a6462005"
     },
     {
       "category": "sources",
@@ -1077,7 +1053,7 @@
       "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/RedisFlagSource.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/RedisFlagSource.java",
-      "sha256": "0b58bd1773560d2b19ef749569542691e68561d2f610c644098b8d75c5631c73"
+      "sha256": "c42d662c3f81a5bee96a64310fac56d4ef46d436ac6f9694d89af9f65dd08ef4"
     },
     {
       "category": "sources",
@@ -1087,9 +1063,15 @@
     },
     {
       "category": "sources",
+      "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/TrinaryFlagSource.java",
+      "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/TrinaryFlagSource.java",
+      "sha256": "3e20cd8e0a127a5b26483ac3fdf379bba11e6aa08c772651be7d4e386ff2403e"
+    },
+    {
+      "category": "sources",
       "id": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/VersionedFlagStore.java",
       "path": "feature-control/library/src/main/java/com/example/platform/featurecontrol/store/VersionedFlagStore.java",
-      "sha256": "51963cde8ff35ce400e21d5fd6f5274d9c524e334c5339fd0c6874f36a8f03b4"
+      "sha256": "ef16355f50dc0eedeaf5ba9ede8df3902f3d98714aadae0d68126efad9be22c6"
     },
     {
       "category": "sources",
@@ -1161,13 +1143,13 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/config/SecurityProperties.java",
       "path": "payment-api/src/main/java/com/example/payments/api/config/SecurityProperties.java",
-      "sha256": "320e71ca4b8f930576d1d4f278bb4117c435866d01f21aea70a9be57648766d3"
+      "sha256": "1ec43caeb501cad96e022dc76fbb1ef2fd6a95e15d7fd91223beed6d3373855c"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/controller/FeatureAdminController.java",
       "path": "payment-api/src/main/java/com/example/payments/api/controller/FeatureAdminController.java",
-      "sha256": "43a07cb5b89e0f9ecbc4a888783069f18f56ae4a8cc48b6fc6524ed4a40332e8"
+      "sha256": "7b2b1946586a8cfebf930494807524df8494152da3cbe3b7b1cfbdd15d591c78"
     },
     {
       "category": "sources",
@@ -1179,13 +1161,13 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/controller/V0PaymentSimulationController.java",
       "path": "payment-api/src/main/java/com/example/payments/api/controller/V0PaymentSimulationController.java",
-      "sha256": "8c4ef55a95c31c666ea38d8bc2f616f20dcc1ed89683037861beb58165e1b4c1"
+      "sha256": "35bc57e3e6b838cc287dce5b8a1bc82749d9d661e808af9bd3e47d8824c140b9"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/coordination/ResponseCoordinator.java",
       "path": "payment-api/src/main/java/com/example/payments/api/coordination/ResponseCoordinator.java",
-      "sha256": "4c75ff0ba32349bbce291a6df0ea3a16c9e5473493cfa1897db69b68f4516230"
+      "sha256": "7483885cf4e9d071b904c18a5e8d56c7eca1f363355d6bc93d2bb5d060a47354"
     },
     {
       "category": "sources",
@@ -1203,7 +1185,7 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/dto/PaymentSimulationRequest.java",
       "path": "payment-api/src/main/java/com/example/payments/api/dto/PaymentSimulationRequest.java",
-      "sha256": "68aad9a56d656a687cc0ac79e5abbbcdf8c7e7b603dfbf74d21546b0adeff157"
+      "sha256": "db8bb33145fcbb1a4a438071e9b168566306b9c394a6b013ad5b2e32bff7c89c"
     },
     {
       "category": "sources",
@@ -1249,6 +1231,18 @@
     },
     {
       "category": "sources",
+      "id": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableException.java",
+      "path": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableException.java",
+      "sha256": "2fd8d870411fde91a7050750d91517ea8e20f70013ba9cac38113b9c329840f3"
+    },
+    {
+      "category": "sources",
+      "id": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableExceptionHandler.java",
+      "path": "payment-api/src/main/java/com/example/payments/api/error/StoreUnavailableExceptionHandler.java",
+      "sha256": "1ca12903c410ee7f56c555f632628fffe06917071aa9bab83731f21072974cbf"
+    },
+    {
+      "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/error/ValidationExceptionHandler.java",
       "path": "payment-api/src/main/java/com/example/payments/api/error/ValidationExceptionHandler.java",
       "sha256": "13083144bdd78f295e4e3ae6e92f70eb2a9727b056499e799810fbc70dd0eedb"
@@ -1263,13 +1257,13 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/filter/ConcurrencyLimitFilter.java",
       "path": "payment-api/src/main/java/com/example/payments/api/filter/ConcurrencyLimitFilter.java",
-      "sha256": "a622f9bfc78039cb2997c1db91e78463b3e613362f323a41911501cf0133ba38"
+      "sha256": "f705df4b41b598bafce381aa6dd712ab1941c6919181f509f49c94f5a5de8495"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/idempotency/IdempotencyFingerprint.java",
       "path": "payment-api/src/main/java/com/example/payments/api/idempotency/IdempotencyFingerprint.java",
-      "sha256": "73c0b83d8061a11602e862895a185e0fd31daee5f35b3e9dabbb8eb6c6f967a2"
+      "sha256": "10227f49699ed82c8a8f11a3744965f75dc11247e4b47998fbc6ad3291db3b40"
     },
     {
       "category": "sources",
@@ -1299,7 +1293,7 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/kafka/PaymentResponseConsumer.java",
       "path": "payment-api/src/main/java/com/example/payments/api/kafka/PaymentResponseConsumer.java",
-      "sha256": "2b85891874a16d8604a89d74ee4828f63817d92b8403bb56452d4624d4fd32a0"
+      "sha256": "cd06b4d8fc0c046983d4315bce99611eba16a64a9f6fa92b0ea553685f7a62a6"
     },
     {
       "category": "sources",
@@ -1323,25 +1317,31 @@
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/metrics/ApiMetrics.java",
       "path": "payment-api/src/main/java/com/example/payments/api/metrics/ApiMetrics.java",
-      "sha256": "e65ec7d8d7be6b923657f2e049ad7992da551d00e6043e4450f4c1e38cf2e73b"
+      "sha256": "cf1a4072a8de9e55c6a025ce3cdf2db889656abcb0acec37acaf5f5e1a0d78b6"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/ratelimit/RedisRateLimiter.java",
       "path": "payment-api/src/main/java/com/example/payments/api/ratelimit/RedisRateLimiter.java",
-      "sha256": "b961d783a9c94f7a0458a1d031cee09fe958195f6aebd66a7e56995b5678eafb"
+      "sha256": "650e06d1771a6c7dca38ca3fd76c6ec88ff58f6dce87f4a380b5a4dae03f0196"
+    },
+    {
+      "category": "sources",
+      "id": "payment-api/src/main/java/com/example/payments/api/redis/RedisClientTuning.java",
+      "path": "payment-api/src/main/java/com/example/payments/api/redis/RedisClientTuning.java",
+      "sha256": "12edc5916ec68e83e03a61d981330c088b63348b342377acadbf1736942093a2"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/redis/RedisStatusStore.java",
       "path": "payment-api/src/main/java/com/example/payments/api/redis/RedisStatusStore.java",
-      "sha256": "f5f5b1c4e269d3056711bc14490d795cf7c377c7621d396ac7d02e63999ed838"
+      "sha256": "53ca6ddc209942b5751ae92829777908a586ec37a1e17dc02a9d1c68430c6c33"
     },
     {
       "category": "sources",
       "id": "payment-api/src/main/java/com/example/payments/api/service/ApiPaymentService.java",
       "path": "payment-api/src/main/java/com/example/payments/api/service/ApiPaymentService.java",
-      "sha256": "d352929fb1e708638109ef5f88e283e79479e8564de03d690b987d13ba013e06"
+      "sha256": "394b867a69b963f9d1bc24315b28664b04a76d190482019f1690dea69d9cd20d"
     },
     {
       "category": "sources",
@@ -1563,7 +1563,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/domain/IdempotencyRecord.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/domain/IdempotencyRecord.java",
-      "sha256": "d59151bb3ee0109f3712c847595f722f0c7c38bafd9b73d3afbaf9b9345a12be"
+      "sha256": "b2784453ea62988d010baf0ad56a96820d9b863c1878e6c471ab212d0b2db1d4"
     },
     {
       "category": "sources",
@@ -1587,7 +1587,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/domain/SbusMessageStatus.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/domain/SbusMessageStatus.java",
-      "sha256": "0c2f5168a9cd7ad31efd76e077c1383ed3143f61b020d88416c1359f7c1d3623"
+      "sha256": "63ee1573bf049342c6f05cb06e7e1e0c32b41c615bd3fe01d09f8354781cfeda"
     },
     {
       "category": "sources",
@@ -1603,9 +1603,33 @@
     },
     {
       "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/health/KafkaHealthIndicator.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/health/KafkaHealthIndicator.java",
+      "sha256": "7ec1d76fa8ac04d497f2c7141cd783bf304a398ee26065902c021beed2f3a5d3"
+    },
+    {
+      "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/health/PostgresHealthIndicator.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/health/PostgresHealthIndicator.java",
+      "sha256": "7ed231a1ce711b20f37e00f16943633be7badb4797d82a55459861a2a941ad06"
+    },
+    {
+      "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/health/RedisHealthIndicator.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/health/RedisHealthIndicator.java",
+      "sha256": "1d34e9859823c14d620fda37b61ad37c5021b00c8d504527039d172595a42f13"
+    },
+    {
+      "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/health/RegistryHealthIndicator.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/health/RegistryHealthIndicator.java",
+      "sha256": "728b25de00746593b85b16eb0c3b54da88592a2dba35f817f9ac6ba7cd701767"
+    },
+    {
+      "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/CoreResponseConsumer.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/CoreResponseConsumer.java",
-      "sha256": "3626f0e8c0b9f88cb62ef05d79fa7a20e7f9fc736820de21d12f61a3e503cd28"
+      "sha256": "b3854dd698bf951f151bbf32af739d28eaba5b4fb65a6553ef438e706d1ccba9"
     },
     {
       "category": "sources",
@@ -1623,7 +1647,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/PaymentRequestedConsumer.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/PaymentRequestedConsumer.java",
-      "sha256": "5411d1ebabb687a09f29dae63ed5f3943b0bde4d514b1539ada4e192729ddcb2"
+      "sha256": "ad906f5aa722df6e8bec9f4d8efdea45ce6e86cad71d5fa13ff3251d0a18ec4e"
     },
     {
       "category": "sources",
@@ -1633,27 +1657,33 @@
     },
     {
       "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RegistryUnavailableException.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RegistryUnavailableException.java",
+      "sha256": "dc2bc82a6b493f1ff7432cc090c35ca2d6b35baf93b5aa657af080928a648255"
+    },
+    {
+      "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryConsumer.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryConsumer.java",
-      "sha256": "6f130afe407b465d49db98c37d59a76e6d2db96766c6f2693ce4eca1f8cc55f4"
+      "sha256": "2b64910e6194b5019b5c63adb49980001cd24a00ee4694a121be44a9765623e3"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryPublisher.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/RetryPublisher.java",
-      "sha256": "68d2d50c02d788d14520dd602b88ea086937981d65d6d48c515c55f6960102ab"
+      "sha256": "ebcbb73980d1fafd2d2d64dd7185e629e07ef3f82075eec49e7848313154f1cb"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/SimulationMessageHandler.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/kafka/SimulationMessageHandler.java",
-      "sha256": "42163fbd1e7d0644fa6a0b92e1eecbfb892ca1b6f7af690427df046f0a95da70"
+      "sha256": "c0680d5427d9c650a015bace89c8befbe6124e8c9b3a40c93111100436ce62dd"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/metrics/SbusMetrics.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/metrics/SbusMetrics.java",
-      "sha256": "6a4c68c0c078f8c7334408003370a6532945c2798f35166655c77127cb223a4c"
+      "sha256": "30835155c607e8490fdd96afa1a704cc54f3f51b39a6d822f64d8ae56e1eee3f"
     },
     {
       "category": "sources",
@@ -1665,19 +1695,19 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxClaimService.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxClaimService.java",
-      "sha256": "38c6791cac3208dd7c1e0cfe92c850568905bab49c67df85cf13d93ad0e6a610"
+      "sha256": "9f55a0366343aee51d0cff2b09851885a8d894a941e556c2fdd2cf1841b228be"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxDispatcher.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxDispatcher.java",
-      "sha256": "433a81916b7178c1e6e3dd0af960a9982a93e570299cc91f5d72ea886df77e67"
+      "sha256": "7e9330e61586e46d88b90641ab4f9c947377891695aa9a46446e98651c39e08d"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxHousekeeping.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxHousekeeping.java",
-      "sha256": "e21de26cfb8a3375d618b1a39742baf8ac2080cc7563e3bee0beb420a41f306e"
+      "sha256": "d3f000ea1e7579716a8060effd75314a82ed720360d05cd5dcb86555c2fc1e45"
     },
     {
       "category": "sources",
@@ -1695,7 +1725,7 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxReaper.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/outbox/OutboxReaper.java",
-      "sha256": "55b70a9b9f9748a31278f9332fc98212a95279b839ad4c78cac09f324dc14a49"
+      "sha256": "7ca6341d66ba0bf546eb15ac43a2e90e5fded5321532135801a55e946ba8f525"
     },
     {
       "category": "sources",
@@ -1719,13 +1749,13 @@
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/repository/OutboxEventRepository.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/repository/OutboxEventRepository.java",
-      "sha256": "b048a38e5f9b68ebc182706ab017d5f349f99cc3e05f10d70f970044759a7232"
+      "sha256": "201ab406039e74334dc8ba3a47004af3222a4ef36098233a1e09f25ff0250b5b"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/repository/PaymentSbusMessageRepository.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/repository/PaymentSbusMessageRepository.java",
-      "sha256": "623e40b909feefbc0588683625ab5987398d486c9fab08485c2eb76d3abfb1e4"
+      "sha256": "6a0c32dc83e4b013b87ec74c283e46f1bb21e5e58cedb9f49e5199959e3488db"
     },
     {
       "category": "sources",
@@ -1741,15 +1771,21 @@
     },
     {
       "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/service/IdempotencyFingerprint.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/service/IdempotencyFingerprint.java",
+      "sha256": "c0e961c7d3bfa79b8ba269baa0c15e3fd29e6c3cf171a8322ce1c86f3391d5f6"
+    },
+    {
+      "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentPersistenceService.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentPersistenceService.java",
-      "sha256": "3b6b670fc50da098467f00de1820d0612f9b741226861867d9be44d0191d8993"
+      "sha256": "4d196eef8f3181cf977b3fe1a917ec9bbe5bb6b5bab58677f85b4ebe9c297b82"
     },
     {
       "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentSimulationService.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/service/PaymentSimulationService.java",
-      "sha256": "b6855328d7cdfe6d5c51ee336b5994d7e7f631a1c71379e26b9c70434753104b"
+      "sha256": "954f7140f22cb7c217052c0f6610537ab38827c2a9d57a66eb37ce32e8107f2c"
     },
     {
       "category": "sources",
@@ -1795,6 +1831,12 @@
     },
     {
       "category": "tests",
+      "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/AsyncFailedStatusIT.java",
+      "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/AsyncFailedStatusIT.java",
+      "sha256": "93520047c92a51fefedb2451ae595c8c4054e17267617b77bee3993aa109c240"
+    },
+    {
+      "category": "tests",
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/AsyncRedisFlowIT.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/AsyncRedisFlowIT.java",
       "sha256": "41a7ebc9e39dd40fc3666fffe2f11e1f763951e527e2b9a3510583216bcb61a2"
@@ -1807,9 +1849,21 @@
     },
     {
       "category": "tests",
+      "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/EnqueueFailedCasIT.java",
+      "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/EnqueueFailedCasIT.java",
+      "sha256": "e2f5638ca062d542acd8f1d7611cb99b4dd1c562fd23353260463aab90adace7"
+    },
+    {
+      "category": "tests",
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceGatesIT.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceGatesIT.java",
       "sha256": "fd121ea265bab6c645b4b28242cf7c12823d34e1204e2382391dcd00eade259c"
+    },
+    {
+      "category": "tests",
+      "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceServiceEnqueueFailureUnitTest.java",
+      "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobAcceptanceServiceEnqueueFailureUnitTest.java",
+      "sha256": "897d056c4453ef0592822b7a755a4781f8743d1ef392d3543f894045705bef79"
     },
     {
       "category": "tests",
@@ -1833,7 +1887,7 @@
       "category": "tests",
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobPollingIT.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/api/JobPollingIT.java",
-      "sha256": "24b17480d6849c79b978de3c42bdbbb658103bed010fd616a556a041724a63f2"
+      "sha256": "30d7464540a05eb7629d4754a0a927d68bcbad69247099b1297a7be96cd7c993"
     },
     {
       "category": "tests",
@@ -1845,7 +1899,7 @@
       "category": "tests",
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/config/AsyncRedisPropertiesUnitTest.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/config/AsyncRedisPropertiesUnitTest.java",
-      "sha256": "5eb81a6eae65fcda6c7f60558810a833faf62ca52f4b39bbb50f4827434a0e13"
+      "sha256": "7231c70aaa170027626e53b3cd8b0a76382aa0b42f7acaaf1d3fb43dcd50f9eb"
     },
     {
       "category": "tests",
@@ -1881,7 +1935,13 @@
       "category": "tests",
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiterUnitTest.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/ratelimit/AsyncRateLimiterUnitTest.java",
-      "sha256": "b19325b6668e9f97e052eacb435e822682a6976c30dc6db89bb421cb32bc9c07"
+      "sha256": "7abc9d368ba6a8f12c66d4c353c6da9fc97910d711c25860c19c35f6727dc853"
+    },
+    {
+      "category": "tests",
+      "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/redis/RedisConnectionsUnitTest.java",
+      "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/redis/RedisConnectionsUnitTest.java",
+      "sha256": "a1100b43208c41d81c96e41c59d614fc98fdbc13488567d0b9f92d1be0475d75"
     },
     {
       "category": "tests",
@@ -1906,6 +1966,12 @@
       "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/worker/ReclaimCoordinatorIT.java",
       "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/worker/ReclaimCoordinatorIT.java",
       "sha256": "2ae8781de0caae7c76e3f46ad638336aa65e3245c936313c4bedb0d196d5d56c"
+    },
+    {
+      "category": "tests",
+      "id": "async-redis-service/src/test/java/com/example/platform/asyncredis/worker/ReclaimScanLeaseRenewalIT.java",
+      "path": "async-redis-service/src/test/java/com/example/platform/asyncredis/worker/ReclaimScanLeaseRenewalIT.java",
+      "sha256": "5cb6f9a7b684c843ad2a9e8d30a97d6054b45d6d83660f2e9b57630162d09cd8"
     },
     {
       "category": "tests",
@@ -1977,7 +2043,7 @@
       "category": "tests",
       "id": "feature-control/library/src/test/java/com/example/platform/featurecontrol/bucketing/BucketerUnitTest.java",
       "path": "feature-control/library/src/test/java/com/example/platform/featurecontrol/bucketing/BucketerUnitTest.java",
-      "sha256": "e718dfea6c31f60801c78fea36bad3c725e6d5fc5ab1c96cb9fb369aadf75bba"
+      "sha256": "65515d49befa5f108179acae9a50411eb0cdff62bdf068e5dd2eb9ca1ad1f66a"
     },
     {
       "category": "tests",
@@ -2031,7 +2097,13 @@
       "category": "tests",
       "id": "feature-control/library/src/test/java/com/example/platform/featurecontrol/resolver/FeatureResolverUnitTest.java",
       "path": "feature-control/library/src/test/java/com/example/platform/featurecontrol/resolver/FeatureResolverUnitTest.java",
-      "sha256": "f76cc613f929ebb1558950f45fffb913e3698ef5e3d57a3652bf919e15b9fda8"
+      "sha256": "b3f91a98877f79e7a2bac7d35232bcdbfb64a03f5f6986a6836e357a6a088310"
+    },
+    {
+      "category": "tests",
+      "id": "feature-control/library/src/test/java/com/example/platform/featurecontrol/resolver/MasterSwitchIT.java",
+      "path": "feature-control/library/src/test/java/com/example/platform/featurecontrol/resolver/MasterSwitchIT.java",
+      "sha256": "526f02e6fcffaeca4c0af9ad604bdd9ad4584626a89687be1d0412befbd59cdb"
     },
     {
       "category": "tests",
@@ -2067,19 +2139,19 @@
       "category": "tests",
       "id": "feature-control/library/src/test/java/com/example/platform/featurecontrol/store/RedisFlagSourceIT.java",
       "path": "feature-control/library/src/test/java/com/example/platform/featurecontrol/store/RedisFlagSourceIT.java",
-      "sha256": "4ed0d5c84cbda08082fe0de0ddc2847a7219e14a78bdb7e6a0d75fa258bb0498"
+      "sha256": "3eb212d8b8d465e2021c5b08c298929c3d4685674c82f2c813b10b77a87789eb"
     },
     {
       "category": "tests",
       "id": "feature-control/library/src/test/java/com/example/platform/featurecontrol/store/VersionedFlagStoreIT.java",
       "path": "feature-control/library/src/test/java/com/example/platform/featurecontrol/store/VersionedFlagStoreIT.java",
-      "sha256": "b091d6cf7f4b0d8d47c93cd92def084a182027a3a9241e882353deffbb8769ff"
+      "sha256": "f7c2d2fbf1e589c5f9943ca80f066de1cb957596b2d6952c6fd5c30f8f28472e"
     },
     {
       "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/AdmissionControlIT.java",
       "path": "payment-api/src/test/java/com/example/payments/api/AdmissionControlIT.java",
-      "sha256": "3dbf3273a41225bcb5599ac672a23cb8c0dc6ce2967e7bb0726e6e8460fcd325"
+      "sha256": "15f3f39eb819475984370095844b2705a9040e830c6563b322d88a402151d6c4"
     },
     {
       "category": "tests",
@@ -2101,6 +2173,12 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/DualBudgetDegradedFallbackIT.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/DualBudgetDegradedFallbackIT.java",
+      "sha256": "e9b6ef317f4e07b20131862a4b9a6201dd2d085fee80d57f7d580852530fcd86"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/IdempotencyIT.java",
       "path": "payment-api/src/test/java/com/example/payments/api/IdempotencyIT.java",
       "sha256": "e28538a5f33b0218cfd67005bb7035b0d8a6543f9723b40e2c73a99e7062e120"
@@ -2110,6 +2188,12 @@
       "id": "payment-api/src/test/java/com/example/payments/api/PublishFailureIT.java",
       "path": "payment-api/src/test/java/com/example/payments/api/PublishFailureIT.java",
       "sha256": "d4b966d3482186a819493b276f4c6fe37a58a4c1afd7a4a14a89ca113177663f"
+    },
+    {
+      "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/RedisOutageFailClosedIT.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/RedisOutageFailClosedIT.java",
+      "sha256": "d804345495084de750cf6ee8f29d8cb88ff7bbdced5348232852961fd0f38d8e"
     },
     {
       "category": "tests",
@@ -2145,13 +2229,19 @@
       "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/controller/V0GatingTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/controller/V0GatingTest.java",
-      "sha256": "730221ad807b312e65ed75840a6b699e937bad72d3ab3b39b8a220cf1989be01"
+      "sha256": "52595e7cb814a034ed5da38f0a89ce5c86873cb768bdb2e9e0dd1c440f61caa9"
+    },
+    {
+      "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/controller/V0PaymentSimulationSurfaceIT.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/controller/V0PaymentSimulationSurfaceIT.java",
+      "sha256": "fe17effd7368cb866b8a7889dc37f038a58239721cfe4ea9d36ae46fe9a6498f"
     },
     {
       "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/coordination/ResponseCoordinatorUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/coordination/ResponseCoordinatorUnitTest.java",
-      "sha256": "98f2d6cdc9f0e7e19efa783f64b2a16563eb9e758caa49a3c7d81c9c25bd14f1"
+      "sha256": "c6033ffd5e1b486c4034ec5221a0f1dbc20a7258836f0a29ec755beb3f16c1a4"
     },
     {
       "category": "tests",
@@ -2161,15 +2251,21 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/error/StoreUnavailableExceptionHandlerUnitTest.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/error/StoreUnavailableExceptionHandlerUnitTest.java",
+      "sha256": "cab65ba1e4826fa30b92f2a749b1b326f19d2394242307d0165523728bce80c4"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/idempotency/IdempotencyFingerprintUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/idempotency/IdempotencyFingerprintUnitTest.java",
-      "sha256": "f6542b4c4e298c81968687ada3cfa87fdfe4f880bcfda4815eacc5e728e22201"
+      "sha256": "edb3a2be3f03c58e27ff79199805af44195ba2fa3291022db5e6bb8ae596c1fd"
     },
     {
       "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/kafka/PaymentResponseConsumerUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/kafka/PaymentResponseConsumerUnitTest.java",
-      "sha256": "1f0a9af4b32d03b636430a13e0438ce4203dcb71174c18b4e6269974f2461f51"
+      "sha256": "e974624941661e83ff9d74722d48fbb95f7da5644bd0cf9ea09ebc2f349f4b54"
     },
     {
       "category": "tests",
@@ -2185,6 +2281,12 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/metrics/ApiMetricsUnitTest.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/metrics/ApiMetricsUnitTest.java",
+      "sha256": "2bab55ebd9f351c50860891c23466975b6d691d65fb78d2567536db9b2ab6107"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/ratelimit/RedisRateLimiterUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/ratelimit/RedisRateLimiterUnitTest.java",
       "sha256": "564205aff76784eb9564ea311f10dc076259a202689e47030ba9acc86f7f1ab9"
@@ -2197,15 +2299,27 @@
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/redis/RedisClientTuningUnitTest.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/redis/RedisClientTuningUnitTest.java",
+      "sha256": "b71257832e691463b8a05cf6c3d27df10ed411d2ee17deea6a5ae4f7b75d3a48"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/redis/RedisStatusStoreIdempotencyIT.java",
       "path": "payment-api/src/test/java/com/example/payments/api/redis/RedisStatusStoreIdempotencyIT.java",
       "sha256": "5e9f170f8b36e04be4540d87310f05506e62e65bbda11483821718015c3d18fb"
     },
     {
       "category": "tests",
+      "id": "payment-api/src/test/java/com/example/payments/api/redis/RedisStatusStoreOutageIT.java",
+      "path": "payment-api/src/test/java/com/example/payments/api/redis/RedisStatusStoreOutageIT.java",
+      "sha256": "76303f35b800bf75d235f04926e72e9ee1681733c6cebc53836866343f9035f2"
+    },
+    {
+      "category": "tests",
       "id": "payment-api/src/test/java/com/example/payments/api/service/ApiPaymentServiceUnitTest.java",
       "path": "payment-api/src/test/java/com/example/payments/api/service/ApiPaymentServiceUnitTest.java",
-      "sha256": "87fc400b87fec20516d2f0b358c5daddf4ac2cc5530d5eeb95b89bcbcfe538ec"
+      "sha256": "f94540d2cb929846e731099ae94633e9307583b76fa40b3194ee90256175f521"
     },
     {
       "category": "tests",
@@ -2299,6 +2413,12 @@
     },
     {
       "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/IdempotencyReplayIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/IdempotencyReplayIT.java",
+      "sha256": "eb32ca9e00cc0ceded2dc4ca93b99a684bef23aba4ee05cfedb97e2984f47ce5"
+    },
+    {
+      "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/SbusFlowIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/SbusFlowIT.java",
       "sha256": "fd39f078ef96d773904e0a36d5f4545ce98f5fdf4d7df3061eb0cbf9269ee10c"
@@ -2319,7 +2439,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/TerminalTransitionIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/TerminalTransitionIT.java",
-      "sha256": "efc34f58b2888ac827b0f60b1c8d38e6efcfeedf456c09328dca3081453ae8f4"
+      "sha256": "b92bfd11a0470792c9733e63fbaa5c9b094f5696cbe9b203d3ee7a673109f896"
     },
     {
       "category": "tests",
@@ -2353,6 +2473,24 @@
     },
     {
       "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/health/DependencyReadinessIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/health/DependencyReadinessIT.java",
+      "sha256": "f5507f45bb8c2ee758e113621bc60340ef412f51e01a122b7e4ff669bc6a1b5b"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/ConsumerErrorStrategyUnitTest.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/ConsumerErrorStrategyUnitTest.java",
+      "sha256": "aca142f1943f390404e3c7c045b7ce732c79ab0a501b4dd33ea996b3effb3d72"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/ConsumerGroupReplayIsInertIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/ConsumerGroupReplayIsInertIT.java",
+      "sha256": "da277c678e55fd8a745eaf4fd3314646626790832311d5f683aeabdd0a007732"
+    },
+    {
+      "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/KafkaPublisherUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/KafkaPublisherUnitTest.java",
       "sha256": "373f44f49ac6ccfd432aedbbd3392ddc5ba449ba2e46e0e6be4603a5c76cd017"
@@ -2361,13 +2499,13 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/RetryPublisherUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/RetryPublisherUnitTest.java",
-      "sha256": "d3c1ff28b5a6a28428862ed624510109d1e3153176945271ff442e2be83ef384"
+      "sha256": "6e7c0ebf7bff549c91c3a6b70d6133ed0e0ab1f4149c952aab8715b831b4870c"
     },
     {
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/SimulationMessageHandlerUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/SimulationMessageHandlerUnitTest.java",
-      "sha256": "3f5bb777857a71c7dba07c124814785244f2ccb33e36d29f0d934f3760dedd63"
+      "sha256": "de261120ac426930c68ddb772553f1cd6e24df8f0fd769e11e1a1ffdcdbdc609"
     },
     {
       "category": "tests",
@@ -2386,6 +2524,18 @@
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/BackoffCalculatorUnitTest.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/BackoffCalculatorUnitTest.java",
       "sha256": "fa1441363d0ce3bf995fa57edd3151df84b8585040bc7c63a96ac5c0cfa1ca78"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/OutboxBatchResilienceIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/OutboxBatchResilienceIT.java",
+      "sha256": "f9c41975f0066e0a3d6205cb453ec545f9482e1e60be707223c1755ca84206cc"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/OutboxHousekeepingIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/outbox/OutboxHousekeepingIT.java",
+      "sha256": "a2827c1633d9e5217d1798fee4f5a89442307883abace97e3e25e646e0ce5a67"
     },
     {
       "category": "tests",
@@ -2415,7 +2565,19 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/retry/RecoverableDeadLetterIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/retry/RecoverableDeadLetterIT.java",
-      "sha256": "2dfded31b3d7dd6c4fef05def24094dad735214d859dfc9d3cab4e8a988db00f"
+      "sha256": "7a54154bb9f25d10650ed65e1468bfa7cff5ceaa70b424c2b59ceff79ff5ddb3"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/service/PaymentSimulationServiceUnitTest.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/service/PaymentSimulationServiceUnitTest.java",
+      "sha256": "0ba0754a8c4a22cc9f916f3594b815b1fa914a96e609e9f8a864c312efa721cb"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/support/MdcUnitTest.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/support/MdcUnitTest.java",
+      "sha256": "83ce7144d1faea522e116ecfa1c32c5280340150d72f93228a277312edaf4471"
     },
     {
       "category": "topics",

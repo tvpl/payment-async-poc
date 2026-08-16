@@ -25,7 +25,9 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
       # application-dev.yml's HS256 dev-token signer has no default (dev/test only, never used
       # in application-prod.yml, which validates asymmetric JWTs via SBUS_JWT_JWKS_URL instead).
-      SBUS_DEV_JWT_SECRET: ${SBUS_DEV_JWT_SECRET:-dev-jwt-signature-secret-change-me-please-32-bytes}
+      # `:?` not `:-`, same reasoning as payment-api: an unset dev signer stops the stack instead
+      # of booting on a committed value.
+      SBUS_DEV_JWT_SECRET: ${SBUS_DEV_JWT_SECRET:?set SBUS_DEV_JWT_SECRET in .env}
       SBUS_JWT_JWKS_URL: ${SBUS_JWT_JWKS_URL:-}
       SBUS_JWT_ISSUER: ${SBUS_JWT_ISSUER:-}
       SBUS_JWT_AUDIENCE: ${SBUS_JWT_AUDIENCE:-}

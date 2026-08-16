@@ -42,7 +42,7 @@ public class FeatureAdminController {
                 body.allowedUsers(), body.allowedGroups(), body.variants(),
                 body.onVariant(), body.offVariant(), body.version(), body.bucketingSalt());
         try {
-            FlagDefinition saved = adminService.put(definition);
+            FlagDefinition saved = adminService.put(definition, actor(authentication));
             audit.record(actor(authentication), name, "upsert",
                     "enabled=" + saved.enabled() + " version=" + saved.version());
             return HttpResponse.ok(saved);
@@ -53,12 +53,21 @@ public class FeatureAdminController {
         }
     }
 
+    // The route carries no version, so the CAS baseline is read from the authoritative store
+    // (never the cached resolver — see FlagAdminService#currentVersion). A concurrent writer
+    // between the read and the delete loses the CAS and surfaces as 409, not a silent overwrite.
     @Delete("/{name}")
     public MutableHttpResponse<?> delete(@Nullable Authentication authentication,
                                          @PathVariable String name) {
-        adminService.delete(name);
-        audit.record(actor(authentication), name, "delete", null);
-        return HttpResponse.noContent();
+        try {
+            adminService.delete(name, adminService.currentVersion(name), actor(authentication));
+            audit.record(actor(authentication), name, "delete", null);
+            return HttpResponse.noContent();
+        } catch (FlagConflictException e) {
+            return HttpResponse.status(HttpStatus.CONFLICT)
+                    .contentType(Problem.MEDIA_TYPE)
+                    .body(Problem.of(409, "Conflict", e.getMessage()));
+        }
     }
 
     private static String actor(Authentication authentication) {

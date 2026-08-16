@@ -1,7 +1,32 @@
 version: 2
 updates:
   - package-ecosystem: gradle
-    directory: /
+    directory: /payment-contracts
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: /payment-api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: /payment-sbus
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: /payment-core-mock
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: /feature-control
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: /async-redis-service
     schedule:
       interval: weekly
     open-pull-requests-limit: 10

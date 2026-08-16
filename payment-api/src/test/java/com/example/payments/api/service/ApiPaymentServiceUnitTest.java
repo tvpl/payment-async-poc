@@ -1,11 +1,14 @@
 package com.example.payments.api.service;
 
+import com.example.payments.api.client.SbusStatusResponse;
+import com.example.payments.api.config.ApiProperties;
 import com.example.payments.api.coordination.ResponseCoordinator;
 import com.example.payments.api.coordination.SbusStatusGateway;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.IdempotencyConflictException;
 import com.example.payments.api.error.PublishFailedException;
+import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.idempotency.IdempotencyFingerprint;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
 import com.example.payments.api.idempotency.PublishState;
@@ -14,6 +17,7 @@ import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
 import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.model.SimulationStatus;
+import io.lettuce.core.RedisClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +26,7 @@ import org.slf4j.MDC;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,11 +35,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -81,6 +89,27 @@ class ApiPaymentServiceUnitTest {
         assertEquals(SimulationStatus.COMPLETED, result.entry().status());
         verify(metrics).recordRequest(anyString());
         verify(producer).send(anyString(), anyString(), anyString(), any(), any());
+    }
+
+    /**
+     * task_89c681c8: causationId was declared in logback.xml but never put into MDC. For the
+     * first event in a chain it must equal the request's own requestId (EventEnvelope's own
+     * javadoc convention) — captured here at the moment of publish, while MDC is still active.
+     */
+    @Test
+    void populatesCausationIdInMdcWhilePublishing() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+        AtomicReference<String> causationIdDuringPublish = new AtomicReference<>();
+        ArgumentCaptor<String> requestId = ArgumentCaptor.forClass(String.class);
+        doAnswer(inv -> {
+            causationIdDuringPublish.set(MDC.get("causationId"));
+            return null;
+        }).when(producer).send(requestId.capture(), anyString(), anyString(), any(), any());
+
+        service.submit(REQUEST, null);
+
+        assertEquals(requestId.getValue(), causationIdDuringPublish.get());
     }
 
     @Test
@@ -156,6 +185,60 @@ class ApiPaymentServiceUnitTest {
                         || entry.status() == SimulationStatus.PROCESSING));
     }
 
+    /**
+     * task_T7 (AUD-06): only the publish-failure path used to unregister the waiter it
+     * registered. Any exception thrown by markPublishState/save/completeFromStore between
+     * register() and await() leaked the waiter forever - it never expires, so it is a
+     * permanent entry in the pending-waiters map (and in {@code api_pending}). These three
+     * tests use a real {@link ResponseCoordinator} (not a mock) so {@code pendingCount()}
+     * reflects the actual waiter registry, the same way {@link ResponseCoordinatorUnitTest}
+     * proves every other exit path leaves it empty.
+     */
+    @Test
+    void unregistersTheWaiterWhenMarkPublishStateThrowsAfterRegister() {
+        ResponseCoordinator realCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+        ApiPaymentService realService =
+                new ApiPaymentService(store, realCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
+        doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
+                .when(store).markPublishState(anyString(), anyString(), anyString(), eq(PublishState.PUBLISHED));
+
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+
+        assertEquals(0, realCoordinator.pendingCount(),
+                "the waiter must be unregistered even though markPublishState threw after register()");
+    }
+
+    @Test
+    void unregistersTheWaiterWhenSaveThrowsAfterRegister() {
+        ResponseCoordinator realCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+        ApiPaymentService realService =
+                new ApiPaymentService(store, realCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
+        // Only the post-register save (SENT_TO_SBUS) should throw; the earlier PENDING save
+        // (before register()) must be left alone or this would not exercise the leak at all.
+        doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
+                .when(store).save(argThat(entry -> entry.status() == SimulationStatus.SENT_TO_SBUS));
+
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+
+        assertEquals(0, realCoordinator.pendingCount(),
+                "the waiter must be unregistered even though store.save(SENT_TO_SBUS) threw after register()");
+    }
+
+    @Test
+    void unregistersTheWaiterWhenCompleteFromStoreThrowsAfterRegister() {
+        ResponseCoordinator realCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+        ResponseCoordinator spyCoordinator = spy(realCoordinator);
+        doThrow(new StoreUnavailableException("Redis down", new RuntimeException()))
+                .when(spyCoordinator).completeFromStore(anyString());
+        ApiPaymentService realService =
+                new ApiPaymentService(store, spyCoordinator, producer, avroSerde, metrics, sbusStatusGateway);
+
+        assertThrows(StoreUnavailableException.class, () -> realService.submit(REQUEST, "the-key"));
+
+        assertEquals(0, spyCoordinator.pendingCount(),
+                "the waiter must be unregistered even though completeFromStore threw after register()");
+    }
+
     @Test
     void resumesAnUnpublishedReservationUnderTheSameRequestId() {
         when(store.reserve(anyString(), anyString(), anyString()))
@@ -208,6 +291,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -220,6 +304,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -232,6 +317,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -244,6 +330,7 @@ class ApiPaymentServiceUnitTest {
 
         assertNull(MDC.get("requestId"));
         assertNull(MDC.get("correlationId"));
+        assertNull(MDC.get("causationId"));
         assertNull(MDC.get("traceId"));
     }
 
@@ -258,5 +345,42 @@ class ApiPaymentServiceUnitTest {
         assertEquals("the-key", exception.idempotencyKey());
         assertEquals("original-request-id", exception.originalRequestId());
         verify(producer, never()).send(anyString(), anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    void getStatusFallsBackToSbusWhenRedisIsUnreachable() {
+        String requestId = "req-outage-1";
+        when(store.get(requestId)).thenThrow(new StoreUnavailableException("Failed to read status for " + requestId,
+                new RuntimeException("connection refused")));
+        when(sbusStatusGateway.getStatus(requestId)).thenReturn(Optional.of(
+                new SbusStatusResponse(requestId, "COMPLETED", null)));
+
+        Optional<StatusEntry> result = service.getStatus(requestId);
+
+        assertTrue(result.isPresent());
+        assertEquals(SimulationStatus.COMPLETED, result.get().status());
+    }
+
+    @Test
+    void getStatusFailsClosedWhenRedisIsUnreachableAndSbusHasNoAnswer() {
+        String requestId = "req-outage-2";
+        when(store.get(requestId)).thenThrow(new StoreUnavailableException("Failed to read status for " + requestId,
+                new RuntimeException("connection refused")));
+        when(sbusStatusGateway.getStatus(requestId)).thenReturn(Optional.empty());
+
+        assertThrows(StoreUnavailableException.class, () -> service.getStatus(requestId));
+    }
+
+    @Test
+    void getStatusStillWorksNormallyWhenRedisIsHealthy() {
+        String requestId = "req-healthy-1";
+        when(store.get(requestId)).thenReturn(
+                Optional.of(new StatusEntry(requestId, SimulationStatus.COMPLETED, null)));
+
+        Optional<StatusEntry> result = service.getStatus(requestId);
+
+        assertTrue(result.isPresent());
+        assertEquals(SimulationStatus.COMPLETED, result.get().status());
+        verify(sbusStatusGateway, never()).getStatus(anyString());
     }
 }

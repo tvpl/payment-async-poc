@@ -5,7 +5,7 @@
 | Propriedade | Valor atual | Finalidade |
 | --- | --- | --- |
 | `javaLanguageVersion` | `21` | toolchain local |
-| `avroVersion` | `1.11.3` | geração e compatibilidade |
+| `avroVersion` | `1.11.4` | geração e compatibilidade |
 | `apicurioVersion` | `2.6.2.Final` | serde de Registry |
 | `kafkaVersion` | `3.8.1` | API de serde fornecida pelo consumidor |
 

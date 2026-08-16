@@ -8,4 +8,4 @@
 
 Key Kafka, `requestId`, `correlationId`, `causationId`, `traceparent`, event type e bytes Avro são preservados nos caminhos de retry/DLQ. Schemas e modelos pertencem aos GAVs `payment-contract-model` e `payment-contract-avro-apicurio`.
 
-O endpoint `/internal/simulations/{requestId}` exige `ROLE_PAYMENT_API`. Liveness/readiness são públicos e mínimos; health agregado e Prometheus exigem autenticação.
+O endpoint `/internal/payment-simulations/{requestId}` exige `ROLE_PAYMENT_API`. Liveness/readiness são públicos e mínimos; health agregado e Prometheus exigem autenticação.

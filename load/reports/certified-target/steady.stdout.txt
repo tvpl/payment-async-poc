@@ -1,0 +1,2892 @@
+
+         /\      Grafana   /‾‾/
+    /\  /  \     |\  __   /  /
+   /  \/    \    | |/ /  /   ‾‾\
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/
+
+     execution: local
+        script: /load/k6/capacity.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 300 max VUs, 15m30s max duration (incl. graceful stop):
+              * steady: 17.00 iterations/s for 15m0s (maxVUs: 100-300, gracefulStop: 30s)
+
+
+running (00m01.0s), 006/100 VUs, 11 complete and 0 interrupted iterations
+steady   [   0% ] 006/100 VUs  00m01.0s/15m0s  17.00 iters/s
+
+running (00m02.0s), 006/100 VUs, 28 complete and 0 interrupted iterations
+steady   [   0% ] 006/100 VUs  00m02.0s/15m0s  17.00 iters/s
+
+running (00m03.0s), 001/100 VUs, 50 complete and 0 interrupted iterations
+steady   [   0% ] 001/100 VUs  00m03.0s/15m0s  17.00 iters/s
+
+running (00m04.0s), 003/100 VUs, 65 complete and 0 interrupted iterations
+steady   [   0% ] 003/100 VUs  00m04.0s/15m0s  17.00 iters/s
+
+running (00m05.0s), 006/100 VUs, 79 complete and 0 interrupted iterations
+steady   [   1% ] 006/100 VUs  00m05.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:18:47Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"922d0126-a1c1-48ea-99c9-cca387d77c43\",\"idempotencyKey\":\"affb9eb3-afc6-4b0d-ac1c-2dbb0196376a\"}" source=console
+
+running (00m06.0s), 005/100 VUs, 97 complete and 0 interrupted iterations
+steady   [   1% ] 005/100 VUs  00m06.0s/15m0s  17.00 iters/s
+
+running (00m07.0s), 004/100 VUs, 115 complete and 0 interrupted iterations
+steady   [   1% ] 004/100 VUs  00m07.0s/15m0s  17.00 iters/s
+
+running (00m08.0s), 007/100 VUs, 129 complete and 0 interrupted iterations
+steady   [   1% ] 007/100 VUs  00m08.0s/15m0s  17.00 iters/s
+
+running (00m09.0s), 002/100 VUs, 151 complete and 0 interrupted iterations
+steady   [   1% ] 002/100 VUs  00m09.0s/15m0s  17.00 iters/s
+
+running (00m10.0s), 001/100 VUs, 169 complete and 0 interrupted iterations
+steady   [   1% ] 001/100 VUs  00m10.0s/15m0s  17.00 iters/s
+
+running (00m11.0s), 003/100 VUs, 184 complete and 0 interrupted iterations
+steady   [   1% ] 003/100 VUs  00m11.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:18:53Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"7194c865-3d3d-45e4-b244-6f5baf219c37\",\"idempotencyKey\":\"e59b6321-265b-43dd-bbd3-2275f7d03bba\"}" source=console
+
+running (00m12.0s), 003/100 VUs, 201 complete and 0 interrupted iterations
+steady   [   1% ] 003/100 VUs  00m12.0s/15m0s  17.00 iters/s
+
+running (00m13.0s), 002/100 VUs, 219 complete and 0 interrupted iterations
+steady   [   1% ] 002/100 VUs  00m13.0s/15m0s  17.00 iters/s
+
+running (00m14.0s), 001/100 VUs, 237 complete and 0 interrupted iterations
+steady   [   2% ] 001/100 VUs  00m14.0s/15m0s  17.00 iters/s
+
+running (00m15.0s), 003/100 VUs, 252 complete and 0 interrupted iterations
+steady   [   2% ] 003/100 VUs  00m15.0s/15m0s  17.00 iters/s
+
+running (00m16.0s), 003/100 VUs, 269 complete and 0 interrupted iterations
+steady   [   2% ] 003/100 VUs  00m16.0s/15m0s  17.00 iters/s
+
+running (00m17.0s), 002/100 VUs, 287 complete and 0 interrupted iterations
+steady   [   2% ] 002/100 VUs  00m17.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:18:59Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"a6cbb8d6-05fc-4e2e-9988-c053bd6ef76f\",\"idempotencyKey\":\"b4b1e8bd-dc2b-4cae-be69-405463129b97\"}" source=console
+
+running (00m18.0s), 001/100 VUs, 305 complete and 0 interrupted iterations
+steady   [   2% ] 001/100 VUs  00m18.0s/15m0s  17.00 iters/s
+
+running (00m19.0s), 003/100 VUs, 320 complete and 0 interrupted iterations
+steady   [   2% ] 003/100 VUs  00m19.0s/15m0s  17.00 iters/s
+
+running (00m20.0s), 003/100 VUs, 337 complete and 0 interrupted iterations
+steady   [   2% ] 003/100 VUs  00m20.0s/15m0s  17.00 iters/s
+
+running (00m21.0s), 002/100 VUs, 355 complete and 0 interrupted iterations
+steady   [   2% ] 002/100 VUs  00m21.0s/15m0s  17.00 iters/s
+
+running (00m22.0s), 004/100 VUs, 370 complete and 0 interrupted iterations
+steady   [   2% ] 004/100 VUs  00m22.0s/15m0s  17.00 iters/s
+
+running (00m23.0s), 002/100 VUs, 389 complete and 0 interrupted iterations
+steady   [   3% ] 002/100 VUs  00m23.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:04Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b77a1982-fa61-4c0e-abe4-20d7f9b7273d\",\"idempotencyKey\":\"b43f5e00-7b9a-42d5-a566-ad0cd300cb0f\"}" source=console
+
+running (00m24.0s), 003/100 VUs, 405 complete and 0 interrupted iterations
+steady   [   3% ] 003/100 VUs  00m24.0s/15m0s  17.00 iters/s
+
+running (00m25.0s), 005/100 VUs, 420 complete and 0 interrupted iterations
+steady   [   3% ] 005/100 VUs  00m25.0s/15m0s  17.00 iters/s
+
+running (00m26.0s), 004/100 VUs, 438 complete and 0 interrupted iterations
+steady   [   3% ] 004/100 VUs  00m26.0s/15m0s  17.00 iters/s
+
+running (00m27.0s), 006/100 VUs, 453 complete and 0 interrupted iterations
+steady   [   3% ] 006/100 VUs  00m27.0s/15m0s  17.00 iters/s
+
+running (00m28.0s), 006/100 VUs, 470 complete and 0 interrupted iterations
+steady   [   3% ] 006/100 VUs  00m28.0s/15m0s  17.00 iters/s
+
+running (00m29.0s), 004/100 VUs, 489 complete and 0 interrupted iterations
+steady   [   3% ] 004/100 VUs  00m29.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:11Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"37981a50-ebd3-4184-8961-55b8ff067673\",\"idempotencyKey\":\"2abb12a4-15b2-465f-a40c-1a03dcc21314\"}" source=console
+
+running (00m30.0s), 006/100 VUs, 504 complete and 0 interrupted iterations
+steady   [   3% ] 006/100 VUs  00m30.0s/15m0s  17.00 iters/s
+
+running (00m31.0s), 004/100 VUs, 523 complete and 0 interrupted iterations
+steady   [   3% ] 004/100 VUs  00m31.0s/15m0s  17.00 iters/s
+
+running (00m32.0s), 004/100 VUs, 540 complete and 0 interrupted iterations
+steady   [   4% ] 004/100 VUs  00m32.0s/15m0s  17.00 iters/s
+
+running (00m33.0s), 003/100 VUs, 558 complete and 0 interrupted iterations
+steady   [   4% ] 003/100 VUs  00m33.0s/15m0s  17.00 iters/s
+
+running (00m34.0s), 002/100 VUs, 576 complete and 0 interrupted iterations
+steady   [   4% ] 002/100 VUs  00m34.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:16Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"90809e57-f5a1-4793-a52d-f1a55e74c2be\",\"idempotencyKey\":\"dcb8b11a-36e3-4961-ad92-347851a85061\"}" source=console
+
+running (00m35.0s), 003/100 VUs, 592 complete and 0 interrupted iterations
+steady   [   4% ] 003/100 VUs  00m35.0s/15m0s  17.00 iters/s
+
+running (00m36.0s), 004/100 VUs, 608 complete and 0 interrupted iterations
+steady   [   4% ] 004/100 VUs  00m36.0s/15m0s  17.00 iters/s
+
+running (00m37.0s), 004/100 VUs, 625 complete and 0 interrupted iterations
+steady   [   4% ] 004/100 VUs  00m37.0s/15m0s  17.00 iters/s
+
+running (00m38.0s), 004/100 VUs, 642 complete and 0 interrupted iterations
+steady   [   4% ] 004/100 VUs  00m38.0s/15m0s  17.00 iters/s
+
+running (00m39.0s), 006/100 VUs, 657 complete and 0 interrupted iterations
+steady   [   4% ] 006/100 VUs  00m39.0s/15m0s  17.00 iters/s
+
+running (00m40.0s), 004/100 VUs, 676 complete and 0 interrupted iterations
+steady   [   4% ] 004/100 VUs  00m40.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:22Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"41bd6cab-2f89-48cf-b804-0435073be33a\",\"idempotencyKey\":\"a947d20a-9888-49f7-819f-9f5da343ca33\"}" source=console
+
+running (00m41.0s), 003/100 VUs, 694 complete and 0 interrupted iterations
+steady   [   5% ] 003/100 VUs  00m41.0s/15m0s  17.00 iters/s
+
+running (00m42.0s), 004/100 VUs, 710 complete and 0 interrupted iterations
+steady   [   5% ] 004/100 VUs  00m42.0s/15m0s  17.00 iters/s
+
+running (00m43.0s), 005/100 VUs, 726 complete and 0 interrupted iterations
+steady   [   5% ] 005/100 VUs  00m43.0s/15m0s  17.00 iters/s
+
+running (00m44.0s), 004/100 VUs, 744 complete and 0 interrupted iterations
+steady   [   5% ] 004/100 VUs  00m44.0s/15m0s  17.00 iters/s
+
+running (00m45.0s), 005/100 VUs, 760 complete and 0 interrupted iterations
+steady   [   5% ] 005/100 VUs  00m45.0s/15m0s  17.00 iters/s
+
+running (00m46.0s), 005/100 VUs, 777 complete and 0 interrupted iterations
+steady   [   5% ] 005/100 VUs  00m46.0s/15m0s  17.00 iters/s
+
+running (00m47.0s), 007/100 VUs, 792 complete and 0 interrupted iterations
+steady   [   5% ] 007/100 VUs  00m47.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:28Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"957dcef3-6222-445a-8086-9cd309b1188b\",\"idempotencyKey\":\"4cf3e26e-306e-4a56-88f8-52efb9d23bf3\"}" source=console
+
+running (00m48.0s), 005/100 VUs, 811 complete and 0 interrupted iterations
+steady   [   5% ] 005/100 VUs  00m48.0s/15m0s  17.00 iters/s
+
+running (00m49.0s), 004/100 VUs, 829 complete and 0 interrupted iterations
+steady   [   5% ] 004/100 VUs  00m49.0s/15m0s  17.00 iters/s
+
+running (00m50.0s), 007/100 VUs, 843 complete and 0 interrupted iterations
+steady   [   6% ] 007/100 VUs  00m50.0s/15m0s  17.00 iters/s
+
+running (00m51.0s), 006/100 VUs, 861 complete and 0 interrupted iterations
+steady   [   6% ] 006/100 VUs  00m51.0s/15m0s  17.00 iters/s
+
+running (00m52.0s), 005/100 VUs, 879 complete and 0 interrupted iterations
+steady   [   6% ] 005/100 VUs  00m52.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:34Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"61d64f39-f0bb-4121-84fd-67a2613caab7\",\"idempotencyKey\":\"f2658d0c-ade7-4b36-adf0-591dc477f674\"}" source=console
+
+running (00m53.0s), 004/100 VUs, 897 complete and 0 interrupted iterations
+steady   [   6% ] 004/100 VUs  00m53.0s/15m0s  17.00 iters/s
+
+running (00m54.0s), 003/100 VUs, 915 complete and 0 interrupted iterations
+steady   [   6% ] 003/100 VUs  00m54.0s/15m0s  17.00 iters/s
+
+running (00m55.0s), 006/100 VUs, 929 complete and 0 interrupted iterations
+steady   [   6% ] 006/100 VUs  00m55.0s/15m0s  17.00 iters/s
+
+running (00m56.0s), 005/100 VUs, 947 complete and 0 interrupted iterations
+steady   [   6% ] 005/100 VUs  00m56.0s/15m0s  17.00 iters/s
+
+running (00m57.0s), 005/100 VUs, 964 complete and 0 interrupted iterations
+steady   [   6% ] 005/100 VUs  00m57.0s/15m0s  17.00 iters/s
+
+running (00m58.0s), 004/100 VUs, 982 complete and 0 interrupted iterations
+steady   [   6% ] 004/100 VUs  00m58.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:39Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f6a84e23-cef9-4d8c-9150-497822f940c3\",\"idempotencyKey\":\"4d399f80-e9ff-4195-9389-5d2111888239\"}" source=console
+
+running (00m59.0s), 007/100 VUs, 996 complete and 0 interrupted iterations
+steady   [   7% ] 007/100 VUs  00m59.0s/15m0s  17.00 iters/s
+
+running (01m00.0s), 006/100 VUs, 1014 complete and 0 interrupted iterations
+steady   [   7% ] 006/100 VUs  01m00.0s/15m0s  17.00 iters/s
+
+running (01m01.0s), 005/100 VUs, 1032 complete and 0 interrupted iterations
+steady   [   7% ] 005/100 VUs  01m01.0s/15m0s  17.00 iters/s
+
+running (01m02.0s), 004/100 VUs, 1050 complete and 0 interrupted iterations
+steady   [   7% ] 004/100 VUs  01m02.0s/15m0s  17.00 iters/s
+
+running (01m03.0s), 004/100 VUs, 1067 complete and 0 interrupted iterations
+steady   [   7% ] 004/100 VUs  01m03.0s/15m0s  17.00 iters/s
+
+running (01m04.0s), 003/100 VUs, 1085 complete and 0 interrupted iterations
+steady   [   7% ] 003/100 VUs  01m04.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:45Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"adc007fd-b787-43b2-9ff6-6310974be49a\",\"idempotencyKey\":\"f6398bff-cc5a-4013-a5f7-06692f7466d8\"}" source=console
+
+running (01m05.0s), 002/100 VUs, 1103 complete and 0 interrupted iterations
+steady   [   7% ] 002/100 VUs  01m05.0s/15m0s  17.00 iters/s
+
+running (01m06.0s), 004/100 VUs, 1118 complete and 0 interrupted iterations
+steady   [   7% ] 004/100 VUs  01m06.0s/15m0s  17.00 iters/s
+
+running (01m07.0s), 006/100 VUs, 1133 complete and 0 interrupted iterations
+steady   [   7% ] 006/100 VUs  01m07.0s/15m0s  17.00 iters/s
+
+running (01m08.0s), 006/100 VUs, 1150 complete and 0 interrupted iterations
+steady   [   8% ] 006/100 VUs  01m08.0s/15m0s  17.00 iters/s
+
+running (01m09.0s), 005/100 VUs, 1168 complete and 0 interrupted iterations
+steady   [   8% ] 005/100 VUs  01m09.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:51Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"3c8e485c-1657-4fa7-8593-6b883c386921\",\"idempotencyKey\":\"40350bb6-4b68-47c8-bbe3-1880f43c30ce\"}" source=console
+
+running (01m10.0s), 005/100 VUs, 1185 complete and 0 interrupted iterations
+steady   [   8% ] 005/100 VUs  01m10.0s/15m0s  17.00 iters/s
+
+running (01m11.0s), 002/100 VUs, 1205 complete and 0 interrupted iterations
+steady   [   8% ] 002/100 VUs  01m11.0s/15m0s  17.00 iters/s
+
+running (01m12.0s), 003/100 VUs, 1221 complete and 0 interrupted iterations
+steady   [   8% ] 003/100 VUs  01m12.0s/15m0s  17.00 iters/s
+
+running (01m13.0s), 003/100 VUs, 1238 complete and 0 interrupted iterations
+steady   [   8% ] 003/100 VUs  01m13.0s/15m0s  17.00 iters/s
+
+running (01m14.0s), 005/100 VUs, 1253 complete and 0 interrupted iterations
+steady   [   8% ] 005/100 VUs  01m14.0s/15m0s  17.00 iters/s
+
+running (01m15.0s), 005/100 VUs, 1270 complete and 0 interrupted iterations
+steady   [   8% ] 005/100 VUs  01m15.0s/15m0s  17.00 iters/s
+
+running (01m16.0s), 004/100 VUs, 1288 complete and 0 interrupted iterations
+steady   [   8% ] 004/100 VUs  01m16.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:19:58Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"ea909766-e943-442f-a0fd-580e0d6042a7\",\"idempotencyKey\":\"bfe112ae-d1e8-44e2-9a07-d58b3be6e5c0\"}" source=console
+
+running (01m17.0s), 005/100 VUs, 1304 complete and 0 interrupted iterations
+steady   [   9% ] 005/100 VUs  01m17.0s/15m0s  17.00 iters/s
+
+running (01m18.0s), 006/100 VUs, 1320 complete and 0 interrupted iterations
+steady   [   9% ] 006/100 VUs  01m18.0s/15m0s  17.00 iters/s
+
+running (01m19.0s), 005/100 VUs, 1338 complete and 0 interrupted iterations
+steady   [   9% ] 005/100 VUs  01m19.0s/15m0s  17.00 iters/s
+
+running (01m20.0s), 005/100 VUs, 1355 complete and 0 interrupted iterations
+steady   [   9% ] 005/100 VUs  01m20.0s/15m0s  17.00 iters/s
+
+running (01m21.0s), 002/100 VUs, 1375 complete and 0 interrupted iterations
+steady   [   9% ] 002/100 VUs  01m21.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:03Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5bfba59d-548a-4f64-b9e4-afdcfa9422fb\",\"idempotencyKey\":\"4bba8194-d51a-46e7-b756-e29fbca8d641\"}" source=console
+
+running (01m22.0s), 007/100 VUs, 1387 complete and 0 interrupted iterations
+steady   [   9% ] 007/100 VUs  01m22.0s/15m0s  17.00 iters/s
+
+running (01m23.0s), 006/100 VUs, 1405 complete and 0 interrupted iterations
+steady   [   9% ] 006/100 VUs  01m23.0s/15m0s  17.00 iters/s
+
+running (01m24.0s), 005/100 VUs, 1423 complete and 0 interrupted iterations
+steady   [   9% ] 005/100 VUs  01m24.0s/15m0s  17.00 iters/s
+
+running (01m25.0s), 004/100 VUs, 1441 complete and 0 interrupted iterations
+steady   [   9% ] 004/100 VUs  01m25.0s/15m0s  17.00 iters/s
+
+running (01m26.0s), 004/100 VUs, 1458 complete and 0 interrupted iterations
+steady   [  10% ] 004/100 VUs  01m26.0s/15m0s  17.00 iters/s
+
+running (01m27.0s), 003/100 VUs, 1476 complete and 0 interrupted iterations
+steady   [  10% ] 003/100 VUs  01m27.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:09Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"3e6a4032-59ef-45a7-85ba-2d83251076ba\",\"idempotencyKey\":\"465101d0-b58f-43d5-a49f-3d96fd4895b5\"}" source=console
+
+running (01m28.0s), 002/100 VUs, 1494 complete and 0 interrupted iterations
+steady   [  10% ] 002/100 VUs  01m28.0s/15m0s  17.00 iters/s
+
+running (01m29.0s), 003/100 VUs, 1510 complete and 0 interrupted iterations
+steady   [  10% ] 003/100 VUs  01m29.0s/15m0s  17.00 iters/s
+
+running (01m30.0s), 006/100 VUs, 1524 complete and 0 interrupted iterations
+steady   [  10% ] 006/100 VUs  01m30.0s/15m0s  17.00 iters/s
+
+running (01m31.0s), 005/100 VUs, 1542 complete and 0 interrupted iterations
+steady   [  10% ] 005/100 VUs  01m31.0s/15m0s  17.00 iters/s
+
+running (01m32.0s), 005/100 VUs, 1559 complete and 0 interrupted iterations
+steady   [  10% ] 005/100 VUs  01m32.0s/15m0s  17.00 iters/s
+
+running (01m33.0s), 002/100 VUs, 1579 complete and 0 interrupted iterations
+steady   [  10% ] 002/100 VUs  01m33.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:15Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"9fd42950-1097-478f-9ff9-543a6d25e439\",\"idempotencyKey\":\"c3a0d268-f76b-46a7-858b-dd208b7a9327\"}" source=console
+
+running (01m34.0s), 006/100 VUs, 1592 complete and 0 interrupted iterations
+steady   [  10% ] 006/100 VUs  01m34.0s/15m0s  17.00 iters/s
+
+running (01m35.0s), 006/100 VUs, 1609 complete and 0 interrupted iterations
+steady   [  11% ] 006/100 VUs  01m35.0s/15m0s  17.00 iters/s
+
+running (01m36.0s), 005/100 VUs, 1627 complete and 0 interrupted iterations
+steady   [  11% ] 005/100 VUs  01m36.0s/15m0s  17.00 iters/s
+
+running (01m37.0s), 004/100 VUs, 1645 complete and 0 interrupted iterations
+steady   [  11% ] 004/100 VUs  01m37.0s/15m0s  17.00 iters/s
+
+running (01m38.0s), 007/100 VUs, 1659 complete and 0 interrupted iterations
+steady   [  11% ] 007/100 VUs  01m38.0s/15m0s  17.00 iters/s
+
+running (01m39.0s), 006/100 VUs, 1677 complete and 0 interrupted iterations
+steady   [  11% ] 006/100 VUs  01m39.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:20Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2b721838-69a6-4eef-a066-9e157bb0dd33\",\"idempotencyKey\":\"b303e5bc-f277-49fa-8b9d-18495d5228b9\"}" source=console
+
+running (01m40.0s), 005/100 VUs, 1695 complete and 0 interrupted iterations
+steady   [  11% ] 005/100 VUs  01m40.0s/15m0s  17.00 iters/s
+
+running (01m41.0s), 004/100 VUs, 1713 complete and 0 interrupted iterations
+steady   [  11% ] 004/100 VUs  01m41.0s/15m0s  17.00 iters/s
+
+running (01m42.0s), 004/100 VUs, 1730 complete and 0 interrupted iterations
+steady   [  11% ] 004/100 VUs  01m42.0s/15m0s  17.00 iters/s
+
+running (01m43.0s), 003/100 VUs, 1748 complete and 0 interrupted iterations
+steady   [  11% ] 003/100 VUs  01m43.0s/15m0s  17.00 iters/s
+
+running (01m44.0s), 006/100 VUs, 1762 complete and 0 interrupted iterations
+steady   [  12% ] 006/100 VUs  01m44.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:26Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"31191d68-17c8-4d90-a4b1-3ed45752327a\",\"idempotencyKey\":\"42ce05ed-a87e-437a-8395-da885a0f6de4\"}" source=console
+
+running (01m45.0s), 006/100 VUs, 1779 complete and 0 interrupted iterations
+steady   [  12% ] 006/100 VUs  01m45.0s/15m0s  17.00 iters/s
+
+running (01m46.0s), 005/100 VUs, 1797 complete and 0 interrupted iterations
+steady   [  12% ] 005/100 VUs  01m46.0s/15m0s  17.00 iters/s
+
+running (01m47.0s), 004/100 VUs, 1815 complete and 0 interrupted iterations
+steady   [  12% ] 004/100 VUs  01m47.0s/15m0s  17.00 iters/s
+
+running (01m48.0s), 007/100 VUs, 1829 complete and 0 interrupted iterations
+steady   [  12% ] 007/100 VUs  01m48.0s/15m0s  17.00 iters/s
+
+running (01m49.0s), 006/100 VUs, 1847 complete and 0 interrupted iterations
+steady   [  12% ] 006/100 VUs  01m49.0s/15m0s  17.00 iters/s
+
+running (01m50.0s), 005/100 VUs, 1865 complete and 0 interrupted iterations
+steady   [  12% ] 005/100 VUs  01m50.0s/15m0s  17.00 iters/s
+
+running (01m51.0s), 004/100 VUs, 1883 complete and 0 interrupted iterations
+steady   [  12% ] 004/100 VUs  01m51.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:33Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c2e81515-8ecd-4d75-a400-66c94fa694b7\",\"idempotencyKey\":\"426b4c6b-182b-49e5-aab0-8a07f827ef76\"}" source=console
+
+running (01m52.0s), 004/100 VUs, 1900 complete and 0 interrupted iterations
+steady   [  12% ] 004/100 VUs  01m52.0s/15m0s  17.00 iters/s
+
+running (01m53.0s), 006/100 VUs, 1915 complete and 0 interrupted iterations
+steady   [  13% ] 006/100 VUs  01m53.0s/15m0s  17.00 iters/s
+
+running (01m54.0s), 005/100 VUs, 1933 complete and 0 interrupted iterations
+steady   [  13% ] 005/100 VUs  01m54.0s/15m0s  17.00 iters/s
+
+running (01m55.0s), 005/100 VUs, 1950 complete and 0 interrupted iterations
+steady   [  13% ] 005/100 VUs  01m55.0s/15m0s  17.00 iters/s
+
+running (01m56.0s), 004/100 VUs, 1968 complete and 0 interrupted iterations
+steady   [  13% ] 004/100 VUs  01m56.0s/15m0s  17.00 iters/s
+
+running (01m57.0s), 007/100 VUs, 1982 complete and 0 interrupted iterations
+steady   [  13% ] 007/100 VUs  01m57.0s/15m0s  17.00 iters/s
+
+running (01m58.0s), 006/100 VUs, 2000 complete and 0 interrupted iterations
+steady   [  13% ] 006/100 VUs  01m58.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:39Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"bb4c1232-95ae-433c-be75-0dfe1ff5a242\",\"idempotencyKey\":\"76931601-017c-4cbc-8f9f-5767934787bf\"}" source=console
+
+running (01m59.0s), 005/100 VUs, 2018 complete and 0 interrupted iterations
+steady   [  13% ] 005/100 VUs  01m59.0s/15m0s  17.00 iters/s
+
+running (02m00.0s), 005/100 VUs, 2035 complete and 0 interrupted iterations
+steady   [  13% ] 005/100 VUs  02m00.0s/15m0s  17.00 iters/s
+
+running (02m01.0s), 003/100 VUs, 2054 complete and 0 interrupted iterations
+steady   [  13% ] 003/100 VUs  02m01.0s/15m0s  17.00 iters/s
+
+running (02m02.0s), 007/100 VUs, 2067 complete and 0 interrupted iterations
+steady   [  14% ] 007/100 VUs  02m02.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:43Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"ccaaa2ba-4d42-4b0f-ab48-4460f6c0209f\",\"idempotencyKey\":\"338fe54c-3f3f-465e-a764-7d4d11253ef4\"}" source=console
+
+running (02m03.0s), 006/100 VUs, 2085 complete and 0 interrupted iterations
+steady   [  14% ] 006/100 VUs  02m03.0s/15m0s  17.00 iters/s
+
+running (02m04.0s), 005/100 VUs, 2103 complete and 0 interrupted iterations
+steady   [  14% ] 005/100 VUs  02m04.0s/15m0s  17.00 iters/s
+
+running (02m05.0s), 004/100 VUs, 2121 complete and 0 interrupted iterations
+steady   [  14% ] 004/100 VUs  02m05.0s/15m0s  17.00 iters/s
+
+running (02m06.0s), 004/100 VUs, 2138 complete and 0 interrupted iterations
+steady   [  14% ] 004/100 VUs  02m06.0s/15m0s  17.00 iters/s
+
+running (02m07.0s), 007/100 VUs, 2152 complete and 0 interrupted iterations
+steady   [  14% ] 007/100 VUs  02m07.0s/15m0s  17.00 iters/s
+
+running (02m08.0s), 006/100 VUs, 2170 complete and 0 interrupted iterations
+steady   [  14% ] 006/100 VUs  02m08.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:50Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"06e5f7f2-b7e0-4e89-be26-d5ef4aff3472\",\"idempotencyKey\":\"0368f99e-859b-41f9-bce7-c8445662d256\"}" source=console
+
+running (02m09.0s), 005/100 VUs, 2188 complete and 0 interrupted iterations
+steady   [  14% ] 005/100 VUs  02m09.0s/15m0s  17.00 iters/s
+
+running (02m10.0s), 004/100 VUs, 2206 complete and 0 interrupted iterations
+steady   [  14% ] 004/100 VUs  02m10.0s/15m0s  17.00 iters/s
+
+running (02m11.0s), 004/100 VUs, 2223 complete and 0 interrupted iterations
+steady   [  15% ] 004/100 VUs  02m11.0s/15m0s  17.00 iters/s
+
+running (02m12.0s), 006/100 VUs, 2238 complete and 0 interrupted iterations
+steady   [  15% ] 006/100 VUs  02m12.0s/15m0s  17.00 iters/s
+
+running (02m13.0s), 006/100 VUs, 2255 complete and 0 interrupted iterations
+steady   [  15% ] 006/100 VUs  02m13.0s/15m0s  17.00 iters/s
+
+running (02m14.0s), 005/100 VUs, 2273 complete and 0 interrupted iterations
+steady   [  15% ] 005/100 VUs  02m14.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:20:56Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"27da3039-afda-4818-8170-433d07699d34\",\"idempotencyKey\":\"ce2d9fd3-2d5f-4bf5-92fb-d018a233f1ef\"}" source=console
+
+running (02m15.0s), 004/100 VUs, 2291 complete and 0 interrupted iterations
+steady   [  15% ] 004/100 VUs  02m15.0s/15m0s  17.00 iters/s
+
+running (02m16.0s), 004/100 VUs, 2308 complete and 0 interrupted iterations
+steady   [  15% ] 004/100 VUs  02m16.0s/15m0s  17.00 iters/s
+
+running (02m17.0s), 006/100 VUs, 2323 complete and 0 interrupted iterations
+steady   [  15% ] 006/100 VUs  02m17.0s/15m0s  17.00 iters/s
+
+running (02m18.0s), 006/100 VUs, 2340 complete and 0 interrupted iterations
+steady   [  15% ] 006/100 VUs  02m18.0s/15m0s  17.00 iters/s
+
+running (02m19.0s), 005/100 VUs, 2358 complete and 0 interrupted iterations
+steady   [  15% ] 005/100 VUs  02m19.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:01Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2283df4c-115e-4c64-82ea-d398bfd62c8f\",\"idempotencyKey\":\"c71a7d3a-9733-4c0d-b644-55252c0ece7d\"}" source=console
+
+running (02m20.0s), 004/100 VUs, 2376 complete and 0 interrupted iterations
+steady   [  16% ] 004/100 VUs  02m20.0s/15m0s  17.00 iters/s
+
+running (02m21.0s), 002/100 VUs, 2395 complete and 0 interrupted iterations
+steady   [  16% ] 002/100 VUs  02m21.0s/15m0s  17.00 iters/s
+
+running (02m22.0s), 006/100 VUs, 2408 complete and 0 interrupted iterations
+steady   [  16% ] 006/100 VUs  02m22.0s/15m0s  17.00 iters/s
+
+running (02m23.0s), 006/100 VUs, 2425 complete and 0 interrupted iterations
+steady   [  16% ] 006/100 VUs  02m23.0s/15m0s  17.00 iters/s
+
+running (02m24.0s), 005/100 VUs, 2443 complete and 0 interrupted iterations
+steady   [  16% ] 005/100 VUs  02m24.0s/15m0s  17.00 iters/s
+
+running (02m25.0s), 004/100 VUs, 2461 complete and 0 interrupted iterations
+steady   [  16% ] 004/100 VUs  02m25.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:07Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"945ac52a-db8c-4de8-bce8-b5c1dd511d4e\",\"idempotencyKey\":\"a24d20e7-9fd8-4ca3-97e6-2ba755429d7c\"}" source=console
+
+running (02m26.0s), 003/100 VUs, 2479 complete and 0 interrupted iterations
+steady   [  16% ] 003/100 VUs  02m26.0s/15m0s  17.00 iters/s
+
+running (02m27.0s), 006/100 VUs, 2493 complete and 0 interrupted iterations
+steady   [  16% ] 006/100 VUs  02m27.0s/15m0s  17.00 iters/s
+
+running (02m28.0s), 005/100 VUs, 2511 complete and 0 interrupted iterations
+steady   [  16% ] 005/100 VUs  02m28.0s/15m0s  17.00 iters/s
+
+running (02m29.0s), 005/100 VUs, 2528 complete and 0 interrupted iterations
+steady   [  17% ] 005/100 VUs  02m29.0s/15m0s  17.00 iters/s
+
+running (02m30.0s), 004/100 VUs, 2546 complete and 0 interrupted iterations
+steady   [  17% ] 004/100 VUs  02m30.0s/15m0s  17.00 iters/s
+
+running (02m31.0s), 002/100 VUs, 2565 complete and 0 interrupted iterations
+steady   [  17% ] 002/100 VUs  02m31.0s/15m0s  17.00 iters/s
+
+running (02m32.0s), 006/100 VUs, 2578 complete and 0 interrupted iterations
+steady   [  17% ] 006/100 VUs  02m32.0s/15m0s  17.00 iters/s
+
+running (02m33.0s), 004/100 VUs, 2597 complete and 0 interrupted iterations
+steady   [  17% ] 004/100 VUs  02m33.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:14Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b5674579-ffbb-473d-973c-c032578da784\",\"idempotencyKey\":\"47d636c5-71ea-4523-b340-4b30b821bee9\"}" source=console
+
+running (02m34.0s), 005/100 VUs, 2613 complete and 0 interrupted iterations
+steady   [  17% ] 005/100 VUs  02m34.0s/15m0s  17.00 iters/s
+
+running (02m35.0s), 004/100 VUs, 2631 complete and 0 interrupted iterations
+steady   [  17% ] 004/100 VUs  02m35.0s/15m0s  17.00 iters/s
+
+running (02m36.0s), 003/100 VUs, 2649 complete and 0 interrupted iterations
+steady   [  17% ] 003/100 VUs  02m36.0s/15m0s  17.00 iters/s
+
+running (02m37.0s), 006/100 VUs, 2663 complete and 0 interrupted iterations
+steady   [  17% ] 006/100 VUs  02m37.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:19Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"d02df509-fe50-4110-8708-7f7d55e0fc8a\",\"idempotencyKey\":\"75da6b5b-4732-47da-af9e-dfab32317918\"}" source=console
+
+running (02m38.0s), 006/100 VUs, 2680 complete and 0 interrupted iterations
+steady   [  18% ] 006/100 VUs  02m38.0s/15m0s  17.00 iters/s
+
+running (02m39.0s), 005/100 VUs, 2698 complete and 0 interrupted iterations
+steady   [  18% ] 005/100 VUs  02m39.0s/15m0s  17.00 iters/s
+
+running (02m40.0s), 004/100 VUs, 2716 complete and 0 interrupted iterations
+steady   [  18% ] 004/100 VUs  02m40.0s/15m0s  17.00 iters/s
+
+running (02m41.0s), 004/100 VUs, 2733 complete and 0 interrupted iterations
+steady   [  18% ] 004/100 VUs  02m41.0s/15m0s  17.00 iters/s
+
+running (02m42.0s), 006/100 VUs, 2748 complete and 0 interrupted iterations
+steady   [  18% ] 006/100 VUs  02m42.0s/15m0s  17.00 iters/s
+
+running (02m43.0s), 006/100 VUs, 2765 complete and 0 interrupted iterations
+steady   [  18% ] 006/100 VUs  02m43.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:25Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"d8aeb158-240b-412d-aae5-8aa91d305e37\",\"idempotencyKey\":\"b75df081-1e6c-4351-a57c-f8652ca2d414\"}" source=console
+
+running (02m44.0s), 005/100 VUs, 2783 complete and 0 interrupted iterations
+steady   [  18% ] 005/100 VUs  02m44.0s/15m0s  17.00 iters/s
+
+running (02m45.0s), 004/100 VUs, 2801 complete and 0 interrupted iterations
+steady   [  18% ] 004/100 VUs  02m45.0s/15m0s  17.00 iters/s
+
+running (02m46.0s), 004/100 VUs, 2818 complete and 0 interrupted iterations
+steady   [  18% ] 004/100 VUs  02m46.0s/15m0s  17.00 iters/s
+
+running (02m47.0s), 006/100 VUs, 2833 complete and 0 interrupted iterations
+steady   [  19% ] 006/100 VUs  02m47.0s/15m0s  17.00 iters/s
+
+running (02m48.0s), 005/100 VUs, 2851 complete and 0 interrupted iterations
+steady   [  19% ] 005/100 VUs  02m48.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:30Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b2088449-e09b-42d4-8542-811dc204df63\",\"idempotencyKey\":\"0cd57e4d-4af0-46af-8cd0-0d99893b5285\"}" source=console
+
+running (02m49.0s), 005/100 VUs, 2868 complete and 0 interrupted iterations
+steady   [  19% ] 005/100 VUs  02m49.0s/15m0s  17.00 iters/s
+
+running (02m50.0s), 004/100 VUs, 2886 complete and 0 interrupted iterations
+steady   [  19% ] 004/100 VUs  02m50.0s/15m0s  17.00 iters/s
+
+running (02m51.0s), 003/100 VUs, 2904 complete and 0 interrupted iterations
+steady   [  19% ] 003/100 VUs  02m51.0s/15m0s  17.00 iters/s
+
+running (02m52.0s), 006/100 VUs, 2918 complete and 0 interrupted iterations
+steady   [  19% ] 006/100 VUs  02m52.0s/15m0s  17.00 iters/s
+
+running (02m53.0s), 006/100 VUs, 2935 complete and 0 interrupted iterations
+steady   [  19% ] 006/100 VUs  02m53.0s/15m0s  17.00 iters/s
+
+running (02m54.0s), 005/100 VUs, 2953 complete and 0 interrupted iterations
+steady   [  19% ] 005/100 VUs  02m54.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:36Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"77f88935-2535-4cea-8df7-56ab6aa31080\",\"idempotencyKey\":\"ad4733bf-c632-464e-b580-979e507cb8d9\"}" source=console
+
+running (02m55.0s), 004/100 VUs, 2971 complete and 0 interrupted iterations
+steady   [  19% ] 004/100 VUs  02m55.0s/15m0s  17.00 iters/s
+
+running (02m56.0s), 004/100 VUs, 2988 complete and 0 interrupted iterations
+steady   [  20% ] 004/100 VUs  02m56.0s/15m0s  17.00 iters/s
+
+running (02m57.0s), 005/100 VUs, 3004 complete and 0 interrupted iterations
+steady   [  20% ] 005/100 VUs  02m57.0s/15m0s  17.00 iters/s
+
+running (02m58.0s), 006/100 VUs, 3020 complete and 0 interrupted iterations
+steady   [  20% ] 006/100 VUs  02m58.0s/15m0s  17.00 iters/s
+
+running (02m59.0s), 005/100 VUs, 3038 complete and 0 interrupted iterations
+steady   [  20% ] 005/100 VUs  02m59.0s/15m0s  17.00 iters/s
+
+running (03m00.0s), 004/100 VUs, 3056 complete and 0 interrupted iterations
+steady   [  20% ] 004/100 VUs  03m00.0s/15m0s  17.00 iters/s
+
+running (03m01.0s), 003/100 VUs, 3074 complete and 0 interrupted iterations
+steady   [  20% ] 003/100 VUs  03m01.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:42Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"32508829-e155-4958-8595-d4d81981c4be\",\"idempotencyKey\":\"8e0ba740-f609-4ef5-90e4-2f3d10c47659\"}" source=console
+
+running (03m02.0s), 006/100 VUs, 3088 complete and 0 interrupted iterations
+steady   [  20% ] 006/100 VUs  03m02.0s/15m0s  17.00 iters/s
+
+running (03m03.0s), 006/100 VUs, 3105 complete and 0 interrupted iterations
+steady   [  20% ] 006/100 VUs  03m03.0s/15m0s  17.00 iters/s
+
+running (03m04.0s), 005/100 VUs, 3123 complete and 0 interrupted iterations
+steady   [  20% ] 005/100 VUs  03m04.0s/15m0s  17.00 iters/s
+
+running (03m05.0s), 004/100 VUs, 3141 complete and 0 interrupted iterations
+steady   [  21% ] 004/100 VUs  03m05.0s/15m0s  17.00 iters/s
+
+running (03m06.0s), 004/100 VUs, 3158 complete and 0 interrupted iterations
+steady   [  21% ] 004/100 VUs  03m06.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:48Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"a4365825-95f2-49d4-bbeb-e493eb371552\",\"idempotencyKey\":\"38f34d28-8a41-42d7-b5ca-959c564972e9\"}" source=console
+
+running (03m07.0s), 006/100 VUs, 3173 complete and 0 interrupted iterations
+steady   [  21% ] 006/100 VUs  03m07.0s/15m0s  17.00 iters/s
+
+running (03m08.0s), 005/100 VUs, 3191 complete and 0 interrupted iterations
+steady   [  21% ] 005/100 VUs  03m08.0s/15m0s  17.00 iters/s
+
+running (03m09.0s), 004/100 VUs, 3209 complete and 0 interrupted iterations
+steady   [  21% ] 004/100 VUs  03m09.0s/15m0s  17.00 iters/s
+
+running (03m10.0s), 004/100 VUs, 3226 complete and 0 interrupted iterations
+steady   [  21% ] 004/100 VUs  03m10.0s/15m0s  17.00 iters/s
+
+running (03m11.0s), 006/100 VUs, 3241 complete and 0 interrupted iterations
+steady   [  21% ] 006/100 VUs  03m11.0s/15m0s  17.00 iters/s
+
+running (03m12.0s), 005/100 VUs, 3259 complete and 0 interrupted iterations
+steady   [  21% ] 005/100 VUs  03m12.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:53Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"30e7e9d5-3bc0-4407-8511-02ea438b841a\",\"idempotencyKey\":\"677ffc03-55ec-45b7-ade6-c18b7464d4b7\"}" source=console
+
+running (03m13.0s), 005/100 VUs, 3276 complete and 0 interrupted iterations
+steady   [  21% ] 005/100 VUs  03m13.0s/15m0s  17.00 iters/s
+
+running (03m14.0s), 004/100 VUs, 3294 complete and 0 interrupted iterations
+steady   [  22% ] 004/100 VUs  03m14.0s/15m0s  17.00 iters/s
+
+running (03m15.0s), 007/100 VUs, 3308 complete and 0 interrupted iterations
+steady   [  22% ] 007/100 VUs  03m15.0s/15m0s  17.00 iters/s
+
+running (03m16.0s), 006/100 VUs, 3326 complete and 0 interrupted iterations
+steady   [  22% ] 006/100 VUs  03m16.0s/15m0s  17.00 iters/s
+
+running (03m17.0s), 004/100 VUs, 3345 complete and 0 interrupted iterations
+steady   [  22% ] 004/100 VUs  03m17.0s/15m0s  17.00 iters/s
+
+running (03m18.0s), 004/100 VUs, 3362 complete and 0 interrupted iterations
+steady   [  22% ] 004/100 VUs  03m18.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:21:59Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"553ddbf1-1f9f-475d-b21b-03a259b2eb87\",\"idempotencyKey\":\"2fb785c0-35b9-46bb-9972-6a20a8540022\"}" source=console
+
+running (03m19.0s), 005/100 VUs, 3378 complete and 0 interrupted iterations
+steady   [  22% ] 005/100 VUs  03m19.0s/15m0s  17.00 iters/s
+
+running (03m20.0s), 003/100 VUs, 3397 complete and 0 interrupted iterations
+steady   [  22% ] 003/100 VUs  03m20.0s/15m0s  17.00 iters/s
+
+running (03m21.0s), 002/100 VUs, 3415 complete and 0 interrupted iterations
+steady   [  22% ] 002/100 VUs  03m21.0s/15m0s  17.00 iters/s
+
+running (03m22.0s), 003/100 VUs, 3431 complete and 0 interrupted iterations
+steady   [  22% ] 003/100 VUs  03m22.0s/15m0s  17.00 iters/s
+
+running (03m23.0s), 002/100 VUs, 3449 complete and 0 interrupted iterations
+steady   [  23% ] 002/100 VUs  03m23.0s/15m0s  17.00 iters/s
+
+running (03m24.0s), 003/100 VUs, 3465 complete and 0 interrupted iterations
+steady   [  23% ] 003/100 VUs  03m24.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:06Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"97e09adc-14c6-4837-80d0-0c3b6068d976\",\"idempotencyKey\":\"148d67a4-dab1-4a3d-abab-2d06035cce6f\"}" source=console
+
+running (03m25.0s), 002/100 VUs, 3483 complete and 0 interrupted iterations
+steady   [  23% ] 002/100 VUs  03m25.0s/15m0s  17.00 iters/s
+
+running (03m26.0s), 003/100 VUs, 3499 complete and 0 interrupted iterations
+steady   [  23% ] 003/100 VUs  03m26.0s/15m0s  17.00 iters/s
+
+running (03m27.0s), 002/100 VUs, 3517 complete and 0 interrupted iterations
+steady   [  23% ] 002/100 VUs  03m27.0s/15m0s  17.00 iters/s
+
+running (03m28.0s), 003/100 VUs, 3533 complete and 0 interrupted iterations
+steady   [  23% ] 003/100 VUs  03m28.0s/15m0s  17.00 iters/s
+
+running (03m29.0s), 003/100 VUs, 3550 complete and 0 interrupted iterations
+steady   [  23% ] 003/100 VUs  03m29.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:11Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5a37da50-8b7d-4a62-81d1-16397116cc32\",\"idempotencyKey\":\"105579af-3b05-40be-acf8-5c7056567799\"}" source=console
+
+running (03m30.0s), 003/100 VUs, 3567 complete and 0 interrupted iterations
+steady   [  23% ] 003/100 VUs  03m30.0s/15m0s  17.00 iters/s
+
+running (03m31.0s), 002/100 VUs, 3585 complete and 0 interrupted iterations
+steady   [  23% ] 002/100 VUs  03m31.0s/15m0s  17.00 iters/s
+
+running (03m32.0s), 001/100 VUs, 3603 complete and 0 interrupted iterations
+steady   [  24% ] 001/100 VUs  03m32.0s/15m0s  17.00 iters/s
+
+running (03m33.0s), 003/100 VUs, 3618 complete and 0 interrupted iterations
+steady   [  24% ] 003/100 VUs  03m33.0s/15m0s  17.00 iters/s
+
+running (03m34.0s), 006/100 VUs, 3632 complete and 0 interrupted iterations
+steady   [  24% ] 006/100 VUs  03m34.0s/15m0s  17.00 iters/s
+
+running (03m35.0s), 005/100 VUs, 3650 complete and 0 interrupted iterations
+steady   [  24% ] 005/100 VUs  03m35.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:17Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"53a0a024-990f-45a6-96be-dc8f77b347bd\",\"idempotencyKey\":\"c1c70dd8-669f-47d5-bca8-224c0e6cf8c0\"}" source=console
+
+running (03m36.0s), 005/100 VUs, 3667 complete and 0 interrupted iterations
+steady   [  24% ] 005/100 VUs  03m36.0s/15m0s  17.00 iters/s
+
+running (03m37.0s), 004/100 VUs, 3685 complete and 0 interrupted iterations
+steady   [  24% ] 004/100 VUs  03m37.0s/15m0s  17.00 iters/s
+
+running (03m38.0s), 007/100 VUs, 3699 complete and 0 interrupted iterations
+steady   [  24% ] 007/100 VUs  03m38.0s/15m0s  17.00 iters/s
+
+running (03m39.0s), 006/100 VUs, 3717 complete and 0 interrupted iterations
+steady   [  24% ] 006/100 VUs  03m39.0s/15m0s  17.00 iters/s
+
+running (03m40.0s), 005/100 VUs, 3735 complete and 0 interrupted iterations
+steady   [  24% ] 005/100 VUs  03m40.0s/15m0s  17.00 iters/s
+
+running (03m41.0s), 005/100 VUs, 3752 complete and 0 interrupted iterations
+steady   [  25% ] 005/100 VUs  03m41.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:23Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d58c828d-9817-475d-a249-78c800d500f6\",\"idempotencyKey\":\"7beaf76e-9fe8-4aeb-aec8-aa5a9c88975f\"}" source=console
+
+running (03m42.0s), 004/100 VUs, 3770 complete and 0 interrupted iterations
+steady   [  25% ] 004/100 VUs  03m42.0s/15m0s  17.00 iters/s
+
+running (03m43.0s), 004/100 VUs, 3787 complete and 0 interrupted iterations
+steady   [  25% ] 004/100 VUs  03m43.0s/15m0s  17.00 iters/s
+
+running (03m44.0s), 006/100 VUs, 3802 complete and 0 interrupted iterations
+steady   [  25% ] 006/100 VUs  03m44.0s/15m0s  17.00 iters/s
+
+running (03m45.0s), 005/100 VUs, 3820 complete and 0 interrupted iterations
+steady   [  25% ] 005/100 VUs  03m45.0s/15m0s  17.00 iters/s
+
+running (03m46.0s), 004/100 VUs, 3838 complete and 0 interrupted iterations
+steady   [  25% ] 004/100 VUs  03m46.0s/15m0s  17.00 iters/s
+
+running (03m47.0s), 005/100 VUs, 3854 complete and 0 interrupted iterations
+steady   [  25% ] 005/100 VUs  03m47.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:29Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"32710d42-a2f9-456a-ab33-be62398297ec\",\"idempotencyKey\":\"4660c0d9-419d-44ca-b51b-eaa0a36278e6\"}" source=console
+
+running (03m48.0s), 006/100 VUs, 3870 complete and 0 interrupted iterations
+steady   [  25% ] 006/100 VUs  03m48.0s/15m0s  17.00 iters/s
+
+running (03m49.0s), 006/100 VUs, 3887 complete and 0 interrupted iterations
+steady   [  25% ] 006/100 VUs  03m49.0s/15m0s  17.00 iters/s
+
+running (03m50.0s), 004/100 VUs, 3906 complete and 0 interrupted iterations
+steady   [  26% ] 004/100 VUs  03m50.0s/15m0s  17.00 iters/s
+
+running (03m51.0s), 003/100 VUs, 3924 complete and 0 interrupted iterations
+steady   [  26% ] 003/100 VUs  03m51.0s/15m0s  17.00 iters/s
+
+running (03m52.0s), 006/100 VUs, 3938 complete and 0 interrupted iterations
+steady   [  26% ] 006/100 VUs  03m52.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:34Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2067810c-5b52-4f62-96aa-08f9580f9c11\",\"idempotencyKey\":\"3ac37fb3-37b5-4f1c-92dc-8306a250fe87\"}" source=console
+
+running (03m53.0s), 004/100 VUs, 3957 complete and 0 interrupted iterations
+steady   [  26% ] 004/100 VUs  03m53.0s/15m0s  17.00 iters/s
+
+running (03m54.0s), 005/100 VUs, 3973 complete and 0 interrupted iterations
+steady   [  26% ] 005/100 VUs  03m54.0s/15m0s  17.00 iters/s
+
+running (03m55.0s), 004/100 VUs, 3991 complete and 0 interrupted iterations
+steady   [  26% ] 004/100 VUs  03m55.0s/15m0s  17.00 iters/s
+
+running (03m56.0s), 003/100 VUs, 4009 complete and 0 interrupted iterations
+steady   [  26% ] 003/100 VUs  03m56.0s/15m0s  17.00 iters/s
+
+running (03m57.0s), 006/100 VUs, 4023 complete and 0 interrupted iterations
+steady   [  26% ] 006/100 VUs  03m57.0s/15m0s  17.00 iters/s
+
+running (03m58.0s), 006/100 VUs, 4040 complete and 0 interrupted iterations
+steady   [  26% ] 006/100 VUs  03m58.0s/15m0s  17.00 iters/s
+
+running (03m59.0s), 005/100 VUs, 4058 complete and 0 interrupted iterations
+steady   [  27% ] 005/100 VUs  03m59.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:41Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"22561036-dc19-49a2-82fe-e947ffd7fd97\",\"idempotencyKey\":\"44d2525a-b71b-4dd4-a353-fbc54cc1ab4f\"}" source=console
+
+running (04m00.0s), 004/100 VUs, 4076 complete and 0 interrupted iterations
+steady   [  27% ] 004/100 VUs  04m00.0s/15m0s  17.00 iters/s
+
+running (04m01.0s), 007/100 VUs, 4090 complete and 0 interrupted iterations
+steady   [  27% ] 007/100 VUs  04m01.0s/15m0s  17.00 iters/s
+
+running (04m02.0s), 006/100 VUs, 4108 complete and 0 interrupted iterations
+steady   [  27% ] 006/100 VUs  04m02.0s/15m0s  17.00 iters/s
+
+running (04m03.0s), 005/100 VUs, 4126 complete and 0 interrupted iterations
+steady   [  27% ] 005/100 VUs  04m03.0s/15m0s  17.00 iters/s
+
+running (04m04.0s), 005/100 VUs, 4143 complete and 0 interrupted iterations
+steady   [  27% ] 005/100 VUs  04m04.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:46Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d6ea3fd6-c288-4c61-a74a-0e9b13d717c0\",\"idempotencyKey\":\"d2cf80ef-2f4c-4d36-a462-7c07483295a2\"}" source=console
+
+running (04m05.0s), 004/100 VUs, 4161 complete and 0 interrupted iterations
+steady   [  27% ] 004/100 VUs  04m05.0s/15m0s  17.00 iters/s
+
+running (04m06.0s), 006/100 VUs, 4176 complete and 0 interrupted iterations
+steady   [  27% ] 006/100 VUs  04m06.0s/15m0s  17.00 iters/s
+
+running (04m07.0s), 005/100 VUs, 4194 complete and 0 interrupted iterations
+steady   [  27% ] 005/100 VUs  04m07.0s/15m0s  17.00 iters/s
+
+running (04m08.0s), 004/100 VUs, 4212 complete and 0 interrupted iterations
+steady   [  28% ] 004/100 VUs  04m08.0s/15m0s  17.00 iters/s
+
+running (04m09.0s), 004/100 VUs, 4229 complete and 0 interrupted iterations
+steady   [  28% ] 004/100 VUs  04m09.0s/15m0s  17.00 iters/s
+
+running (04m10.0s), 006/100 VUs, 4244 complete and 0 interrupted iterations
+steady   [  28% ] 006/100 VUs  04m10.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:52Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f959d256-42ad-41c0-b374-1019130f68a2\",\"idempotencyKey\":\"da04d34d-9999-49a8-9709-eb4fed206ff2\"}" source=console
+
+running (04m11.0s), 006/100 VUs, 4261 complete and 0 interrupted iterations
+steady   [  28% ] 006/100 VUs  04m11.0s/15m0s  17.00 iters/s
+
+running (04m12.0s), 004/100 VUs, 4280 complete and 0 interrupted iterations
+steady   [  28% ] 004/100 VUs  04m12.0s/15m0s  17.00 iters/s
+
+running (04m13.0s), 004/100 VUs, 4297 complete and 0 interrupted iterations
+steady   [  28% ] 004/100 VUs  04m13.0s/15m0s  17.00 iters/s
+
+running (04m14.0s), 003/100 VUs, 4315 complete and 0 interrupted iterations
+steady   [  28% ] 003/100 VUs  04m14.0s/15m0s  17.00 iters/s
+
+running (04m15.0s), 006/100 VUs, 4329 complete and 0 interrupted iterations
+steady   [  28% ] 006/100 VUs  04m15.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:22:57Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"a81aaec4-3bd7-489e-864a-3cc5383f3086\",\"idempotencyKey\":\"a33e2c3c-e63f-438f-97c1-8dc77de5f485\"}" source=console
+
+running (04m16.0s), 006/100 VUs, 4346 complete and 0 interrupted iterations
+steady   [  28% ] 006/100 VUs  04m16.0s/15m0s  17.00 iters/s
+
+running (04m17.0s), 005/100 VUs, 4364 complete and 0 interrupted iterations
+steady   [  29% ] 005/100 VUs  04m17.0s/15m0s  17.00 iters/s
+
+running (04m18.0s), 004/100 VUs, 4382 complete and 0 interrupted iterations
+steady   [  29% ] 004/100 VUs  04m18.0s/15m0s  17.00 iters/s
+
+running (04m19.0s), 007/100 VUs, 4396 complete and 0 interrupted iterations
+steady   [  29% ] 007/100 VUs  04m19.0s/15m0s  17.00 iters/s
+
+running (04m20.0s), 006/100 VUs, 4414 complete and 0 interrupted iterations
+steady   [  29% ] 006/100 VUs  04m20.0s/15m0s  17.00 iters/s
+
+running (04m21.0s), 005/100 VUs, 4432 complete and 0 interrupted iterations
+steady   [  29% ] 005/100 VUs  04m21.0s/15m0s  17.00 iters/s
+
+running (04m22.0s), 004/100 VUs, 4450 complete and 0 interrupted iterations
+steady   [  29% ] 004/100 VUs  04m22.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:04Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"05b9a2a3-5d31-4cda-aec7-96c00ce58282\",\"idempotencyKey\":\"ac040cc0-fc89-4ee7-831f-2a6a8ba32ffb\"}" source=console
+
+running (04m23.0s), 003/100 VUs, 4468 complete and 0 interrupted iterations
+steady   [  29% ] 003/100 VUs  04m23.0s/15m0s  17.00 iters/s
+
+running (04m24.0s), 006/100 VUs, 4482 complete and 0 interrupted iterations
+steady   [  29% ] 006/100 VUs  04m24.0s/15m0s  17.00 iters/s
+
+running (04m25.0s), 005/100 VUs, 4500 complete and 0 interrupted iterations
+steady   [  29% ] 005/100 VUs  04m25.0s/15m0s  17.00 iters/s
+
+running (04m26.0s), 005/100 VUs, 4517 complete and 0 interrupted iterations
+steady   [  30% ] 005/100 VUs  04m26.0s/15m0s  17.00 iters/s
+
+running (04m27.0s), 004/100 VUs, 4535 complete and 0 interrupted iterations
+steady   [  30% ] 004/100 VUs  04m27.0s/15m0s  17.00 iters/s
+
+running (04m28.0s), 007/100 VUs, 4549 complete and 0 interrupted iterations
+steady   [  30% ] 007/100 VUs  04m28.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:10Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"27726405-b385-4259-8df8-0d127280b6b0\",\"idempotencyKey\":\"1c306abc-0e60-43b5-9d4b-2439f075b9a2\"}" source=console
+
+running (04m29.0s), 006/100 VUs, 4567 complete and 0 interrupted iterations
+steady   [  30% ] 006/100 VUs  04m29.0s/15m0s  17.00 iters/s
+
+running (04m30.0s), 005/100 VUs, 4585 complete and 0 interrupted iterations
+steady   [  30% ] 005/100 VUs  04m30.0s/15m0s  17.00 iters/s
+
+running (04m31.0s), 004/100 VUs, 4603 complete and 0 interrupted iterations
+steady   [  30% ] 004/100 VUs  04m31.0s/15m0s  17.00 iters/s
+
+running (04m32.0s), 005/100 VUs, 4619 complete and 0 interrupted iterations
+steady   [  30% ] 005/100 VUs  04m32.0s/15m0s  17.00 iters/s
+
+running (04m33.0s), 001/100 VUs, 4640 complete and 0 interrupted iterations
+steady   [  30% ] 001/100 VUs  04m33.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:15Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"25d8bbba-26f5-4080-8dd9-64c403a043e8\",\"idempotencyKey\":\"93dc57a7-237b-43dd-8595-f27e39e3881b\"}" source=console
+
+running (04m34.0s), 003/100 VUs, 4655 complete and 0 interrupted iterations
+steady   [  30% ] 003/100 VUs  04m34.0s/15m0s  17.00 iters/s
+
+running (04m35.0s), 003/100 VUs, 4672 complete and 0 interrupted iterations
+steady   [  31% ] 003/100 VUs  04m35.0s/15m0s  17.00 iters/s
+
+running (04m36.0s), 002/100 VUs, 4690 complete and 0 interrupted iterations
+steady   [  31% ] 002/100 VUs  04m36.0s/15m0s  17.00 iters/s
+
+running (04m37.0s), 004/100 VUs, 4705 complete and 0 interrupted iterations
+steady   [  31% ] 004/100 VUs  04m37.0s/15m0s  17.00 iters/s
+
+running (04m38.0s), 004/100 VUs, 4722 complete and 0 interrupted iterations
+steady   [  31% ] 004/100 VUs  04m38.0s/15m0s  17.00 iters/s
+
+running (04m39.0s), 006/100 VUs, 4737 complete and 0 interrupted iterations
+steady   [  31% ] 006/100 VUs  04m39.0s/15m0s  17.00 iters/s
+
+running (04m40.0s), 006/100 VUs, 4754 complete and 0 interrupted iterations
+steady   [  31% ] 006/100 VUs  04m40.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:22Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c0bdbaf2-aad3-4639-8185-bd09656e20a9\",\"idempotencyKey\":\"ad6bb6d5-27e8-4070-bb3e-73a731b6d6c7\"}" source=console
+
+running (04m41.0s), 005/100 VUs, 4772 complete and 0 interrupted iterations
+steady   [  31% ] 005/100 VUs  04m41.0s/15m0s  17.00 iters/s
+
+running (04m42.0s), 004/100 VUs, 4790 complete and 0 interrupted iterations
+steady   [  31% ] 004/100 VUs  04m42.0s/15m0s  17.00 iters/s
+
+running (04m43.0s), 006/100 VUs, 4805 complete and 0 interrupted iterations
+steady   [  31% ] 006/100 VUs  04m43.0s/15m0s  17.00 iters/s
+
+running (04m44.0s), 006/100 VUs, 4822 complete and 0 interrupted iterations
+steady   [  32% ] 006/100 VUs  04m44.0s/15m0s  17.00 iters/s
+
+running (04m45.0s), 005/100 VUs, 4840 complete and 0 interrupted iterations
+steady   [  32% ] 005/100 VUs  04m45.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:27Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c5a6f291-f4d0-4254-a936-c982b104cea8\",\"idempotencyKey\":\"999abe5b-cf6b-475e-b3e5-746914571b9b\"}" source=console
+
+running (04m46.0s), 003/100 VUs, 4859 complete and 0 interrupted iterations
+steady   [  32% ] 003/100 VUs  04m46.0s/15m0s  17.00 iters/s
+
+running (04m47.0s), 003/100 VUs, 4876 complete and 0 interrupted iterations
+steady   [  32% ] 003/100 VUs  04m47.0s/15m0s  17.00 iters/s
+
+running (04m48.0s), 006/100 VUs, 4890 complete and 0 interrupted iterations
+steady   [  32% ] 006/100 VUs  04m48.0s/15m0s  17.00 iters/s
+
+running (04m49.0s), 005/100 VUs, 4908 complete and 0 interrupted iterations
+steady   [  32% ] 005/100 VUs  04m49.0s/15m0s  17.00 iters/s
+
+running (04m50.0s), 005/100 VUs, 4925 complete and 0 interrupted iterations
+steady   [  32% ] 005/100 VUs  04m50.0s/15m0s  17.00 iters/s
+
+running (04m51.0s), 004/100 VUs, 4943 complete and 0 interrupted iterations
+steady   [  32% ] 004/100 VUs  04m51.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:32Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"7c4cef2d-c8af-4b0b-81ce-3b2ab8eeb8ef\",\"idempotencyKey\":\"57c13ab1-18d7-4654-94d0-2ea79339f711\"}" source=console
+
+running (04m52.0s), 003/100 VUs, 4961 complete and 0 interrupted iterations
+steady   [  32% ] 003/100 VUs  04m52.0s/15m0s  17.00 iters/s
+
+running (04m53.0s), 006/100 VUs, 4975 complete and 0 interrupted iterations
+steady   [  33% ] 006/100 VUs  04m53.0s/15m0s  17.00 iters/s
+
+running (04m54.0s), 006/100 VUs, 4992 complete and 0 interrupted iterations
+steady   [  33% ] 006/100 VUs  04m54.0s/15m0s  17.00 iters/s
+
+running (04m55.0s), 005/100 VUs, 5010 complete and 0 interrupted iterations
+steady   [  33% ] 005/100 VUs  04m55.0s/15m0s  17.00 iters/s
+
+running (04m56.0s), 004/100 VUs, 5028 complete and 0 interrupted iterations
+steady   [  33% ] 004/100 VUs  04m56.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:38Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"9c56fb38-7abe-4bf4-8c5e-142e9c92c5ee\",\"idempotencyKey\":\"b8d42d7e-a836-475c-abb1-22afc2bb1708\"}" source=console
+
+running (04m57.0s), 004/100 VUs, 5045 complete and 0 interrupted iterations
+steady   [  33% ] 004/100 VUs  04m57.0s/15m0s  17.00 iters/s
+
+running (04m58.0s), 006/100 VUs, 5060 complete and 0 interrupted iterations
+steady   [  33% ] 006/100 VUs  04m58.0s/15m0s  17.00 iters/s
+
+running (04m59.0s), 005/100 VUs, 5078 complete and 0 interrupted iterations
+steady   [  33% ] 005/100 VUs  04m59.0s/15m0s  17.00 iters/s
+
+running (05m00.0s), 004/100 VUs, 5096 complete and 0 interrupted iterations
+steady   [  33% ] 004/100 VUs  05m00.0s/15m0s  17.00 iters/s
+
+running (05m01.0s), 003/100 VUs, 5114 complete and 0 interrupted iterations
+steady   [  33% ] 003/100 VUs  05m01.0s/15m0s  17.00 iters/s
+
+running (05m02.0s), 006/100 VUs, 5128 complete and 0 interrupted iterations
+steady   [  34% ] 006/100 VUs  05m02.0s/15m0s  17.00 iters/s
+
+running (05m03.0s), 006/100 VUs, 5145 complete and 0 interrupted iterations
+steady   [  34% ] 006/100 VUs  05m03.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:45Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"fd4e37f7-320c-4e0d-a4f7-cb5b5848af32\",\"idempotencyKey\":\"05b7864a-bf0d-47ab-bc99-5797aecf5e47\"}" source=console
+
+running (05m04.0s), 005/100 VUs, 5163 complete and 0 interrupted iterations
+steady   [  34% ] 005/100 VUs  05m04.0s/15m0s  17.00 iters/s
+
+running (05m05.0s), 004/100 VUs, 5181 complete and 0 interrupted iterations
+steady   [  34% ] 004/100 VUs  05m05.0s/15m0s  17.00 iters/s
+
+running (05m06.0s), 004/100 VUs, 5198 complete and 0 interrupted iterations
+steady   [  34% ] 004/100 VUs  05m06.0s/15m0s  17.00 iters/s
+
+running (05m07.0s), 006/100 VUs, 5213 complete and 0 interrupted iterations
+steady   [  34% ] 006/100 VUs  05m07.0s/15m0s  17.00 iters/s
+
+running (05m08.0s), 006/100 VUs, 5230 complete and 0 interrupted iterations
+steady   [  34% ] 006/100 VUs  05m08.0s/15m0s  17.00 iters/s
+
+running (05m09.0s), 005/100 VUs, 5248 complete and 0 interrupted iterations
+steady   [  34% ] 005/100 VUs  05m09.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:50Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"116846b6-b2d3-4429-834f-b4fe67e214c6\",\"idempotencyKey\":\"c6b636a5-237c-439a-a2f8-ee79e830dde4\"}" source=console
+
+running (05m10.0s), 004/100 VUs, 5266 complete and 0 interrupted iterations
+steady   [  34% ] 004/100 VUs  05m10.0s/15m0s  17.00 iters/s
+
+running (05m11.0s), 007/100 VUs, 5280 complete and 0 interrupted iterations
+steady   [  35% ] 007/100 VUs  05m11.0s/15m0s  17.00 iters/s
+
+running (05m12.0s), 006/100 VUs, 5298 complete and 0 interrupted iterations
+steady   [  35% ] 006/100 VUs  05m12.0s/15m0s  17.00 iters/s
+
+running (05m13.0s), 005/100 VUs, 5316 complete and 0 interrupted iterations
+steady   [  35% ] 005/100 VUs  05m13.0s/15m0s  17.00 iters/s
+
+running (05m14.0s), 004/100 VUs, 5334 complete and 0 interrupted iterations
+steady   [  35% ] 004/100 VUs  05m14.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:23:56Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"51ccdd82-c039-4949-8309-9faac8645cdb\",\"idempotencyKey\":\"9b18b1e9-9dfe-4108-8a36-c5f8e645d153\"}" source=console
+
+running (05m15.0s), 004/100 VUs, 5351 complete and 0 interrupted iterations
+steady   [  35% ] 004/100 VUs  05m15.0s/15m0s  17.00 iters/s
+
+running (05m16.0s), 007/100 VUs, 5365 complete and 0 interrupted iterations
+steady   [  35% ] 007/100 VUs  05m16.0s/15m0s  17.00 iters/s
+
+running (05m17.0s), 006/100 VUs, 5383 complete and 0 interrupted iterations
+steady   [  35% ] 006/100 VUs  05m17.0s/15m0s  17.00 iters/s
+
+running (05m18.0s), 005/100 VUs, 5401 complete and 0 interrupted iterations
+steady   [  35% ] 005/100 VUs  05m18.0s/15m0s  17.00 iters/s
+
+running (05m19.0s), 005/100 VUs, 5418 complete and 0 interrupted iterations
+steady   [  35% ] 005/100 VUs  05m19.0s/15m0s  17.00 iters/s
+
+running (05m20.0s), 004/100 VUs, 5436 complete and 0 interrupted iterations
+steady   [  36% ] 004/100 VUs  05m20.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:01Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"b6ec686f-e24a-49d9-a682-3274cfbf4034\",\"idempotencyKey\":\"db0fb861-8dac-472e-892d-5d143cbf2b1f\"}" source=console
+
+running (05m21.0s), 006/100 VUs, 5451 complete and 0 interrupted iterations
+steady   [  36% ] 006/100 VUs  05m21.0s/15m0s  17.00 iters/s
+
+running (05m22.0s), 005/100 VUs, 5469 complete and 0 interrupted iterations
+steady   [  36% ] 005/100 VUs  05m22.0s/15m0s  17.00 iters/s
+
+running (05m23.0s), 005/100 VUs, 5486 complete and 0 interrupted iterations
+steady   [  36% ] 005/100 VUs  05m23.0s/15m0s  17.00 iters/s
+
+running (05m24.0s), 004/100 VUs, 5504 complete and 0 interrupted iterations
+steady   [  36% ] 004/100 VUs  05m24.0s/15m0s  17.00 iters/s
+
+running (05m25.0s), 004/100 VUs, 5521 complete and 0 interrupted iterations
+steady   [  36% ] 004/100 VUs  05m25.0s/15m0s  17.00 iters/s
+
+running (05m26.0s), 006/100 VUs, 5536 complete and 0 interrupted iterations
+steady   [  36% ] 006/100 VUs  05m26.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:08Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"53b2d3da-34e9-40b4-a355-f27f8d5ae23b\",\"idempotencyKey\":\"06243577-c571-4ad0-87ba-15a71f140871\"}" source=console
+
+running (05m27.0s), 005/100 VUs, 5554 complete and 0 interrupted iterations
+steady   [  36% ] 005/100 VUs  05m27.0s/15m0s  17.00 iters/s
+
+running (05m28.0s), 005/100 VUs, 5571 complete and 0 interrupted iterations
+steady   [  36% ] 005/100 VUs  05m28.0s/15m0s  17.00 iters/s
+
+running (05m29.0s), 004/100 VUs, 5589 complete and 0 interrupted iterations
+steady   [  37% ] 004/100 VUs  05m29.0s/15m0s  17.00 iters/s
+
+running (05m30.0s), 003/100 VUs, 5607 complete and 0 interrupted iterations
+steady   [  37% ] 003/100 VUs  05m30.0s/15m0s  17.00 iters/s
+
+running (05m31.0s), 006/100 VUs, 5621 complete and 0 interrupted iterations
+steady   [  37% ] 006/100 VUs  05m31.0s/15m0s  17.00 iters/s
+
+running (05m32.0s), 005/100 VUs, 5639 complete and 0 interrupted iterations
+steady   [  37% ] 005/100 VUs  05m32.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:14Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"68560ad8-2686-43db-9b07-3dd533dde0be\",\"idempotencyKey\":\"f2f41c4a-fe02-4b26-972d-a7ee81c9664c\"}" source=console
+
+running (05m33.0s), 005/100 VUs, 5656 complete and 0 interrupted iterations
+steady   [  37% ] 005/100 VUs  05m33.0s/15m0s  17.00 iters/s
+
+running (05m34.0s), 004/100 VUs, 5674 complete and 0 interrupted iterations
+steady   [  37% ] 004/100 VUs  05m34.0s/15m0s  17.00 iters/s
+
+running (05m35.0s), 007/100 VUs, 5688 complete and 0 interrupted iterations
+steady   [  37% ] 007/100 VUs  05m35.0s/15m0s  17.00 iters/s
+
+running (05m36.0s), 006/100 VUs, 5706 complete and 0 interrupted iterations
+steady   [  37% ] 006/100 VUs  05m36.0s/15m0s  17.00 iters/s
+
+running (05m37.0s), 005/100 VUs, 5724 complete and 0 interrupted iterations
+steady   [  37% ] 005/100 VUs  05m37.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:19Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"a151583d-b42c-4610-a046-8b14a8030b9a\",\"idempotencyKey\":\"594060c8-0c8f-4b21-810f-dbd7bf1ad414\"}" source=console
+
+running (05m38.0s), 004/100 VUs, 5742 complete and 0 interrupted iterations
+steady   [  38% ] 004/100 VUs  05m38.0s/15m0s  17.00 iters/s
+
+running (05m39.0s), 003/100 VUs, 5760 complete and 0 interrupted iterations
+steady   [  38% ] 003/100 VUs  05m39.0s/15m0s  17.00 iters/s
+
+running (05m40.0s), 006/100 VUs, 5774 complete and 0 interrupted iterations
+steady   [  38% ] 006/100 VUs  05m40.0s/15m0s  17.00 iters/s
+
+running (05m41.0s), 006/100 VUs, 5791 complete and 0 interrupted iterations
+steady   [  38% ] 006/100 VUs  05m41.0s/15m0s  17.00 iters/s
+
+running (05m42.0s), 005/100 VUs, 5809 complete and 0 interrupted iterations
+steady   [  38% ] 005/100 VUs  05m42.0s/15m0s  17.00 iters/s
+
+running (05m43.0s), 004/100 VUs, 5827 complete and 0 interrupted iterations
+steady   [  38% ] 004/100 VUs  05m43.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:25Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"4de06a63-45f4-409b-bd7e-19a28ed40e16\",\"idempotencyKey\":\"9e5da957-774d-44bb-ac69-1b2de459cb50\"}" source=console
+
+running (05m44.0s), 004/100 VUs, 5844 complete and 0 interrupted iterations
+steady   [  38% ] 004/100 VUs  05m44.0s/15m0s  17.00 iters/s
+
+running (05m45.0s), 006/100 VUs, 5859 complete and 0 interrupted iterations
+steady   [  38% ] 006/100 VUs  05m45.0s/15m0s  17.00 iters/s
+
+running (05m46.0s), 005/100 VUs, 5877 complete and 0 interrupted iterations
+steady   [  38% ] 005/100 VUs  05m46.0s/15m0s  17.00 iters/s
+
+running (05m47.0s), 005/100 VUs, 5894 complete and 0 interrupted iterations
+steady   [  39% ] 005/100 VUs  05m47.0s/15m0s  17.00 iters/s
+
+running (05m48.0s), 004/100 VUs, 5912 complete and 0 interrupted iterations
+steady   [  39% ] 004/100 VUs  05m48.0s/15m0s  17.00 iters/s
+
+running (05m49.0s), 007/100 VUs, 5926 complete and 0 interrupted iterations
+steady   [  39% ] 007/100 VUs  05m49.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:31Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"8f90fea7-38f9-4606-9ac8-17760937bfb9\",\"idempotencyKey\":\"309d6e0b-1865-41b2-9c94-797637d1c32c\"}" source=console
+
+running (05m50.0s), 006/100 VUs, 5944 complete and 0 interrupted iterations
+steady   [  39% ] 006/100 VUs  05m50.0s/15m0s  17.00 iters/s
+
+running (05m51.0s), 005/100 VUs, 5962 complete and 0 interrupted iterations
+steady   [  39% ] 005/100 VUs  05m51.0s/15m0s  17.00 iters/s
+
+running (05m52.0s), 005/100 VUs, 5979 complete and 0 interrupted iterations
+steady   [  39% ] 005/100 VUs  05m52.0s/15m0s  17.00 iters/s
+
+running (05m53.0s), 007/100 VUs, 5994 complete and 0 interrupted iterations
+steady   [  39% ] 007/100 VUs  05m53.0s/15m0s  17.00 iters/s
+
+running (05m54.0s), 007/100 VUs, 6011 complete and 0 interrupted iterations
+steady   [  39% ] 007/100 VUs  05m54.0s/15m0s  17.00 iters/s
+
+running (05m55.0s), 005/100 VUs, 6030 complete and 0 interrupted iterations
+steady   [  39% ] 005/100 VUs  05m55.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:37Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"63d005ef-d473-4dea-886d-95e1f8b93544\",\"idempotencyKey\":\"fbc7aef6-edb2-4fdb-9509-053ae560ec5a\"}" source=console
+
+running (05m56.0s), 005/100 VUs, 6047 complete and 0 interrupted iterations
+steady   [  40% ] 005/100 VUs  05m56.0s/15m0s  17.00 iters/s
+
+running (05m57.0s), 004/100 VUs, 6065 complete and 0 interrupted iterations
+steady   [  40% ] 004/100 VUs  05m57.0s/15m0s  17.00 iters/s
+
+running (05m58.0s), 004/100 VUs, 6082 complete and 0 interrupted iterations
+steady   [  40% ] 004/100 VUs  05m58.0s/15m0s  17.00 iters/s
+
+running (05m59.0s), 006/100 VUs, 6097 complete and 0 interrupted iterations
+steady   [  40% ] 006/100 VUs  05m59.0s/15m0s  17.00 iters/s
+
+running (06m00.0s), 006/100 VUs, 6114 complete and 0 interrupted iterations
+steady   [  40% ] 006/100 VUs  06m00.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:42Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f4806015-f6ea-4fe4-a129-765db3d7c9c9\",\"idempotencyKey\":\"57a510d2-9b7e-4942-9810-5395728fe511\"}" source=console
+
+running (06m01.0s), 004/100 VUs, 6133 complete and 0 interrupted iterations
+steady   [  40% ] 004/100 VUs  06m01.0s/15m0s  17.00 iters/s
+
+running (06m02.0s), 004/100 VUs, 6150 complete and 0 interrupted iterations
+steady   [  40% ] 004/100 VUs  06m02.0s/15m0s  17.00 iters/s
+
+running (06m03.0s), 006/100 VUs, 6165 complete and 0 interrupted iterations
+steady   [  40% ] 006/100 VUs  06m03.0s/15m0s  17.00 iters/s
+
+running (06m04.0s), 006/100 VUs, 6182 complete and 0 interrupted iterations
+steady   [  40% ] 006/100 VUs  06m04.0s/15m0s  17.00 iters/s
+
+running (06m05.0s), 005/100 VUs, 6200 complete and 0 interrupted iterations
+steady   [  41% ] 005/100 VUs  06m05.0s/15m0s  17.00 iters/s
+
+running (06m06.0s), 004/100 VUs, 6218 complete and 0 interrupted iterations
+steady   [  41% ] 004/100 VUs  06m06.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:48Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"1e43055c-1c27-434e-942a-aa9186f4f803\",\"idempotencyKey\":\"27ba0368-3f20-4b65-8c14-7cf433d2863e\"}" source=console
+
+running (06m07.0s), 005/100 VUs, 6234 complete and 0 interrupted iterations
+steady   [  41% ] 005/100 VUs  06m07.0s/15m0s  17.00 iters/s
+
+running (06m08.0s), 005/100 VUs, 6251 complete and 0 interrupted iterations
+steady   [  41% ] 005/100 VUs  06m08.0s/15m0s  17.00 iters/s
+
+running (06m09.0s), 005/100 VUs, 6268 complete and 0 interrupted iterations
+steady   [  41% ] 005/100 VUs  06m09.0s/15m0s  17.00 iters/s
+
+running (06m10.0s), 004/100 VUs, 6286 complete and 0 interrupted iterations
+steady   [  41% ] 004/100 VUs  06m10.0s/15m0s  17.00 iters/s
+
+running (06m11.0s), 003/100 VUs, 6304 complete and 0 interrupted iterations
+steady   [  41% ] 003/100 VUs  06m11.0s/15m0s  17.00 iters/s
+
+running (06m12.0s), 006/100 VUs, 6318 complete and 0 interrupted iterations
+steady   [  41% ] 006/100 VUs  06m12.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:24:54Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"30b6c329-c188-4ad8-8577-92e610d9ce88\",\"idempotencyKey\":\"cdd24a74-82a4-470d-b0cb-e2a29efe14a6\"}" source=console
+
+running (06m13.0s), 006/100 VUs, 6335 complete and 0 interrupted iterations
+steady   [  41% ] 006/100 VUs  06m13.0s/15m0s  17.00 iters/s
+
+running (06m14.0s), 005/100 VUs, 6353 complete and 0 interrupted iterations
+steady   [  42% ] 005/100 VUs  06m14.0s/15m0s  17.00 iters/s
+
+running (06m15.0s), 004/100 VUs, 6371 complete and 0 interrupted iterations
+steady   [  42% ] 004/100 VUs  06m15.0s/15m0s  17.00 iters/s
+
+running (06m16.0s), 006/100 VUs, 6386 complete and 0 interrupted iterations
+steady   [  42% ] 006/100 VUs  06m16.0s/15m0s  17.00 iters/s
+
+running (06m17.0s), 009/100 VUs, 6400 complete and 0 interrupted iterations
+steady   [  42% ] 009/100 VUs  06m17.0s/15m0s  17.00 iters/s
+
+running (06m18.0s), 003/100 VUs, 6423 complete and 0 interrupted iterations
+steady   [  42% ] 003/100 VUs  06m18.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:00Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"9a81d367-198e-4947-a197-734f1aa7c4b8\",\"idempotencyKey\":\"d65e4329-f897-4c52-9aa3-b396b6d6096b\"}" source=console
+
+running (06m19.0s), 002/100 VUs, 6441 complete and 0 interrupted iterations
+steady   [  42% ] 002/100 VUs  06m19.0s/15m0s  17.00 iters/s
+
+running (06m20.0s), 001/100 VUs, 6459 complete and 0 interrupted iterations
+steady   [  42% ] 001/100 VUs  06m20.0s/15m0s  17.00 iters/s
+
+running (06m21.0s), 003/100 VUs, 6474 complete and 0 interrupted iterations
+steady   [  42% ] 003/100 VUs  06m21.0s/15m0s  17.00 iters/s
+
+running (06m22.0s), 003/100 VUs, 6491 complete and 0 interrupted iterations
+steady   [  42% ] 003/100 VUs  06m22.0s/15m0s  17.00 iters/s
+
+running (06m23.0s), 005/100 VUs, 6506 complete and 0 interrupted iterations
+steady   [  43% ] 005/100 VUs  06m23.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:05Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6371b032-a4f0-48e4-83b0-0c6457fecbc3\",\"idempotencyKey\":\"45fcbded-de2d-4b3a-a09f-ef918fd713ca\"}" source=console
+
+running (06m24.0s), 004/100 VUs, 6524 complete and 0 interrupted iterations
+steady   [  43% ] 004/100 VUs  06m24.0s/15m0s  17.00 iters/s
+
+running (06m25.0s), 003/100 VUs, 6542 complete and 0 interrupted iterations
+steady   [  43% ] 003/100 VUs  06m25.0s/15m0s  17.00 iters/s
+
+running (06m26.0s), 006/100 VUs, 6556 complete and 0 interrupted iterations
+steady   [  43% ] 006/100 VUs  06m26.0s/15m0s  17.00 iters/s
+
+running (06m27.0s), 004/100 VUs, 6575 complete and 0 interrupted iterations
+steady   [  43% ] 004/100 VUs  06m27.0s/15m0s  17.00 iters/s
+
+running (06m28.0s), 005/100 VUs, 6591 complete and 0 interrupted iterations
+steady   [  43% ] 005/100 VUs  06m28.0s/15m0s  17.00 iters/s
+
+running (06m29.0s), 004/100 VUs, 6609 complete and 0 interrupted iterations
+steady   [  43% ] 004/100 VUs  06m29.0s/15m0s  17.00 iters/s
+
+running (06m30.0s), 007/100 VUs, 6623 complete and 0 interrupted iterations
+steady   [  43% ] 007/100 VUs  06m30.0s/15m0s  17.00 iters/s
+
+running (06m31.0s), 006/100 VUs, 6641 complete and 0 interrupted iterations
+steady   [  43% ] 006/100 VUs  06m31.0s/15m0s  17.00 iters/s
+
+running (06m32.0s), 005/100 VUs, 6659 complete and 0 interrupted iterations
+steady   [  44% ] 005/100 VUs  06m32.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:14Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"241edbce-32aa-44d5-9789-6f1d100a44d3\",\"idempotencyKey\":\"01e02172-6999-47b1-bf2c-eb377eb36c62\"}" source=console
+
+running (06m33.0s), 001/100 VUs, 6680 complete and 0 interrupted iterations
+steady   [  44% ] 001/100 VUs  06m33.0s/15m0s  17.00 iters/s
+
+running (06m34.0s), 004/100 VUs, 6694 complete and 0 interrupted iterations
+steady   [  44% ] 004/100 VUs  06m34.0s/15m0s  17.00 iters/s
+
+running (06m35.0s), 006/100 VUs, 6709 complete and 0 interrupted iterations
+steady   [  44% ] 006/100 VUs  06m35.0s/15m0s  17.00 iters/s
+
+running (06m36.0s), 006/100 VUs, 6726 complete and 0 interrupted iterations
+steady   [  44% ] 006/100 VUs  06m36.0s/15m0s  17.00 iters/s
+
+running (06m37.0s), 005/100 VUs, 6744 complete and 0 interrupted iterations
+steady   [  44% ] 005/100 VUs  06m37.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:19Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"baed45fd-1d15-43fa-b120-ffd0ceddf9f1\",\"idempotencyKey\":\"f0af8db5-3fa7-4398-8bea-94c88f3b51be\"}" source=console
+
+running (06m38.0s), 004/100 VUs, 6762 complete and 0 interrupted iterations
+steady   [  44% ] 004/100 VUs  06m38.0s/15m0s  17.00 iters/s
+
+running (06m39.0s), 004/100 VUs, 6779 complete and 0 interrupted iterations
+steady   [  44% ] 004/100 VUs  06m39.0s/15m0s  17.00 iters/s
+
+running (06m40.0s), 006/100 VUs, 6794 complete and 0 interrupted iterations
+steady   [  44% ] 006/100 VUs  06m40.0s/15m0s  17.00 iters/s
+
+running (06m41.0s), 006/100 VUs, 6811 complete and 0 interrupted iterations
+steady   [  45% ] 006/100 VUs  06m41.0s/15m0s  17.00 iters/s
+
+running (06m42.0s), 005/100 VUs, 6829 complete and 0 interrupted iterations
+steady   [  45% ] 005/100 VUs  06m42.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:24Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"094fc4f7-890e-45eb-8bc2-eb3b312dd156\",\"idempotencyKey\":\"3edf27eb-f5b4-4cec-9145-6973ef63abfb\"}" source=console
+
+running (06m43.0s), 005/100 VUs, 6846 complete and 0 interrupted iterations
+steady   [  45% ] 005/100 VUs  06m43.0s/15m0s  17.00 iters/s
+
+running (06m44.0s), 004/100 VUs, 6864 complete and 0 interrupted iterations
+steady   [  45% ] 004/100 VUs  06m44.0s/15m0s  17.00 iters/s
+
+running (06m45.0s), 006/100 VUs, 6879 complete and 0 interrupted iterations
+steady   [  45% ] 006/100 VUs  06m45.0s/15m0s  17.00 iters/s
+
+running (06m46.0s), 004/100 VUs, 6898 complete and 0 interrupted iterations
+steady   [  45% ] 004/100 VUs  06m46.0s/15m0s  17.00 iters/s
+
+running (06m47.0s), 005/100 VUs, 6914 complete and 0 interrupted iterations
+steady   [  45% ] 005/100 VUs  06m47.0s/15m0s  17.00 iters/s
+
+running (06m48.0s), 004/100 VUs, 6932 complete and 0 interrupted iterations
+steady   [  45% ] 004/100 VUs  06m48.0s/15m0s  17.00 iters/s
+
+running (06m49.0s), 004/100 VUs, 6949 complete and 0 interrupted iterations
+steady   [  45% ] 004/100 VUs  06m49.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:30Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"aa698a5a-66e3-46b6-8fc7-27956daa522d\",\"idempotencyKey\":\"ad35196f-55ef-4fd0-8c5e-b3f02d67d748\"}" source=console
+
+running (06m50.0s), 006/100 VUs, 6964 complete and 0 interrupted iterations
+steady   [  46% ] 006/100 VUs  06m50.0s/15m0s  17.00 iters/s
+
+running (06m51.0s), 002/100 VUs, 6985 complete and 0 interrupted iterations
+steady   [  46% ] 002/100 VUs  06m51.0s/15m0s  17.00 iters/s
+
+running (06m52.0s), 005/100 VUs, 6999 complete and 0 interrupted iterations
+steady   [  46% ] 005/100 VUs  06m52.0s/15m0s  17.00 iters/s
+
+running (06m53.0s), 004/100 VUs, 7017 complete and 0 interrupted iterations
+steady   [  46% ] 004/100 VUs  06m53.0s/15m0s  17.00 iters/s
+
+running (06m54.0s), 006/100 VUs, 7032 complete and 0 interrupted iterations
+steady   [  46% ] 006/100 VUs  06m54.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:35Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"816cb29d-0604-4afa-b524-b272d2dc7afb\",\"idempotencyKey\":\"d1013b10-01ae-4474-9707-9323d9bec23b\"}" source=console
+
+running (06m55.0s), 006/100 VUs, 7049 complete and 0 interrupted iterations
+steady   [  46% ] 006/100 VUs  06m55.0s/15m0s  17.00 iters/s
+
+running (06m56.0s), 004/100 VUs, 7068 complete and 0 interrupted iterations
+steady   [  46% ] 004/100 VUs  06m56.0s/15m0s  17.00 iters/s
+
+running (06m57.0s), 002/100 VUs, 7087 complete and 0 interrupted iterations
+steady   [  46% ] 002/100 VUs  06m57.0s/15m0s  17.00 iters/s
+
+running (06m58.0s), 007/100 VUs, 7099 complete and 0 interrupted iterations
+steady   [  46% ] 007/100 VUs  06m58.0s/15m0s  17.00 iters/s
+
+running (06m59.0s), 006/100 VUs, 7117 complete and 0 interrupted iterations
+steady   [  47% ] 006/100 VUs  06m59.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:41Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6b11b3fe-b10a-4237-913b-6f2f107b15f1\",\"idempotencyKey\":\"7821d92e-1de8-44e5-a543-3f4985867bb0\"}" source=console
+
+running (07m00.0s), 005/100 VUs, 7135 complete and 0 interrupted iterations
+steady   [  47% ] 005/100 VUs  07m00.0s/15m0s  17.00 iters/s
+
+running (07m01.0s), 004/100 VUs, 7153 complete and 0 interrupted iterations
+steady   [  47% ] 004/100 VUs  07m01.0s/15m0s  17.00 iters/s
+
+running (07m02.0s), 002/100 VUs, 7172 complete and 0 interrupted iterations
+steady   [  47% ] 002/100 VUs  07m02.0s/15m0s  17.00 iters/s
+
+running (07m03.0s), 006/100 VUs, 7185 complete and 0 interrupted iterations
+steady   [  47% ] 006/100 VUs  07m03.0s/15m0s  17.00 iters/s
+
+running (07m04.0s), 006/100 VUs, 7202 complete and 0 interrupted iterations
+steady   [  47% ] 006/100 VUs  07m04.0s/15m0s  17.00 iters/s
+
+running (07m05.0s), 005/100 VUs, 7220 complete and 0 interrupted iterations
+steady   [  47% ] 005/100 VUs  07m05.0s/15m0s  17.00 iters/s
+
+running (07m06.0s), 004/100 VUs, 7238 complete and 0 interrupted iterations
+steady   [  47% ] 004/100 VUs  07m06.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:47Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2f775b99-5928-4980-aeff-95fad48fc8a4\",\"idempotencyKey\":\"72f344ee-f437-4f1a-a022-82689d09aef1\"}" source=console
+
+running (07m07.0s), 007/100 VUs, 7252 complete and 0 interrupted iterations
+steady   [  47% ] 007/100 VUs  07m07.0s/15m0s  17.00 iters/s
+
+running (07m08.0s), 004/100 VUs, 7272 complete and 0 interrupted iterations
+steady   [  48% ] 004/100 VUs  07m08.0s/15m0s  17.00 iters/s
+
+running (07m09.0s), 005/100 VUs, 7288 complete and 0 interrupted iterations
+steady   [  48% ] 005/100 VUs  07m09.0s/15m0s  17.00 iters/s
+
+running (07m10.0s), 004/100 VUs, 7306 complete and 0 interrupted iterations
+steady   [  48% ] 004/100 VUs  07m10.0s/15m0s  17.00 iters/s
+
+running (07m11.0s), 007/100 VUs, 7320 complete and 0 interrupted iterations
+steady   [  48% ] 007/100 VUs  07m11.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:52Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"dce5ef12-38d8-42ac-a7cb-5c9910b7f454\",\"idempotencyKey\":\"eeaa3144-5355-463e-92cd-a3f80eb564c8\"}" source=console
+
+running (07m12.0s), 004/100 VUs, 7340 complete and 0 interrupted iterations
+steady   [  48% ] 004/100 VUs  07m12.0s/15m0s  17.00 iters/s
+
+running (07m13.0s), 005/100 VUs, 7356 complete and 0 interrupted iterations
+steady   [  48% ] 005/100 VUs  07m13.0s/15m0s  17.00 iters/s
+
+running (07m14.0s), 004/100 VUs, 7374 complete and 0 interrupted iterations
+steady   [  48% ] 004/100 VUs  07m14.0s/15m0s  17.00 iters/s
+
+running (07m15.0s), 003/100 VUs, 7392 complete and 0 interrupted iterations
+steady   [  48% ] 003/100 VUs  07m15.0s/15m0s  17.00 iters/s
+
+running (07m16.0s), 007/100 VUs, 7405 complete and 0 interrupted iterations
+steady   [  48% ] 007/100 VUs  07m16.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:25:58Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6fdab194-35df-479a-8b82-f5fa68d1c9d7\",\"idempotencyKey\":\"cbe9f5f0-7b09-4d18-a5cc-3152a5d7ff10\"}" source=console
+
+running (07m17.0s), 006/100 VUs, 7423 complete and 0 interrupted iterations
+steady   [  49% ] 006/100 VUs  07m17.0s/15m0s  17.00 iters/s
+
+running (07m18.0s), 005/100 VUs, 7441 complete and 0 interrupted iterations
+steady   [  49% ] 005/100 VUs  07m18.0s/15m0s  17.00 iters/s
+
+running (07m19.0s), 005/100 VUs, 7458 complete and 0 interrupted iterations
+steady   [  49% ] 005/100 VUs  07m19.0s/15m0s  17.00 iters/s
+
+running (07m20.0s), 003/100 VUs, 7477 complete and 0 interrupted iterations
+steady   [  49% ] 003/100 VUs  07m20.0s/15m0s  17.00 iters/s
+
+running (07m21.0s), 007/100 VUs, 7490 complete and 0 interrupted iterations
+steady   [  49% ] 007/100 VUs  07m21.0s/15m0s  17.00 iters/s
+
+running (07m22.0s), 004/100 VUs, 7510 complete and 0 interrupted iterations
+steady   [  49% ] 004/100 VUs  07m22.0s/15m0s  17.00 iters/s
+
+running (07m23.0s), 005/100 VUs, 7526 complete and 0 interrupted iterations
+steady   [  49% ] 005/100 VUs  07m23.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:05Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"22826f68-e5b5-4170-bb10-29007f610de2\",\"idempotencyKey\":\"c62641d5-645b-4dd1-b593-f4a97c88ebef\"}" source=console
+
+running (07m24.0s), 004/100 VUs, 7544 complete and 0 interrupted iterations
+steady   [  49% ] 004/100 VUs  07m24.0s/15m0s  17.00 iters/s
+
+running (07m25.0s), 003/100 VUs, 7562 complete and 0 interrupted iterations
+steady   [  49% ] 003/100 VUs  07m25.0s/15m0s  17.00 iters/s
+
+running (07m26.0s), 007/100 VUs, 7575 complete and 0 interrupted iterations
+steady   [  50% ] 007/100 VUs  07m26.0s/15m0s  17.00 iters/s
+
+running (07m27.0s), 005/100 VUs, 7594 complete and 0 interrupted iterations
+steady   [  50% ] 005/100 VUs  07m27.0s/15m0s  17.00 iters/s
+
+running (07m28.0s), 005/100 VUs, 7611 complete and 0 interrupted iterations
+steady   [  50% ] 005/100 VUs  07m28.0s/15m0s  17.00 iters/s
+
+running (07m29.0s), 004/100 VUs, 7629 complete and 0 interrupted iterations
+steady   [  50% ] 004/100 VUs  07m29.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:11Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"507616c3-665e-4273-8937-ae08f586d3c7\",\"idempotencyKey\":\"0a30b0a7-0466-4ffd-b58b-65e932970776\"}" source=console
+
+running (07m30.0s), 003/100 VUs, 7647 complete and 0 interrupted iterations
+steady   [  50% ] 003/100 VUs  07m30.0s/15m0s  17.00 iters/s
+
+running (07m31.0s), 006/100 VUs, 7661 complete and 0 interrupted iterations
+steady   [  50% ] 006/100 VUs  07m31.0s/15m0s  17.00 iters/s
+
+running (07m32.0s), 004/100 VUs, 7680 complete and 0 interrupted iterations
+steady   [  50% ] 004/100 VUs  07m32.0s/15m0s  17.00 iters/s
+
+running (07m33.0s), 005/100 VUs, 7696 complete and 0 interrupted iterations
+steady   [  50% ] 005/100 VUs  07m33.0s/15m0s  17.00 iters/s
+
+running (07m34.0s), 004/100 VUs, 7714 complete and 0 interrupted iterations
+steady   [  50% ] 004/100 VUs  07m34.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:16Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"a7921e13-330e-4d89-9d5d-34d79c53ed77\",\"idempotencyKey\":\"ed48d4fa-2645-408d-9992-53d3df49d1a5\"}" source=console
+
+running (07m35.0s), 003/100 VUs, 7732 complete and 0 interrupted iterations
+steady   [  51% ] 003/100 VUs  07m35.0s/15m0s  17.00 iters/s
+
+running (07m36.0s), 006/100 VUs, 7746 complete and 0 interrupted iterations
+steady   [  51% ] 006/100 VUs  07m36.0s/15m0s  17.00 iters/s
+
+running (07m37.0s), 006/100 VUs, 7763 complete and 0 interrupted iterations
+steady   [  51% ] 006/100 VUs  07m37.0s/15m0s  17.00 iters/s
+
+running (07m38.0s), 005/100 VUs, 7781 complete and 0 interrupted iterations
+steady   [  51% ] 005/100 VUs  07m38.0s/15m0s  17.00 iters/s
+
+running (07m39.0s), 004/100 VUs, 7799 complete and 0 interrupted iterations
+steady   [  51% ] 004/100 VUs  07m39.0s/15m0s  17.00 iters/s
+
+running (07m40.0s), 007/100 VUs, 7813 complete and 0 interrupted iterations
+steady   [  51% ] 007/100 VUs  07m40.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:22Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"dbb15280-7c8b-4975-a146-afd3293f5bcc\",\"idempotencyKey\":\"0a96ad27-4b2a-4728-80cc-4915869e7745\"}" source=console
+
+running (07m41.0s), 006/100 VUs, 7831 complete and 0 interrupted iterations
+steady   [  51% ] 006/100 VUs  07m41.0s/15m0s  17.00 iters/s
+
+running (07m42.0s), 005/100 VUs, 7849 complete and 0 interrupted iterations
+steady   [  51% ] 005/100 VUs  07m42.0s/15m0s  17.00 iters/s
+
+running (07m43.0s), 001/100 VUs, 7870 complete and 0 interrupted iterations
+steady   [  51% ] 001/100 VUs  07m43.0s/15m0s  17.00 iters/s
+
+running (07m44.0s), 003/100 VUs, 7885 complete and 0 interrupted iterations
+steady   [  52% ] 003/100 VUs  07m44.0s/15m0s  17.00 iters/s
+
+running (07m45.0s), 004/100 VUs, 7901 complete and 0 interrupted iterations
+steady   [  52% ] 004/100 VUs  07m45.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:27Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b3aaa93c-fd6f-434c-800f-1d0ad17e5bc0\",\"idempotencyKey\":\"1a75086e-c309-49b4-8a79-f9dd3966a426\"}" source=console
+
+running (07m46.0s), 002/100 VUs, 7920 complete and 0 interrupted iterations
+steady   [  52% ] 002/100 VUs  07m46.0s/15m0s  17.00 iters/s
+
+running (07m47.0s), 005/100 VUs, 7934 complete and 0 interrupted iterations
+steady   [  52% ] 005/100 VUs  07m47.0s/15m0s  17.00 iters/s
+
+running (07m48.0s), 004/100 VUs, 7952 complete and 0 interrupted iterations
+steady   [  52% ] 004/100 VUs  07m48.0s/15m0s  17.00 iters/s
+
+running (07m49.0s), 006/100 VUs, 7967 complete and 0 interrupted iterations
+steady   [  52% ] 006/100 VUs  07m49.0s/15m0s  17.00 iters/s
+
+running (07m50.0s), 005/100 VUs, 7985 complete and 0 interrupted iterations
+steady   [  52% ] 005/100 VUs  07m50.0s/15m0s  17.00 iters/s
+
+running (07m51.0s), 004/100 VUs, 8003 complete and 0 interrupted iterations
+steady   [  52% ] 004/100 VUs  07m51.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:33Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"3eaa6ab8-f117-45d9-bd52-bc6a8e5dab53\",\"idempotencyKey\":\"c754753f-8fc2-408f-be67-a8dc62f3ef5e\"}" source=console
+
+running (07m52.0s), 004/100 VUs, 8020 complete and 0 interrupted iterations
+steady   [  52% ] 004/100 VUs  07m52.0s/15m0s  17.00 iters/s
+
+running (07m53.0s), 004/100 VUs, 8037 complete and 0 interrupted iterations
+steady   [  53% ] 004/100 VUs  07m53.0s/15m0s  17.00 iters/s
+
+running (07m54.0s), 006/100 VUs, 8052 complete and 0 interrupted iterations
+steady   [  53% ] 006/100 VUs  07m54.0s/15m0s  17.00 iters/s
+
+running (07m55.0s), 004/100 VUs, 8071 complete and 0 interrupted iterations
+steady   [  53% ] 004/100 VUs  07m55.0s/15m0s  17.00 iters/s
+
+running (07m56.0s), 006/100 VUs, 8086 complete and 0 interrupted iterations
+steady   [  53% ] 006/100 VUs  07m56.0s/15m0s  17.00 iters/s
+
+running (07m57.0s), 003/100 VUs, 8106 complete and 0 interrupted iterations
+steady   [  53% ] 003/100 VUs  07m57.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:38Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"244d3784-16ef-4272-b00b-82e8139ccff5\",\"idempotencyKey\":\"dd6cdd79-558c-4408-8dc8-ce939940757e\"}" source=console
+
+running (07m58.0s), 002/100 VUs, 8124 complete and 0 interrupted iterations
+steady   [  53% ] 002/100 VUs  07m58.0s/15m0s  17.00 iters/s
+
+running (07m59.0s), 002/100 VUs, 8141 complete and 0 interrupted iterations
+steady   [  53% ] 002/100 VUs  07m59.0s/15m0s  17.00 iters/s
+
+running (08m00.0s), 004/100 VUs, 8156 complete and 0 interrupted iterations
+steady   [  53% ] 004/100 VUs  08m00.0s/15m0s  17.00 iters/s
+
+running (08m01.0s), 007/100 VUs, 8170 complete and 0 interrupted iterations
+steady   [  53% ] 007/100 VUs  08m01.0s/15m0s  17.00 iters/s
+
+running (08m02.0s), 006/100 VUs, 8188 complete and 0 interrupted iterations
+steady   [  54% ] 006/100 VUs  08m02.0s/15m0s  17.00 iters/s
+
+running (08m03.0s), 005/100 VUs, 8206 complete and 0 interrupted iterations
+steady   [  54% ] 005/100 VUs  08m03.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:45Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"4311d5ab-a05b-4525-bfd4-e7e47f79c99a\",\"idempotencyKey\":\"3efcd753-5cf9-4617-804f-c1c23c5e7d4a\"}" source=console
+
+running (08m04.0s), 004/100 VUs, 8224 complete and 0 interrupted iterations
+steady   [  54% ] 004/100 VUs  08m04.0s/15m0s  17.00 iters/s
+
+running (08m05.0s), 004/100 VUs, 8241 complete and 0 interrupted iterations
+steady   [  54% ] 004/100 VUs  08m05.0s/15m0s  17.00 iters/s
+
+running (08m06.0s), 004/100 VUs, 8258 complete and 0 interrupted iterations
+steady   [  54% ] 004/100 VUs  08m06.0s/15m0s  17.00 iters/s
+
+running (08m07.0s), 005/100 VUs, 8274 complete and 0 interrupted iterations
+steady   [  54% ] 005/100 VUs  08m07.0s/15m0s  17.00 iters/s
+
+running (08m08.0s), 004/100 VUs, 8292 complete and 0 interrupted iterations
+steady   [  54% ] 004/100 VUs  08m08.0s/15m0s  17.00 iters/s
+
+running (08m09.0s), 004/100 VUs, 8309 complete and 0 interrupted iterations
+steady   [  54% ] 004/100 VUs  08m09.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:51Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"880b981d-b04f-4bc3-b8ff-c60286da50e1\",\"idempotencyKey\":\"ba3dce00-6a44-4444-bec1-25a40b8fa2b6\"}" source=console
+
+running (08m10.0s), 006/100 VUs, 8324 complete and 0 interrupted iterations
+steady   [  54% ] 006/100 VUs  08m10.0s/15m0s  17.00 iters/s
+
+running (08m11.0s), 005/100 VUs, 8342 complete and 0 interrupted iterations
+steady   [  55% ] 005/100 VUs  08m11.0s/15m0s  17.00 iters/s
+
+running (08m12.0s), 004/100 VUs, 8360 complete and 0 interrupted iterations
+steady   [  55% ] 004/100 VUs  08m12.0s/15m0s  17.00 iters/s
+
+running (08m13.0s), 004/100 VUs, 8377 complete and 0 interrupted iterations
+steady   [  55% ] 004/100 VUs  08m13.0s/15m0s  17.00 iters/s
+
+running (08m14.0s), 006/100 VUs, 8392 complete and 0 interrupted iterations
+steady   [  55% ] 006/100 VUs  08m14.0s/15m0s  17.00 iters/s
+
+running (08m15.0s), 003/100 VUs, 8412 complete and 0 interrupted iterations
+steady   [  55% ] 003/100 VUs  08m15.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:26:57Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"a631d15c-7c05-46ff-abeb-0bdb90c5d45e\",\"idempotencyKey\":\"204adb96-d806-429c-85cc-09a1dabf47c0\"}" source=console
+
+running (08m16.0s), 004/100 VUs, 8428 complete and 0 interrupted iterations
+steady   [  55% ] 004/100 VUs  08m16.0s/15m0s  17.00 iters/s
+
+running (08m17.0s), 004/100 VUs, 8445 complete and 0 interrupted iterations
+steady   [  55% ] 004/100 VUs  08m17.0s/15m0s  17.00 iters/s
+
+running (08m18.0s), 003/100 VUs, 8463 complete and 0 interrupted iterations
+steady   [  55% ] 003/100 VUs  08m18.0s/15m0s  17.00 iters/s
+
+running (08m19.0s), 006/100 VUs, 8477 complete and 0 interrupted iterations
+steady   [  55% ] 006/100 VUs  08m19.0s/15m0s  17.00 iters/s
+
+running (08m20.0s), 005/100 VUs, 8495 complete and 0 interrupted iterations
+steady   [  56% ] 005/100 VUs  08m20.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:02Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"e75d7199-4195-43a1-acba-b1ae5afd84e4\",\"idempotencyKey\":\"df4a992b-0a96-4aac-bc4e-ea794ea66e7b\"}" source=console
+
+running (08m21.0s), 004/100 VUs, 8513 complete and 0 interrupted iterations
+steady   [  56% ] 004/100 VUs  08m21.0s/15m0s  17.00 iters/s
+
+running (08m22.0s), 005/100 VUs, 8529 complete and 0 interrupted iterations
+steady   [  56% ] 005/100 VUs  08m22.0s/15m0s  17.00 iters/s
+
+running (08m23.0s), 006/100 VUs, 8545 complete and 0 interrupted iterations
+steady   [  56% ] 006/100 VUs  08m23.0s/15m0s  17.00 iters/s
+
+running (08m24.0s), 005/100 VUs, 8563 complete and 0 interrupted iterations
+steady   [  56% ] 005/100 VUs  08m24.0s/15m0s  17.00 iters/s
+
+running (08m25.0s), 004/100 VUs, 8581 complete and 0 interrupted iterations
+steady   [  56% ] 004/100 VUs  08m25.0s/15m0s  17.00 iters/s
+
+running (08m26.0s), 003/100 VUs, 8599 complete and 0 interrupted iterations
+steady   [  56% ] 003/100 VUs  08m26.0s/15m0s  17.00 iters/s
+
+running (08m27.0s), 006/100 VUs, 8613 complete and 0 interrupted iterations
+steady   [  56% ] 006/100 VUs  08m27.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:09Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"df1478bc-3d4b-4de3-aa76-0d67f989f1f8\",\"idempotencyKey\":\"07828701-1c3a-4cdb-ae2c-3ca6ae21e789\"}" source=console
+
+running (08m28.0s), 004/100 VUs, 8632 complete and 0 interrupted iterations
+steady   [  56% ] 004/100 VUs  08m28.0s/15m0s  17.00 iters/s
+
+running (08m29.0s), 005/100 VUs, 8648 complete and 0 interrupted iterations
+steady   [  57% ] 005/100 VUs  08m29.0s/15m0s  17.00 iters/s
+
+running (08m30.0s), 002/100 VUs, 8668 complete and 0 interrupted iterations
+steady   [  57% ] 002/100 VUs  08m30.0s/15m0s  17.00 iters/s
+
+running (08m31.0s), 006/100 VUs, 8681 complete and 0 interrupted iterations
+steady   [  57% ] 006/100 VUs  08m31.0s/15m0s  17.00 iters/s
+
+running (08m32.0s), 006/100 VUs, 8698 complete and 0 interrupted iterations
+steady   [  57% ] 006/100 VUs  08m32.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:14Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"76ea5484-1f20-472a-a834-59f71f260a6c\",\"idempotencyKey\":\"e5738504-40e6-49bf-99f8-c29ad85c00ff\"}" source=console
+
+running (08m33.0s), 005/100 VUs, 8716 complete and 0 interrupted iterations
+steady   [  57% ] 005/100 VUs  08m33.0s/15m0s  17.00 iters/s
+
+running (08m34.0s), 004/100 VUs, 8734 complete and 0 interrupted iterations
+steady   [  57% ] 004/100 VUs  08m34.0s/15m0s  17.00 iters/s
+
+running (08m35.0s), 006/100 VUs, 8749 complete and 0 interrupted iterations
+steady   [  57% ] 006/100 VUs  08m35.0s/15m0s  17.00 iters/s
+
+running (08m36.0s), 003/100 VUs, 8769 complete and 0 interrupted iterations
+steady   [  57% ] 003/100 VUs  08m36.0s/15m0s  17.00 iters/s
+
+running (08m37.0s), 003/100 VUs, 8786 complete and 0 interrupted iterations
+steady   [  57% ] 003/100 VUs  08m37.0s/15m0s  17.00 iters/s
+
+running (08m38.0s), 004/100 VUs, 8802 complete and 0 interrupted iterations
+steady   [  58% ] 004/100 VUs  08m38.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:19Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b491781e-fc68-463f-b184-bd01e84b85c9\",\"idempotencyKey\":\"3bda50c8-d95c-4913-ac31-744e9c24e665\"}" source=console
+
+running (08m39.0s), 007/100 VUs, 8816 complete and 0 interrupted iterations
+steady   [  58% ] 007/100 VUs  08m39.0s/15m0s  17.00 iters/s
+
+running (08m40.0s), 005/100 VUs, 8835 complete and 0 interrupted iterations
+steady   [  58% ] 005/100 VUs  08m40.0s/15m0s  17.00 iters/s
+
+running (08m41.0s), 004/100 VUs, 8853 complete and 0 interrupted iterations
+steady   [  58% ] 004/100 VUs  08m41.0s/15m0s  17.00 iters/s
+
+running (08m42.0s), 004/100 VUs, 8870 complete and 0 interrupted iterations
+steady   [  58% ] 004/100 VUs  08m42.0s/15m0s  17.00 iters/s
+
+running (08m43.0s), 007/100 VUs, 8884 complete and 0 interrupted iterations
+steady   [  58% ] 007/100 VUs  08m43.0s/15m0s  17.00 iters/s
+
+running (08m44.0s), 006/100 VUs, 8902 complete and 0 interrupted iterations
+steady   [  58% ] 006/100 VUs  08m44.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:26Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"64409e4d-85b0-4888-b626-e8734d6416c5\",\"idempotencyKey\":\"042fc014-4fd2-4a71-b0b2-069fc0b39ff9\"}" source=console
+
+running (08m45.0s), 005/100 VUs, 8920 complete and 0 interrupted iterations
+steady   [  58% ] 005/100 VUs  08m45.0s/15m0s  17.00 iters/s
+
+running (08m46.0s), 003/100 VUs, 8939 complete and 0 interrupted iterations
+steady   [  58% ] 003/100 VUs  08m46.0s/15m0s  17.00 iters/s
+
+running (08m47.0s), 003/100 VUs, 8956 complete and 0 interrupted iterations
+steady   [  59% ] 003/100 VUs  08m47.0s/15m0s  17.00 iters/s
+
+running (08m48.0s), 006/100 VUs, 8970 complete and 0 interrupted iterations
+steady   [  59% ] 006/100 VUs  08m48.0s/15m0s  17.00 iters/s
+
+running (08m49.0s), 004/100 VUs, 8989 complete and 0 interrupted iterations
+steady   [  59% ] 004/100 VUs  08m49.0s/15m0s  17.00 iters/s
+
+running (08m50.0s), 005/100 VUs, 9005 complete and 0 interrupted iterations
+steady   [  59% ] 005/100 VUs  08m50.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:31Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"0e5442fe-4867-4eb4-86f7-59ba78ab84d1\",\"idempotencyKey\":\"e1ae6481-a4be-4d43-9d33-34a559952d1a\"}" source=console
+
+running (08m51.0s), 004/100 VUs, 9023 complete and 0 interrupted iterations
+steady   [  59% ] 004/100 VUs  08m51.0s/15m0s  17.00 iters/s
+
+running (08m52.0s), 005/100 VUs, 9039 complete and 0 interrupted iterations
+steady   [  59% ] 005/100 VUs  08m52.0s/15m0s  17.00 iters/s
+
+running (08m53.0s), 005/100 VUs, 9056 complete and 0 interrupted iterations
+steady   [  59% ] 005/100 VUs  08m53.0s/15m0s  17.00 iters/s
+
+running (08m54.0s), 004/100 VUs, 9074 complete and 0 interrupted iterations
+steady   [  59% ] 004/100 VUs  08m54.0s/15m0s  17.00 iters/s
+
+running (08m55.0s), 004/100 VUs, 9091 complete and 0 interrupted iterations
+steady   [  59% ] 004/100 VUs  08m55.0s/15m0s  17.00 iters/s
+
+running (08m56.0s), 006/100 VUs, 9106 complete and 0 interrupted iterations
+steady   [  60% ] 006/100 VUs  08m56.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:38Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d27309bf-f771-4917-add9-4bbef9184e1c\",\"idempotencyKey\":\"11be1c26-ddd8-47bd-8f18-38374b9a4d76\"}" source=console
+
+running (08m57.0s), 005/100 VUs, 9124 complete and 0 interrupted iterations
+steady   [  60% ] 005/100 VUs  08m57.0s/15m0s  17.00 iters/s
+
+running (08m58.0s), 003/100 VUs, 9143 complete and 0 interrupted iterations
+steady   [  60% ] 003/100 VUs  08m58.0s/15m0s  17.00 iters/s
+
+running (08m59.0s), 004/100 VUs, 9159 complete and 0 interrupted iterations
+steady   [  60% ] 004/100 VUs  08m59.0s/15m0s  17.00 iters/s
+
+running (09m00.0s), 007/100 VUs, 9173 complete and 0 interrupted iterations
+steady   [  60% ] 007/100 VUs  09m00.0s/15m0s  17.00 iters/s
+
+running (09m01.0s), 006/100 VUs, 9191 complete and 0 interrupted iterations
+steady   [  60% ] 006/100 VUs  09m01.0s/15m0s  17.00 iters/s
+
+running (09m02.0s), 005/100 VUs, 9209 complete and 0 interrupted iterations
+steady   [  60% ] 005/100 VUs  09m02.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:44Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d8ea2426-7113-4858-b8ef-554449bd2ccc\",\"idempotencyKey\":\"baf92d39-1576-4017-bfbd-0441d19fbe56\"}" source=console
+
+running (09m03.0s), 004/100 VUs, 9227 complete and 0 interrupted iterations
+steady   [  60% ] 004/100 VUs  09m03.0s/15m0s  17.00 iters/s
+
+running (09m04.0s), 007/100 VUs, 9241 complete and 0 interrupted iterations
+steady   [  60% ] 007/100 VUs  09m04.0s/15m0s  17.00 iters/s
+
+running (09m05.0s), 006/100 VUs, 9259 complete and 0 interrupted iterations
+steady   [  61% ] 006/100 VUs  09m05.0s/15m0s  17.00 iters/s
+
+running (09m06.0s), 005/100 VUs, 9277 complete and 0 interrupted iterations
+steady   [  61% ] 005/100 VUs  09m06.0s/15m0s  17.00 iters/s
+
+running (09m07.0s), 004/100 VUs, 9295 complete and 0 interrupted iterations
+steady   [  61% ] 004/100 VUs  09m07.0s/15m0s  17.00 iters/s
+
+running (09m08.0s), 005/100 VUs, 9311 complete and 0 interrupted iterations
+steady   [  61% ] 005/100 VUs  09m08.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:50Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"fc9df0a0-bed9-4242-b0cc-8b3c2e233e09\",\"idempotencyKey\":\"eec0320a-f7e2-4c8c-8235-dd22a051721e\"}" source=console
+
+running (09m09.0s), 006/100 VUs, 9327 complete and 0 interrupted iterations
+steady   [  61% ] 006/100 VUs  09m09.0s/15m0s  17.00 iters/s
+
+running (09m10.0s), 003/100 VUs, 9347 complete and 0 interrupted iterations
+steady   [  61% ] 003/100 VUs  09m10.0s/15m0s  17.00 iters/s
+
+running (09m11.0s), 004/100 VUs, 9363 complete and 0 interrupted iterations
+steady   [  61% ] 004/100 VUs  09m11.0s/15m0s  17.00 iters/s
+
+running (09m12.0s), 003/100 VUs, 9381 complete and 0 interrupted iterations
+steady   [  61% ] 003/100 VUs  09m12.0s/15m0s  17.00 iters/s
+
+running (09m13.0s), 006/100 VUs, 9395 complete and 0 interrupted iterations
+steady   [  61% ] 006/100 VUs  09m13.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:27:55Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"9034bd85-08f9-4094-b4b2-2d1b8b9d59f5\",\"idempotencyKey\":\"1bd38faf-0dfa-47f0-a4be-47dce7ceaa6f\"}" source=console
+
+running (09m14.0s), 005/100 VUs, 9413 complete and 0 interrupted iterations
+steady   [  62% ] 005/100 VUs  09m14.0s/15m0s  17.00 iters/s
+
+running (09m15.0s), 005/100 VUs, 9430 complete and 0 interrupted iterations
+steady   [  62% ] 005/100 VUs  09m15.0s/15m0s  17.00 iters/s
+
+running (09m16.0s), 002/100 VUs, 9450 complete and 0 interrupted iterations
+steady   [  62% ] 002/100 VUs  09m16.0s/15m0s  17.00 iters/s
+
+running (09m17.0s), 006/100 VUs, 9463 complete and 0 interrupted iterations
+steady   [  62% ] 006/100 VUs  09m17.0s/15m0s  17.00 iters/s
+
+running (09m18.0s), 003/100 VUs, 9483 complete and 0 interrupted iterations
+steady   [  62% ] 003/100 VUs  09m18.0s/15m0s  17.00 iters/s
+
+running (09m19.0s), 003/100 VUs, 9500 complete and 0 interrupted iterations
+steady   [  62% ] 003/100 VUs  09m19.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:01Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"7cf2fa5e-a79e-445e-aabb-bd7f3f251df1\",\"idempotencyKey\":\"fb484c36-cb05-49ec-98ea-0f36b089a864\"}" source=console
+
+running (09m20.0s), 003/100 VUs, 9517 complete and 0 interrupted iterations
+steady   [  62% ] 003/100 VUs  09m20.0s/15m0s  17.00 iters/s
+
+running (09m21.0s), 006/100 VUs, 9531 complete and 0 interrupted iterations
+steady   [  62% ] 006/100 VUs  09m21.0s/15m0s  17.00 iters/s
+
+running (09m22.0s), 005/100 VUs, 9549 complete and 0 interrupted iterations
+steady   [  62% ] 005/100 VUs  09m22.0s/15m0s  17.00 iters/s
+
+running (09m23.0s), 004/100 VUs, 9567 complete and 0 interrupted iterations
+steady   [  63% ] 004/100 VUs  09m23.0s/15m0s  17.00 iters/s
+
+running (09m24.0s), 001/100 VUs, 9587 complete and 0 interrupted iterations
+steady   [  63% ] 001/100 VUs  09m24.0s/15m0s  17.00 iters/s
+
+running (09m25.0s), 006/100 VUs, 9599 complete and 0 interrupted iterations
+steady   [  63% ] 006/100 VUs  09m25.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:06Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"cef47d11-ce63-4a97-aa43-a449d099d13f\",\"idempotencyKey\":\"a331423a-6aa3-4fc4-aa04-64842ea87667\"}" source=console
+
+running (09m26.0s), 003/100 VUs, 9619 complete and 0 interrupted iterations
+steady   [  63% ] 003/100 VUs  09m26.0s/15m0s  17.00 iters/s
+
+running (09m27.0s), 003/100 VUs, 9636 complete and 0 interrupted iterations
+steady   [  63% ] 003/100 VUs  09m27.0s/15m0s  17.00 iters/s
+
+running (09m28.0s), 003/100 VUs, 9653 complete and 0 interrupted iterations
+steady   [  63% ] 003/100 VUs  09m28.0s/15m0s  17.00 iters/s
+
+running (09m29.0s), 006/100 VUs, 9667 complete and 0 interrupted iterations
+steady   [  63% ] 006/100 VUs  09m29.0s/15m0s  17.00 iters/s
+
+running (09m30.0s), 005/100 VUs, 9685 complete and 0 interrupted iterations
+steady   [  63% ] 005/100 VUs  09m30.0s/15m0s  17.00 iters/s
+
+running (09m31.0s), 005/100 VUs, 9702 complete and 0 interrupted iterations
+steady   [  63% ] 005/100 VUs  09m31.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:13Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f50f99bf-984c-4664-bd0d-0e71dfe7cb72\",\"idempotencyKey\":\"c7b4caba-7c73-425b-8358-4d1d3f2df8dd\"}" source=console
+
+running (09m32.0s), 004/100 VUs, 9720 complete and 0 interrupted iterations
+steady   [  64% ] 004/100 VUs  09m32.0s/15m0s  17.00 iters/s
+
+running (09m33.0s), 007/100 VUs, 9734 complete and 0 interrupted iterations
+steady   [  64% ] 007/100 VUs  09m33.0s/15m0s  17.00 iters/s
+
+running (09m34.0s), 006/100 VUs, 9752 complete and 0 interrupted iterations
+steady   [  64% ] 006/100 VUs  09m34.0s/15m0s  17.00 iters/s
+
+running (09m35.0s), 005/100 VUs, 9770 complete and 0 interrupted iterations
+steady   [  64% ] 005/100 VUs  09m35.0s/15m0s  17.00 iters/s
+
+running (09m36.0s), 004/100 VUs, 9788 complete and 0 interrupted iterations
+steady   [  64% ] 004/100 VUs  09m36.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:18Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"fbff28b0-a08d-4ad4-a293-afb0ce9f9357\",\"idempotencyKey\":\"321059ff-da3a-4c0a-a333-f1a3304615a6\"}" source=console
+
+running (09m37.0s), 004/100 VUs, 9805 complete and 0 interrupted iterations
+steady   [  64% ] 004/100 VUs  09m37.0s/15m0s  17.00 iters/s
+
+running (09m38.0s), 006/100 VUs, 9820 complete and 0 interrupted iterations
+steady   [  64% ] 006/100 VUs  09m38.0s/15m0s  17.00 iters/s
+
+running (09m39.0s), 005/100 VUs, 9838 complete and 0 interrupted iterations
+steady   [  64% ] 005/100 VUs  09m39.0s/15m0s  17.00 iters/s
+
+running (09m40.0s), 004/100 VUs, 9856 complete and 0 interrupted iterations
+steady   [  64% ] 004/100 VUs  09m40.0s/15m0s  17.00 iters/s
+
+running (09m41.0s), 004/100 VUs, 9873 complete and 0 interrupted iterations
+steady   [  65% ] 004/100 VUs  09m41.0s/15m0s  17.00 iters/s
+
+running (09m42.0s), 006/100 VUs, 9888 complete and 0 interrupted iterations
+steady   [  65% ] 006/100 VUs  09m42.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:24Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"86b8da3d-aa21-4f25-983b-4631b15e9f14\",\"idempotencyKey\":\"e3bc1023-d3fa-4da6-b03d-55d9d2d0a461\"}" source=console
+
+running (09m43.0s), 005/100 VUs, 9906 complete and 0 interrupted iterations
+steady   [  65% ] 005/100 VUs  09m43.0s/15m0s  17.00 iters/s
+
+running (09m44.0s), 005/100 VUs, 9923 complete and 0 interrupted iterations
+steady   [  65% ] 005/100 VUs  09m44.0s/15m0s  17.00 iters/s
+
+running (09m45.0s), 004/100 VUs, 9941 complete and 0 interrupted iterations
+steady   [  65% ] 004/100 VUs  09m45.0s/15m0s  17.00 iters/s
+
+running (09m46.0s), 006/100 VUs, 9956 complete and 0 interrupted iterations
+steady   [  65% ] 006/100 VUs  09m46.0s/15m0s  17.00 iters/s
+
+running (09m47.0s), 004/100 VUs, 9975 complete and 0 interrupted iterations
+steady   [  65% ] 004/100 VUs  09m47.0s/15m0s  17.00 iters/s
+
+running (09m48.0s), 005/100 VUs, 9991 complete and 0 interrupted iterations
+steady   [  65% ] 005/100 VUs  09m48.0s/15m0s  17.00 iters/s
+
+running (09m49.0s), 004/100 VUs, 10009 complete and 0 interrupted iterations
+steady   [  65% ] 004/100 VUs  09m49.0s/15m0s  17.00 iters/s
+
+running (09m50.0s), 004/100 VUs, 10026 complete and 0 interrupted iterations
+steady   [  66% ] 004/100 VUs  09m50.0s/15m0s  17.00 iters/s
+
+running (09m51.0s), 006/100 VUs, 10041 complete and 0 interrupted iterations
+steady   [  66% ] 006/100 VUs  09m51.0s/15m0s  17.00 iters/s
+
+running (09m52.0s), 005/100 VUs, 10059 complete and 0 interrupted iterations
+steady   [  66% ] 005/100 VUs  09m52.0s/15m0s  17.00 iters/s
+
+running (09m53.0s), 004/100 VUs, 10077 complete and 0 interrupted iterations
+steady   [  66% ] 004/100 VUs  09m53.0s/15m0s  17.00 iters/s
+
+running (09m54.0s), 003/100 VUs, 10095 complete and 0 interrupted iterations
+steady   [  66% ] 003/100 VUs  09m54.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:36Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"e1a2aa19-4afb-41b7-862e-008e3a894552\",\"idempotencyKey\":\"a2ee05e8-eafd-4186-93fe-baba72bf04cb\"}" source=console
+
+running (09m55.0s), 006/100 VUs, 10109 complete and 0 interrupted iterations
+steady   [  66% ] 006/100 VUs  09m55.0s/15m0s  17.00 iters/s
+
+running (09m56.0s), 005/100 VUs, 10127 complete and 0 interrupted iterations
+steady   [  66% ] 005/100 VUs  09m56.0s/15m0s  17.00 iters/s
+
+running (09m57.0s), 004/100 VUs, 10145 complete and 0 interrupted iterations
+steady   [  66% ] 004/100 VUs  09m57.0s/15m0s  17.00 iters/s
+
+running (09m58.0s), 003/100 VUs, 10163 complete and 0 interrupted iterations
+steady   [  66% ] 003/100 VUs  09m58.0s/15m0s  17.00 iters/s
+
+running (09m59.0s), 006/100 VUs, 10177 complete and 0 interrupted iterations
+steady   [  67% ] 006/100 VUs  09m59.0s/15m0s  17.00 iters/s
+
+running (10m00.0s), 006/100 VUs, 10194 complete and 0 interrupted iterations
+steady   [  67% ] 006/100 VUs  10m00.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:41Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6f66ae2a-99ab-4e49-b03e-55ca9c8ed569\",\"idempotencyKey\":\"3e538092-0f12-44fc-9018-7a8c9b951dc2\"}" source=console
+
+running (10m01.0s), 005/100 VUs, 10212 complete and 0 interrupted iterations
+steady   [  67% ] 005/100 VUs  10m01.0s/15m0s  17.00 iters/s
+
+running (10m02.0s), 004/100 VUs, 10230 complete and 0 interrupted iterations
+steady   [  67% ] 004/100 VUs  10m02.0s/15m0s  17.00 iters/s
+
+running (10m03.0s), 007/100 VUs, 10244 complete and 0 interrupted iterations
+steady   [  67% ] 007/100 VUs  10m03.0s/15m0s  17.00 iters/s
+
+running (10m04.0s), 006/100 VUs, 10262 complete and 0 interrupted iterations
+steady   [  67% ] 006/100 VUs  10m04.0s/15m0s  17.00 iters/s
+
+running (10m05.0s), 005/100 VUs, 10280 complete and 0 interrupted iterations
+steady   [  67% ] 005/100 VUs  10m05.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:47Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"cf05bb36-120a-426f-84ad-08f5d11785df\",\"idempotencyKey\":\"ef0efaaf-8118-42ae-be52-bf42e4a13ff5\"}" source=console
+
+running (10m06.0s), 004/100 VUs, 10298 complete and 0 interrupted iterations
+steady   [  67% ] 004/100 VUs  10m06.0s/15m0s  17.00 iters/s
+
+running (10m07.0s), 007/100 VUs, 10312 complete and 0 interrupted iterations
+steady   [  67% ] 007/100 VUs  10m07.0s/15m0s  17.00 iters/s
+
+running (10m08.0s), 006/100 VUs, 10330 complete and 0 interrupted iterations
+steady   [  68% ] 006/100 VUs  10m08.0s/15m0s  17.00 iters/s
+
+running (10m09.0s), 005/100 VUs, 10348 complete and 0 interrupted iterations
+steady   [  68% ] 005/100 VUs  10m09.0s/15m0s  17.00 iters/s
+
+running (10m10.0s), 004/100 VUs, 10366 complete and 0 interrupted iterations
+steady   [  68% ] 004/100 VUs  10m10.0s/15m0s  17.00 iters/s
+
+running (10m11.0s), 004/100 VUs, 10383 complete and 0 interrupted iterations
+steady   [  68% ] 004/100 VUs  10m11.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:53Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"927c5b3f-3474-4fb2-acdb-8ab625370213\",\"idempotencyKey\":\"adc4d119-7a91-4f2b-9ed1-71f3957d2203\"}" source=console
+
+running (10m12.0s), 006/100 VUs, 10398 complete and 0 interrupted iterations
+steady   [  68% ] 006/100 VUs  10m12.0s/15m0s  17.00 iters/s
+
+running (10m13.0s), 005/100 VUs, 10416 complete and 0 interrupted iterations
+steady   [  68% ] 005/100 VUs  10m13.0s/15m0s  17.00 iters/s
+
+running (10m14.0s), 004/100 VUs, 10434 complete and 0 interrupted iterations
+steady   [  68% ] 004/100 VUs  10m14.0s/15m0s  17.00 iters/s
+
+running (10m15.0s), 007/100 VUs, 10448 complete and 0 interrupted iterations
+steady   [  68% ] 007/100 VUs  10m15.0s/15m0s  17.00 iters/s
+
+running (10m16.0s), 006/100 VUs, 10466 complete and 0 interrupted iterations
+steady   [  68% ] 006/100 VUs  10m16.0s/15m0s  17.00 iters/s
+
+running (10m17.0s), 005/100 VUs, 10484 complete and 0 interrupted iterations
+steady   [  69% ] 005/100 VUs  10m17.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:28:59Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"3aa7b119-c882-4cfb-b65a-865eb10339af\",\"idempotencyKey\":\"1f400da5-0434-424f-9f74-393d1c195c64\"}" source=console
+
+running (10m18.0s), 004/100 VUs, 10502 complete and 0 interrupted iterations
+steady   [  69% ] 004/100 VUs  10m18.0s/15m0s  17.00 iters/s
+
+running (10m19.0s), 007/100 VUs, 10516 complete and 0 interrupted iterations
+steady   [  69% ] 007/100 VUs  10m19.0s/15m0s  17.00 iters/s
+
+running (10m20.0s), 006/100 VUs, 10534 complete and 0 interrupted iterations
+steady   [  69% ] 006/100 VUs  10m20.0s/15m0s  17.00 iters/s
+
+running (10m21.0s), 005/100 VUs, 10552 complete and 0 interrupted iterations
+steady   [  69% ] 005/100 VUs  10m21.0s/15m0s  17.00 iters/s
+
+running (10m22.0s), 004/100 VUs, 10570 complete and 0 interrupted iterations
+steady   [  69% ] 004/100 VUs  10m22.0s/15m0s  17.00 iters/s
+
+running (10m23.0s), 007/100 VUs, 10584 complete and 0 interrupted iterations
+steady   [  69% ] 007/100 VUs  10m23.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:05Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f18ef150-606c-4a71-b1a6-d310d7ad2fd2\",\"idempotencyKey\":\"850a7e83-4463-4641-a3ac-0eca47d7c3a6\"}" source=console
+
+running (10m24.0s), 006/100 VUs, 10602 complete and 0 interrupted iterations
+steady   [  69% ] 006/100 VUs  10m24.0s/15m0s  17.00 iters/s
+
+running (10m25.0s), 005/100 VUs, 10620 complete and 0 interrupted iterations
+steady   [  69% ] 005/100 VUs  10m25.0s/15m0s  17.00 iters/s
+
+running (10m26.0s), 004/100 VUs, 10638 complete and 0 interrupted iterations
+steady   [  70% ] 004/100 VUs  10m26.0s/15m0s  17.00 iters/s
+
+running (10m27.0s), 005/100 VUs, 10654 complete and 0 interrupted iterations
+steady   [  70% ] 005/100 VUs  10m27.0s/15m0s  17.00 iters/s
+
+running (10m28.0s), 006/100 VUs, 10670 complete and 0 interrupted iterations
+steady   [  70% ] 006/100 VUs  10m28.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:10Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"fa166d24-c2d7-4155-99c7-d1b7bf1a2f2b\",\"idempotencyKey\":\"c7bbd51b-3d92-4ce9-ae4b-7a5412b9395f\"}" source=console
+
+running (10m29.0s), 005/100 VUs, 10688 complete and 0 interrupted iterations
+steady   [  70% ] 005/100 VUs  10m29.0s/15m0s  17.00 iters/s
+
+running (10m30.0s), 004/100 VUs, 10706 complete and 0 interrupted iterations
+steady   [  70% ] 004/100 VUs  10m30.0s/15m0s  17.00 iters/s
+
+running (10m31.0s), 007/100 VUs, 10720 complete and 0 interrupted iterations
+steady   [  70% ] 007/100 VUs  10m31.0s/15m0s  17.00 iters/s
+
+running (10m32.0s), 006/100 VUs, 10738 complete and 0 interrupted iterations
+steady   [  70% ] 006/100 VUs  10m32.0s/15m0s  17.00 iters/s
+
+running (10m33.0s), 005/100 VUs, 10756 complete and 0 interrupted iterations
+steady   [  70% ] 005/100 VUs  10m33.0s/15m0s  17.00 iters/s
+
+running (10m34.0s), 004/100 VUs, 10774 complete and 0 interrupted iterations
+steady   [  70% ] 004/100 VUs  10m34.0s/15m0s  17.00 iters/s
+
+running (10m35.0s), 001/100 VUs, 10794 complete and 0 interrupted iterations
+steady   [  71% ] 001/100 VUs  10m35.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:17Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"91fc8dfc-694d-4ea3-9ef7-3f806ed40da2\",\"idempotencyKey\":\"3689a352-37ac-46fa-beb2-ff3fcb28b52c\"}" source=console
+
+running (10m36.0s), 006/100 VUs, 10806 complete and 0 interrupted iterations
+steady   [  71% ] 006/100 VUs  10m36.0s/15m0s  17.00 iters/s
+
+running (10m37.0s), 005/100 VUs, 10824 complete and 0 interrupted iterations
+steady   [  71% ] 005/100 VUs  10m37.0s/15m0s  17.00 iters/s
+
+running (10m38.0s), 004/100 VUs, 10842 complete and 0 interrupted iterations
+steady   [  71% ] 004/100 VUs  10m38.0s/15m0s  17.00 iters/s
+
+running (10m39.0s), 005/100 VUs, 10858 complete and 0 interrupted iterations
+steady   [  71% ] 005/100 VUs  10m39.0s/15m0s  17.00 iters/s
+
+running (10m40.0s), 006/100 VUs, 10874 complete and 0 interrupted iterations
+steady   [  71% ] 006/100 VUs  10m40.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:22Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"50ae3d74-fb88-4888-a1bc-c0ba69077989\",\"idempotencyKey\":\"5ac75157-8353-4083-95ed-bb7c4ad4616f\"}" source=console
+
+running (10m41.0s), 006/100 VUs, 10891 complete and 0 interrupted iterations
+steady   [  71% ] 006/100 VUs  10m41.0s/15m0s  17.00 iters/s
+
+running (10m42.0s), 004/100 VUs, 10910 complete and 0 interrupted iterations
+steady   [  71% ] 004/100 VUs  10m42.0s/15m0s  17.00 iters/s
+
+running (10m43.0s), 004/100 VUs, 10927 complete and 0 interrupted iterations
+steady   [  71% ] 004/100 VUs  10m43.0s/15m0s  17.00 iters/s
+
+running (10m44.0s), 006/100 VUs, 10942 complete and 0 interrupted iterations
+steady   [  72% ] 006/100 VUs  10m44.0s/15m0s  17.00 iters/s
+
+running (10m45.0s), 004/100 VUs, 10961 complete and 0 interrupted iterations
+steady   [  72% ] 004/100 VUs  10m45.0s/15m0s  17.00 iters/s
+
+running (10m46.0s), 003/100 VUs, 10979 complete and 0 interrupted iterations
+steady   [  72% ] 003/100 VUs  10m46.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:28Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"ab553932-e06c-4fd6-9f0b-bec6a4ae4f61\",\"idempotencyKey\":\"de8fff4e-728f-4714-bc96-91d46a0df8ca\"}" source=console
+
+running (10m47.0s), 004/100 VUs, 10995 complete and 0 interrupted iterations
+steady   [  72% ] 004/100 VUs  10m47.0s/15m0s  17.00 iters/s
+
+running (10m48.0s), 007/100 VUs, 11009 complete and 0 interrupted iterations
+steady   [  72% ] 007/100 VUs  10m48.0s/15m0s  17.00 iters/s
+
+running (10m49.0s), 006/100 VUs, 11027 complete and 0 interrupted iterations
+steady   [  72% ] 006/100 VUs  10m49.0s/15m0s  17.00 iters/s
+
+running (10m50.0s), 005/100 VUs, 11045 complete and 0 interrupted iterations
+steady   [  72% ] 005/100 VUs  10m50.0s/15m0s  17.00 iters/s
+
+running (10m51.0s), 004/100 VUs, 11063 complete and 0 interrupted iterations
+steady   [  72% ] 004/100 VUs  10m51.0s/15m0s  17.00 iters/s
+
+running (10m52.0s), 004/100 VUs, 11080 complete and 0 interrupted iterations
+steady   [  72% ] 004/100 VUs  10m52.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:34Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6996a41a-eb37-430f-8670-d0541b69ddb0\",\"idempotencyKey\":\"44b12fed-846a-44e0-a40c-0f88d84dbd6b\"}" source=console
+
+running (10m53.0s), 006/100 VUs, 11095 complete and 0 interrupted iterations
+steady   [  73% ] 006/100 VUs  10m53.0s/15m0s  17.00 iters/s
+
+running (10m54.0s), 005/100 VUs, 11113 complete and 0 interrupted iterations
+steady   [  73% ] 005/100 VUs  10m54.0s/15m0s  17.00 iters/s
+
+running (10m55.0s), 004/100 VUs, 11131 complete and 0 interrupted iterations
+steady   [  73% ] 004/100 VUs  10m55.0s/15m0s  17.00 iters/s
+
+running (10m56.0s), 007/100 VUs, 11145 complete and 0 interrupted iterations
+steady   [  73% ] 007/100 VUs  10m56.0s/15m0s  17.00 iters/s
+
+running (10m57.0s), 006/100 VUs, 11163 complete and 0 interrupted iterations
+steady   [  73% ] 006/100 VUs  10m57.0s/15m0s  17.00 iters/s
+
+running (10m58.0s), 005/100 VUs, 11181 complete and 0 interrupted iterations
+steady   [  73% ] 005/100 VUs  10m58.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:40Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"21f53434-e302-432e-b174-c001f98e1bae\",\"idempotencyKey\":\"56f21fe0-3f02-4702-9ed3-735b2b94d8c0\"}" source=console
+
+running (10m59.0s), 004/100 VUs, 11199 complete and 0 interrupted iterations
+steady   [  73% ] 004/100 VUs  10m59.0s/15m0s  17.00 iters/s
+
+running (11m00.0s), 003/100 VUs, 11217 complete and 0 interrupted iterations
+steady   [  73% ] 003/100 VUs  11m00.0s/15m0s  17.00 iters/s
+
+running (11m01.0s), 007/100 VUs, 11230 complete and 0 interrupted iterations
+steady   [  73% ] 007/100 VUs  11m01.0s/15m0s  17.00 iters/s
+
+running (11m02.0s), 003/100 VUs, 11251 complete and 0 interrupted iterations
+steady   [  74% ] 003/100 VUs  11m02.0s/15m0s  17.00 iters/s
+
+running (11m03.0s), 005/100 VUs, 11266 complete and 0 interrupted iterations
+steady   [  74% ] 005/100 VUs  11m03.0s/15m0s  17.00 iters/s
+
+running (11m04.0s), 004/100 VUs, 11284 complete and 0 interrupted iterations
+steady   [  74% ] 004/100 VUs  11m04.0s/15m0s  17.00 iters/s
+
+running (11m05.0s), 007/100 VUs, 11298 complete and 0 interrupted iterations
+steady   [  74% ] 007/100 VUs  11m05.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:46Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f86a7136-e1ed-46b4-ac0f-74de38c9e80e\",\"idempotencyKey\":\"bb2bda5f-a632-491f-a1ec-2e16973b21ce\"}" source=console
+
+running (11m06.0s), 003/100 VUs, 11319 complete and 0 interrupted iterations
+steady   [  74% ] 003/100 VUs  11m06.0s/15m0s  17.00 iters/s
+
+running (11m07.0s), 005/100 VUs, 11334 complete and 0 interrupted iterations
+steady   [  74% ] 005/100 VUs  11m07.0s/15m0s  17.00 iters/s
+
+running (11m08.0s), 004/100 VUs, 11352 complete and 0 interrupted iterations
+steady   [  74% ] 004/100 VUs  11m08.0s/15m0s  17.00 iters/s
+
+running (11m09.0s), 007/100 VUs, 11366 complete and 0 interrupted iterations
+steady   [  74% ] 007/100 VUs  11m09.0s/15m0s  17.00 iters/s
+
+running (11m10.0s), 006/100 VUs, 11384 complete and 0 interrupted iterations
+steady   [  74% ] 006/100 VUs  11m10.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:52Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"be999b58-6c1e-4291-a01c-8c8fdb3672c1\",\"idempotencyKey\":\"5a09a519-7d66-4da8-b422-4b9365d00f7a\"}" source=console
+
+running (11m11.0s), 005/100 VUs, 11402 complete and 0 interrupted iterations
+steady   [  75% ] 005/100 VUs  11m11.0s/15m0s  17.00 iters/s
+
+running (11m12.0s), 004/100 VUs, 11420 complete and 0 interrupted iterations
+steady   [  75% ] 004/100 VUs  11m12.0s/15m0s  17.00 iters/s
+
+running (11m13.0s), 005/100 VUs, 11436 complete and 0 interrupted iterations
+steady   [  75% ] 005/100 VUs  11m13.0s/15m0s  17.00 iters/s
+
+running (11m14.0s), 005/100 VUs, 11453 complete and 0 interrupted iterations
+steady   [  75% ] 005/100 VUs  11m14.0s/15m0s  17.00 iters/s
+
+running (11m15.0s), 005/100 VUs, 11470 complete and 0 interrupted iterations
+steady   [  75% ] 005/100 VUs  11m15.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:29:57Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"791dadec-eb10-49d7-bc62-5d8e1cbb07a2\",\"idempotencyKey\":\"06b8333b-d05a-4d2d-93a7-4d602d8479f3\"}" source=console
+
+running (11m16.0s), 004/100 VUs, 11488 complete and 0 interrupted iterations
+steady   [  75% ] 004/100 VUs  11m16.0s/15m0s  17.00 iters/s
+
+running (11m17.0s), 003/100 VUs, 11506 complete and 0 interrupted iterations
+steady   [  75% ] 003/100 VUs  11m17.0s/15m0s  17.00 iters/s
+
+running (11m18.0s), 006/100 VUs, 11520 complete and 0 interrupted iterations
+steady   [  75% ] 006/100 VUs  11m18.0s/15m0s  17.00 iters/s
+
+running (11m19.0s), 006/100 VUs, 11537 complete and 0 interrupted iterations
+steady   [  75% ] 006/100 VUs  11m19.0s/15m0s  17.00 iters/s
+
+running (11m20.0s), 004/100 VUs, 11556 complete and 0 interrupted iterations
+steady   [  76% ] 004/100 VUs  11m20.0s/15m0s  17.00 iters/s
+
+running (11m21.0s), 003/100 VUs, 11574 complete and 0 interrupted iterations
+steady   [  76% ] 003/100 VUs  11m21.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:02Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d9593501-3847-4327-8518-810c789f028c\",\"idempotencyKey\":\"c593d326-2f4a-4226-b801-ba9c72508978\"}" source=console
+
+running (11m22.0s), 005/100 VUs, 11589 complete and 0 interrupted iterations
+steady   [  76% ] 005/100 VUs  11m22.0s/15m0s  17.00 iters/s
+
+running (11m23.0s), 005/100 VUs, 11606 complete and 0 interrupted iterations
+steady   [  76% ] 005/100 VUs  11m23.0s/15m0s  17.00 iters/s
+
+running (11m24.0s), 005/100 VUs, 11623 complete and 0 interrupted iterations
+steady   [  76% ] 005/100 VUs  11m24.0s/15m0s  17.00 iters/s
+
+running (11m25.0s), 004/100 VUs, 11641 complete and 0 interrupted iterations
+steady   [  76% ] 004/100 VUs  11m25.0s/15m0s  17.00 iters/s
+
+running (11m26.0s), 006/100 VUs, 11656 complete and 0 interrupted iterations
+steady   [  76% ] 006/100 VUs  11m26.0s/15m0s  17.00 iters/s
+
+running (11m27.0s), 006/100 VUs, 11673 complete and 0 interrupted iterations
+steady   [  76% ] 006/100 VUs  11m27.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:09Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"fd7d9bc6-6b2c-4602-a846-7f822c06ec83\",\"idempotencyKey\":\"62776b62-e664-4a77-bcbe-55bbf46673a4\"}" source=console
+
+running (11m28.0s), 004/100 VUs, 11692 complete and 0 interrupted iterations
+steady   [  76% ] 004/100 VUs  11m28.0s/15m0s  17.00 iters/s
+
+running (11m29.0s), 004/100 VUs, 11709 complete and 0 interrupted iterations
+steady   [  77% ] 004/100 VUs  11m29.0s/15m0s  17.00 iters/s
+
+running (11m30.0s), 007/100 VUs, 11723 complete and 0 interrupted iterations
+steady   [  77% ] 007/100 VUs  11m30.0s/15m0s  17.00 iters/s
+
+running (11m31.0s), 006/100 VUs, 11741 complete and 0 interrupted iterations
+steady   [  77% ] 006/100 VUs  11m31.0s/15m0s  17.00 iters/s
+
+running (11m32.0s), 005/100 VUs, 11759 complete and 0 interrupted iterations
+steady   [  77% ] 005/100 VUs  11m32.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:14Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"43fa0037-732b-44cf-8e4d-3ac875b1013c\",\"idempotencyKey\":\"5f532b49-028e-42a3-8b15-4a5b171bea3a\"}" source=console
+
+running (11m33.0s), 004/100 VUs, 11777 complete and 0 interrupted iterations
+steady   [  77% ] 004/100 VUs  11m33.0s/15m0s  17.00 iters/s
+
+running (11m34.0s), 007/100 VUs, 11791 complete and 0 interrupted iterations
+steady   [  77% ] 007/100 VUs  11m34.0s/15m0s  17.00 iters/s
+
+running (11m35.0s), 005/100 VUs, 11810 complete and 0 interrupted iterations
+steady   [  77% ] 005/100 VUs  11m35.0s/15m0s  17.00 iters/s
+
+running (11m36.0s), 003/100 VUs, 11829 complete and 0 interrupted iterations
+steady   [  77% ] 003/100 VUs  11m36.0s/15m0s  17.00 iters/s
+
+running (11m37.0s), 004/100 VUs, 11845 complete and 0 interrupted iterations
+steady   [  77% ] 004/100 VUs  11m37.0s/15m0s  17.00 iters/s
+
+running (11m38.0s), 005/100 VUs, 11861 complete and 0 interrupted iterations
+steady   [  78% ] 005/100 VUs  11m38.0s/15m0s  17.00 iters/s
+
+running (11m39.0s), 005/100 VUs, 11878 complete and 0 interrupted iterations
+steady   [  78% ] 005/100 VUs  11m39.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:21Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2e28f8b5-1356-4fdf-885d-fbe6ec9b9fd8\",\"idempotencyKey\":\"afad071e-c1a3-4709-95d4-805ab26db832\"}" source=console
+
+running (11m40.0s), 005/100 VUs, 11895 complete and 0 interrupted iterations
+steady   [  78% ] 005/100 VUs  11m40.0s/15m0s  17.00 iters/s
+
+running (11m41.0s), 003/100 VUs, 11914 complete and 0 interrupted iterations
+steady   [  78% ] 003/100 VUs  11m41.0s/15m0s  17.00 iters/s
+
+running (11m42.0s), 005/100 VUs, 11929 complete and 0 interrupted iterations
+steady   [  78% ] 005/100 VUs  11m42.0s/15m0s  17.00 iters/s
+
+running (11m43.0s), 006/100 VUs, 11945 complete and 0 interrupted iterations
+steady   [  78% ] 006/100 VUs  11m43.0s/15m0s  17.00 iters/s
+
+running (11m44.0s), 005/100 VUs, 11963 complete and 0 interrupted iterations
+steady   [  78% ] 005/100 VUs  11m44.0s/15m0s  17.00 iters/s
+
+running (11m45.0s), 001/100 VUs, 11984 complete and 0 interrupted iterations
+steady   [  78% ] 001/100 VUs  11m45.0s/15m0s  17.00 iters/s
+
+running (11m46.0s), 006/100 VUs, 11996 complete and 0 interrupted iterations
+steady   [  78% ] 006/100 VUs  11m46.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:28Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c6181b15-5b03-4e12-97b7-ad502770c2a4\",\"idempotencyKey\":\"dd94dae7-6aaa-4521-9316-c1026db86986\"}" source=console
+
+running (11m47.0s), 006/100 VUs, 12013 complete and 0 interrupted iterations
+steady   [  79% ] 006/100 VUs  11m47.0s/15m0s  17.00 iters/s
+
+running (11m48.0s), 005/100 VUs, 12031 complete and 0 interrupted iterations
+steady   [  79% ] 005/100 VUs  11m48.0s/15m0s  17.00 iters/s
+
+running (11m49.0s), 001/100 VUs, 12052 complete and 0 interrupted iterations
+steady   [  79% ] 001/100 VUs  11m49.0s/15m0s  17.00 iters/s
+
+running (11m50.0s), 003/100 VUs, 12067 complete and 0 interrupted iterations
+steady   [  79% ] 003/100 VUs  11m50.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:31Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"153449ce-be47-4126-82dc-d57ddfc9f981\",\"idempotencyKey\":\"cb3487df-448c-48ea-8c02-cce851a8b7c0\"}" source=console
+
+running (11m51.0s), 006/100 VUs, 12081 complete and 0 interrupted iterations
+steady   [  79% ] 006/100 VUs  11m51.0s/15m0s  17.00 iters/s
+
+running (11m52.0s), 005/100 VUs, 12099 complete and 0 interrupted iterations
+steady   [  79% ] 005/100 VUs  11m52.0s/15m0s  17.00 iters/s
+
+running (11m53.0s), 005/100 VUs, 12116 complete and 0 interrupted iterations
+steady   [  79% ] 005/100 VUs  11m53.0s/15m0s  17.00 iters/s
+
+running (11m54.0s), 005/100 VUs, 12133 complete and 0 interrupted iterations
+steady   [  79% ] 005/100 VUs  11m54.0s/15m0s  17.00 iters/s
+
+running (11m55.0s), 006/100 VUs, 12149 complete and 0 interrupted iterations
+steady   [  79% ] 006/100 VUs  11m55.0s/15m0s  17.00 iters/s
+
+running (11m56.0s), 005/100 VUs, 12167 complete and 0 interrupted iterations
+steady   [  80% ] 005/100 VUs  11m56.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:38Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"df5f016d-3891-486d-830d-775335345278\",\"idempotencyKey\":\"9ff604c2-ec0c-4005-8f45-dcb2bdd38256\"}" source=console
+
+running (11m57.0s), 003/100 VUs, 12186 complete and 0 interrupted iterations
+steady   [  80% ] 003/100 VUs  11m57.0s/15m0s  17.00 iters/s
+
+running (11m58.0s), 004/100 VUs, 12202 complete and 0 interrupted iterations
+steady   [  80% ] 004/100 VUs  11m58.0s/15m0s  17.00 iters/s
+
+running (11m59.0s), 006/100 VUs, 12217 complete and 0 interrupted iterations
+steady   [  80% ] 006/100 VUs  11m59.0s/15m0s  17.00 iters/s
+
+running (12m00.0s), 005/100 VUs, 12235 complete and 0 interrupted iterations
+steady   [  80% ] 005/100 VUs  12m00.0s/15m0s  17.00 iters/s
+
+running (12m01.0s), 005/100 VUs, 12252 complete and 0 interrupted iterations
+steady   [  80% ] 005/100 VUs  12m01.0s/15m0s  17.00 iters/s
+
+running (12m02.0s), 004/100 VUs, 12270 complete and 0 interrupted iterations
+steady   [  80% ] 004/100 VUs  12m02.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:44Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6151e919-074e-4988-955b-b14ba3d2aee7\",\"idempotencyKey\":\"e441f4b3-bce8-4534-aaea-1e96f8624054\"}" source=console
+
+running (12m03.0s), 007/100 VUs, 12284 complete and 0 interrupted iterations
+steady   [  80% ] 007/100 VUs  12m03.0s/15m0s  17.00 iters/s
+
+running (12m04.0s), 004/100 VUs, 12304 complete and 0 interrupted iterations
+steady   [  80% ] 004/100 VUs  12m04.0s/15m0s  17.00 iters/s
+
+running (12m05.0s), 004/100 VUs, 12321 complete and 0 interrupted iterations
+steady   [  81% ] 004/100 VUs  12m05.0s/15m0s  17.00 iters/s
+
+running (12m06.0s), 004/100 VUs, 12338 complete and 0 interrupted iterations
+steady   [  81% ] 004/100 VUs  12m06.0s/15m0s  17.00 iters/s
+
+running (12m07.0s), 006/100 VUs, 12353 complete and 0 interrupted iterations
+steady   [  81% ] 006/100 VUs  12m07.0s/15m0s  17.00 iters/s
+
+running (12m08.0s), 006/100 VUs, 12370 complete and 0 interrupted iterations
+steady   [  81% ] 006/100 VUs  12m08.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:50Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"4646fddf-b4af-4ec7-98cf-fff5a01aed6e\",\"idempotencyKey\":\"621bc8bd-7129-42d3-99ab-fbc3d4b30c2e\"}" source=console
+
+running (12m09.0s), 004/100 VUs, 12389 complete and 0 interrupted iterations
+steady   [  81% ] 004/100 VUs  12m09.0s/15m0s  17.00 iters/s
+
+running (12m10.0s), 004/100 VUs, 12406 complete and 0 interrupted iterations
+steady   [  81% ] 004/100 VUs  12m10.0s/15m0s  17.00 iters/s
+
+running (12m11.0s), 006/100 VUs, 12421 complete and 0 interrupted iterations
+steady   [  81% ] 006/100 VUs  12m11.0s/15m0s  17.00 iters/s
+
+running (12m12.0s), 005/100 VUs, 12439 complete and 0 interrupted iterations
+steady   [  81% ] 005/100 VUs  12m12.0s/15m0s  17.00 iters/s
+
+running (12m13.0s), 005/100 VUs, 12456 complete and 0 interrupted iterations
+steady   [  81% ] 005/100 VUs  12m13.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:30:55Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"157e55b1-9c3b-4896-b6bb-26ff90c5365f\",\"idempotencyKey\":\"124149d8-d5f2-44cb-8b91-a2cb4d182a11\"}" source=console
+
+running (12m14.0s), 003/100 VUs, 12475 complete and 0 interrupted iterations
+steady   [  82% ] 003/100 VUs  12m14.0s/15m0s  17.00 iters/s
+
+running (12m15.0s), 006/100 VUs, 12489 complete and 0 interrupted iterations
+steady   [  82% ] 006/100 VUs  12m15.0s/15m0s  17.00 iters/s
+
+running (12m16.0s), 004/100 VUs, 12508 complete and 0 interrupted iterations
+steady   [  82% ] 004/100 VUs  12m16.0s/15m0s  17.00 iters/s
+
+running (12m17.0s), 002/100 VUs, 12527 complete and 0 interrupted iterations
+steady   [  82% ] 002/100 VUs  12m17.0s/15m0s  17.00 iters/s
+
+running (12m18.0s), 000/100 VUs, 12546 complete and 0 interrupted iterations
+steady   [  82% ] 000/100 VUs  12m18.0s/15m0s  17.00 iters/s
+
+running (12m19.0s), 007/100 VUs, 12556 complete and 0 interrupted iterations
+steady   [  82% ] 007/100 VUs  12m19.0s/15m0s  17.00 iters/s
+
+running (12m20.0s), 006/100 VUs, 12574 complete and 0 interrupted iterations
+steady   [  82% ] 006/100 VUs  12m20.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:02Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2c82d2e5-66ad-475a-bbad-4fcc3c25e835\",\"idempotencyKey\":\"451103c8-97dc-4e4b-a430-bdd9b28d4b96\"}" source=console
+
+running (12m21.0s), 005/100 VUs, 12592 complete and 0 interrupted iterations
+steady   [  82% ] 005/100 VUs  12m21.0s/15m0s  17.00 iters/s
+
+running (12m22.0s), 004/100 VUs, 12610 complete and 0 interrupted iterations
+steady   [  82% ] 004/100 VUs  12m22.0s/15m0s  17.00 iters/s
+
+running (12m23.0s), 007/100 VUs, 12624 complete and 0 interrupted iterations
+steady   [  83% ] 007/100 VUs  12m23.0s/15m0s  17.00 iters/s
+
+running (12m24.0s), 006/100 VUs, 12642 complete and 0 interrupted iterations
+steady   [  83% ] 006/100 VUs  12m24.0s/15m0s  17.00 iters/s
+
+running (12m25.0s), 005/100 VUs, 12660 complete and 0 interrupted iterations
+steady   [  83% ] 005/100 VUs  12m25.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:07Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5c6fc2a6-74a4-432c-a547-67d04a8686d8\",\"idempotencyKey\":\"505dc23d-2eb8-4acc-814a-b17bf898ce9e\"}" source=console
+
+running (12m26.0s), 004/100 VUs, 12678 complete and 0 interrupted iterations
+steady   [  83% ] 004/100 VUs  12m26.0s/15m0s  17.00 iters/s
+
+running (12m27.0s), 004/100 VUs, 12695 complete and 0 interrupted iterations
+steady   [  83% ] 004/100 VUs  12m27.0s/15m0s  17.00 iters/s
+
+running (12m28.0s), 006/100 VUs, 12710 complete and 0 interrupted iterations
+steady   [  83% ] 006/100 VUs  12m28.0s/15m0s  17.00 iters/s
+
+running (12m29.0s), 005/100 VUs, 12728 complete and 0 interrupted iterations
+steady   [  83% ] 005/100 VUs  12m29.0s/15m0s  17.00 iters/s
+
+running (12m30.0s), 005/100 VUs, 12745 complete and 0 interrupted iterations
+steady   [  83% ] 005/100 VUs  12m30.0s/15m0s  17.00 iters/s
+
+running (12m31.0s), 004/100 VUs, 12763 complete and 0 interrupted iterations
+steady   [  83% ] 004/100 VUs  12m31.0s/15m0s  17.00 iters/s
+
+running (12m32.0s), 006/100 VUs, 12778 complete and 0 interrupted iterations
+steady   [  84% ] 006/100 VUs  12m32.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:13Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d2697f92-4553-479b-9b57-81c42d03f6e6\",\"idempotencyKey\":\"5a205a84-af4a-4c72-bcc5-6f02f62ebf12\"}" source=console
+
+running (12m33.0s), 006/100 VUs, 12795 complete and 0 interrupted iterations
+steady   [  84% ] 006/100 VUs  12m33.0s/15m0s  17.00 iters/s
+
+running (12m34.0s), 005/100 VUs, 12813 complete and 0 interrupted iterations
+steady   [  84% ] 005/100 VUs  12m34.0s/15m0s  17.00 iters/s
+
+running (12m35.0s), 004/100 VUs, 12831 complete and 0 interrupted iterations
+steady   [  84% ] 004/100 VUs  12m35.0s/15m0s  17.00 iters/s
+
+running (12m36.0s), 007/100 VUs, 12845 complete and 0 interrupted iterations
+steady   [  84% ] 007/100 VUs  12m36.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:18Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"08bf2410-226d-4e65-a3bb-88e90fe5fc36\",\"idempotencyKey\":\"26d5500f-ecf0-4699-bdd3-36a3353d771f\"}" source=console
+
+running (12m37.0s), 006/100 VUs, 12863 complete and 0 interrupted iterations
+steady   [  84% ] 006/100 VUs  12m37.0s/15m0s  17.00 iters/s
+
+running (12m38.0s), 005/100 VUs, 12881 complete and 0 interrupted iterations
+steady   [  84% ] 005/100 VUs  12m38.0s/15m0s  17.00 iters/s
+
+running (12m39.0s), 004/100 VUs, 12899 complete and 0 interrupted iterations
+steady   [  84% ] 004/100 VUs  12m39.0s/15m0s  17.00 iters/s
+
+running (12m40.0s), 007/100 VUs, 12913 complete and 0 interrupted iterations
+steady   [  84% ] 007/100 VUs  12m40.0s/15m0s  17.00 iters/s
+
+running (12m41.0s), 006/100 VUs, 12931 complete and 0 interrupted iterations
+steady   [  85% ] 006/100 VUs  12m41.0s/15m0s  17.00 iters/s
+
+running (12m42.0s), 005/100 VUs, 12949 complete and 0 interrupted iterations
+steady   [  85% ] 005/100 VUs  12m42.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:24Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"1a69dcb7-6003-4a59-95a3-f0282930cbbe\",\"idempotencyKey\":\"4bdade92-646c-4353-8df1-6842d92757c0\"}" source=console
+
+running (12m43.0s), 004/100 VUs, 12967 complete and 0 interrupted iterations
+steady   [  85% ] 004/100 VUs  12m43.0s/15m0s  17.00 iters/s
+
+running (12m44.0s), 004/100 VUs, 12984 complete and 0 interrupted iterations
+steady   [  85% ] 004/100 VUs  12m44.0s/15m0s  17.00 iters/s
+
+running (12m45.0s), 006/100 VUs, 12999 complete and 0 interrupted iterations
+steady   [  85% ] 006/100 VUs  12m45.0s/15m0s  17.00 iters/s
+
+running (12m46.0s), 005/100 VUs, 13017 complete and 0 interrupted iterations
+steady   [  85% ] 005/100 VUs  12m46.0s/15m0s  17.00 iters/s
+
+running (12m47.0s), 005/100 VUs, 13034 complete and 0 interrupted iterations
+steady   [  85% ] 005/100 VUs  12m47.0s/15m0s  17.00 iters/s
+
+running (12m48.0s), 004/100 VUs, 13052 complete and 0 interrupted iterations
+steady   [  85% ] 004/100 VUs  12m48.0s/15m0s  17.00 iters/s
+
+running (12m49.0s), 006/100 VUs, 13067 complete and 0 interrupted iterations
+steady   [  85% ] 006/100 VUs  12m49.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:31Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"bff2dbb4-b349-466f-8de8-7f480a8862d1\",\"idempotencyKey\":\"d9f75c26-839b-4cd2-864b-16972a00c653\"}" source=console
+
+running (12m50.0s), 006/100 VUs, 13084 complete and 0 interrupted iterations
+steady   [  86% ] 006/100 VUs  12m50.0s/15m0s  17.00 iters/s
+
+running (12m51.0s), 005/100 VUs, 13102 complete and 0 interrupted iterations
+steady   [  86% ] 005/100 VUs  12m51.0s/15m0s  17.00 iters/s
+
+running (12m52.0s), 004/100 VUs, 13120 complete and 0 interrupted iterations
+steady   [  86% ] 004/100 VUs  12m52.0s/15m0s  17.00 iters/s
+
+running (12m53.0s), 004/100 VUs, 13137 complete and 0 interrupted iterations
+steady   [  86% ] 004/100 VUs  12m53.0s/15m0s  17.00 iters/s
+
+running (12m54.0s), 006/100 VUs, 13152 complete and 0 interrupted iterations
+steady   [  86% ] 006/100 VUs  12m54.0s/15m0s  17.00 iters/s
+
+running (12m55.0s), 006/100 VUs, 13169 complete and 0 interrupted iterations
+steady   [  86% ] 006/100 VUs  12m55.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:36Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"e626d452-1b05-407e-ad28-4183cb158d06\",\"idempotencyKey\":\"1b4fb981-568d-4827-8468-95591e318d11\"}" source=console
+
+running (12m56.0s), 005/100 VUs, 13187 complete and 0 interrupted iterations
+steady   [  86% ] 005/100 VUs  12m56.0s/15m0s  17.00 iters/s
+
+running (12m57.0s), 004/100 VUs, 13205 complete and 0 interrupted iterations
+steady   [  86% ] 004/100 VUs  12m57.0s/15m0s  17.00 iters/s
+
+running (12m58.0s), 004/100 VUs, 13222 complete and 0 interrupted iterations
+steady   [  86% ] 004/100 VUs  12m58.0s/15m0s  17.00 iters/s
+
+running (12m59.0s), 006/100 VUs, 13237 complete and 0 interrupted iterations
+steady   [  87% ] 006/100 VUs  12m59.0s/15m0s  17.00 iters/s
+
+running (13m00.0s), 006/100 VUs, 13254 complete and 0 interrupted iterations
+steady   [  87% ] 006/100 VUs  13m00.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:42Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"ba22dc0a-bf9b-4e29-a080-e83da80b9312\",\"idempotencyKey\":\"9f1f7f9e-2999-4e4e-b5f2-c04d618b061e\"}" source=console
+
+running (13m01.0s), 004/100 VUs, 13273 complete and 0 interrupted iterations
+steady   [  87% ] 004/100 VUs  13m01.0s/15m0s  17.00 iters/s
+
+running (13m02.0s), 005/100 VUs, 13289 complete and 0 interrupted iterations
+steady   [  87% ] 005/100 VUs  13m02.0s/15m0s  17.00 iters/s
+
+running (13m03.0s), 006/100 VUs, 13305 complete and 0 interrupted iterations
+steady   [  87% ] 006/100 VUs  13m03.0s/15m0s  17.00 iters/s
+
+running (13m04.0s), 005/100 VUs, 13323 complete and 0 interrupted iterations
+steady   [  87% ] 005/100 VUs  13m04.0s/15m0s  17.00 iters/s
+
+running (13m05.0s), 004/100 VUs, 13341 complete and 0 interrupted iterations
+steady   [  87% ] 004/100 VUs  13m05.0s/15m0s  17.00 iters/s
+
+running (13m06.0s), 003/100 VUs, 13359 complete and 0 interrupted iterations
+steady   [  87% ] 003/100 VUs  13m06.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:48Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"cc0864be-ea2d-4a8f-b33e-570a493d3dc2\",\"idempotencyKey\":\"d47609a5-d9da-4a3f-aabb-e1904215ce4b\"}" source=console
+
+running (13m07.0s), 007/100 VUs, 13372 complete and 0 interrupted iterations
+steady   [  87% ] 007/100 VUs  13m07.0s/15m0s  17.00 iters/s
+
+running (13m08.0s), 006/100 VUs, 13390 complete and 0 interrupted iterations
+steady   [  88% ] 006/100 VUs  13m08.0s/15m0s  17.00 iters/s
+
+running (13m09.0s), 005/100 VUs, 13408 complete and 0 interrupted iterations
+steady   [  88% ] 005/100 VUs  13m09.0s/15m0s  17.00 iters/s
+
+running (13m10.0s), 005/100 VUs, 13425 complete and 0 interrupted iterations
+steady   [  88% ] 005/100 VUs  13m10.0s/15m0s  17.00 iters/s
+
+running (13m11.0s), 004/100 VUs, 13443 complete and 0 interrupted iterations
+steady   [  88% ] 004/100 VUs  13m11.0s/15m0s  17.00 iters/s
+
+running (13m12.0s), 004/100 VUs, 13460 complete and 0 interrupted iterations
+steady   [  88% ] 004/100 VUs  13m12.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:54Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"fe6c860e-81b9-4bae-9b13-105a33c80225\",\"idempotencyKey\":\"3f08e759-cddb-4a3d-a50f-c55aace78f90\"}" source=console
+
+running (13m13.0s), 006/100 VUs, 13475 complete and 0 interrupted iterations
+steady   [  88% ] 006/100 VUs  13m13.0s/15m0s  17.00 iters/s
+
+running (13m14.0s), 005/100 VUs, 13493 complete and 0 interrupted iterations
+steady   [  88% ] 005/100 VUs  13m14.0s/15m0s  17.00 iters/s
+
+running (13m15.0s), 004/100 VUs, 13511 complete and 0 interrupted iterations
+steady   [  88% ] 004/100 VUs  13m15.0s/15m0s  17.00 iters/s
+
+running (13m16.0s), 003/100 VUs, 13529 complete and 0 interrupted iterations
+steady   [  88% ] 003/100 VUs  13m16.0s/15m0s  17.00 iters/s
+
+running (13m17.0s), 005/100 VUs, 13544 complete and 0 interrupted iterations
+steady   [  89% ] 005/100 VUs  13m17.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:31:59Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"088053ee-1c3f-4b45-9419-dfd60f5608cb\",\"idempotencyKey\":\"81e72139-5940-4600-87d5-4c78f53c1a60\"}" source=console
+
+running (13m18.0s), 006/100 VUs, 13560 complete and 0 interrupted iterations
+steady   [  89% ] 006/100 VUs  13m18.0s/15m0s  17.00 iters/s
+
+running (13m19.0s), 006/100 VUs, 13577 complete and 0 interrupted iterations
+steady   [  89% ] 006/100 VUs  13m19.0s/15m0s  17.00 iters/s
+
+running (13m20.0s), 005/100 VUs, 13595 complete and 0 interrupted iterations
+steady   [  89% ] 005/100 VUs  13m20.0s/15m0s  17.00 iters/s
+
+running (13m21.0s), 004/100 VUs, 13613 complete and 0 interrupted iterations
+steady   [  89% ] 004/100 VUs  13m21.0s/15m0s  17.00 iters/s
+
+running (13m22.0s), 003/100 VUs, 13631 complete and 0 interrupted iterations
+steady   [  89% ] 003/100 VUs  13m22.0s/15m0s  17.00 iters/s
+
+running (13m23.0s), 006/100 VUs, 13645 complete and 0 interrupted iterations
+steady   [  89% ] 006/100 VUs  13m23.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:05Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2e0ebe93-8efe-49c3-91d2-5970cacfac0e\",\"idempotencyKey\":\"d555b0ff-29a3-4111-b881-110814b208b6\"}" source=console
+
+running (13m24.0s), 005/100 VUs, 13663 complete and 0 interrupted iterations
+steady   [  89% ] 005/100 VUs  13m24.0s/15m0s  17.00 iters/s
+
+running (13m25.0s), 003/100 VUs, 13682 complete and 0 interrupted iterations
+steady   [  89% ] 003/100 VUs  13m25.0s/15m0s  17.00 iters/s
+
+running (13m26.0s), 001/100 VUs, 13701 complete and 0 interrupted iterations
+steady   [  90% ] 001/100 VUs  13m26.0s/15m0s  17.00 iters/s
+
+running (13m27.0s), 005/100 VUs, 13714 complete and 0 interrupted iterations
+steady   [  90% ] 005/100 VUs  13m27.0s/15m0s  17.00 iters/s
+
+running (13m28.0s), 006/100 VUs, 13730 complete and 0 interrupted iterations
+steady   [  90% ] 006/100 VUs  13m28.0s/15m0s  17.00 iters/s
+
+running (13m29.0s), 005/100 VUs, 13748 complete and 0 interrupted iterations
+steady   [  90% ] 005/100 VUs  13m29.0s/15m0s  17.00 iters/s
+
+running (13m30.0s), 004/100 VUs, 13766 complete and 0 interrupted iterations
+steady   [  90% ] 004/100 VUs  13m30.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:11Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f24eb23e-0717-4084-afc3-f822aa99f7b1\",\"idempotencyKey\":\"31eb262e-acf3-468b-bf36-eb77c22b89e7\"}" source=console
+
+running (13m31.0s), 004/100 VUs, 13783 complete and 0 interrupted iterations
+steady   [  90% ] 004/100 VUs  13m31.0s/15m0s  17.00 iters/s
+
+running (13m32.0s), 005/100 VUs, 13799 complete and 0 interrupted iterations
+steady   [  90% ] 005/100 VUs  13m32.0s/15m0s  17.00 iters/s
+
+running (13m33.0s), 004/100 VUs, 13817 complete and 0 interrupted iterations
+steady   [  90% ] 004/100 VUs  13m33.0s/15m0s  17.00 iters/s
+
+running (13m34.0s), 005/100 VUs, 13833 complete and 0 interrupted iterations
+steady   [  90% ] 005/100 VUs  13m34.0s/15m0s  17.00 iters/s
+
+running (13m35.0s), 005/100 VUs, 13850 complete and 0 interrupted iterations
+steady   [  91% ] 005/100 VUs  13m35.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:17Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"60f38990-66ef-4bd9-b9a4-947508f81768\",\"idempotencyKey\":\"b3eee356-98bd-491b-8e02-3ff95f5a5688\"}" source=console
+
+running (13m36.0s), 003/100 VUs, 13869 complete and 0 interrupted iterations
+steady   [  91% ] 003/100 VUs  13m36.0s/15m0s  17.00 iters/s
+
+running (13m37.0s), 007/100 VUs, 13882 complete and 0 interrupted iterations
+steady   [  91% ] 007/100 VUs  13m37.0s/15m0s  17.00 iters/s
+
+running (13m38.0s), 005/100 VUs, 13901 complete and 0 interrupted iterations
+steady   [  91% ] 005/100 VUs  13m38.0s/15m0s  17.00 iters/s
+
+running (13m39.0s), 003/100 VUs, 13920 complete and 0 interrupted iterations
+steady   [  91% ] 003/100 VUs  13m39.0s/15m0s  17.00 iters/s
+
+running (13m40.0s), 004/100 VUs, 13936 complete and 0 interrupted iterations
+steady   [  91% ] 004/100 VUs  13m40.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:22Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"de241005-f42d-44d3-9bec-f5b8664d5381\",\"idempotencyKey\":\"d853d22d-6485-42a4-a3f1-386caa29b6ff\"}" source=console
+
+running (13m41.0s), 007/100 VUs, 13950 complete and 0 interrupted iterations
+steady   [  91% ] 007/100 VUs  13m41.0s/15m0s  17.00 iters/s
+
+running (13m42.0s), 006/100 VUs, 13968 complete and 0 interrupted iterations
+steady   [  91% ] 006/100 VUs  13m42.0s/15m0s  17.00 iters/s
+
+running (13m43.0s), 005/100 VUs, 13986 complete and 0 interrupted iterations
+steady   [  91% ] 005/100 VUs  13m43.0s/15m0s  17.00 iters/s
+
+running (13m44.0s), 004/100 VUs, 14004 complete and 0 interrupted iterations
+steady   [  92% ] 004/100 VUs  13m44.0s/15m0s  17.00 iters/s
+
+running (13m45.0s), 006/100 VUs, 14019 complete and 0 interrupted iterations
+steady   [  92% ] 006/100 VUs  13m45.0s/15m0s  17.00 iters/s
+
+running (13m46.0s), 006/100 VUs, 14036 complete and 0 interrupted iterations
+steady   [  92% ] 006/100 VUs  13m46.0s/15m0s  17.00 iters/s
+
+running (13m47.0s), 005/100 VUs, 14054 complete and 0 interrupted iterations
+steady   [  92% ] 005/100 VUs  13m47.0s/15m0s  17.00 iters/s
+
+running (13m48.0s), 004/100 VUs, 14072 complete and 0 interrupted iterations
+steady   [  92% ] 004/100 VUs  13m48.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:29Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5634d230-ef0c-41f4-bd13-64c0fca97ff2\",\"idempotencyKey\":\"78aaad69-d365-4f7d-8520-98a529a06b9b\"}" source=console
+
+running (13m49.0s), 003/100 VUs, 14090 complete and 0 interrupted iterations
+steady   [  92% ] 003/100 VUs  13m49.0s/15m0s  17.00 iters/s
+
+running (13m50.0s), 006/100 VUs, 14104 complete and 0 interrupted iterations
+steady   [  92% ] 006/100 VUs  13m50.0s/15m0s  17.00 iters/s
+
+running (13m51.0s), 005/100 VUs, 14122 complete and 0 interrupted iterations
+steady   [  92% ] 005/100 VUs  13m51.0s/15m0s  17.00 iters/s
+
+running (13m52.0s), 005/100 VUs, 14139 complete and 0 interrupted iterations
+steady   [  92% ] 005/100 VUs  13m52.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:34Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"420b99b9-495a-4aaf-b9c3-18d27aa82ad1\",\"idempotencyKey\":\"c7ddb341-8a8f-4dfc-a3a6-cbb5e4ece6a8\"}" source=console
+
+running (13m53.0s), 004/100 VUs, 14157 complete and 0 interrupted iterations
+steady   [  93% ] 004/100 VUs  13m53.0s/15m0s  17.00 iters/s
+
+running (13m54.0s), 006/100 VUs, 14172 complete and 0 interrupted iterations
+steady   [  93% ] 006/100 VUs  13m54.0s/15m0s  17.00 iters/s
+
+running (13m55.0s), 006/100 VUs, 14189 complete and 0 interrupted iterations
+steady   [  93% ] 006/100 VUs  13m55.0s/15m0s  17.00 iters/s
+
+running (13m56.0s), 005/100 VUs, 14207 complete and 0 interrupted iterations
+steady   [  93% ] 005/100 VUs  13m56.0s/15m0s  17.00 iters/s
+
+running (13m57.0s), 004/100 VUs, 14225 complete and 0 interrupted iterations
+steady   [  93% ] 004/100 VUs  13m57.0s/15m0s  17.00 iters/s
+
+running (13m58.0s), 003/100 VUs, 14243 complete and 0 interrupted iterations
+steady   [  93% ] 003/100 VUs  13m58.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:40Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"27a1f605-cc3e-42a0-b578-6aa97a34bd2b\",\"idempotencyKey\":\"4c2cdec8-d467-4031-ae91-8b45cbd18992\"}" source=console
+
+running (13m59.0s), 006/100 VUs, 14257 complete and 0 interrupted iterations
+steady   [  93% ] 006/100 VUs  13m59.0s/15m0s  17.00 iters/s
+
+running (14m00.0s), 009/100 VUs, 14271 complete and 0 interrupted iterations
+steady   [  93% ] 009/100 VUs  14m00.0s/15m0s  17.00 iters/s
+
+running (14m01.0s), 003/100 VUs, 14294 complete and 0 interrupted iterations
+steady   [  93% ] 003/100 VUs  14m01.0s/15m0s  17.00 iters/s
+
+running (14m02.0s), 002/100 VUs, 14312 complete and 0 interrupted iterations
+steady   [  94% ] 002/100 VUs  14m02.0s/15m0s  17.00 iters/s
+
+running (14m03.0s), 003/100 VUs, 14328 complete and 0 interrupted iterations
+steady   [  94% ] 003/100 VUs  14m03.0s/15m0s  17.00 iters/s
+
+running (14m04.0s), 003/100 VUs, 14345 complete and 0 interrupted iterations
+steady   [  94% ] 003/100 VUs  14m04.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:45Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"44238b69-7156-4e44-9caa-1af41f27f741\",\"idempotencyKey\":\"23f899bd-6a26-4401-bc72-c5acf0f065e6\"}" source=console
+
+running (14m05.0s), 002/100 VUs, 14363 complete and 0 interrupted iterations
+steady   [  94% ] 002/100 VUs  14m05.0s/15m0s  17.00 iters/s
+
+running (14m06.0s), 001/100 VUs, 14381 complete and 0 interrupted iterations
+steady   [  94% ] 001/100 VUs  14m06.0s/15m0s  17.00 iters/s
+
+running (14m07.0s), 003/100 VUs, 14396 complete and 0 interrupted iterations
+steady   [  94% ] 003/100 VUs  14m07.0s/15m0s  17.00 iters/s
+
+running (14m08.0s), 003/100 VUs, 14413 complete and 0 interrupted iterations
+steady   [  94% ] 003/100 VUs  14m08.0s/15m0s  17.00 iters/s
+
+running (14m09.0s), 002/100 VUs, 14431 complete and 0 interrupted iterations
+steady   [  94% ] 002/100 VUs  14m09.0s/15m0s  17.00 iters/s
+
+running (14m10.0s), 002/100 VUs, 14448 complete and 0 interrupted iterations
+steady   [  94% ] 002/100 VUs  14m10.0s/15m0s  17.00 iters/s
+
+running (14m11.0s), 003/100 VUs, 14464 complete and 0 interrupted iterations
+steady   [  95% ] 003/100 VUs  14m11.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:53Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"861358bc-97f1-4186-8c2d-bad54fd39719\",\"idempotencyKey\":\"dc321ced-0878-4a6f-a340-7d7a1720a745\"}" source=console
+
+running (14m12.0s), 002/100 VUs, 14482 complete and 0 interrupted iterations
+steady   [  95% ] 002/100 VUs  14m12.0s/15m0s  17.00 iters/s
+
+running (14m13.0s), 003/100 VUs, 14498 complete and 0 interrupted iterations
+steady   [  95% ] 003/100 VUs  14m13.0s/15m0s  17.00 iters/s
+
+running (14m14.0s), 002/100 VUs, 14516 complete and 0 interrupted iterations
+steady   [  95% ] 002/100 VUs  14m14.0s/15m0s  17.00 iters/s
+
+running (14m15.0s), 003/100 VUs, 14532 complete and 0 interrupted iterations
+steady   [  95% ] 003/100 VUs  14m15.0s/15m0s  17.00 iters/s
+
+running (14m16.0s), 003/100 VUs, 14549 complete and 0 interrupted iterations
+steady   [  95% ] 003/100 VUs  14m16.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:32:58Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f3c497d3-fb1c-473a-a794-82dde5c304c7\",\"idempotencyKey\":\"c9a5cb3c-fbb3-4e45-8b07-95baa3ae9ff2\"}" source=console
+
+running (14m17.0s), 003/100 VUs, 14566 complete and 0 interrupted iterations
+steady   [  95% ] 003/100 VUs  14m17.0s/15m0s  17.00 iters/s
+
+running (14m18.0s), 002/100 VUs, 14584 complete and 0 interrupted iterations
+steady   [  95% ] 002/100 VUs  14m18.0s/15m0s  17.00 iters/s
+
+running (14m19.0s), 001/100 VUs, 14602 complete and 0 interrupted iterations
+steady   [  95% ] 001/100 VUs  14m19.0s/15m0s  17.00 iters/s
+
+running (14m20.0s), 007/100 VUs, 14613 complete and 0 interrupted iterations
+steady   [  96% ] 007/100 VUs  14m20.0s/15m0s  17.00 iters/s
+
+running (14m21.0s), 006/100 VUs, 14631 complete and 0 interrupted iterations
+steady   [  96% ] 006/100 VUs  14m21.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:03Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"16fa528a-7be1-43cc-ad61-c14efa27e110\",\"idempotencyKey\":\"e841aaa9-c491-424d-9696-149c8f35ed60\"}" source=console
+
+running (14m22.0s), 005/100 VUs, 14649 complete and 0 interrupted iterations
+steady   [  96% ] 005/100 VUs  14m22.0s/15m0s  17.00 iters/s
+
+running (14m23.0s), 004/100 VUs, 14667 complete and 0 interrupted iterations
+steady   [  96% ] 004/100 VUs  14m23.0s/15m0s  17.00 iters/s
+
+running (14m24.0s), 003/100 VUs, 14685 complete and 0 interrupted iterations
+steady   [  96% ] 003/100 VUs  14m24.0s/15m0s  17.00 iters/s
+
+running (14m25.0s), 006/100 VUs, 14699 complete and 0 interrupted iterations
+steady   [  96% ] 006/100 VUs  14m25.0s/15m0s  17.00 iters/s
+
+running (14m26.0s), 009/100 VUs, 14713 complete and 0 interrupted iterations
+steady   [  96% ] 009/100 VUs  14m26.0s/15m0s  17.00 iters/s
+
+running (14m27.0s), 004/100 VUs, 14735 complete and 0 interrupted iterations
+steady   [  96% ] 004/100 VUs  14m27.0s/15m0s  17.00 iters/s
+
+running (14m28.0s), 004/100 VUs, 14752 complete and 0 interrupted iterations
+steady   [  96% ] 004/100 VUs  14m28.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:10Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c21c6291-9f0e-486c-9f75-2cd3c7951c82\",\"idempotencyKey\":\"e759b682-6b3f-4b00-9c48-97c7c970cb4e\"}" source=console
+
+running (14m29.0s), 004/100 VUs, 14769 complete and 0 interrupted iterations
+steady   [  97% ] 004/100 VUs  14m29.0s/15m0s  17.00 iters/s
+
+running (14m30.0s), 006/100 VUs, 14784 complete and 0 interrupted iterations
+steady   [  97% ] 006/100 VUs  14m30.0s/15m0s  17.00 iters/s
+
+running (14m31.0s), 005/100 VUs, 14802 complete and 0 interrupted iterations
+steady   [  97% ] 005/100 VUs  14m31.0s/15m0s  17.00 iters/s
+
+running (14m32.0s), 005/100 VUs, 14819 complete and 0 interrupted iterations
+steady   [  97% ] 005/100 VUs  14m32.0s/15m0s  17.00 iters/s
+
+running (14m33.0s), 004/100 VUs, 14837 complete and 0 interrupted iterations
+steady   [  97% ] 004/100 VUs  14m33.0s/15m0s  17.00 iters/s
+
+running (14m34.0s), 007/100 VUs, 14851 complete and 0 interrupted iterations
+steady   [  97% ] 007/100 VUs  14m34.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:15Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b9435c1e-ff1b-4248-bb52-c3cceb132abc\",\"idempotencyKey\":\"8e0156dc-54d4-4998-ab93-1fcaed83dd7a\"}" source=console
+
+running (14m35.0s), 006/100 VUs, 14869 complete and 0 interrupted iterations
+steady   [  97% ] 006/100 VUs  14m35.0s/15m0s  17.00 iters/s
+
+running (14m36.0s), 004/100 VUs, 14888 complete and 0 interrupted iterations
+steady   [  97% ] 004/100 VUs  14m36.0s/15m0s  17.00 iters/s
+
+running (14m37.0s), 004/100 VUs, 14905 complete and 0 interrupted iterations
+steady   [  97% ] 004/100 VUs  14m37.0s/15m0s  17.00 iters/s
+
+running (14m38.0s), 007/100 VUs, 14919 complete and 0 interrupted iterations
+steady   [  98% ] 007/100 VUs  14m38.0s/15m0s  17.00 iters/s
+
+running (14m39.0s), 006/100 VUs, 14937 complete and 0 interrupted iterations
+steady   [  98% ] 006/100 VUs  14m39.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:21Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"2d1129b1-4f52-4e75-ae78-2de51cc96221\",\"idempotencyKey\":\"7db133b5-79f5-4044-9c29-29f7e4a9440f\"}" source=console
+
+running (14m40.0s), 005/100 VUs, 14955 complete and 0 interrupted iterations
+steady   [  98% ] 005/100 VUs  14m40.0s/15m0s  17.00 iters/s
+
+running (14m41.0s), 004/100 VUs, 14973 complete and 0 interrupted iterations
+steady   [  98% ] 004/100 VUs  14m41.0s/15m0s  17.00 iters/s
+
+running (14m42.0s), 005/100 VUs, 14989 complete and 0 interrupted iterations
+steady   [  98% ] 005/100 VUs  14m42.0s/15m0s  17.00 iters/s
+
+running (14m43.0s), 006/100 VUs, 15005 complete and 0 interrupted iterations
+steady   [  98% ] 006/100 VUs  14m43.0s/15m0s  17.00 iters/s
+
+running (14m44.0s), 005/100 VUs, 15023 complete and 0 interrupted iterations
+steady   [  98% ] 005/100 VUs  14m44.0s/15m0s  17.00 iters/s
+
+running (14m45.0s), 004/100 VUs, 15041 complete and 0 interrupted iterations
+steady   [  98% ] 004/100 VUs  14m45.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:26Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"be0b061b-b0a2-48ba-adf7-61149443e411\",\"idempotencyKey\":\"c26f000f-3577-4059-b6fb-0e0a52c42002\"}" source=console
+
+running (14m46.0s), 006/100 VUs, 15056 complete and 0 interrupted iterations
+steady   [  98% ] 006/100 VUs  14m46.0s/15m0s  17.00 iters/s
+
+running (14m47.0s), 006/100 VUs, 15073 complete and 0 interrupted iterations
+steady   [  99% ] 006/100 VUs  14m47.0s/15m0s  17.00 iters/s
+
+running (14m48.0s), 003/100 VUs, 15093 complete and 0 interrupted iterations
+steady   [  99% ] 003/100 VUs  14m48.0s/15m0s  17.00 iters/s
+
+running (14m49.0s), 004/100 VUs, 15109 complete and 0 interrupted iterations
+steady   [  99% ] 004/100 VUs  14m49.0s/15m0s  17.00 iters/s
+
+running (14m50.0s), 007/100 VUs, 15123 complete and 0 interrupted iterations
+steady   [  99% ] 007/100 VUs  14m50.0s/15m0s  17.00 iters/s
+
+running (14m51.0s), 006/100 VUs, 15141 complete and 0 interrupted iterations
+steady   [  99% ] 006/100 VUs  14m51.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:33Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b3ece93e-3168-42d9-999b-48e1f172989c\",\"idempotencyKey\":\"e189e5de-d622-4303-bd42-73c50f8d02a8\"}" source=console
+
+running (14m52.0s), 004/100 VUs, 15160 complete and 0 interrupted iterations
+steady   [  99% ] 004/100 VUs  14m52.0s/15m0s  17.00 iters/s
+
+running (14m53.0s), 004/100 VUs, 15177 complete and 0 interrupted iterations
+steady   [  99% ] 004/100 VUs  14m53.0s/15m0s  17.00 iters/s
+
+running (14m54.0s), 007/100 VUs, 15191 complete and 0 interrupted iterations
+steady   [  99% ] 007/100 VUs  14m54.0s/15m0s  17.00 iters/s
+
+running (14m55.0s), 003/100 VUs, 15212 complete and 0 interrupted iterations
+steady   [  99% ] 003/100 VUs  14m55.0s/15m0s  17.00 iters/s
+
+running (14m56.0s), 005/100 VUs, 15227 complete and 0 interrupted iterations
+steady   [ 100% ] 005/100 VUs  14m56.0s/15m0s  17.00 iters/s
+
+running (14m57.0s), 004/100 VUs, 15245 complete and 0 interrupted iterations
+steady   [ 100% ] 004/100 VUs  14m57.0s/15m0s  17.00 iters/s
+time="2026-08-14T12:33:38Z" level=info msg="{\"sample\":true,\"scenario\":\"steady\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"49f8d4cc-c919-4374-8409-4f89f307ce58\",\"idempotencyKey\":\"eaada428-a050-413e-af4b-91c5a8635534\"}" source=console
+
+running (14m58.0s), 007/100 VUs, 15259 complete and 0 interrupted iterations
+steady   [ 100% ] 007/100 VUs  14m58.0s/15m0s  17.00 iters/s
+
+running (14m59.0s), 006/100 VUs, 15277 complete and 0 interrupted iterations
+steady   [ 100% ] 006/100 VUs  14m59.0s/15m0s  17.00 iters/s
+
+running (15m00.0s), 005/100 VUs, 15295 complete and 0 interrupted iterations
+steady   [ 100% ] 005/100 VUs  15m00.0s/15m0s  17.00 iters/s
+
+     cap_key_0_reqs.................: 7651   8.498284/s
+     cap_key_1_reqs.................: 7650   8.497173/s
+     cap_status_200.................: 13716  15.234932/s
+     cap_status_422.................: 1585   1.760525/s
+     data_received..................: 9.0 MB 9.9 kB/s
+     data_sent......................: 6.2 MB 6.9 kB/s
+     http_req_blocked...............: avg=12.55µs  min=1.7µs   med=5.2µs    max=15.93ms  p(90)=13.04µs  p(95)=16.79µs  p(99)=174.41µs
+     http_req_connecting............: avg=4.41µs   min=0s      med=0s       max=15.89ms  p(90)=0s       p(95)=0s       p(99)=127.87µs
+   ✓ http_req_duration..............: avg=293.69ms min=27.29ms med=298.54ms max=885.34ms p(90)=392.63ms p(95)=404.82ms p(99)=421.64ms
+       { expected_response:true }...: avg=293.69ms min=27.29ms med=298.54ms max=885.34ms p(90)=392.63ms p(95)=404.82ms p(99)=421.64ms
+     http_req_failed................: 0.00%  0 out of 15301
+     http_req_receiving.............: avg=54.85µs  min=9.25µs  med=45.45µs  max=13.18ms  p(90)=92.62µs  p(95)=112.79µs p(99)=166.95µs
+     http_req_sending...............: avg=26.37µs  min=5.75µs  med=20.7µs   max=2.35ms   p(90)=45.83µs  p(95)=56.79µs  p(99)=89.45µs
+     http_req_tls_handshaking.......: avg=0s       min=0s      med=0s       max=0s       p(90)=0s       p(95)=0s       p(99)=0s
+     http_req_waiting...............: avg=293.61ms min=27.26ms med=298.45ms max=885.24ms p(90)=392.56ms p(95)=404.75ms p(99)=421.53ms
+     http_reqs......................: 15301  16.995457/s
+     iteration_duration.............: avg=294.01ms min=27.47ms med=298.9ms  max=885.72ms p(90)=392.88ms p(95)=405.11ms p(99)=422.13ms
+     iterations.....................: 15301  16.995457/s
+     vus............................: 5      min=0          max=9
+     vus_max........................: 100    min=100        max=100
+
+
+running (15m00.3s), 000/100 VUs, 15301 complete and 0 interrupted iterations
+steady ✓ [ 100% ] 000/100 VUs  15m0s  17.00 iters/s

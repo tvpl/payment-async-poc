@@ -4,19 +4,31 @@
 
 scenario_outbox_crash_window_reclaim() {
   local name="outbox-crash-window-reclaim"
-  local resp req before_body before_auth row_id
+  local resp req before_body before_sim_id row_id
 
   resp=$(submit_payment "http://localhost:8080")
   req=$(json_field "$(echo "$resp" | tail -n +2)" requestId)
   if [ -z "$req" ]; then log_fail "${name}" "setup: submit_payment returned no requestId"; return; fi
   sleep 2
 
-  row_id=$(psql_sandbox "SELECT id FROM outbox_event WHERE aggregate_id = '${req}' AND topic = 'payment.simulation.completed' AND status = 'PUBLISHED' ORDER BY id DESC LIMIT 1;")
+  # payment-core-mock's approve/decline decision is probabilistic (PAY-06 must hold either way),
+  # so the terminal topic is 'payment.simulation.completed' OR 'payment.simulation.failed' — never
+  # pin to one, or this setup fails at random on a genuine decline instead of a real defect.
+  row_id=$(psql_sandbox "SELECT id FROM outbox_event WHERE aggregate_id = '${req}' AND topic IN ('payment.simulation.completed','payment.simulation.failed') AND status = 'PUBLISHED' ORDER BY id DESC LIMIT 1;")
   row_id=$(echo "$row_id" | tr -d '[:space:]')
-  if [ -z "$row_id" ]; then log_fail "${name}" "setup: no PUBLISHED terminal-event outbox row found for ${req}"; return; fi
+  if [ -z "$row_id" ]; then
+    local sim_status
+    sim_status=$(psql_sandbox "SELECT status FROM payment_sbus_message WHERE request_id = '${req}';" | tr -d '[:space:]')
+    log_fail "${name}" "setup: no PUBLISHED terminal-event outbox row found for ${req} (simulation status: ${sim_status:-unknown})"
+    return
+  fi
 
   before_body=$(curl -s -m 10 -H "X-API-Key: ${API_KEY}" "http://localhost:8080/payment-simulations/${req}")
-  before_auth=$(json_field "$before_body" "result.authorizationCode")
+  # simulationId (not authorizationCode) is the field to pin: it's set once by the Core response
+  # regardless of outcome, whereas authorizationCode is only populated on APPROVED — comparing
+  # authorizationCode alone false-fails on a genuine DECLINE, where it's legitimately empty both
+  # before and after.
+  before_sim_id=$(json_field "$before_body" "result.simulationId")
 
   # Simulate "crashed right after Kafka ack, before the outbox mark": roll this already-published
   # row's fencing fields back to a stale IN_PROGRESS claim, as if a process died mid-publish.
@@ -31,16 +43,16 @@ scenario_outbox_crash_window_reclaim() {
     [ "$final_status" = "PUBLISHED" ] && break
   done
 
-  local after_body after_auth
+  local after_body after_sim_id
   after_body=$(curl -s -m 10 -H "X-API-Key: ${API_KEY}" "http://localhost:8080/payment-simulations/${req}")
-  after_auth=$(json_field "$after_body" "result.authorizationCode")
+  after_sim_id=$(json_field "$after_body" "result.simulationId")
 
   if [ "$final_status" != "PUBLISHED" ]; then
     log_fail "${name}" "row ${row_id} never returned to PUBLISHED after forced crash (last seen: ${final_status})"
-  elif [ "$after_auth" != "$before_auth" ] || [ -z "$after_auth" ]; then
-    log_fail "${name}" "terminal result changed after forced duplicate republish: before=${before_auth} after=${after_auth}"
+  elif [ "$after_sim_id" != "$before_sim_id" ] || [ -z "$after_sim_id" ]; then
+    log_fail "${name}" "terminal result changed after forced duplicate republish: before=${before_sim_id} after=${after_sim_id}"
   else
-    log_pass "${name}: reclaimed+republished row ${row_id} (PAY-05) without altering the already-chosen terminal result (PAY-06, authorizationCode=${after_auth})"
+    log_pass "${name}: reclaimed+republished row ${row_id} (PAY-05) without altering the already-chosen terminal result (PAY-06, simulationId=${after_sim_id})"
   fi
 }
 

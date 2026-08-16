@@ -44,7 +44,7 @@ Instruções para agentes que trabalham **dentro** desta fronteira. Nada aqui de
   abra a mudança na fronteira dona.
 - **Não** adicione valores a `SimulationStatus` nem a qualquer tipo do contrato publicado.
 - **Não** declare infraestrutura (Kafka/Redis/Postgres/Registry) no `compose.yaml` desta raiz.
-- **Não** use `project(':...')` nem source cross-root no build.
+- **Não** dependa de outra fronteira por source, projeto Gradle ou composite build; consuma GAV publicado.
 - **Não** versione `.env`, segredo ou chave real; `.env.example` fica sem valor atribuído.
 - **Não** enfraqueça, pule ou remova teste para fazer um gate passar.
 - Push, deploy, publicação externa e remoção de volumes do sandbox estão fora de autorização.

@@ -1,0 +1,43 @@
+[obs] bringing up single-instance fleet (payment-api, payment-sbus, payment-core-mock)
+ Container payment-core-mock-core-mock-1 Creating
+ Container payment-core-mock-core-mock-1 Created
+ Container payment-core-mock-core-mock-1 Starting
+ Container payment-core-mock-core-mock-1 Started
+ Container payment-core-mock-core-mock-1 Waiting
+ Container payment-core-mock-core-mock-1 Healthy
+ Container payment-sbus-sbus-1 Creating
+ Container payment-sbus-sbus-1 Created
+ Container payment-sbus-sbus-1 Starting
+ Container payment-sbus-sbus-1 Started
+ Container payment-sbus-sbus-1 Waiting
+ Container payment-sbus-sbus-1 Healthy
+ Container payment-api-api-1 Creating
+ Container payment-api-api-1 Created
+ Container payment-api-api-1 Starting
+ Container payment-api-api-1 Started
+ Container payment-api-api-1 Waiting
+ Container payment-api-api-1 Healthy
+[obs] === correlation_ids ===
+[obs] PASS: payment-api log carries requestId+correlationId+traceId for 2e81f4cd-07e3-4867-896f-d07f152eb91a
+[obs] PASS: payment-sbus log carries requestId+correlationId+causationId+traceId for 2e81f4cd-07e3-4867-896f-d07f152eb91a
+[obs] PASS: payment-api log carries causationId for 2e81f4cd-07e3-4867-896f-d07f152eb91a
+[obs] === trace_in_jaeger ===
+[obs] PASS: OTLP pipeline (otel-collector -> Jaeger) is real and working — payment-core-mock traces are queryable
+[obs] === metrics_scrape ===
+[obs] PASS: sandbox Prometheus scrapes payment-core-mock via application-targets.json (up==1)
+[obs] PASS: payment-simulation-api scrape target registered, fails as expected (auth gap, documented)
+[obs] === assets_manifest ===
+[obs] PASS: application-assets.json declares 14 owned assets
+[obs] PASS: every declared asset has owner+version+kind, and path (when present) resolves to a real file
+[obs] === dashboard_validator ===
+[obs] PASS: real dashboards under */ops/dashboards, sandbox/observability/dashboards and load/dashboards reference only implemented metrics
+[obs] PASS: validator detects a dashboard referencing a removed/nonexistent metric (EDG-04)
+[obs] PASS: scratch fixture cleaned up, real tree unchanged
+[obs] === alert_fires ===
+[obs] poisoning payment.simulation.completed (1/2) to create api_response_dead_lettered_total
+[obs] poisoning payment.simulation.completed (2/2) to observe a real increase
+[obs] PASS: PaymentApiResponseDeadLettered fires synthetically (real alert rule, real metric, real trigger)
+[obs] tearing down fleet
+
+[obs] RESULT: 12 passed, 0 failed
+[obs] floor met (>=8 passed)

@@ -15,11 +15,6 @@ from typing import Any, Iterable
 
 FORMAT_VERSION = 1
 IGNORED_PARTS = {".git", ".gradle", "build"}
-# Pre-migration monorepo modules superseded by a standalone root (MIG-02): the workspace keeps
-# them on disk only as a frozen reference until T59 removes them, so they are not live inventory.
-# Counting them would double-track every relocated file and collide on logical keys that are
-# unique by name rather than by path (e.g. Topics.java's topic constants).
-LEGACY_TRANSITIONAL_ROOTS = {"common", "api-service", "sbus-service", "core-mock"}
 TOPIC_PATTERN = re.compile(
     r'public\s+static\s+final\s+String\s+([A-Z][A-Z0-9_]*)\s*=\s*"([^"]+)"'
 )
@@ -37,7 +32,7 @@ def relative_files(root: Path, patterns: Iterable[str]) -> list[Path]:
             if not path.is_file():
                 continue
             parts = path.relative_to(root).parts
-            if IGNORED_PARTS.intersection(parts) or parts[0] in LEGACY_TRANSITIONAL_ROOTS:
+            if IGNORED_PARTS.intersection(parts):
                 continue
             paths.add(path)
     return sorted(paths, key=lambda path: path.relative_to(root).as_posix())
@@ -87,11 +82,23 @@ def build_manifest(root: Path) -> dict[str, Any]:
         # not this workspace-level loss-prevention gate.
         *file_entries(root, "schemas", ["**/src/main/avro/*.avsc", "payment-contracts/schemas/*.avsc"]),
         *topic_entries(root),
-        *file_entries(root, "dashboards", ["observability/grafana/dashboards/*.json"]),
+        # T59 relocated dashboards from the legacy root observability/grafana/dashboards/ into
+        # each owner's own ops/dashboards/ (apps), sandbox/observability/dashboards/ (shared
+        # infra) or load/dashboards/ (workspace-owned k6 dashboard) — never copied, see
+        # sandbox/docs/observability.md and sandbox/observability/application-assets.json.
+        *file_entries(
+            root,
+            "dashboards",
+            [
+                "*/ops/dashboards/*.json",
+                "sandbox/observability/dashboards/*.json",
+                "load/dashboards/*.json",
+            ],
+        ),
         *file_entries(
             root,
             "scripts",
-            ["Makefile", "scripts/**/*.sh", "scripts/**/*.py", "load/**/*.js"],
+            ["scripts/**/*.sh", "scripts/**/*.py", "load/**/*.js"],
         ),
         *file_entries(root, "documents", ["README.md", "AGENTS.md", "docs/**/*.md"]),
     ]

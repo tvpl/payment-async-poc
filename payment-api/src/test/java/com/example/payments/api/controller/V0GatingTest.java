@@ -4,7 +4,6 @@ import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.service.ApiPaymentService;
 import com.example.platform.featurecontrol.config.FeatureSettings;
-import com.example.platform.featurecontrol.kafka.TopicRouter;
 import com.example.platform.featurecontrol.model.FlagDefinition;
 import com.example.platform.featurecontrol.model.FlagType;
 import com.example.platform.featurecontrol.resolver.FeatureResolver;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -42,13 +42,12 @@ class V0GatingTest {
     private final FlagSource flags = name -> "payment-api-v0".equals(name) ? Optional.of(V0) : Optional.empty();
     private final FeatureResolver resolver =
             new FeatureResolver(flags, new MasterSwitch(new FeatureSettings(), flags), List.of());
-    private final TopicRouter topicRouter = new TopicRouter(resolver);
 
     private final PaymentSimulationRequest request = new PaymentSimulationRequest(
             "MERCHANT-001", new BigDecimal("10.00"), "BRL", "CREDIT_CARD", "VISA", 1, "AUTHORIZE_AND_CAPTURE");
 
     private V0PaymentSimulationController controller(ApiPaymentService service) {
-        return new V0PaymentSimulationController(service, resolver, topicRouter);
+        return new V0PaymentSimulationController(service, resolver);
     }
 
     private Authentication user(String name, String... groups) {
@@ -79,5 +78,21 @@ class V0GatingTest {
 
         assertEquals(HttpStatus.OK, response.getStatus());
         assertEquals("v0", response.getHeaders().get("X-Api-Version"));
+    }
+
+    /**
+     * task_T9 (AUD-27): {@code service.submit()} always publishes to {@code Topics.REQUESTED}
+     * regardless of what {@code TopicRouter} computed - the header announced routing that never
+     * happened. The header, the flag, and the {@code TopicRouter} call are all removed now.
+     */
+    @Test
+    void v0ResponseNeverAnnouncesARoutedTopic() {
+        ApiPaymentService service = mock(ApiPaymentService.class);
+        StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
+        when(service.submit(any(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+
+        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "");
+
+        assertNull(response.getHeaders().get("X-Routed-Topic"));
     }
 }

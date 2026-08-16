@@ -30,10 +30,11 @@ class CiPolicyTest(unittest.TestCase):
     def test_required_integration_suites_are_explicit(self) -> None:
         workflow = (REPOSITORY_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
 
-        self.assertIn(":api-service:test -PwithIT", workflow)
-        self.assertIn(":sbus-service:test -PwithIT", workflow)
-        self.assertIn(":async-redis-service:test -PwithIT", workflow)
-        self.assertIn(":feature-demo:test :pilot-app:test -PwithIT", workflow)
+        # Imported, not restated: the previous hand-copied list still asserted the
+        # pre-migration `:api-service:` aggregator paths and went red unnoticed.
+        self.assertEqual(4, len(ci_policy.REQUIRED_INTEGRATION))
+        for command in ci_policy.REQUIRED_INTEGRATION:
+            self.assertIn(command, workflow)
 
     def test_not_run_integration_is_blocking(self) -> None:
         workflow = (REPOSITORY_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")

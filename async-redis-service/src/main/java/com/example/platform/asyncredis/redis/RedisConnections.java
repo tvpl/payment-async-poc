@@ -80,11 +80,30 @@ public class RedisConnections {
         if (conn == null || !conn.isOpen()) {
             synchronized (this) {
                 if (shared == null || !shared.isOpen()) {
-                    shared = client().connect();
+                    // A connection that already reports !isOpen() (a dead socket, e.g. after a
+                    // reconnect event) still holds resources until close() runs explicitly (AUD-19)
+                    // -- Lettuce does not release them on its own just because the channel dropped.
+                    // Swap first, then close the superseded connection, so a concurrent reader can
+                    // never observe the field between "closed" and "replaced".
+                    StatefulRedisConnection<String, String> superseded = shared;
+                    shared = newSharedConnection();
+                    if (superseded != null) {
+                        superseded.close();
+                    }
                 }
             }
         }
         return shared.sync();
+    }
+
+    /**
+     * Creates the connection {@link #shared()} installs. A seam for tests: overridden by a
+     * same-package test subclass to hand back controllable fakes instead of opening a real socket,
+     * so the close-the-superseded-connection behavior above is provable without a live Redis or a
+     * mocking framework (neither is a dependency of this module).
+     */
+    StatefulRedisConnection<String, String> newSharedConnection() {
+        return client().connect();
     }
 
     /**

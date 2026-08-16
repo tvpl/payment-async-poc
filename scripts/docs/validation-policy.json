@@ -1,36 +1,25 @@
 {
   "allowed_commands": [
     "awk",
+    "bash",
+    "cd",
+    "cp",
     "curl",
     "docker",
+    "echo",
     "export",
     "git",
     "gradle",
     "jq",
     "k6",
     "make",
+    "openssl",
+    "psql",
+    "python3",
     "redis-cli",
-    "sleep"
+    "sleep",
+    "test"
   ],
-  "documented_claim_debts": [
-    {
-      "contains": "pronto para carga real",
-      "owner": "async-redis-service",
-      "path": "docs/17-async-sync-redis.md",
-      "resolution_task": "T45"
-    },
-    {
-      "contains": "Gaps corrigidos + checklist de deploy",
-      "owner": "workspace",
-      "path": "docs/README.md",
-      "resolution_task": "T59"
-    },
-    {
-      "contains": "Vou levar para produção",
-      "owner": "workspace",
-      "path": "docs/README.md",
-      "resolution_task": "T59"
-    }
-  ],
+  "documented_claim_debts": [],
   "documented_metric_debts": []
 }

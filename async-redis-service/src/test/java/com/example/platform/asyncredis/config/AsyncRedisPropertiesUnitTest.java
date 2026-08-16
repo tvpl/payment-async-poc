@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,5 +65,36 @@ class AsyncRedisPropertiesUnitTest {
                 assertThrows(ConfigurationException.class, props::validateRetention);
         assertTrue(thrown.getMessage().contains("async.redis.pool-max-wait"),
                 "the failure must name the offending property; was: " + thrown.getMessage());
+    }
+
+    /**
+     * AUD-20: a status shorter-lived than the idempotency reservation it backs leaves a replay
+     * window where the reservation still resolves a jobId, but that job's status key has already
+     * expired — a later replay of the same Idempotency-Key would then find nothing to answer with.
+     */
+    @Test
+    void aStatusTtlShorterThanTheIdempotencyTtlIsRefusedAtStartup() {
+        AsyncRedisProperties props = valid();
+        props.setStatusTtl(Duration.ofHours(1));
+        props.setIdempotencyTtl(Duration.ofHours(2));
+
+        ConfigurationException thrown =
+                assertThrows(ConfigurationException.class, props::validateRetention);
+        assertTrue(thrown.getMessage().contains("async.redis.status-ttl"),
+                "the failure must name the offending property; was: " + thrown.getMessage());
+        assertTrue(thrown.getMessage().contains("idempotency-ttl"),
+                "the failure must name the property it was compared against; was: "
+                        + thrown.getMessage());
+    }
+
+    @Test
+    void aStatusTtlEqualToTheIdempotencyTtlIsAccepted() {
+        AsyncRedisProperties props = valid();
+        props.setStatusTtl(Duration.ofHours(2));
+        props.setIdempotencyTtl(Duration.ofHours(2));
+        props.setResultTtl(Duration.ofMinutes(1));
+
+        assertDoesNotThrow(props::validateRetention,
+                "status-ttl equal to idempotency-ttl satisfies >= and must boot");
     }
 }

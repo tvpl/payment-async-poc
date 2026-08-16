@@ -47,9 +47,12 @@ publishing {
     }
     repositories {
         // Local file repo — lets CI validate the artifact/POM without any credentials.
+        // Anchored on the BOUNDARY root (`feature-control/build/repo`), not this subproject's
+        // own `library/build/`, matching payment-contracts' `rootProject.layout.buildDirectory`
+        // convention and the path every consumer defaults to (`../feature-control/build/repo`).
         maven {
             name = 'localBuild'
-            url = layout.buildDirectory.dir('repo')
+            url = rootProject.layout.buildDirectory.dir('repo')
         }
         // GitHub Packages — the real distribution target. Credentials come from the environment.
         maven {

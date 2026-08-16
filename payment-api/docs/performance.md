@@ -2,9 +2,9 @@
 
 ## Meta aprovada
 
-Conforme AD-006: 10.000 req/min sustentadas por 15 minutos e spike de 20.000 req/min por 60
-segundos. Excesso recebe `429`, `202` ou buffering limitado. Perda silenciosa não é resultado
-aceitável em nenhum cenário.
+Conforme AD-007 (supersede AD-006): 1.000 req/min sustentados por 15 minutos e spike de 2.000
+req/min por 60 segundos, com latência média ≤ 300ms e p99 ≤ 10s. Excesso recebe `429`, `202` ou
+buffering limitado. Perda silenciosa não é resultado aceitável em nenhum cenário.
 
 ## Onde está o custo
 
@@ -29,8 +29,8 @@ status).
 
 | Cenário | Data | Resultado |
 | --- | --- | --- |
-| Sustentado 10.000 req/min por 15 min | — | `NOT_RUN` |
-| Spike 20.000 req/min por 60 s | — | `NOT_RUN` |
+| Sustentado 1.000 req/min por 15 min | — | `NOT_RUN` |
+| Spike 2.000 req/min por 60 s | — | `NOT_RUN` |
 | Duas instâncias de API com coordenação cross-instance | — | `NOT_RUN` |
 
 Nenhum número de capacidade desta fronteira está validado. Um relatório precisa registrar versão,

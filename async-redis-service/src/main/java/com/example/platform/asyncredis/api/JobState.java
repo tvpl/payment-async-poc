@@ -7,5 +7,21 @@ public enum JobState {
     PROCESSING,
 
     /** The worker released a result. Terminal. */
-    COMPLETED
+    COMPLETED,
+
+    /**
+     * The idempotency reservation was taken but the stream {@code XADD} failed — this jobId was
+     * never really accepted, no worker will ever see it. Not terminal: {@link
+     * com.example.platform.asyncredis.api.JobAcceptanceService} retries the enqueue against the
+     * same reservation on the next request carrying the same Idempotency-Key, instead of a
+     * {@code Replay} pointing at a job that doesn't exist on any stream.
+     */
+    ENQUEUE_FAILED,
+
+    /**
+     * The worker routed this job to the dead-letter stream — poison (max-deliveries exceeded) or
+     * structurally malformed. Terminal (AUD-13): unlike {@code ENQUEUE_FAILED}, no retry against
+     * the same jobId will ever succeed.
+     */
+    FAILED
 }

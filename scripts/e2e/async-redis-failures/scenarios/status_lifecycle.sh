@@ -20,7 +20,7 @@ scenario_status_lifecycle_all_states() {
   docker run -d --name async-redis-t56-shortttl --network "$SANDBOX_NETWORK" -p "${short_port}:8084" \
     -e MICRONAUT_ENVIRONMENTS=dev -e REDIS_HOST=redis -e REDIS_PORT=6379 \
     -e ASYNC_INSTANCE_ID=t56shortttl -e ASYNC_REDIS_STREAM=async.jobs.t56shortttl \
-    -e ASYNC_REDIS_RESULT_TTL=3s -e ASYNC_REDIS_STATUS_TTL=8s \
+    -e ASYNC_REDIS_RESULT_TTL=3s -e ASYNC_REDIS_STATUS_TTL=8s -e ASYNC_REDIS_IDEMPOTENCY_TTL=8s \
     async-redis-service:local >/dev/null
 
   wait_healthy async-redis-t56-slow || true

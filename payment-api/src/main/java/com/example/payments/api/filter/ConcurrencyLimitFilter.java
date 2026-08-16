@@ -20,15 +20,21 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Admission control for POST /payment-simulations. Virtual threads make waiting cheap
- * but do NOT bound load on the Core — these limiters do, returning 429 with
- * {@code Retry-After} when the burst exceeds the configured budget (CAP-03).
+ * Admission control for POST /payment-simulations, including its v0 beta at
+ * {@code /v0/payment-simulations}. Virtual threads make waiting cheap but do NOT bound load on
+ * the Core — these limiters do, returning 429 with {@code Retry-After} when the burst exceeds the
+ * configured budget (CAP-03).
  *
  * <p>Two budgets apply: the resource budget caps the route across all callers, and the tenant
  * budget stops one caller from consuming the whole route. The tenant is identified by a hash of
  * its credential, never the credential itself, so no secret reaches a Redis key or a log line.
+ * {@code resource} includes the path, so v0 gets its own resource bucket at the same configured
+ * size as the main route rather than sharing one counter with it. v0 is unauthenticated by design
+ * (see {@code V0PaymentSimulationController}), so it never carries an {@code X-API-Key} — every
+ * anonymous v0 caller therefore shares one {@code "anonymous"} tenant bucket, same as any
+ * anonymous caller would on the main route.
  */
-@Filter(value = "/payment-simulations", methods = HttpMethod.POST)
+@Filter(value = {"/payment-simulations", "/v0/payment-simulations"}, methods = HttpMethod.POST)
 public class ConcurrencyLimitFilter implements HttpServerFilter {
 
     private static final String ANONYMOUS_TENANT = "anonymous";
@@ -51,14 +57,25 @@ public class ConcurrencyLimitFilter implements HttpServerFilter {
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         String resource = request.getMethod().name() + ":" + request.getPath();
-        if (!resourceLimiter.tryAcquire(resource) || !tenantLimiter.tryAcquire(tenant(request))) {
+        if (!resourceLimiter.tryAcquireBoth(resource, tenantLimiter, tenant(request))) {
             return Publishers.just(HttpResponse.status(HttpStatus.TOO_MANY_REQUESTS)
                     .header("Retry-After", "1"));
         }
         return chain.proceed(request);
     }
 
+    /**
+     * v0 is anonymous by design and not covered by {@code ApiKeyFilter}
+     * ({@code /v0/payment-simulations} is unauthenticated), so any {@code X-API-Key} it carries
+     * is unvalidated caller-supplied text. Fingerprinting it anyway would let a rotating key
+     * mint a fresh tenant bucket - starting with a full budget - on every request, bypassing
+     * the tenant budget entirely (AUD-05). Every v0 caller shares the fixed anonymous bucket
+     * regardless of what the header says.
+     */
     private static String tenant(HttpRequest<?> request) {
+        if (request.getPath().startsWith("/v0/")) {
+            return ANONYMOUS_TENANT;
+        }
         String credential = request.getHeaders().get("X-API-Key");
         if (credential == null || credential.isBlank()) {
             return ANONYMOUS_TENANT;

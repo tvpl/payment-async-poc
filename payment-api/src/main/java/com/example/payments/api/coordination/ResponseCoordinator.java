@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,12 @@ public class ResponseCoordinator {
                 t.setDaemon(true);
                 return t;
             });
+    // The PubSub listener below must never call complete() inline: complete() runs a
+    // synchronous Redis command (RedisStatusStore.get()), and Lettuce dispatches every message
+    // on the connection's single Netty event-loop thread — a slow command there stalls delivery
+    // of every subsequent message for every other waiter on this instance, not just the current
+    // one (task_3801253b). One virtual thread per message keeps that dispatch thread free.
+    private final ExecutorService notificationDispatcher = Executors.newVirtualThreadPerTaskExecutor();
 
     private final RedisClient redisClient;
     private final RedisStatusStore store;
@@ -70,18 +77,26 @@ public class ResponseCoordinator {
         if (shuttingDown) {
             return;
         }
+        // The field is only assigned once subscribe() has actually succeeded; a connection that
+        // opens but fails to subscribe is closed in the catch below instead of being leaked as
+        // an orphaned Lettuce connection on every retry (AUD-17).
+        StatefulRedisPubSubConnection<String, String> connection = null;
         try {
-            pubSub = redisClient.connectPubSub();
-            pubSub.addListener(new RedisPubSubAdapter<>() {
+            connection = redisClient.connectPubSub();
+            connection.addListener(new RedisPubSubAdapter<>() {
                 @Override
                 public void message(String channel, String requestId) {
-                    complete(requestId);
+                    onMessage(requestId);
                 }
             });
             // Lettuce re-subscribes channels automatically after a reconnect.
-            pubSub.sync().subscribe(properties.getResponseChannel());
+            connection.sync().subscribe(properties.getResponseChannel());
+            pubSub = connection;
             LOG.info("Subscribed to Redis channel {}", properties.getResponseChannel());
         } catch (Exception e) {
+            if (connection != null) {
+                connection.close();
+            }
             LOG.warn("Redis pub/sub subscribe failed; retrying in 5s ({})", e.getMessage());
             scheduler.schedule(this::trySubscribe, 5, TimeUnit.SECONDS);
         }
@@ -108,6 +123,16 @@ public class ResponseCoordinator {
     /** Number of requests currently blocked waiting for an async result. */
     public int pendingCount() {
         return waiters.size();
+    }
+
+    /**
+     * Entry point for the Redis PubSub listener. Dispatches to {@link #complete} on a separate
+     * thread — see {@link #notificationDispatcher}'s field comment for why this must never run
+     * inline on the calling (Netty event-loop) thread. Package-private so a test can invoke it
+     * directly without a real Lettuce PubSub connection.
+     */
+    void onMessage(String requestId) {
+        notificationDispatcher.execute(() -> complete(requestId));
     }
 
     /** Completes a waiting future if the Redis entry has reached a terminal state. */
@@ -158,6 +183,7 @@ public class ResponseCoordinator {
                 f.completeExceptionally(new IllegalStateException("API shutting down")));
         waiters.clear();
         scheduler.shutdownNow();
+        notificationDispatcher.shutdownNow();
         if (pubSub != null) {
             pubSub.close();
         }

@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "targets": ["payment-core-mock-core-mock-1:8082"],
+    "labels": { "job": "payment-core-mock", "owner": "payment-core-mock" }
+  },
+  {
+    "targets": ["payment-api-api-1:8080"],
+    "labels": { "job": "payment-simulation-api", "owner": "payment-api" }
+  },
+  {
+    "targets": ["payment-sbus-sbus-1:8081"],
+    "labels": { "job": "payment-sbus", "owner": "payment-sbus" }
+  },
+  {
+    "targets": ["async-redis-service-async-redis-1:8084"],
+    "labels": { "job": "async-redis-service", "owner": "async-redis-service" }
+  }
+]

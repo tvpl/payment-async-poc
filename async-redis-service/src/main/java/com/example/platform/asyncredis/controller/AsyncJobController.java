@@ -121,6 +121,18 @@ public class AsyncJobController {
             case JobStatusView.Expired ignored ->
                     HttpResponse.<JobResponse>status(HttpStatus.GONE)
                             .body(new JobResponse(jobId, "EXPIRED", url, null));
+            case JobStatusView.Failed ignored ->
+                    // Terminal: the worker gave up and routed this job to the DLQ. The client needs
+                    // an observable terminal state instead of the job silently aging out to UNKNOWN
+                    // once its status-ttl expires (AUD-13).
+                    HttpResponse.ok(new JobResponse(jobId, "FAILED", url, null));
+            case JobStatusView.EnqueueFailed ignored ->
+                    // The reservation exists but the stream write never landed. Retrying the
+                    // original POST with the same Idempotency-Key re-attempts the enqueue
+                    // (JobAcceptanceService); a plain GET here can only report the truth.
+                    HttpResponse.<JobResponse>status(HttpStatus.SERVICE_UNAVAILABLE)
+                            .header("Retry-After", "1")
+                            .body(new JobResponse(jobId, "UNAVAILABLE", url, null));
             case JobStatusView.Unknown ignored ->
                     HttpResponse.<JobResponse>notFound()
                             .body(new JobResponse(jobId, "UNKNOWN", url, null));

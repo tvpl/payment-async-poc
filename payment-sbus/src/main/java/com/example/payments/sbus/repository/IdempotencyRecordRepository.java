@@ -14,8 +14,6 @@ public interface IdempotencyRecordRepository extends CrudRepository<IdempotencyR
 
     Optional<IdempotencyRecord> findByIdempotencyKey(String idempotencyKey);
 
-    boolean existsByIdempotencyKey(String idempotencyKey);
-
     /** Retention: purge old idempotency records (bounded batch keeps locks short). */
     @Query(value = """
             DELETE FROM idempotency_record

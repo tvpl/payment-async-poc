@@ -24,7 +24,7 @@ REQUIRED_DOCUMENTS = {
     "docs/adr/0001-contract-artifacts-and-compatibility.md",
 }
 LINK = re.compile(r"(?<!!)\[[^]]+\]\(([^)]+)\)")
-FORBIDDEN_CONTENT = ("common/src/main", "../common", "project(':common')", "docker compose up")
+FORBIDDEN_CONTENT = ("common/src/main", "project(':", 'project(":', "docker compose up", "payment-api/src", "payment-sbus/src", "payment-core-mock/src", "feature-control/src", "async-redis-service/src")
 ADR_HEADINGS = ("## Contexto", "## Decisão", "## Alternativas consideradas", "## Consequências", "## Supersession")
 REQUIRED_CONTENT = {
     "README.md": (

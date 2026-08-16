@@ -20,8 +20,8 @@ resubmissão escaparia da deduplicação enquanto o original ainda estivesse vis
 
 | Propriedade | Default | Efeito |
 | --- | --- | --- |
-| `payment.simulation.rate-limit.limit-for-period` | `200` | orçamento da rota por janela, na frota |
-| `payment.simulation.rate-limit.tenant-limit-for-period` | `50` | orçamento de um tenant por janela |
+| `payment.simulation.rate-limit.limit-for-period` | `20` | orçamento da rota por janela, na frota |
+| `payment.simulation.rate-limit.tenant-limit-for-period` | `10` | orçamento de um tenant por janela |
 | `payment.simulation.rate-limit.instances` | `${PAYMENT_API_INSTANCES:1}` | réplicas que dividem o orçamento |
 | `payment.simulation.rate-limit.refresh-period` | `1s` | tamanho da janela |
 

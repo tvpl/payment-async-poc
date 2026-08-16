@@ -9,9 +9,10 @@ permissions:
   contents: read
 
 env:
-  API_KEY: ci-only-required-value
+  PAYMENT_API_KEY: ci-only-required-value
   JWT_SIGNATURE_SECRET: ci-only-signing-value-with-at-least-32-bytes
   POSTGRES_PASSWORD: ci-only-required-value
+  GRAFANA_ADMIN_PASSWORD: ci-only-required-value
   COVERAGE_GATE_STATUS: NOT_RUN
 
 jobs:
@@ -23,19 +24,19 @@ jobs:
       matrix:
         include:
           - boundary: payment-contracts
-            command: ./gradlew :common:build --no-daemon
+            command: cd payment-contracts && ./gradlew build --no-daemon
           - boundary: payment-api
-            command: ./gradlew :api-service:build --no-daemon
+            command: cd payment-api && ./gradlew build --no-daemon
           - boundary: payment-sbus
-            command: ./gradlew :sbus-service:build --no-daemon
+            command: cd payment-sbus && ./gradlew build --no-daemon
           - boundary: payment-core-mock
-            command: ./gradlew :core-mock:build --no-daemon
+            command: cd payment-core-mock && ./gradlew build --no-daemon
           - boundary: feature-control
-            command: ./gradlew :feature-control:build :feature-demo:build :pilot-app:build --no-daemon
+            command: cd feature-control && ./gradlew build --no-daemon
           - boundary: async-redis-service
-            command: ./gradlew :async-redis-service:build --no-daemon
+            command: cd async-redis-service && ./gradlew build --no-daemon
           - boundary: sandbox
-            command: docker compose config -q
+            command: cd sandbox && make config
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -47,6 +48,16 @@ jobs:
       - name: Set up Gradle
         if: matrix.boundary != 'sandbox'
         uses: gradle/actions/setup-gradle@v4
+      # Cross-boundary deps resolve by GAV from a sibling boundary's build output, which a fresh
+      # checkout does not have (build/ is gitignored). Without this, payment-api/payment-sbus/
+      # payment-core-mock fail on "Could not find com.example.payments:payment-contract-model".
+      - name: Publish prerequisite artifacts
+        if: contains(fromJSON('["payment-api","payment-sbus","payment-core-mock"]'), matrix.boundary)
+        run: |
+          (cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon)
+          if [ "${{ matrix.boundary }}" = "payment-api" ]; then
+            (cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon)
+          fi
       - name: Run boundary build
         id: gate
         env:
@@ -86,13 +97,13 @@ jobs:
       matrix:
         include:
           - boundary: payment-api
-            command: ./gradlew :api-service:test -PwithIT --no-daemon
+            command: cd payment-api && ./gradlew test -PwithIT --no-daemon
           - boundary: payment-sbus
-            command: ./gradlew :sbus-service:test -PwithIT --no-daemon
+            command: cd payment-sbus && ./gradlew test -PwithIT --no-daemon
           - boundary: async-redis-service
-            command: ./gradlew :async-redis-service:test -PwithIT --no-daemon
+            command: cd async-redis-service && ./gradlew test -PwithIT --no-daemon
           - boundary: feature-control
-            command: ./gradlew :feature-demo:test :pilot-app:test -PwithIT --no-daemon
+            command: cd feature-control && ./gradlew test -PwithIT --no-daemon
     services:
       redis:
         image: redis:7.4-alpine
@@ -109,6 +120,13 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Publish prerequisite artifacts
+        if: contains(fromJSON('["payment-api","payment-sbus"]'), matrix.boundary)
+        run: |
+          (cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon)
+          if [ "${{ matrix.boundary }}" = "payment-api" ]; then
+            (cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon)
+          fi
       - name: Run required integration gate
         id: integration-gate
         env:
@@ -172,8 +190,15 @@ jobs:
         with:
           languages: java-kotlin
       - uses: gradle/actions/setup-gradle@v4
-      - name: Compile for CodeQL
-        run: ./gradlew classes --no-daemon
+      - name: Compile every standalone root for CodeQL
+        run: |
+          # Publish first: the consumer roots resolve contracts/feature-control by GAV from a
+          # sibling build/ directory that a fresh checkout does not have.
+          (cd payment-contracts && ./gradlew publishAllToLocalBuildRepository --no-daemon)
+          (cd feature-control && ./gradlew publishLibraryToLocalBuildRepository --no-daemon)
+          for boundary in payment-contracts payment-api payment-sbus payment-core-mock feature-control async-redis-service; do
+            (cd "$boundary" && ./gradlew classes --no-daemon)
+          done
       - uses: github/codeql-action/analyze@v3
 
   governance:
@@ -190,12 +215,14 @@ jobs:
           python3 .github/workflows/check_ci_policy.py
       - name: Record quality policy
         run: |
-          echo "| Gate | Result |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| workflow lint | ${{ needs.workflow-lint.result == 'success' && 'PASS' || 'FAIL' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| static analysis | ${{ needs.static-analysis.result == 'success' && 'PASS' || 'FAIL' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| coverage | ${COVERAGE_GATE_STATUS} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| dependency updates | PASS |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "| Gate | Result |"
+            echo "| --- | --- |"
+            echo "| workflow lint | ${{ needs.workflow-lint.result == 'success' && 'PASS' || 'FAIL' }} |"
+            echo "| static analysis | ${{ needs.static-analysis.result == 'success' && 'PASS' || 'FAIL' }} |"
+            echo "| coverage | ${COVERAGE_GATE_STATUS} |"
+            echo "| dependency updates | PASS |"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Enforce executed blocking gates
         env:
           BOUNDARY_RESULT: ${{ needs.boundary-build.result }}

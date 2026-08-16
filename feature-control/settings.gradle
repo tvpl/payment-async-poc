@@ -12,9 +12,8 @@ pluginManagement {
 rootProject.name = 'feature-control'
 
 // The library keeps the ':feature-control' project path (matching its published artifactId) so
-// the two example apps' `implementation project(':feature-control')` dependency declaration is
-// identical whether built from this standalone root or from the transitional workspace root
-// (which repoints the same project path at this same `library/` directory — see MIG-02).
+// the two example apps' `implementation project(':feature-control')` dependency declaration
+// stays stable regardless of which directory holds the library sources.
 include 'feature-control'
 project(':feature-control').projectDir = file('library')
 

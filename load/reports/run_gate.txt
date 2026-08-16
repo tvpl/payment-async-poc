@@ -1,0 +1,67 @@
+[capacity] === profile: certified-target — bring-up ===
+[capacity] warm-up: 45s @ 10 req/s (discarded)
+[capacity] CAP-05 duplicate-key probe: PASS (requestId=94cb9ce4-ec90-4e8d-8885-06cdd38a839d on both instances)
+[capacity] steady (certified-target): snapshotting before-state
+[capacity] steady (certified-target): running k6 (167 req/s x 15m)
+[capacity] steady (certified-target): k6 exit=0
+[capacity] steady (certified-target): snapshotting after-state
+[capacity] steady (certified-target): reconciling sampled requestIds
+[capacity] steady (certified-target): done
+[capacity] spike (certified-target): snapshotting before-state
+[capacity] spike (certified-target): running k6 (333 req/s x 60s)
+[capacity] spike (certified-target): k6 exit=0
+[capacity] spike (certified-target): snapshotting after-state
+[capacity] spike (certified-target): reconciling sampled requestIds
+[capacity] spike (certified-target): done
+[capacity] soak (certified-target): snapshotting before-state
+[capacity] soak (certified-target): running k6 (133 req/s x 10m)
+[capacity] soak (certified-target): k6 exit=0
+[capacity] soak (certified-target): snapshotting after-state
+[capacity] soak (certified-target): reconciling sampled requestIds
+[capacity] soak (certified-target): done
+[capacity] slowdown (certified-target): injecting core-mock latency 1500-3500ms
+[capacity] slowdown (certified-target): snapshotting before-state
+[capacity] slowdown (certified-target): running k6 (2 req/s x 90s)
+[capacity] slowdown (certified-target): k6 exit=0
+[capacity] slowdown (certified-target): snapshotting after-state
+[capacity] slowdown (certified-target): reconciling sampled requestIds
+[capacity] slowdown (certified-target): done
+[capacity] slowdown (certified-target): restoring core-mock latency to 1-2ms
+[capacity] recovery (certified-target): observing drain for 18 x 10s
+[capacity] recovery (certified-target): done, timeline at /Users/thiagolopes/Projects/payment-async-poc/load/reports/certified-target/recovery.timeline.jsonl
+[capacity] === profile: certified-target — teardown ===
+[capacity] === profile: constrained-core — bring-up ===
+[capacity] warm-up: 45s @ 10 req/s (discarded)
+[capacity] CAP-05 duplicate-key probe: PASS (requestId=a562af74-e46d-4279-981a-b05bd38fbded on both instances)
+[capacity] steady (constrained-core): snapshotting before-state
+[capacity] steady (constrained-core): running k6 (167 req/s x 15m)
+[capacity] steady (constrained-core): k6 exit=0
+[capacity] steady (constrained-core): snapshotting after-state
+[capacity] steady (constrained-core): reconciling sampled requestIds
+[capacity] steady (constrained-core): done
+[capacity] spike (constrained-core): snapshotting before-state
+[capacity] spike (constrained-core): running k6 (333 req/s x 60s)
+[capacity] spike (constrained-core): k6 exit=0
+[capacity] spike (constrained-core): snapshotting after-state
+[capacity] spike (constrained-core): reconciling sampled requestIds
+[capacity] spike (constrained-core): done
+[capacity] soak (constrained-core): snapshotting before-state
+[capacity] soak (constrained-core): running k6 (133 req/s x 10m)
+[capacity] soak (constrained-core): k6 exit=0
+[capacity] soak (constrained-core): snapshotting after-state
+[capacity] soak (constrained-core): reconciling sampled requestIds
+[capacity] soak (constrained-core): done
+[capacity] slowdown (constrained-core): injecting core-mock latency 1500-3500ms
+[capacity] slowdown (constrained-core): snapshotting before-state
+[capacity] slowdown (constrained-core): running k6 (2 req/s x 90s)
+[capacity] slowdown (constrained-core): k6 exit=0
+[capacity] slowdown (constrained-core): snapshotting after-state
+[capacity] slowdown (constrained-core): reconciling sampled requestIds
+[capacity] slowdown (constrained-core): done
+[capacity] slowdown (constrained-core): restoring core-mock latency to 20-20ms
+[capacity] recovery (constrained-core): observing drain for 18 x 10s
+[capacity] recovery (constrained-core): done, timeline at /Users/thiagolopes/Projects/payment-async-poc/load/reports/constrained-core/recovery.timeline.jsonl
+[capacity] === profile: constrained-core — teardown ===
+[capacity] all profiles done in 4389s — generating report
+report written to /Users/thiagolopes/Projects/payment-async-poc/load/reports/20260811-185714-capacity-report.md
+[capacity] report: /Users/thiagolopes/Projects/payment-async-poc/load/reports/20260811-185714-capacity-report.md (aggregate exit=1)

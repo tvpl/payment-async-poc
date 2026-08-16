@@ -1,6 +1,7 @@
 # Documentação — feature-control
 
 - [Arquitetura](architecture.md)
+- [Adoção](adoption.md)
 - [Configuração](configuration.md)
 - [Segurança](security.md)
 - [Operação](operations.md)

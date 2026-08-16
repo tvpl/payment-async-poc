@@ -40,17 +40,23 @@ public class VersionedFlagStore {
 
     // KEYS: [flagKey, auditStreamKey]. ARGV: [expectedVersion, actor, timestampMillis, flagName].
     // Returns the deleted (or matched-absent) version, or -1 on a version mismatch.
+    // AUD-21: a delete of a flag that doesn't exist mutates nothing, so it audits as 'noop', not 'ok'
+    // -- 'ok' is reserved for a mutation that actually happened.
     private static final String DELETE_LUA = """
             local cur = redis.call('GET', KEYS[1])
             local curVer = 0
             if cur then curVer = tonumber(cjson.decode(cur).version) or 0 end
             local expected = tonumber(ARGV[1])
             if expected ~= curVer then return -1 end
-            if cur then redis.call('DEL', KEYS[1]) end
+            local result = 'noop'
+            if cur then
+                redis.call('DEL', KEYS[1])
+                result = 'ok'
+            end
             redis.call('XADD', KEYS[2], '*',
                 'action', 'delete', 'flag', ARGV[4], 'actor', ARGV[2],
                 'before', cur or '', 'after', '',
-                'version', tostring(curVer), 'result', 'ok', 'ts', ARGV[3])
+                'version', tostring(curVer), 'result', result, 'ts', ARGV[3])
             return curVer
             """;
 

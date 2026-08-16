@@ -6,7 +6,7 @@
 
 ## Gate de integração
 
-`./gradlew test -PwithIT --no-daemon` cobre Redis real (`localhost:6379`): aceitação/idempotência, backpressure do pool de espera, identidade única de worker, reconexão com backoff, liberação atômica de resultado, DLQ durável e retenção. 96 testes ao final do Phase 7 (T38–T44).
+`./gradlew test -PwithIT --no-daemon` cobre Redis real (`localhost:6379`): aceitação/idempotência, backpressure do pool de espera, identidade única de worker, reconexão com backoff, liberação atômica de resultado, DLQ durável e retenção, além das transições CAS de status, renovação de lease de reclaim por entrada, e conexão compartilhada fechada na troca (AUD-03/12/13/19/20). 112 testes ao total (`build/test-results/test`).
 
 ## Documentação e imagem
 
