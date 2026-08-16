@@ -386,8 +386,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: evento `eventVersion: 99.0` → DLQ com razão `unknown-major`
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: evento `eventVersion: 99.0` → DLQ com razão `unknown-major`
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

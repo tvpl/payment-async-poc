@@ -2,9 +2,11 @@ package com.example.payments.sbus.kafka;
 
 import com.example.payments.common.avro.CorePaymentSimulationResponse;
 import com.example.payments.common.avro.PaymentSimulationRequested;
+import com.example.payments.common.events.EnvelopeVersions;
 import com.example.payments.common.events.EventEnvelope;
 import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Topics;
+import com.example.payments.common.events.UnknownEventMajorException;
 import com.example.payments.common.kafka.AvroCodecUnavailableException;
 import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.mapping.AvroMapper;
@@ -83,6 +85,7 @@ public class SimulationMessageHandler {
             }
             throw new PoisonMessageException("Invalid PaymentSimulationRequested", e);
         }
+        assertKnownMajorOrPoison(env.eventVersion());
         Mdc.fromConsumer(record, env);
         try {
             // Business processing — transient failures propagate (retryable); a data-integrity
@@ -112,6 +115,7 @@ public class SimulationMessageHandler {
             }
             throw new PoisonMessageException("Invalid CorePaymentSimulationResponse", e);
         }
+        assertKnownMajorOrPoison(env.eventVersion());
         Mdc.fromConsumer(record, env);
         try {
             service.handleCoreResponse(env);
@@ -119,6 +123,25 @@ public class SimulationMessageHandler {
             throw asPoisonIfDataIntegrityViolation(failure);
         } finally {
             Mdc.clear();
+        }
+    }
+
+    /**
+     * API-02: an envelope whose {@code eventVersion} is on a major this contract does not know
+     * how to read must never be processed silently — reprocessing it later, once a consumer that
+     * understands the major exists, requires it to still be sitting on a topic rather than having
+     * been dropped or (worse) misinterpreted as the known major's shape. {@link
+     * EnvelopeVersions#assertKnownMajor} is the single source of truth for "known major" shared
+     * with every other reader of the contract; a rejection here is reclassified as {@link
+     * PoisonMessageException} with an explicit {@code unknown-major} reason (never the generic
+     * decode-failure message) so the DLQ record is self-explanatory without needing to inspect the
+     * payload.
+     */
+    private static void assertKnownMajorOrPoison(String eventVersion) {
+        try {
+            EnvelopeVersions.assertKnownMajor(eventVersion);
+        } catch (UnknownEventMajorException unknownMajor) {
+            throw new PoisonMessageException("unknown-major: " + unknownMajor.getMessage(), unknownMajor);
         }
     }
 
