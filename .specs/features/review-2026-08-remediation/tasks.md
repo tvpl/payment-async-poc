@@ -452,9 +452,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Boot falha com budget ≥ wait-timeout (teste de contexto)
-- [ ] IT com broker parado: 503 em < wait-timeout + 1s
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] Boot falha com budget ≥ wait-timeout (teste de contexto)
+- [x] IT com broker parado: 503 em < wait-timeout + 1s
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

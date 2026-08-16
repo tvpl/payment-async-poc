@@ -78,6 +78,10 @@ platform:
         off-variant: v1
 
 payment:
+  # BUDG-01: derives max.block.ms/request.timeout.ms/delivery.timeout.ms for the request-path
+  # Kafka producer (see PublishBudgetProducerCustomizer), checked at boot against
+  # payment.simulation.wait-timeout (see PublishBudgetGuard).
+  publish-budget: 500ms
   simulation:
     wait-timeout: 3s
     status-ttl: 15m
