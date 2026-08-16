@@ -251,9 +251,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT prova envelope+header com tenant do binding
-- [ ] Logs do fluxo carregam `tenantId` no MDC
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] IT prova envelope+header com tenant do binding
+- [x] Logs do fluxo carregam `tenantId` no MDC
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full

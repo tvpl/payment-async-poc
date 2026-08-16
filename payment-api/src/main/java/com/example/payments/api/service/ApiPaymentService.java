@@ -122,6 +122,7 @@ public class ApiPaymentService {
         // causationId, argument).
         MDC.put("causationId", requestId);
         MDC.put("traceId", traceId);
+        MDC.put("tenantId", tenantId);
         // Every exit from here on — result, timeout, interruption, shutdown or publish failure —
         // leaves the thread's MDC clean; a request thread is reused (PAY-10).
         try {
@@ -150,12 +151,12 @@ public class ApiPaymentService {
         try {
             EventEnvelope<PaymentSimulationRequestPayload> envelope = EventEnvelope.create(
                     EventTypes.PAYMENT_SIMULATION_REQUESTED,
-                    requestId, correlationId, requestId, traceId, Sources.API,
+                    requestId, correlationId, requestId, traceId, Sources.API, tenantId,
                     request.toPayload());
 
             try {
                 byte[] bytes = avroSerde.serialize(Topics.REQUESTED, AvroMapper.toAvroRequested(envelope));
-                producer.send(requestId, requestId, correlationId, idempotencyKey, bytes);
+                producer.send(requestId, requestId, correlationId, idempotencyKey, tenantId, bytes);
             } catch (Exception e) {
                 // Keep the identity, mark it unpublished: the caller gets an honest failure and a
                 // retry with the same key resumes this requestId instead of waiting out an orphan.
