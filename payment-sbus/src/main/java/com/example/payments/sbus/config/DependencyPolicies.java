@@ -34,7 +34,10 @@ public final class DependencyPolicies {
             @Value("${sbus.dependencies.postgresql.readiness-required:true}") boolean postgresReadiness,
             @Value("${sbus.dependencies.redis.timeout:2s}") Duration redisTimeout,
             @Value("${sbus.dependencies.redis.max-attempts:1}") int redisAttempts,
-            @Value("${sbus.dependencies.redis.readiness-required:true}") boolean redisReadiness,
+            // RES-03/RES-04: Redis backs only the Core rate limiter, not payment durability —
+            // an outage degrades throttling, it does not make the SBUS instance unable to do
+            // useful work, so it defaults to NOT gating readiness (see RedisHealthIndicator).
+            @Value("${sbus.dependencies.redis.readiness-required:false}") boolean redisReadiness,
             @Value("${sbus.dependencies.registry.timeout:3s}") Duration registryTimeout,
             @Value("${sbus.dependencies.registry.max-attempts:3}") int registryAttempts,
             @Value("${sbus.dependencies.registry.readiness-required:true}") boolean registryReadiness) {
@@ -70,9 +73,8 @@ public final class DependencyPolicies {
             if (budget.maxAttempts() < 1) {
                 throw new ConfigurationException(dependency + " max-attempts must be at least 1");
             }
-            if (!budget.requiredForReadiness()) {
-                throw new ConfigurationException(dependency + " must be required for SBUS readiness");
-            }
+            // RES-04: readiness-required:false is now an accepted, deliberate policy for a
+            // non-critical dependency (see RedisHealthIndicator) — no longer rejected here.
             result.put(dependency, budget);
         }
         return Map.copyOf(result);

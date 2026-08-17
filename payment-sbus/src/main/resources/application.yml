@@ -140,7 +140,10 @@ sbus:
     redis:
       timeout: 2s
       max-attempts: 1
-      readiness-required: true
+      # RES-03/RES-04: Redis backs only the Core rate limiter; an outage degrades throttling
+      # but does not stop payment durability, so it no longer gates readiness (see
+      # RedisHealthIndicator, which still reports it as degraded).
+      readiness-required: false
     registry:
       timeout: 3s
       max-attempts: 3

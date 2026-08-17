@@ -13,6 +13,7 @@ import static com.example.payments.sbus.config.DependencyPolicies.Dependency.SCH
 import static com.example.payments.sbus.config.DependencyPolicies.RecoverableState.CLAIMED_OUTBOX;
 import static com.example.payments.sbus.config.DependencyPolicies.RecoverableState.KAFKA_RECORD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,12 +46,19 @@ class DependencyPoliciesUnitTest {
         assertThrows(ConfigurationException.class, () -> DependencyPolicies.validated(policies));
     }
 
+    /**
+     * RES-04: {@code readiness-required: false} is now an accepted, deliberate policy for a
+     * non-critical dependency (e.g. Redis, which backs only the Core rate limiter) — validation
+     * no longer forbids it.
+     */
     @Test
-    void rejectsDependencyExcludedFromReadiness() {
+    void acceptsDependencyExcludedFromReadiness() {
         var policies = validPolicies();
         policies.put(REDIS, new DependencyPolicies.Budget(Duration.ofSeconds(1), 1, false, CLAIMED_OUTBOX));
 
-        assertThrows(ConfigurationException.class, () -> DependencyPolicies.validated(policies));
+        var validated = DependencyPolicies.validated(policies);
+
+        assertFalse(validated.get(REDIS).requiredForReadiness());
     }
 
     private static EnumMap<DependencyPolicies.Dependency, DependencyPolicies.Budget> validPolicies() {
