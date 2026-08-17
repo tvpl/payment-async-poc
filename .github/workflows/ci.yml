@@ -198,7 +198,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin
       - uses: gradle/actions/setup-gradle@v4
@@ -211,7 +211,7 @@ jobs:
           for boundary in payment-contracts payment-api payment-sbus payment-core-mock feature-control async-redis-service; do
             (cd "$boundary" && ./gradlew classes --no-daemon)
           done
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
 
   governance:
     name: Governance and explicit gate status
