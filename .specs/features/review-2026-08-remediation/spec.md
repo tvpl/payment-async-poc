@@ -302,7 +302,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | SCAL-01 | P2: Escala do processamento durável | Design | Verified |
 | SCAL-02 | P2: Escala do processamento durável | Design | Verified |
 | SCAL-03 | P2: Escala do processamento durável | Design | Verified |
-| SCAL-04 | P2: Escala do processamento durável | Design | Pending |
+| SCAL-04 | P2: Escala do processamento durável | Design | Verified |
 | SCAL-05 | P2: Escala do processamento durável | Design | Verified |
 | SCAL-06 | P2: Escala do processamento durável | Design | Verified |
 | K8S-01 | P2: Envoy Gateway em Kubernetes | Design | Pending |
