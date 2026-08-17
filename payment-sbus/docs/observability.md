@@ -14,6 +14,12 @@ Métricas em `/prometheus` (autenticado). Os nomes abaixo são verificados contr
 | `sbus_dlq_unconfirmed_oldest_age_seconds` | gauge | Idade do item de DLQ não confirmado mais antigo |
 | `sbus_unrecoverable_message_total` | contador | Um registro cuja própria falha também não pôde ser persistida |
 | `sbus_end_to_end_latency` | timer (p50/p95/p99) | Do evento de solicitação até o evento final |
+| `sbus_outbox_housekeeping_purged_total` | contador | Linhas PUBLISHED purgadas por execuções de housekeeping do outbox |
+| `sbus_outbox_housekeeping_remaining` | gauge | Linhas PUBLISHED ainda elegíveis para purga ao fim da última execução (drenou tudo = 0; teto de tempo atingido = backlog restante) |
+| `sbus_housekeeping_idempotency_purged_total` | contador | Registros de `idempotency_record` purgados |
+| `sbus_housekeeping_idempotency_remaining` | gauge | Registros de `idempotency_record` ainda elegíveis ao fim da última execução |
+| `sbus_housekeeping_message_purged_total` | contador | Linhas terminais de `payment_sbus_message` purgadas |
+| `sbus_housekeeping_message_remaining` | gauge | Linhas terminais de `payment_sbus_message` ainda elegíveis ao fim da última execução |
 
 ## O que observar primeiro
 
@@ -25,13 +31,15 @@ Métricas em `/prometheus` (autenticado). Os nomes abaixo são verificados contr
 
 **`sbus_end_to_end_latency` no p99 subindo com o p50 estável** indica cauda, não degradação geral — normalmente retry acontecendo em uma fração do tráfego, não lentidão do Core.
 
+**Pool PostgreSQL (Hikari)**: o indicator `postgresql-pool` em `/health` tenta adquirir uma conexão do pool com timeout curto (`sbus.health.pool-acquire-timeout`, default 2s) — distinto do indicator `postgresql`, que ignora o pool de propósito para checar o próprio PostgreSQL. As métricas `hikaricp_connections_active`/`_idle`/`_pending`/`_timeout` (padrão do `micronaut-jdbc-hikari` com Micrometer) alimentam o dashboard `ops/dashboards/postgres-pool.json` e o alerta [`postgres-pool.yml`](../ops/alerts/postgres-pool.yml). Runbook: [`postgres-pool.md`](../ops/runbooks/postgres-pool.md).
+
 Além das métricas próprias, acompanhe **consumer lag** por tópico e o **pool JDBC**: as transações aqui são curtas de propósito, então pool saturado costuma apontar para uma conexão presa em I/O, não para volume.
 
 ## Logs
 
 Estruturados, propagando `requestId`, `correlationId`, `causationId` e `traceId` em todo o caminho de consumo e publicação. Nunca registre token, payload sensível, idempotency key integral ou conteúdo de `.env`.
 
-A exceção deliberada é a mensagem irrecuperável descrita acima: ela registra o payload em base64 justamente porque não há mais nenhum lugar durável para guardá-lo, e perdê-lo seria perder o pagamento.
+A mensagem irrecuperável descrita acima (`SBUS_MESSAGE_AT_RISK`) registra apenas o ponteiro recuperável do registro (`topic/partition/offset/key`, SEC-02) — nunca o payload em claro ou em base64. O registro em si permanece recuperável direto do Kafka nesse ponteiro enquanto o orçamento de retry mantiver o offset sem avançar; `x-retry-reason`/`x-dlq-reason` são truncados e têm trechos com aparência de payload redigidos antes de virar header ou coluna persistida (SEC-03).
 
 ## Tracing
 

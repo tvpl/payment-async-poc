@@ -87,6 +87,10 @@ payment:
     status-ttl: 15m
     idempotency-ttl: 24h
     response-channel: payment-sim-responses
+    # SCAL-05: wake-up channel split into N hash-sharded channels; legacy channel kept published
+    # to for one release so instances not yet upgraded to shard-aware subscription still wake up.
+    response-channel-shards: 4
+    response-channel-legacy-enabled: true
     rate-limit:
       # Route budget, tenant budget, and the instance count that keeps the Redis-down
       # fallback from multiplying the approved burst across the fleet. Bound by

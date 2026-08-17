@@ -51,13 +51,18 @@ kafka:
         poll:
           records: 100
           interval:
-            # AUD-10: unset before, defaulting to Kafka's own 5-minute default — far below the
-            # 30-minute retry budget (retryCount=900 x retryDelay=2s, see PaymentRequestedConsumer
-            # / CoreResponseConsumer) a durable-persistence retry loop needs to ride out a
-            # realistic Postgres failover. Below the budget, the consumer group would evict the
-            # instance for exceeding max.poll.interval.ms long before the retries exhaust. 35
-            # minutes clears the 30-minute budget with margin.
-            ms: 2100000
+            # SCAL-01: superseded task_T15/AUD-10's 35-minute value. That value assumed the
+            # in-process @ErrorStrategy retry (PaymentRequestedConsumer/CoreResponseConsumer/
+            # RetryConsumer, guarding ONLY the pathological case where even the durable retry/DLQ
+            # write itself fails — see RetryPublisher's javadoc) needed a 30-minute budget to ride
+            # out a Postgres failover, which meant holding this partition hostage for up to that
+            # long. SCAL-01 caps this at <=5 minutes instead: that in-process budget is now a few
+            # seconds (see the three listeners' own @ErrorStrategy), so a prolonged Postgres outage
+            # no longer blocks the consume loop — it falls through quickly to the documented
+            # SBUS_MESSAGE_AT_RISK/sbus_unrecoverable_message_total path, and the worst case is an
+            # extra rebalance (safe: redelivery is idempotent-safe already), never a stuck
+            # partition. 4 minutes leaves margin under the 5-minute ceiling.
+            ms: 240000
   producers:
     default:
       key:
@@ -140,7 +145,10 @@ sbus:
     redis:
       timeout: 2s
       max-attempts: 1
-      readiness-required: true
+      # RES-03/RES-04: Redis backs only the Core rate limiter; an outage degrades throttling
+      # but does not stop payment durability, so it no longer gates readiness (see
+      # RedisHealthIndicator, which still reports it as degraded).
+      readiness-required: false
     registry:
       timeout: 3s
       max-attempts: 3

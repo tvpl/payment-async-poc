@@ -22,6 +22,7 @@ import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.common.mapping.AvroMapper;
 import com.example.payments.common.model.PaymentSimulationRequestPayload;
 import com.example.payments.common.model.SimulationStatus;
+import io.micronaut.core.annotation.Nullable;
 import io.opentelemetry.api.trace.Span;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -64,13 +65,33 @@ public class ApiPaymentService {
         this.sbusStatusGateway = sbusStatusGateway;
     }
 
-    /** Outcome of a submit: the current entry, whether we timed out, whether it was a replay. */
-    public record SubmitResult(StatusEntry entry, boolean timedOut, boolean duplicate) {
+    /**
+     * Outcome of a submit: the current entry, whether we timed out, whether it was a replay, and
+     * the correlationId this request resolved to (OBS-03) - adopted from a valid inbound header
+     * or freshly generated, always echoed back in the response.
+     */
+    public record SubmitResult(StatusEntry entry, boolean timedOut, boolean duplicate, String correlationId) {
     }
 
+    /** Convenience overload for callers with no inbound correlation-id header. */
     public SubmitResult submit(PaymentSimulationRequest request, String idempotencyKeyHeader, String tenantId) {
+        return submit(request, idempotencyKeyHeader, tenantId, null);
+    }
+
+    /**
+     * @param correlationIdHeader the raw {@code x-correlation-id} header value, or {@code null}/blank
+     *                            if absent. OBS-03: a value matching {@link CorrelationIdValidation}
+     *                            is adopted as-is; anything else (absent, malformed) is silently
+     *                            ignored and a new id is generated - never a reason to reject the
+     *                            request.
+     */
+    public SubmitResult submit(PaymentSimulationRequest request, String idempotencyKeyHeader, String tenantId,
+                               @Nullable String correlationIdHeader) {
         metrics.recordRequest(request.paymentMethod());
 
+        String correlationId = CorrelationIdValidation.isValid(correlationIdHeader)
+                ? correlationIdHeader
+                : UUID.randomUUID().toString();
         String idempotencyKey = (idempotencyKeyHeader == null || idempotencyKeyHeader.isBlank())
                 ? UUID.randomUUID().toString()
                 : idempotencyKeyHeader;
@@ -87,7 +108,7 @@ public class ApiPaymentService {
             throw new IdempotencyConflictException(idempotencyKey, conflict.requestId());
         }
         if (outcome instanceof IdempotencyOutcome.Replay replay) {
-            return replay(idempotencyKey, replay.requestId());
+            return replay(idempotencyKey, replay.requestId(), correlationId);
         }
         if (outcome instanceof IdempotencyOutcome.ResumePublish resume) {
             // A previous attempt on this key never confirmed its publish. Recover it under the
@@ -95,24 +116,24 @@ public class ApiPaymentService {
             requestId = resume.requestId();
             LOG.info("Resuming unpublished request tenant={} key={} requestId={}", tenantId, idempotencyKey, requestId);
         }
-        return publishAndAwait(request, tenantId, idempotencyKey, fingerprint, requestId);
+        return publishAndAwait(request, tenantId, idempotencyKey, fingerprint, requestId, correlationId);
     }
 
     /** Replays a confirmed identity. A status we do not have is never reported as progress. */
-    private SubmitResult replay(String idempotencyKey, String requestId) {
+    private SubmitResult replay(String idempotencyKey, String requestId, String correlationId) {
         StatusEntry entry = store.get(requestId)
                 .orElseGet(() -> new StatusEntry(requestId, SimulationStatus.TIMEOUT, null));
         LOG.info("Idempotent replay key={} -> requestId={} status={}",
                 idempotencyKey, requestId, entry.status());
-        return new SubmitResult(entry, !isTerminal(entry.status()), true);
+        return new SubmitResult(entry, !isTerminal(entry.status()), true, correlationId);
     }
 
     private SubmitResult publishAndAwait(PaymentSimulationRequest request,
                                          String tenantId,
                                          String idempotencyKey,
                                          String fingerprint,
-                                         String requestId) {
-        String correlationId = UUID.randomUUID().toString();
+                                         String requestId,
+                                         String correlationId) {
         String traceId = currentTraceId();
         MDC.put("requestId", requestId);
         MDC.put("correlationId", correlationId);
@@ -179,12 +200,12 @@ public class ApiPaymentService {
             metrics.recordWait(Duration.ofNanos(System.nanoTime() - start));
 
             if (result.isPresent()) {
-                return new SubmitResult(result.get(), false, false);
+                return new SubmitResult(result.get(), false, false, correlationId);
             }
             metrics.recordTimeout();
             StatusEntry current = store.get(requestId)
                     .orElse(new StatusEntry(requestId, SimulationStatus.SENT_TO_SBUS, null));
-            return new SubmitResult(current, true, false);
+            return new SubmitResult(current, true, false, correlationId);
         } finally {
             if (!reachedAwait) {
                 coordinator.unregister(requestId);

@@ -93,25 +93,45 @@ class OutboxHousekeepingIT {
     }
 
     /**
-     * task_T16 (AUD-24): five stale PUBLISHED rows, a batch-size of 2 (see {@link #properties()})
-     * — each {@code purge()} call must delete at most one batch's worth, not the whole backlog in
-     * one unbounded DELETE.
+     * task_T16 (AUD-24): each individual DELETE is still bounded to one batch's worth (size 2,
+     * see {@link #properties()}) — never one unbounded statement over the whole backlog.
+     * RES-02 (T28): a single {@code purge()} call now loops batch after batch until the backlog
+     * is fully drained (or the time cap is hit), instead of purging at most one batch per
+     * scheduled interval regardless of how large the backlog is — five stale rows across three
+     * batches of at most two are all gone after one call.
      */
     @Test
-    void purgeDeletesStalePublishedRowsInBoundedBatches() throws Exception {
+    void purgeDrainsTheWholeBacklogInOneRunAcrossSeveralBoundedBatches() throws Exception {
         for (int i = 0; i < 5; i++) {
             repository.save(publishedEvent("stale-" + i));
         }
         assertEquals(5, countRows());
 
         housekeeping.purge();
-        assertEquals(3, countRows(), "only one batch (size 2) must be purged per call");
 
-        housekeeping.purge();
-        assertEquals(1, countRows());
+        assertEquals(0, countRows(), "one run must drain the whole eligible backlog, not just one batch");
+    }
 
-        housekeeping.purge();
-        assertEquals(0, countRows(), "the final, smaller-than-a-batch remainder is still purged");
+    /**
+     * RES-02: a run that hits its time cap before the backlog drains must stop instead of
+     * running unbounded. A cap of {@code 0ms} makes the very first elapsed-time check (right
+     * after the first batch's DELETE round-trip) already past the deadline, so exactly one batch
+     * is purged and the rest of a ten-batch backlog is left for the next run.
+     */
+    @Test
+    void purgeStopsAtTheTimeCapInsteadOfDrainingAnArbitrarilyLargeBacklog() throws Exception {
+        for (int i = 0; i < 20; i++) {
+            repository.save(publishedEvent("capped-" + i));
+        }
+        assertEquals(20, countRows());
+
+        try (var capped = ApplicationContext.run(cappedProperties())) {
+            OutboxHousekeeping cappedHousekeeping = capped.getBean(OutboxHousekeeping.class);
+            cappedHousekeeping.purge();
+        }
+
+        assertEquals(18, countRows(),
+                "a 0ms time cap must stop the loop after exactly one batch (size 2), leaving the rest for the next run");
     }
 
     /** task_T16 (AUD-25): V11 creates the index the PENDING claim query needs. */
@@ -166,6 +186,13 @@ class OutboxHousekeepingIT {
 
     private static String registryUrl() {
         return "http://" + APICURIO.getHost() + ":" + APICURIO.getMappedPort(8080) + "/apis/registry/v2";
+    }
+
+    /** T28 (RES-02): same fixture as {@link #properties()}, but with the time cap forced to 0. */
+    private static Map<String, Object> cappedProperties() {
+        Map<String, Object> base = new java.util.HashMap<>(properties());
+        base.put("sbus.outbox.housekeeping-time-cap", "0ms");
+        return base;
     }
 
     private static Map<String, Object> properties() {

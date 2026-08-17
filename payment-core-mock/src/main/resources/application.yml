@@ -39,6 +39,12 @@ core:
     decline-pct: ${CORE_DECLINE_PCT:10}
     fail-pct: ${CORE_FAIL_PCT:0}
     seed: ${CORE_SEED:20260808}
+  kafka:
+    consumers:
+      # SCAL-03: consumer thread count for CoreSimulationConsumer — see its class javadoc for
+      # what the per-command sleep serializes at different thread counts.
+      command:
+        threads: ${CORE_COMMAND_CONSUMER_THREADS:3}
 
 otel:
   service:

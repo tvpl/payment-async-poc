@@ -2,7 +2,10 @@ package com.example.payments.api.coordination;
 
 import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.client.SbusStatusResponse;
+import com.example.payments.api.metrics.ApiMetrics;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +29,7 @@ public class SbusStatusGateway {
 
     private final SbusStatusClient client;
     private final SbusFallbackProperties properties;
+    private final ApiMetrics metrics;
     private final String serviceName;
 
     private final AtomicInteger consecutiveFailures = new AtomicInteger();
@@ -33,9 +37,11 @@ public class SbusStatusGateway {
 
     public SbusStatusGateway(SbusStatusClient client,
                              SbusFallbackProperties properties,
+                             ApiMetrics metrics,
                              @Value("${micronaut.application.name:payment-simulation-api}") String serviceName) {
         this.client = client;
         this.properties = properties;
+        this.metrics = metrics;
         this.serviceName = serviceName;
     }
 
@@ -48,11 +54,26 @@ public class SbusStatusGateway {
             Optional<SbusStatusResponse> response = client.getStatus(requestId, serviceName);
             consecutiveFailures.set(0);
             return response;
+        } catch (HttpClientResponseException e) {
+            // SEC-05: a rejected service credential still degrades to "no extra information"
+            // (never an error the caller sees), but it is a distinct failure mode from a slow or
+            // unreachable SBUS - worth its own signal so a misconfigured/expired credential is
+            // visible instead of silently looking like ordinary SBUS unavailability.
+            if (isAuthFailure(e.getStatus())) {
+                metrics.recordSbusAuthFailure();
+            }
+            recordFailure();
+            LOG.debug("SBUS status fallback unavailable for {}: {}", requestId, e.getMessage());
+            return Optional.empty();
         } catch (Exception e) {
             recordFailure();
             LOG.debug("SBUS status fallback unavailable for {}: {}", requestId, e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private static boolean isAuthFailure(HttpStatus status) {
+        return status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN;
     }
 
     /** True while the circuit is open. Exposed for readiness/diagnostics. */

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -22,9 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -228,6 +230,32 @@ class ResponseCoordinatorUnitTest {
     }
 
     /**
+     * OBS-01: a lost pub/sub notification must not turn a finished result into a false timeout.
+     * Nothing here ever calls {@code complete()}/{@code onMessage()} - only {@code await()}'s own
+     * periodic re-poll of the store can surface the result, and the first re-poll deliberately
+     * finds nothing so this proves the loop keeps checking rather than giving up after one look.
+     */
+    @Test
+    void aRepollFindsATerminalResultThatArrivedWithoutAPublish() {
+        ApiProperties longerWait = new ApiProperties();
+        longerWait.setWaitTimeout(Duration.ofSeconds(2));
+        ResponseCoordinator patient = new ResponseCoordinator(mock(RedisClient.class), store, longerWait);
+        String requestId = "req-repoll";
+        StatusEntry terminal = new StatusEntry(requestId, SimulationStatus.COMPLETED, null);
+        CompletableFuture<StatusEntry> future = patient.register(requestId);
+        when(store.get(requestId)).thenReturn(Optional.empty(), Optional.of(terminal));
+
+        long start = System.nanoTime();
+        Optional<StatusEntry> result = patient.await(requestId, future);
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+        assertEquals(Optional.of(terminal), result);
+        verify(store, times(2)).get(requestId);
+        assertTrue(elapsed.compareTo(Duration.ofSeconds(2)) < 0,
+                "result only surfaced at/after the full wait-timeout, not via re-poll: " + elapsed);
+    }
+
+    /**
      * task_T8 (AUD-17): {@code trySubscribe()}'s reconnect path used to leak the Lettuce
      * connection when {@code connectPubSub()} succeeded but the subsequent {@code subscribe()}
      * call threw - the already-opened connection was never closed, only ever retried again on
@@ -243,12 +271,55 @@ class ResponseCoordinatorUnitTest {
         RedisPubSubCommands<String, String> syncCommands = mock(RedisPubSubCommands.class);
         when(redisClient.connectPubSub()).thenReturn(connection);
         when(connection.sync()).thenReturn(syncCommands);
-        doThrow(new RuntimeException("subscribe failed")).when(syncCommands).subscribe(anyString());
+        doThrow(new RuntimeException("subscribe failed")).when(syncCommands).subscribe(any(String[].class));
         ResponseCoordinator leaky = new ResponseCoordinator(redisClient, store, new ApiProperties());
 
         leaky.start();
 
         verify(connection).close();
         leaky.close();
+    }
+
+    /**
+     * SCAL-05: this instance always subscribes to every shard channel for the configured shard
+     * count (never a partitioned subset) plus the legacy, unsharded channel - kept for one
+     * release so an instance still publishing only to the legacy channel keeps waking up
+     * waiters here during the transition.
+     */
+    @Test
+    void subscribesToEveryConfiguredShardChannelPlusTheLegacyChannel() {
+        ApiProperties sharded = new ApiProperties();
+        sharded.setResponseChannel("payment-sim-responses");
+        sharded.setResponseChannelShards(3);
+        ResponseCoordinator shardedCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, sharded);
+
+        String[] channels = shardedCoordinator.channelsToSubscribe();
+
+        assertEquals(
+                List.of(
+                        "payment-sim-responses-0",
+                        "payment-sim-responses-1",
+                        "payment-sim-responses-2",
+                        "payment-sim-responses"),
+                List.of(channels));
+    }
+
+    /** With the default shard count (4), the shard channels 0..3 are subscribed to. */
+    @Test
+    void subscribesToTheDefaultFourShardsPlusLegacyByDefault() {
+        ResponseCoordinator defaultCoordinator =
+                new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+
+        String[] channels = defaultCoordinator.channelsToSubscribe();
+
+        assertEquals(5, channels.length);
+        assertEquals(
+                List.of(
+                        "payment-sim-responses-0",
+                        "payment-sim-responses-1",
+                        "payment-sim-responses-2",
+                        "payment-sim-responses-3",
+                        "payment-sim-responses"),
+                List.of(channels));
     }
 }

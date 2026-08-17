@@ -101,10 +101,17 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'com.redis:testcontainers-redis:2.2.2'
     testImplementation 'org.awaitility:awaitility:4.2.1'
+    // OBS-02: InMemorySpanExporter for OutboxTraceContextIT, proving the outbox publish span
+    // (and its link back to the persisted ingestion context) without a live OTel collector.
+    testImplementation 'io.opentelemetry:opentelemetry-sdk-testing:1.54.1'
     // Already a runtime dependency (application.yml parsing) — exposed to tests too so
     // ConsumerErrorStrategyUnitTest can assert against the actual YAML-configured
     // max.poll.interval.ms instead of duplicating the value as a literal.
     testImplementation 'org.yaml:snakeyaml'
+    // Already a runtime dependency (logback.xml) — exposed to tests too so
+    // RetryPublisherUnitTest can attach a ListAppender and assert real log output never
+    // carries the payload (SEC-02), instead of only inspecting the code that builds it.
+    testImplementation 'ch.qos.logback:logback-classic'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

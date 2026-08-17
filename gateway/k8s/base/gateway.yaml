@@ -1,0 +1,31 @@
+# Gateway API equivalente ao listener HTTP do compose (gateway/envoy/envoy.yaml,
+# listener edge_http). Mesma postura: só o que tiver HTTPRoute existe (default-deny);
+# o resto responde 404 do próprio Gateway API, sem precisar de uma rota "not_exposed"
+# explícita como no Envoy estático.
+#
+# SPEC_DEVIATION: o listener mTLS (edge_mtls, porta 10443) do compose não tem
+# equivalente aqui. O mapeamento K8S-01/02 documentado no design cobre allowlist,
+# JWT e políticas de tráfego — não menciona mTLS de borda. Registrado como limite
+# conhecido em gateway/docs/architecture.md (T47).
+#
+# gatewayClassName assume que o controller Envoy Gateway já está instalado no
+# cluster (o Helm chart do Envoy Gateway cria a GatewayClass "eg"); este base não
+# instala o controller nem declara a GatewayClass.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: payment-gateway
+spec:
+  gatewayClassName: eg
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: payment-gateway-proxy-config
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same

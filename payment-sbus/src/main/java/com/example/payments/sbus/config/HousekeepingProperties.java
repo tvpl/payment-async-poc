@@ -11,6 +11,8 @@ public class HousekeepingProperties {
     private Duration idempotencyRetention = Duration.ofDays(7);
     private Duration messageRetention = Duration.ofDays(30);
     private int batchSize = 500;
+    /** Upper bound on one housekeeping run's wall time, whether or not the backlog drained. */
+    private Duration timeCap = Duration.ofSeconds(30);
 
     public Duration getIdempotencyRetention() {
         return idempotencyRetention;
@@ -34,5 +36,13 @@ public class HousekeepingProperties {
 
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
+    }
+
+    public Duration getTimeCap() {
+        return timeCap;
+    }
+
+    public void setTimeCap(Duration timeCap) {
+        this.timeCap = timeCap;
     }
 }

@@ -62,4 +62,11 @@ public interface PaymentSbusMessageRepository extends CrudRepository<PaymentSbus
                 LIMIT :limit)
             """, nativeQuery = true)
     int deleteTerminalUpdatedBefore(Instant threshold, int limit);
+
+    /** RES-02: how many rows are still eligible after a housekeeping run stopped (drained or capped). */
+    @Query(value = """
+            SELECT count(*) FROM payment_sbus_message
+            WHERE status IN ('COMPLETED','FAILED') AND updated_at < :threshold
+            """, nativeQuery = true)
+    long countTerminalUpdatedBefore(Instant threshold);
 }

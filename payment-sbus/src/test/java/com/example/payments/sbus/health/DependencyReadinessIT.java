@@ -14,13 +14,18 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.DefaultHttpClientConfiguration;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.management.health.indicator.HealthResult;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.security.token.generator.TokenGenerator;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -29,9 +34,14 @@ import org.testcontainers.utility.DockerImageName;
 import java.math.BigDecimal;
 import java.sql.DriverManager;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -137,6 +147,113 @@ class DependencyReadinessIT {
             redis.stop();
             apicurio.stop();
         }
+    }
+
+    /**
+     * RES-03/RES-04: Redis backs only the Core rate limiter — its outage must not take the SBUS
+     * instance out of rotation. Readiness stays UP, the indicator itself reports the component as
+     * DEGRADED (not DOWN), and the Postgres-backed internal status endpoint keeps responding.
+     */
+    @Test
+    void redisOutageKeepsReadinessUpWithTheComponentDegradedAndInternalStatusStillResponding() throws Exception {
+        PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"));
+        KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
+        GenericContainer<?> apicurio = new GenericContainer<>(
+                DockerImageName.parse("apicurio/apicurio-registry-mem:2.6.2.Final")).withExposedPorts(8080);
+        RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:7-alpine"));
+        postgres.start();
+        kafka.start();
+        apicurio.start();
+        redis.start();
+        String registryUrl = "http://" + apicurio.getHost() + ":" + apicurio.getMappedPort(8080)
+                + "/apis/registry/v2";
+        String secret = "test-only-t29-readiness-signing-secret-with-at-least-32-bytes";
+
+        try (EmbeddedServer server = ApplicationContext.run(EmbeddedServer.class,
+                     securedProperties(postgres, kafka, registryUrl, redis, secret));
+             HttpClient httpClient = HttpClient.create(server.getURL(), testHttpClientConfig())) {
+
+            assertEquals(HttpStatus.OK, readinessStatus(httpClient));
+
+            redis.stop();
+
+            RedisHealthIndicator indicator = server.getApplicationContext().getBean(RedisHealthIndicator.class);
+            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+                HealthResult result = blockingResult(indicator.getResult());
+                assertEquals("DEGRADED", result.getStatus().getName(),
+                        "a non-critical Redis outage must report DEGRADED, not DOWN");
+            });
+
+            // Readiness stays UP the whole time: Redis is not required for it (RES-03/RES-04).
+            assertEquals(HttpStatus.OK, readinessStatus(httpClient));
+
+            // The internal status endpoint (Postgres-backed, no Redis dependency) keeps responding.
+            TokenGenerator tokenGenerator = server.getApplicationContext().getBean(TokenGenerator.class);
+            String token = token(tokenGenerator, "ROLE_PAYMENT_API");
+            assertEquals(HttpStatus.NOT_FOUND,
+                    status(httpClient, HttpRequest.GET("/internal/payment-simulations/missing-request")
+                            .bearerAuth(token)),
+                    "/internal/... must keep responding (404 for an unknown id, not a timeout/503) "
+                            + "while Redis is down");
+        } finally {
+            postgres.stop();
+            kafka.stop();
+            if (redis.isRunning()) {
+                redis.stop();
+            }
+            apicurio.stop();
+        }
+    }
+
+    private static HttpStatus status(HttpClient client, HttpRequest<?> request) {
+        try {
+            return client.toBlocking().exchange(request).getStatus();
+        } catch (HttpClientResponseException e) {
+            return e.getStatus();
+        }
+    }
+
+    private static String token(TokenGenerator tokenGenerator, String role) {
+        long now = Instant.now().getEpochSecond();
+        return tokenGenerator.generateToken(Map.of(
+                "sub", "payment-api-test",
+                "roles", List.of(role),
+                "iat", now,
+                "exp", now + 300))
+                .orElseThrow();
+    }
+
+    private static HealthResult blockingResult(Publisher<HealthResult> publisher) throws Exception {
+        CompletableFuture<HealthResult> future = new CompletableFuture<>();
+        publisher.subscribe(new Subscriber<>() {
+            @Override
+            public void onSubscribe(Subscription subscription) {
+                subscription.request(1);
+            }
+
+            @Override
+            public void onNext(HealthResult result) {
+                future.complete(result);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                future.completeExceptionally(throwable);
+            }
+
+            @Override
+            public void onComplete() {
+            }
+        });
+        return future.get(5, TimeUnit.SECONDS);
+    }
+
+    private static Map<String, Object> securedProperties(PostgreSQLContainer<?> postgres, KafkaContainer kafka,
+                                                          String registryUrl, RedisContainer redis, String secret) {
+        Map<String, Object> secured = new HashMap<>(properties(postgres, kafka, registryUrl, redis));
+        secured.put("micronaut.security.token.jwt.signatures.secret.generator.secret", secret);
+        secured.put("micronaut.security.token.jwt.signatures.secret.generator.jws-algorithm", "HS256");
+        return secured;
     }
 
     private static DefaultHttpClientConfiguration testHttpClientConfig() {

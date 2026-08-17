@@ -49,7 +49,8 @@ public class PaymentSimulationController {
             @Valid @Body PaymentSimulationRequest request,
             @Header(name = Headers.IDEMPOTENCY_KEY, defaultValue = "") @Nullable String idempotencyKey,
             @Header(name = API_KEY_HEADER, defaultValue = "") @Nullable String apiKey,
-            @Header(name = Headers.TENANT_ID, defaultValue = "") @Nullable String tenantIdHeader) {
+            @Header(name = Headers.TENANT_ID, defaultValue = "") @Nullable String tenantIdHeader,
+            @Header(name = Headers.CORRELATION_ID, defaultValue = "") @Nullable String correlationIdHeader) {
 
         TenantResolution resolution = tenantResolver.resolve(apiKey, tenantIdHeader);
         if (resolution instanceof TenantResolution.Forbidden) {
@@ -72,7 +73,7 @@ public class PaymentSimulationController {
         }
 
         String tenantId = ((TenantResolution.Effective) resolution).tenantId();
-        ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey, tenantId);
+        ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey, tenantId, correlationIdHeader);
         StatusEntry entry = result.entry();
         String statusUrl = statusUrl(entry.requestId());
         StatusResponse body = new StatusResponse(
@@ -80,14 +81,17 @@ public class PaymentSimulationController {
 
         if (!result.timedOut()) {
             if (entry.status() == SimulationStatus.COMPLETED) {
-                return HttpResponse.ok(body);                       // 200
+                return HttpResponse.ok(body)                        // 200
+                        .header(Headers.CORRELATION_ID, result.correlationId());
             }
             if (entry.status() == SimulationStatus.FAILED) {
-                return HttpResponse.<StatusResponse>status(HttpStatus.UNPROCESSABLE_ENTITY).body(body); // 422
+                return HttpResponse.<StatusResponse>status(HttpStatus.UNPROCESSABLE_ENTITY).body(body) // 422
+                        .header(Headers.CORRELATION_ID, result.correlationId());
             }
         }
         // Still processing — client polls statusUrl or waits for an out-of-band result.
-        return HttpResponse.accepted().body(body);                  // 202
+        return HttpResponse.accepted().body(body)                   // 202
+                .header(Headers.CORRELATION_ID, result.correlationId());
     }
 
     @Get("/{requestId}")

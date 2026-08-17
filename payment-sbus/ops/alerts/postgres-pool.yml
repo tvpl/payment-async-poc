@@ -1,0 +1,21 @@
+groups:
+  - name: payment-sbus-postgres-pool
+    rules:
+      - alert: PaymentSbusHikariPoolSaturated
+        expr: hikaricp_connections_pending{job="payment-sbus"} > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: payment-sbus
+        annotations:
+          summary: Payment SBUS Hikari pool has threads waiting for a connection
+          description: Threads have been queued for a PostgreSQL connection for over two minutes; the pool cannot keep up with demand.
+      - alert: PaymentSbusHikariPoolExhausted
+        expr: hikaricp_connections_active{job="payment-sbus"} >= hikaricp_connections_max{job="payment-sbus"}
+        for: 2m
+        labels:
+          severity: critical
+          service: payment-sbus
+        annotations:
+          summary: Payment SBUS Hikari pool is fully saturated
+          description: Every pooled connection has been active for over two minutes; new work cannot acquire a connection.

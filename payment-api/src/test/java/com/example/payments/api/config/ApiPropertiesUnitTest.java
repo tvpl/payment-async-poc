@@ -8,6 +8,7 @@ import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ApiPropertiesUnitTest {
 
@@ -68,5 +69,35 @@ class ApiPropertiesUnitTest {
         properties.setPublishLease(Duration.ZERO);
 
         assertThrows(ConfigurationException.class, properties::validate);
+    }
+
+    /** SCAL-05: the correlation channel defaults to 4 shards. */
+    @Test
+    void defaultResponseChannelShardsIsFour() {
+        assertEquals(4, new ApiProperties().getResponseChannelShards());
+    }
+
+    /** SCAL-05: the legacy channel is published to by default, for the transition period. */
+    @Test
+    void responseChannelLegacyIsEnabledByDefault() {
+        assertTrue(new ApiProperties().isResponseChannelLegacyEnabled());
+    }
+
+    @Test
+    void rejectsFewerThanOneResponseChannelShard() {
+        ApiProperties properties = properties(
+                Duration.ofSeconds(3), Duration.ofMinutes(15), Duration.ofMinutes(15));
+        properties.setResponseChannelShards(0);
+
+        assertThrows(ConfigurationException.class, properties::validate);
+    }
+
+    @Test
+    void acceptsOneResponseChannelShard() {
+        ApiProperties properties = properties(
+                Duration.ofSeconds(3), Duration.ofMinutes(15), Duration.ofMinutes(15));
+        properties.setResponseChannelShards(1);
+
+        assertDoesNotThrow(properties::validate);
     }
 }

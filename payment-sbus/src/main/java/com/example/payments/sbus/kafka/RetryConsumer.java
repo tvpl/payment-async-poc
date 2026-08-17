@@ -20,14 +20,18 @@ import java.util.Map;
  * The consumer never sleeps on a partition; another failure is durably rescheduled.
  *
  * <p>{@code retryCount}/{@code retryDelay}: see {@link PaymentRequestedConsumer}'s javadoc —
- * same 30-minute budget against the same failure (Postgres down when {@link RetryPublisher}
+ * same short (SCAL-01) budget against the same failure (Postgres down when {@link RetryPublisher}
  * tries to durably record the next retry/DLQ).
+ *
+ * <p>{@code threadsValue} (SCAL-03): see {@link PaymentRequestedConsumer}'s javadoc — same
+ * reasoning, this group's own default of 3.
  */
 @KafkaListener(
         groupId = "payment-sbus-retry",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
-        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 900, retryDelay = "2s"))
+        threadsValue = "${sbus.kafka.consumers.retry.threads:3}",
+        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 4, retryDelay = "250ms"))
 public class RetryConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(RetryConsumer.class);

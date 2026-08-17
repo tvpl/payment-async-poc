@@ -3,6 +3,7 @@ package com.example.payments.sbus.retry;
 import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Topics;
 import com.example.payments.sbus.config.RetryProperties;
+import com.example.payments.sbus.kafka.RetryPublisher;
 import com.example.payments.sbus.outbox.BackoffCalculator;
 import com.example.payments.sbus.repository.OutboxEventRepository;
 import com.example.payments.sbus.support.Json;
@@ -56,7 +57,9 @@ public class DurableRetryScheduler {
         headers.put(Headers.ORIGIN_TOPIC, originTopic);
         headers.put(Headers.RETRY_ATTEMPT, String.valueOf(attempt));
         headers.put(Headers.RETRY_NOT_BEFORE, String.valueOf(dueAt.toEpochMilli()));
-        headers.put("x-retry-reason", String.valueOf(cause == null ? "retry" : cause.getMessage()));
+        // SEC-03: sanitized (truncated, payload-like runs redacted) before it becomes a
+        // persisted header — an exception message can otherwise echo raw input content.
+        headers.put("x-retry-reason", RetryPublisher.sanitizeReason(cause == null ? "retry" : cause.getMessage()));
 
         String deduplicationKey = deduplicationKey(source, attempt);
         int inserted = repository.insertDurableRetry(

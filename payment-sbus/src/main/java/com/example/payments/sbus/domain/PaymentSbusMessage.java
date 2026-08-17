@@ -34,6 +34,14 @@ public class PaymentSbusMessage {
     private String idempotencyKey;
     private String simulationId;
 
+    /**
+     * OBS-02: the {@code traceparent} (W3C Trace Context) captured at THIS row's own ingestion —
+     * null when the incoming record carried none. Persisted so the final event published for this
+     * row (potentially much later, once the Core responds) can still carry a link back to the
+     * trace that originated it, instead of the final event going out with no trace context at all.
+     */
+    private String traceparent;
+
     @MappedProperty(type = DataType.STRING)
     private SbusMessageStatus status;
 
@@ -111,6 +119,14 @@ public class PaymentSbusMessage {
 
     public void setSimulationId(String simulationId) {
         this.simulationId = simulationId;
+    }
+
+    public String getTraceparent() {
+        return traceparent;
+    }
+
+    public void setTraceparent(String traceparent) {
+        this.traceparent = traceparent;
     }
 
     public SbusMessageStatus getStatus() {

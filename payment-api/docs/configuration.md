@@ -45,6 +45,11 @@ Validações: `tenant-limit-for-period <= limit-for-period` e `instances >= 1`.
 | `micronaut.http.services.sbus.read-timeout` | `800ms` | orçamento de leitura de **uma** chamada |
 | `payment.sbus.failure-threshold` | `5` | falhas consecutivas que abrem o circuito |
 | `payment.sbus.open-duration` | `30s` | tempo com o circuito aberto |
+| `payment.sbus.credential.secret` | `${SBUS_DEV_JWT_SECRET:}` (dev) | segredo HS256 compartilhado com o SBUS; assina um JWT `ROLE_PAYMENT_API` por chamada (SEC-05) |
+| `payment.sbus.credential.token` | `${SBUS_SERVICE_TOKEN:}` (prod) | token pré-emitido por gestão externa de credenciais, usado como está (SEC-05) |
+
+Sem `secret` nem `token` configurado, a chamada ao SBUS sai sem `Authorization` e degrada como
+qualquer outra indisponibilidade do SBUS (nenhuma delas é obrigatória para o boot).
 
 ## Codec
 

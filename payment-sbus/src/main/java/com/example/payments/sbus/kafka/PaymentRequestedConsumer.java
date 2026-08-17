@@ -22,8 +22,12 @@ import java.util.Map;
  *
  * <p>The only way that rethrow happens is {@link RetryPublisher}'s own durable write failing —
  * in practice, Postgres itself being down. {@code retryCount}/{@code retryDelay} below are that
- * budget: 900 × 2s = 30 minutes, long enough to ride out a realistic failover or restart without
- * giving up. See {@link RetryPublisher} for what happens once even that is exhausted.
+ * budget: 4 × 250ms = 1s per record, small on purpose (SCAL-01) — even a full {@code
+ * max.poll.records} batch (100) hitting this simultaneously stays a couple of minutes, comfortably
+ * under {@code max.poll.interval.ms} (see {@code application.yml}), instead of the 30-minute
+ * budget task_T15/AUD-10 originally used, which meant a prolonged outage held this partition
+ * hostage. Past this short budget, the record falls through to {@link RetryPublisher}'s own
+ * SBUS_MESSAGE_AT_RISK path — never lost, just no longer blocking the consume loop.
  *
  * <p>{@code groupId} (AUD-10) is dedicated to this topic — it used to share {@code payment-sbus}
  * with {@link CoreResponseConsumer}, so a rebalance triggered by either listener revoked
@@ -33,12 +37,20 @@ import java.util.Map;
  * since {@code request_id UNIQUE} makes replaying an already-processed {@code Requested} record a
  * no-op (see {@code PaymentPersistenceService#persistRequested}); proven directly by
  * {@code ConsumerGroupReplayIsInertIT}.
+ *
+ * <p>{@code threadsValue} (SCAL-03): configurable consumer thread count for this group — each
+ * thread runs its own poll loop over a share of the topic's partitions, so distinct-key messages
+ * on distinct partitions process concurrently instead of behind a single thread. Default 3
+ * doubles the margin over the AD-007 capacity target without repartitioning later; production
+ * tunes it via env {@code SBUS_KAFKA_CONSUMERS_REQUESTED_THREADS} (Micronaut's standard
+ * dotted-to-uppercase-underscore mapping of {@code sbus.kafka.consumers.requested.threads}).
  */
 @KafkaListener(
         groupId = "payment-sbus-requested",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
-        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 900, retryDelay = "2s"))
+        threadsValue = "${sbus.kafka.consumers.requested.threads:3}",
+        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 4, retryDelay = "250ms"))
 public class PaymentRequestedConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(PaymentRequestedConsumer.class);

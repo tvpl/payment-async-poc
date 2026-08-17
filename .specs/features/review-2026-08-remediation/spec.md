@@ -281,33 +281,33 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | BUDG-03 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-04 | P1: Orçamentos de tempo | Design | Verified |
 | SEC-01 | P1: Segurança e governança | Design | Verified |
-| SEC-02 | P1: Segurança e governança | Design | Pending |
-| SEC-03 | P1: Segurança e governança | Design | Pending |
+| SEC-02 | P1: Segurança e governança | Design | Verified |
+| SEC-03 | P1: Segurança e governança | Design | Verified |
 | SEC-04 | P1: Segurança e governança | Design | Verified |
-| SEC-05 | P1: Segurança e governança | Design | Pending |
-| SEC-06 | P1: Segurança e governança | Design | Implementing |
+| SEC-05 | P1: Segurança e governança | Design | Verified |
+| SEC-06 | P1: Segurança e governança | Design | Verified |
 | SEC-07 | P1: Segurança e governança | Design | Verified |
 | SEC-08 | P1: Segurança e governança | Design | Verified |
-| RES-01 | P1: Resiliência de fundo | Design | Pending |
-| RES-02 | P1: Resiliência de fundo | Design | Pending |
-| RES-03 | P1: Resiliência de fundo | Design | Pending |
-| RES-04 | P1: Resiliência de fundo | Design | Pending |
-| RES-05 | P1: Resiliência de fundo | Design | Pending |
-| RES-06 | P1: Resiliência de fundo | Design | Pending |
-| OBS-01 | P2: Correlação e observabilidade | Design | Pending |
-| OBS-02 | P2: Correlação e observabilidade | Design | Pending |
-| OBS-03 | P2: Correlação e observabilidade | Design | Pending |
-| OBS-04 | P2: Correlação e observabilidade | Design | Pending |
-| OBS-05 | P2: Correlação e observabilidade | Design | Pending |
-| SCAL-01 | P2: Escala do processamento durável | Design | Pending |
-| SCAL-02 | P2: Escala do processamento durável | Design | Pending |
-| SCAL-03 | P2: Escala do processamento durável | Design | Pending |
-| SCAL-04 | P2: Escala do processamento durável | Design | Pending |
-| SCAL-05 | P2: Escala do processamento durável | Design | Pending |
-| SCAL-06 | P2: Escala do processamento durável | Design | Pending |
-| K8S-01 | P2: Envoy Gateway em Kubernetes | Design | Pending |
-| K8S-02 | P2: Envoy Gateway em Kubernetes | Design | Pending |
-| K8S-03 | P2: Envoy Gateway em Kubernetes | Design | Pending |
+| RES-01 | P1: Resiliência de fundo | Design | Verified |
+| RES-02 | P1: Resiliência de fundo | Design | Verified |
+| RES-03 | P1: Resiliência de fundo | Design | Verified |
+| RES-04 | P1: Resiliência de fundo | Design | Verified |
+| RES-05 | P1: Resiliência de fundo | Design | Verified |
+| RES-06 | P1: Resiliência de fundo | Design | Verified |
+| OBS-01 | P2: Correlação e observabilidade | Design | Verified |
+| OBS-02 | P2: Correlação e observabilidade | Design | Verified |
+| OBS-03 | P2: Correlação e observabilidade | Design | Verified |
+| OBS-04 | P2: Correlação e observabilidade | Design | Verified |
+| OBS-05 | P2: Correlação e observabilidade | Design | Verified |
+| SCAL-01 | P2: Escala do processamento durável | Design | Verified |
+| SCAL-02 | P2: Escala do processamento durável | Design | Verified |
+| SCAL-03 | P2: Escala do processamento durável | Design | Verified |
+| SCAL-04 | P2: Escala do processamento durável | Design | Verified |
+| SCAL-05 | P2: Escala do processamento durável | Design | Verified |
+| SCAL-06 | P2: Escala do processamento durável | Design | Verified |
+| K8S-01 | P2: Envoy Gateway em Kubernetes | Design | Verified |
+| K8S-02 | P2: Envoy Gateway em Kubernetes | Design | Verified |
+| K8S-03 | P2: Envoy Gateway em Kubernetes | Design | Verified |
 | K8S-04 | P2: Envoy Gateway em Kubernetes | Design | Pending |
 | K8S-05 | P2: Envoy Gateway em Kubernetes | Design | Pending |
 | API-01 | P3: Contrato e versionamento | Design | Pending |

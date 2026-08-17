@@ -3,10 +3,18 @@ COMPOSE := docker compose
 
 .PHONY: config up down logs smoke certs-export clean
 
-# Validação estrutural sem subir nada (usada também no CI).
+# Validação estrutural sem subir nada (usada também no CI). Exige kustomize e
+# kubeconform no PATH (não instalados por este Makefile — ver gateway/docs/testing.md).
 config:
 	KEYCLOAK_ADMIN_PASSWORD=$${KEYCLOAK_ADMIN_PASSWORD:-config-check-only} $(COMPOSE) config -q
 	python3 scripts/validate-config.py
+	kustomize build k8s/overlays/sandbox | kubeconform -strict -summary \
+		-schema-location default \
+		-schema-location 'k8s/schemas/{{ .ResourceKind }}_{{ .ResourceAPIVersion }}.json'
+	kustomize build k8s/overlays/prod-example | kubeconform -strict -summary \
+		-schema-location default \
+		-schema-location 'k8s/schemas/{{ .ResourceKind }}_{{ .ResourceAPIVersion }}.json'
+	python3 scripts/check-k8s-parity.py
 
 up:
 	$(COMPOSE) up -d

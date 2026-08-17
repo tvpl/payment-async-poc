@@ -16,3 +16,12 @@ micronaut:
             generator:
               secret: ${JWT_SIGNATURE_SECRET}
               jws-algorithm: HS256
+
+# SEC-05: HS256 secret shared with the SBUS's own dev signing config (SBUS_DEV_JWT_SECRET on
+# both boundaries) - dev/local only, lets SbusServiceTokenProvider mint a ROLE_PAYMENT_API JWT
+# for the durable status fallback call. Empty by default: unset means no credential is presented
+# and the call degrades exactly like any other SBUS unavailability (SbusStatusGateway).
+payment:
+  sbus:
+    credential:
+      secret: ${SBUS_DEV_JWT_SECRET:}

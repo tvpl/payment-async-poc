@@ -65,7 +65,7 @@ public class OutboxClaimService {
         String nextHeaders = dlq ? dlqHeaders : event.getHeaders();
         String lastError = truncate(error);
         Instant nextAttemptAt = Instant.now().plus(
-                BackoffCalculator.backoff(attempts, properties.getBaseBackoff(), properties.getMaxBackoff()));
+                BackoffCalculator.backoffWithJitter(attempts, properties.getBaseBackoff(), properties.getMaxBackoff()));
         int updated = repository.markFailedAttempt(event.getId(), event.getClaimToken(),
                 nextStatus.name(), nextTopic, nextHeaders, attempts, nextAttemptAt, lastError);
         if (updated == 0) {

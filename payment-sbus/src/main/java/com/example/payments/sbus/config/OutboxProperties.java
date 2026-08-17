@@ -18,6 +18,8 @@ public class OutboxProperties {
     private Duration lease = Duration.ofMinutes(1);
     /** PUBLISHED rows older than this are purged by housekeeping. */
     private Duration retention = Duration.ofDays(3);
+    /** Upper bound on one housekeeping run's wall time, whether or not the backlog drained. */
+    private Duration housekeepingTimeCap = Duration.ofSeconds(30);
 
     public int getBatchSize() {
         return batchSize;
@@ -73,5 +75,13 @@ public class OutboxProperties {
 
     public void setRetention(Duration retention) {
         this.retention = retention;
+    }
+
+    public Duration getHousekeepingTimeCap() {
+        return housekeepingTimeCap;
+    }
+
+    public void setHousekeepingTimeCap(Duration housekeepingTimeCap) {
+        this.housekeepingTimeCap = housekeepingTimeCap;
     }
 }

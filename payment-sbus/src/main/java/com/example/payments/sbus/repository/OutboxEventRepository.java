@@ -109,6 +109,13 @@ public interface OutboxEventRepository extends CrudRepository<OutboxEvent, Long>
             """, nativeQuery = true)
     int deletePublishedBefore(Instant threshold, int limit);
 
+    /** RES-02: how many rows are still eligible after a housekeeping run stopped (drained or capped). */
+    @Query(value = """
+            SELECT count(*) FROM outbox_event
+            WHERE status IN ('PUBLISHED', 'DLQ_PUBLISHED') AND published_at < :threshold
+            """, nativeQuery = true)
+    long countPublishedBefore(Instant threshold);
+
     long countByStatus(OutboxStatus status);
 
     @Query(value = """

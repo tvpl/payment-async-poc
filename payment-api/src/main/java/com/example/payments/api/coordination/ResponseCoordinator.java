@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +40,9 @@ import java.util.concurrent.TimeoutException;
 public class ResponseCoordinator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResponseCoordinator.class);
+
+    /** OBS-01: maximum gap between store re-polls while a waiter's future has not completed. */
+    private static final Duration REPOLL_INTERVAL = Duration.ofMillis(500);
 
     private final ConcurrentHashMap<String, CompletableFuture<StatusEntry>> waiters =
             new ConcurrentHashMap<>();
@@ -90,9 +95,10 @@ public class ResponseCoordinator {
                 }
             });
             // Lettuce re-subscribes channels automatically after a reconnect.
-            connection.sync().subscribe(properties.getResponseChannel());
+            String[] channels = channelsToSubscribe();
+            connection.sync().subscribe(channels);
             pubSub = connection;
-            LOG.info("Subscribed to Redis channel {}", properties.getResponseChannel());
+            LOG.info("Subscribed to Redis channels {}", String.join(", ", channels));
         } catch (Exception e) {
             if (connection != null) {
                 connection.close();
@@ -100,6 +106,21 @@ public class ResponseCoordinator {
             LOG.warn("Redis pub/sub subscribe failed; retrying in 5s ({})", e.getMessage());
             scheduler.schedule(this::trySubscribe, 5, TimeUnit.SECONDS);
         }
+    }
+
+    /**
+     * SCAL-05: every shard channel for the configured shard count, plus the legacy unsharded
+     * channel — this instance always subscribes to <em>all</em> shards (never a partitioned
+     * subset), so a shard-count change on another, not-yet-restarted instance can never leave a
+     * requestId's wake-up unheard here. The legacy channel is kept alongside it for one release
+     * so an instance that has not yet upgraded to shard-aware subscription (still publishing
+     * only to the legacy channel) still wakes up waiters on this instance during the transition.
+     */
+    String[] channelsToSubscribe() {
+        List<String> channels = new ArrayList<>(
+                ResponseChannels.allShardChannels(properties.getResponseChannel(), properties.getResponseChannelShards()));
+        channels.add(properties.getResponseChannel());
+        return channels.toArray(new String[0]);
     }
 
     /**
@@ -155,14 +176,36 @@ public class ResponseCoordinator {
     /**
      * Blocks (on the calling virtual thread) up to {@code timeout} for the result.
      *
+     * <p>OBS-01: the Redis pub/sub notification is at-most-once - a message can be lost (a
+     * subscribe race on reconnect, a dropped connection) without the underlying result ever
+     * being missing from the store. Waiting on the future alone would then time out into a false
+     * 202 even though the terminal result has been sitting in the store the whole time. Instead
+     * of one {@code future.get(timeout)}, the wait is chunked into polls of at most {@link
+     * #REPOLL_INTERVAL}: each timed-out chunk re-checks the store via {@link #completeFromStore}
+     * (which completes the future if a terminal result is there) before the next chunk, so a
+     * lost wake-up is caught well within the overall budget instead of only at its edge.
+     *
      * @return the terminal entry, or empty on timeout/shutdown.
      */
     public Optional<StatusEntry> await(String requestId, CompletableFuture<StatusEntry> future) {
-        Duration timeout = properties.getWaitTimeout();
+        long deadlineNanos = System.nanoTime() + properties.getWaitTimeout().toNanos();
         try {
-            return Optional.of(future.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
-        } catch (TimeoutException e) {
-            return Optional.empty();
+            while (true) {
+                long remainingNanos = deadlineNanos - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    return Optional.empty();
+                }
+                long chunkMillis = Math.min(REPOLL_INTERVAL.toMillis(),
+                        Math.max(1, Duration.ofNanos(remainingNanos).toMillis()));
+                try {
+                    return Optional.of(future.get(chunkMillis, TimeUnit.MILLISECONDS));
+                } catch (TimeoutException e) {
+                    completeFromStore(requestId);
+                    if (future.isDone()) {
+                        return Optional.of(future.get());
+                    }
+                }
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return Optional.empty();

@@ -67,7 +67,8 @@ public class V0PaymentSimulationController {
     public MutableHttpResponse<?> create(
             @Nullable Authentication authentication,
             @Valid @Body PaymentSimulationRequest request,
-            @Header(name = Headers.IDEMPOTENCY_KEY, defaultValue = "") @Nullable String idempotencyKey) {
+            @Header(name = Headers.IDEMPOTENCY_KEY, defaultValue = "") @Nullable String idempotencyKey,
+            @Header(name = Headers.CORRELATION_ID, defaultValue = "") @Nullable String correlationIdHeader) {
 
         FeatureContext ctx = JwtFeatureContextFactory.from(authentication, null);
         FeatureDecision v0 = features.evaluate(V0_FLAG, ctx);
@@ -85,7 +86,7 @@ public class V0PaymentSimulationController {
                             "Idempotency-Key header is required and must match [A-Za-z0-9_-]{1,128}"));
         }
 
-        ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey, V0_TENANT);
+        ApiPaymentService.SubmitResult result = service.submit(request, idempotencyKey, V0_TENANT, correlationIdHeader);
         var entry = result.entry();
         StatusResponse body = new StatusResponse(
                 entry.requestId(), entry.status(), statusUrl(entry.requestId()), entry.result());
@@ -100,7 +101,8 @@ public class V0PaymentSimulationController {
         }
         return HttpResponse.status(status).body(body)
                 .header("X-Api-Version", "v0")
-                .header("X-Feature-Reason", v0.reason());
+                .header("X-Feature-Reason", v0.reason())
+                .header(Headers.CORRELATION_ID, result.correlationId());
     }
 
     @Get("/{requestId}")

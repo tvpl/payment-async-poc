@@ -2,7 +2,11 @@ package com.example.payments.api.coordination;
 
 import com.example.payments.api.client.SbusStatusClient;
 import com.example.payments.api.client.SbusStatusResponse;
+import com.example.payments.api.metrics.ApiMetrics;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +35,7 @@ class SbusStatusGatewayUnitTest {
 
     private SbusStatusClient client;
     private SbusFallbackProperties properties;
+    private ApiMetrics metrics;
     private SbusStatusGateway gateway;
 
     @BeforeEach
@@ -39,7 +44,8 @@ class SbusStatusGatewayUnitTest {
         properties = new SbusFallbackProperties();
         properties.setFailureThreshold(3);
         properties.setOpenDuration(Duration.ofMillis(400));
-        gateway = new SbusStatusGateway(client, properties, SERVICE_NAME);
+        metrics = mock(ApiMetrics.class);
+        gateway = new SbusStatusGateway(client, properties, metrics, SERVICE_NAME);
     }
 
     @Test
@@ -101,6 +107,37 @@ class SbusStatusGatewayUnitTest {
 
         assertFalse(gateway.circuitOpen(), "isolated failures must not trip the circuit");
         verify(client, times(2)).getStatus(eq("fail-1"), anyString());
+    }
+
+    @Test
+    void anUnauthorizedResponseDegradesToNoInformationAndRecordsTheAuthFailureMetric() {
+        when(client.getStatus(anyString(), anyString()))
+                .thenThrow(new HttpClientResponseException("Unauthorized",
+                        HttpResponse.status(HttpStatus.UNAUTHORIZED)));
+
+        assertEquals(Optional.empty(), gateway.getStatus("req-1"));
+
+        verify(metrics).recordSbusAuthFailure();
+    }
+
+    @Test
+    void aForbiddenResponseDegradesToNoInformationAndRecordsTheAuthFailureMetric() {
+        when(client.getStatus(anyString(), anyString()))
+                .thenThrow(new HttpClientResponseException("Forbidden",
+                        HttpResponse.status(HttpStatus.FORBIDDEN)));
+
+        assertEquals(Optional.empty(), gateway.getStatus("req-1"));
+
+        verify(metrics).recordSbusAuthFailure();
+    }
+
+    @Test
+    void aNonAuthFailureNeverRecordsTheAuthFailureMetric() {
+        when(client.getStatus(anyString(), anyString())).thenThrow(new RuntimeException("read timeout"));
+
+        assertEquals(Optional.empty(), gateway.getStatus("req-1"));
+
+        verify(metrics, never()).recordSbusAuthFailure();
     }
 
     @Test

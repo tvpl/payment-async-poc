@@ -1,5 +1,6 @@
 package com.example.payments.sbus.health;
 
+import com.example.payments.sbus.config.DependencyPolicies;
 import com.example.payments.sbus.config.RedisCommandsProvider;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.health.HealthStatus;
@@ -19,6 +20,12 @@ import org.reactivestreams.Publisher;
  * does not read {@link com.example.payments.sbus.config.DependencyPolicies} — disabled via
  * {@code redis.health.enabled: false} in application.yml so this one (wired to the declared
  * budget) is the only "redis" entry in the readiness response.
+ *
+ * <p>RES-03/RES-04: Redis backs only the Core rate limiter, not payment durability. With
+ * {@code sbus.dependencies.redis.readiness-required} at its default of {@code false}, a Redis
+ * outage still shows up here as {@link #DEGRADED} — an operational status, so it does not sink
+ * the readiness aggregate — instead of the plain {@link HealthStatus#DOWN} it reports when an
+ * operator has explicitly opted this dependency back into gating readiness.
  */
 @Singleton
 @Readiness
@@ -26,10 +33,16 @@ public class RedisHealthIndicator implements HealthIndicator {
 
     private static final String NAME = "redis";
 
-    private final RedisCommandsProvider commands;
+    /** Non-critical-dependency-down: operational (does not sink the readiness aggregate). */
+    private static final HealthStatus DEGRADED = new HealthStatus("DEGRADED",
+            "redis unreachable but not required for SBUS readiness (RES-03)", Boolean.TRUE, null);
 
-    public RedisHealthIndicator(RedisCommandsProvider commands) {
+    private final RedisCommandsProvider commands;
+    private final DependencyPolicies policies;
+
+    public RedisHealthIndicator(RedisCommandsProvider commands, DependencyPolicies policies) {
         this.commands = commands;
+        this.policies = policies;
     }
 
     @Override
@@ -37,10 +50,15 @@ public class RedisHealthIndicator implements HealthIndicator {
         HealthResult.Builder builder = HealthResult.builder(NAME);
         try {
             String pong = commands.commands().ping();
-            builder.status("PONG".equalsIgnoreCase(pong) ? HealthStatus.UP : HealthStatus.DOWN);
+            builder.status("PONG".equalsIgnoreCase(pong) ? HealthStatus.UP : downOrDegraded());
         } catch (RuntimeException failure) {
-            builder.status(HealthStatus.DOWN).exception(failure);
+            builder.status(downOrDegraded()).exception(failure);
         }
         return Publishers.just(builder.build());
+    }
+
+    private HealthStatus downOrDegraded() {
+        boolean requiredForReadiness = policies.budget(DependencyPolicies.Dependency.REDIS).requiredForReadiness();
+        return requiredForReadiness ? HealthStatus.DOWN : DEGRADED;
     }
 }

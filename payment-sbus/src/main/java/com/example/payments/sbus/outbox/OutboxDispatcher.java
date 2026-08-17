@@ -1,20 +1,36 @@
 package com.example.payments.sbus.outbox;
 
+import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Topics;
 import com.example.payments.sbus.ratelimit.RedisRateLimiter;
 import com.example.payments.sbus.domain.OutboxEvent;
 import com.example.payments.sbus.kafka.KafkaPublisher;
 import com.example.payments.sbus.metrics.SbusMetrics;
 import com.example.payments.sbus.support.Json;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
+import io.opentelemetry.context.propagation.TextMapGetter;
+import io.opentelemetry.context.propagation.TextMapSetter;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Orchestrates outbox publication. Claims a batch in a short transaction
@@ -30,11 +46,36 @@ import java.util.Map;
  * <strong>distributed</strong> {@link RedisRateLimiter} on {@code core.command} — a global guard
  * across SBUS instances; a Redis outage there degrades that one topic's throttling, it does not
  * abort the rest of the batch (see {@link #tryAcquireCoreCommand()}).
+ *
+ * <p>SCAL-02: the sends themselves run in parallel (one virtual thread per row, futures joined
+ * before the batch returns) — a single slow send (a laggy broker leader, a stalled connection) no
+ * longer serializes every other row behind it. {@code markPublished} still happens per item right
+ * after ITS OWN send succeeds (see above), and the claim lease is renewed per row, immediately
+ * before THAT row's own send (see {@link #dispatchOne}) — the per-row equivalent of the old
+ * "renew the rows still waiting their turn after each one's own sequential turn", which no longer
+ * means anything once nothing is waiting its turn the same way.
  */
 @Singleton
 public class OutboxDispatcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(OutboxDispatcher.class);
+
+    /** OBS-02: reads/writes the {@code traceparent} header on the plain string-map carrier the
+     * outbox already persists (see {@link #parseHeaders}) — never touches Kafka record headers
+     * directly, since the span must exist (and its OWN traceparent be computed) before the record
+     * is built. */
+    private static final TextMapGetter<Map<String, String>> HEADER_GETTER = new TextMapGetter<>() {
+        @Override
+        public Iterable<String> keys(Map<String, String> carrier) {
+            return carrier.keySet();
+        }
+
+        @Override
+        public String get(Map<String, String> carrier, String key) {
+            return carrier == null ? null : carrier.get(key);
+        }
+    };
+    private static final TextMapSetter<Map<String, String>> HEADER_SETTER = Map::put;
 
     private final OutboxClaimService claimService;
     private final KafkaPublisher publisher;
@@ -42,67 +83,153 @@ public class OutboxDispatcher {
     private final Json json;
     private final RedisRateLimiter coreCommandLimiter;
     private final OutboxPublicationLock publicationLock;
+    private final Tracer tracer;
+
+    // RES-06: set by @PreDestroy so an ordered shutdown stops claiming new batches; currentBatch
+    // tracks the batch this instance most recently claimed and has not fully processed yet, so
+    // shutdown() can release whatever is still unpublished in it without incrementing attempts.
+    private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
+    private volatile List<OutboxEvent> currentBatch = List.of();
+
+    // SCAL-02: one virtual thread per row's send — this workload is I/O-bound (network round
+    // trips to the broker), the same reasoning ResponseCoordinator's own notification dispatcher
+    // uses for a comparable fan-out.
+    private final ExecutorService dispatchExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     public OutboxDispatcher(OutboxClaimService claimService,
                             KafkaPublisher publisher,
                             SbusMetrics metrics,
                             Json json,
                             @Named("core-command") RedisRateLimiter coreCommandLimiter,
-                            OutboxPublicationLock publicationLock) {
+                            OutboxPublicationLock publicationLock,
+                            Tracer tracer) {
         this.claimService = claimService;
         this.publisher = publisher;
         this.metrics = metrics;
         this.json = json;
         this.coreCommandLimiter = coreCommandLimiter;
         this.publicationLock = publicationLock;
+        this.tracer = tracer;
     }
 
     public int dispatchBatch() {
+        if (shuttingDown.get()) {
+            return 0;
+        }
         List<OutboxEvent> batch = claimService.claimBatch();
-        int publishedCount = 0;
-        for (int i = 0; i < batch.size(); i++) {
-            OutboxEvent event = batch.get(i);
-            // Backpressure to the Core: if the limiter denies (or can't be reached — see
-            // tryAcquireCoreCommand), release the row (PENDING) and retry on the next poll.
-            // Other topics flow freely: a Redis outage on this one distributed counter must
-            // not stop payment.simulation.completed/failed/DLQ, which need no rate limiting.
-            if (Topics.CORE_COMMAND.equals(event.getTopic()) && !tryAcquireCoreCommand()) {
-                claimService.release(event, Instant.now().plusMillis(200));
-                continue;
+        currentBatch = batch;
+        try {
+            if (batch.isEmpty() || shuttingDown.get()) {
+                releaseUnprocessed(batch);
+                return 0;
             }
-            if (publish(event)) {
-                // Marked right away, not batched to the end of the loop — see class javadoc.
-                if (claimService.markPublished(event)) {
+
+            // Backpressure to the Core: if the limiter denies (or can't be reached — see
+            // tryAcquireCoreCommand), release the row (PENDING) and retry on the next poll. Other
+            // topics flow freely: a Redis outage on this one distributed counter must not stop
+            // payment.simulation.completed/failed/DLQ, which need no rate limiting. Cheap,
+            // in-memory-ish check — not worth parallelizing on its own.
+            List<OutboxEvent> eligible = new ArrayList<>(batch.size());
+            for (OutboxEvent event : batch) {
+                if (Topics.CORE_COMMAND.equals(event.getTopic()) && !tryAcquireCoreCommand()) {
+                    claimService.release(event, Instant.now().plusMillis(200));
+                    continue;
+                }
+                eligible.add(event);
+            }
+            if (eligible.isEmpty()) {
+                return 0;
+            }
+
+            List<CompletableFuture<Boolean>> sends = eligible.stream()
+                    .map(event -> CompletableFuture.supplyAsync(() -> dispatchOne(event), dispatchExecutor))
+                    .toList();
+
+            int publishedCount = 0;
+            for (CompletableFuture<Boolean> send : sends) {
+                if (Boolean.TRUE.equals(send.join())) {
                     publishedCount++;
-                    metrics.recordPublished(1);
-                    if (Topics.DLQ.equals(event.getTopic())) {
-                        metrics.recordDlq();
-                    }
-                } else {
-                    LOG.warn("Outbox event {} sent to Kafka but its claim was stale when marking "
-                            + "published — a duplicate PUBLISHED mark from a previous owner is "
-                            + "expected to have already recorded it", event.getId());
                 }
             }
-            // AUD-07: renew the lease of the rows this batch still hasn't gotten to, right after
-            // this row's own turn — never accumulated to the end of the loop. A slow batch (one
-            // row taking a long time) must not let its OWN lease expire out from under the rows
-            // still waiting; without this, the reaper could reclaim — and a later poll could
-            // republish — a row this dispatcher is still actively about to send.
-            List<OutboxEvent> remaining = batch.subList(i + 1, batch.size());
-            if (!remaining.isEmpty() && !claimService.renewRemaining(remaining)) {
-                // A genuinely lost fence: something else (the reaper, on an already-expired
-                // lease) reclaimed at least one remaining row out from under this batch.
-                // Continuing would risk double-publishing it — abort the rest of the batch; the
-                // reaper's normal recovery path (attempts + backoff, see OutboxReaper) picks up
-                // whatever is left.
-                metrics.recordPublishFailure();
-                LOG.error("Lost the outbox claim lease while renewing {} remaining row(s) "
-                        + "mid-batch — aborting the rest of this batch", remaining.size());
-                break;
+            return publishedCount;
+        } finally {
+            currentBatch = List.of();
+        }
+    }
+
+    /**
+     * One row's full publish-and-mark turn, run concurrently with every other row in the batch.
+     * Checked for shutdown right before the actual send — a row whose task had not yet started by
+     * the time an ordered shutdown fired is released cleanly (PENDING, attempts unchanged) instead
+     * of sent; a row already mid-send when shutdown fires completes normally (a send in flight is
+     * never interrupted — same limitation the previous sequential loop already had for whichever
+     * row it was currently on).
+     *
+     * <p>AUD-07/SCAL-02: renews (and re-verifies) THIS row's own claim immediately before its own
+     * send — the per-row equivalent of the old "renew the rows still waiting their turn after
+     * each one's own sequential turn", adapted for concurrent dispatch where nothing is "still
+     * waiting" the same way. Right before its own send is also the freshest possible renewal: if
+     * something else (the reaper, on an already-expired lease) reclaimed this exact row out from
+     * under this batch at any point up to now — including while a sibling row's send was slow —
+     * the send is skipped entirely instead of happening against a claim this instance no longer
+     * owns.
+     */
+    private boolean dispatchOne(OutboxEvent event) {
+        if (shuttingDown.get()) {
+            try {
+                claimService.release(event, Instant.now());
+            } catch (Exception e) {
+                LOG.warn("Failed to cleanly release outbox event {} during shutdown", event.getId(), e);
+            }
+            return false;
+        }
+        if (!claimService.renewRemaining(List.of(event))) {
+            metrics.recordPublishFailure();
+            LOG.error("Lost the outbox claim lease for event {} before its own dispatch turn — skipping",
+                    event.getId());
+            return false;
+        }
+        if (!publish(event)) {
+            return false;
+        }
+        // Marked right away, not batched to the end of the batch — see class javadoc.
+        if (claimService.markPublished(event)) {
+            metrics.recordPublished(1);
+            if (Topics.DLQ.equals(event.getTopic())) {
+                metrics.recordDlq();
+            }
+            return true;
+        }
+        LOG.warn("Outbox event {} sent to Kafka but its claim was stale when marking "
+                + "published — a duplicate PUBLISHED mark from a previous owner is "
+                + "expected to have already recorded it", event.getId());
+        return false;
+    }
+
+    /**
+     * RES-06: stops claiming new batches and releases whatever this instance's most recent batch
+     * still had claimed but unpublished, without incrementing {@code attempts} — {@link
+     * OutboxClaimService#release} is the same fenced, immediate reset to PENDING the throttle
+     * path already uses, so a row released here is never IN_PROGRESS for the reaper to find (a
+     * clean release and a crash are distinguishable exactly by that: a crash leaves the row
+     * IN_PROGRESS until the lease expires, and only then does the reaper — a genuinely different
+     * path — increment attempts). Also stops accepting new dispatch tasks (SCAL-02).
+     */
+    @PreDestroy
+    public void shutdown() {
+        shuttingDown.set(true);
+        releaseUnprocessed(currentBatch);
+        dispatchExecutor.shutdown();
+    }
+
+    private void releaseUnprocessed(List<OutboxEvent> rows) {
+        for (OutboxEvent event : rows) {
+            try {
+                claimService.release(event, Instant.now());
+            } catch (Exception e) {
+                LOG.warn("Failed to cleanly release outbox event {} during shutdown", event.getId(), e);
             }
         }
-        return publishedCount;
     }
 
     /**
@@ -126,7 +253,7 @@ public class OutboxDispatcher {
     private boolean publish(OutboxEvent event) {
         try {
             var result = publicationLock.executeIfAcquired(event.getId(), () -> {
-                publisher.send(event.getTopic(), event.getKey(), event.getPayload(), parseHeaders(event));
+                publishWithSpan(event);
                 return Boolean.TRUE;
             });
             if (result.isEmpty()) {
@@ -151,6 +278,35 @@ public class OutboxDispatcher {
                 LOG.warn("Outbox publish failed event={} (will retry)", event.getId(), e);
             }
             return false;
+        }
+    }
+
+    /**
+     * OBS-02: publish gets its OWN span ("outbox publish") rather than resuming the ingestion
+     * trace as a parent — a row can sit in the outbox for anywhere from milliseconds to minutes
+     * (backoff, lease waits, a slow batch ahead of it), and chaining it as a child would stretch
+     * the ingestion span's own duration to match however long that took. Instead this span links
+     * back to the ingestion context persisted on the row's own headers (if any — see {@code
+     * HeaderMap.from}), and stamps its OWN {@code traceparent} onto the record before sending, so
+     * the event a consumer receives always carries a fresh, currently-valid context rooted at the
+     * moment of publish, with a link an OTel backend can use to pivot back to the original request.
+     */
+    private void publishWithSpan(OutboxEvent event) {
+        Map<String, String> headers = parseHeaders(event);
+        Context ingestionContext = W3CTraceContextPropagator.getInstance()
+                .extract(Context.root(), headers, HEADER_GETTER);
+        Span ingestionSpan = Span.fromContextOrNull(ingestionContext);
+
+        SpanBuilder spanBuilder = tracer.spanBuilder("outbox publish").setSpanKind(SpanKind.PRODUCER);
+        if (ingestionSpan != null && ingestionSpan.getSpanContext().isValid()) {
+            spanBuilder.addLink(ingestionSpan.getSpanContext());
+        }
+        Span span = spanBuilder.startSpan();
+        try (Scope scope = span.makeCurrent()) {
+            W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, HEADER_SETTER);
+            publisher.send(event.getTopic(), event.getKey(), event.getPayload(), headers);
+        } finally {
+            span.end();
         }
     }
 
