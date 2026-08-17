@@ -1,0 +1,38 @@
+# Equivalente ao filtro envoy.filters.http.jwt_authn do envoy.yaml: mesmo issuer,
+# mesma audience, mesmo JWKS remoto do Keycloak. targetRefs aponta só para as três
+# rotas autenticadas (payment-status-get, payment-submit, v0-payment-simulations) —
+# "health" fica de fora de propósito, igual ao match { prefix: "/health" } sem
+# requires no compose.
+#
+# TEN-07/K8S-04: claimToHeaders injeta X-Tenant-Id a partir do claim "tenant_id" do
+# JWT validado. O RequestHeaderModifier em cada HTTPRoute (rules[].filters) remove
+# um X-Tenant-Id forjado pelo cliente antes da resolução de rota — mesma ordem do
+# compose (remoção prévia do header de entrada, claim_to_headers na sequência). O
+# Edge revalida o header contra o binding da API key de qualquer forma (TenantResolver),
+# então esta injeção é defesa em profundidade, não a única barreira.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: keycloak-jwt
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payment-status-get
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payment-submit
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: v0-payment-simulations
+  jwt:
+    providers:
+      - name: keycloak
+        issuer: http://keycloak.payment-gateway.svc.cluster.local/realms/payments
+        audiences:
+          - payment-gateway
+        remoteJWKS:
+          uri: http://keycloak.payment-gateway.svc.cluster.local/realms/payments/protocol/openid-connect/certs
+        claimToHeaders:
+          - claim: tenant_id
+            header: X-Tenant-Id

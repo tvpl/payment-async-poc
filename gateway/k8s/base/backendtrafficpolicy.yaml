@@ -1,0 +1,153 @@
+# Uma BackendTrafficPolicy por rota, espelhando rate limit, circuit breaking e
+# retry do envoy.yaml/ratelimit/config.yaml. circuitBreaker e healthCheck.passive
+# repetem os mesmos valores do cluster único "payment_api" do compose (YAML
+# anchors não atravessam documentos "---" separados, então os valores são
+# reescritos em cada policy — gateway/scripts/check-k8s-parity.py (T45) confere
+# retry/timeout/rate limit; a duplicação do circuit breaker é estrutural, não
+# checada por rota).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: health
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: health
+  circuitBreaker:
+    maxConnections: 512
+    maxPendingRequests: 256
+    maxParallelRequests: 512
+    maxParallelRetries: 3
+  healthCheck:
+    passive:
+      consecutive5XxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+---
+# GET de status: idempotente, retry cobre 5xx/reset/falha de conexão — igual ao
+# retry_policy da rota "payment_status_get" no envoy.yaml.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: payment-status-get
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payment-status-get
+  circuitBreaker:
+    maxConnections: 512
+    maxPendingRequests: 256
+    maxParallelRequests: 512
+    maxParallelRetries: 3
+  healthCheck:
+    passive:
+      consecutive5XxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  retry:
+    numRetries: 2
+    perRetry:
+      timeout: 2s
+    retryOn:
+      triggers: ["5xx", "reset", "connect-failure", "refused-stream"]
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        - limit:
+            requests: 100
+            unit: Second
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+          limit:
+            requests: 600
+            unit: Minute
+---
+# POST só re-tenta falhas que garantidamente não chegaram ao upstream. Reenvio de
+# 5xx fica proibido aqui: a idempotência é do Edge, não desta camada (mesmo
+# comentário do envoy.yaml na rota "payment_submit").
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: payment-submit
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: payment-submit
+  circuitBreaker:
+    maxConnections: 512
+    maxPendingRequests: 256
+    maxParallelRequests: 512
+    maxParallelRetries: 3
+  healthCheck:
+    passive:
+      consecutive5XxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  retry:
+    numRetries: 2
+    retryOn:
+      triggers: ["connect-failure", "refused-stream"]
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        - limit:
+            requests: 100
+            unit: Second
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+          limit:
+            requests: 600
+            unit: Minute
+---
+# Beta v0: mesmo perfil de retry do submit, orçamento global mais restrito (25/s)
+# porque a rota é anônima no Edge — ver ratelimit/config.yaml.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: v0-payment-simulations
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: v0-payment-simulations
+  circuitBreaker:
+    maxConnections: 512
+    maxPendingRequests: 256
+    maxParallelRequests: 512
+    maxParallelRetries: 3
+  healthCheck:
+    passive:
+      consecutive5XxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+  retry:
+    numRetries: 2
+    retryOn:
+      triggers: ["connect-failure", "refused-stream"]
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        - limit:
+            requests: 25
+            unit: Second
+        - clientSelectors:
+            - sourceCIDR:
+                type: Distinct
+                value: 0.0.0.0/0
+          limit:
+            requests: 600
+            unit: Minute

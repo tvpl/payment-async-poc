@@ -1,0 +1,105 @@
+# Espelha 1:1 a allowlist de rotas do listener edge_http em gateway/envoy/envoy.yaml:
+# mesmos quatro prefixos, mesmas restrições de método, mesmo backend. Uma entrada
+# nova na allowlist do compose sem HTTPRoute equivalente aqui é o que
+# gateway/scripts/check-k8s-parity.py (T45) reprova.
+#
+# backendRefs assume um Service "payment-api" na porta 8080 no mesmo namespace do
+# Gateway (equivalente ao alias DNS "api:8080" do compose) — provido por quem
+# implanta o payment-api no cluster, fora do escopo destes manifests.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: health
+spec:
+  parentRefs:
+    - name: payment-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /health/
+      timeouts:
+        request: 3s
+      backendRefs:
+        - name: payment-api
+          port: 8080
+---
+# GET de status é idempotente: retry agressivo é seguro (ver BackendTrafficPolicy
+# payment-status-get). Prefixo com barra final: mesma especificidade do
+# "payment_status_get" no envoy.yaml (não casa a raiz "/payment-simulations").
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: payment-status-get
+spec:
+  parentRefs:
+    - name: payment-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /payment-simulations/
+          method: GET
+      # TEN-07/K8S-04: descarta um X-Tenant-Id forjado pelo cliente antes da
+      # SecurityPolicy injetar o valor real do claim (ver securitypolicy.yaml).
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove: ["X-Tenant-Id"]
+      timeouts:
+        request: 5s
+      backendRefs:
+        - name: payment-api
+          port: 8080
+---
+# Submissão (POST e qualquer outro método não coberto pela rota GET acima). Sem
+# restrição de método, igual ao "payment_submit" do envoy.yaml — o Edge é quem
+# decide 405 para métodos que não suporta.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: payment-submit
+spec:
+  parentRefs:
+    - name: payment-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /payment-simulations
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove: ["X-Tenant-Id"]
+      timeouts:
+        # > wait-timeout de 3s do Edge + margem: o 202 degradado deve vir do
+        # Edge, nunca um 504 do gateway (mesma razão documentada no envoy.yaml).
+        request: 6s
+      backendRefs:
+        - name: payment-api
+          port: 8080
+---
+# Rota beta v0: superfície anônima no Edge, então o gateway é hoje a única
+# barreira de token na frente dela (ver BackendTrafficPolicy com rate limit mais
+# restrito).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: v0-payment-simulations
+spec:
+  parentRefs:
+    - name: payment-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /v0/payment-simulations
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove: ["X-Tenant-Id"]
+      timeouts:
+        request: 6s
+      backendRefs:
+        - name: payment-api
+          port: 8080

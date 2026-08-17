@@ -1033,8 +1033,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `kubectl kustomize` (ou `kustomize build`) renderiza sem erro
-- [ ] Semântica espelhada: mesma allowlist, retry POST restrito, timeout > wait-timeout
+- [x] `kubectl kustomize` (ou `kustomize build`) renderiza sem erro
+- [x] Semântica espelhada: mesma allowlist, retry POST restrito, timeout > wait-timeout
 
 **Tests**: none
 **Gate**: build
