@@ -14,6 +14,7 @@ config:
 	kustomize build k8s/overlays/prod-example | kubeconform -strict -summary \
 		-schema-location default \
 		-schema-location 'k8s/schemas/{{ .ResourceKind }}_{{ .ResourceAPIVersion }}.json'
+	python3 scripts/check-k8s-parity.py
 
 up:
 	$(COMPOSE) up -d

@@ -1099,8 +1099,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Remoção de rota de um lado derruba o gate (provado no unittest)
-- [ ] `python3 -m unittest` do script verde; `make config` inclui a paridade
+- [x] Remoção de rota de um lado derruba o gate (provado no unittest)
+- [x] `python3 -m unittest` do script verde; `make config` inclui a paridade
 
 **Tests**: unit
 **Gate**: quick
