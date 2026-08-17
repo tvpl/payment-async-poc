@@ -13,11 +13,15 @@ while IFS= read -r topic; do
   if [[ -z "$topic" || "$topic" == \#* ]]; then
     continue
   fi
+  # SCAL-03: default 6 doubles the margin over the AD-007 capacity target (see
+  # sandbox/docs/performance.md) without repartitioning later — matches the SBUS listeners'
+  # own default consumer thread count (3) with headroom to spare. Override via
+  # KAFKA_TOPIC_PARTITIONS in sandbox/.env for a different local target.
   "${COMPOSE[@]}" exec -T kafka /opt/kafka/bin/kafka-topics.sh \
     --bootstrap-server localhost:9092 \
     --create --if-not-exists \
     --topic "$topic" \
-    --partitions "${KAFKA_TOPIC_PARTITIONS:-3}" \
+    --partitions "${KAFKA_TOPIC_PARTITIONS:-6}" \
     --replication-factor "${KAFKA_TOPIC_RF:-1}" >/dev/null
 done < "$TOPICS_FILE"
 

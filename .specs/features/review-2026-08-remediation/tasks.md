@@ -989,8 +989,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Variável documentada em `.env.example` e docs do sandbox
-- [ ] `make config` e validadores do sandbox verdes
+- [x] Variável documentada em `.env.example` e docs do sandbox
+- [x] `make config` e validadores do sandbox verdes (make config, validate_ports.py, validate_lifecycle.py, verify-docs.sh all green locally — no Docker daemon needed for these; the tests/test_observability.py unittest failures are pre-existing and unrelated to KAFKA_TOPIC_PARTITIONS, confirmed present before this task's changes too)
 
 **Tests**: none
 **Gate**: build
