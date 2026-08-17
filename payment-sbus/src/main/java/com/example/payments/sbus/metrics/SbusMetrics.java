@@ -1,14 +1,17 @@
 package com.example.payments.sbus.metrics;
 
+import com.example.payments.common.kafka.AvroSerde;
 import com.example.payments.sbus.domain.OutboxStatus;
 import com.example.payments.sbus.repository.OutboxEventRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Custom SBUS metrics exposed to Prometheus:
@@ -21,13 +24,25 @@ import java.time.Duration;
  *   <li>{@code sbus_unrecoverable_message_total} – a record whose own failure could not be
  *       durably persisted either; the payload is preserved in a log line, not in a table.</li>
  *   <li>{@code sbus_end_to_end_latency} – occurredAt(request) -&gt; final event.</li>
+ *   <li>{@code sbus_avro_codec_pool_*} – {@link AvroSerde#poolSnapshot()} capacity/available/
+ *       borrowed/timeouts (OBS-05).</li>
  * </ul>
+ *
+ * <p>OBS-04: the three count-based gauges above (pending/unconfirmed/oldest-age) never run a
+ * {@code COUNT(*)} on the Prometheus scrape thread — each reads an {@link AtomicLong} refreshed on
+ * a fixed 15s schedule ({@link #refreshCachedCounts()}), independent of how often (or rarely) the
+ * gauge itself gets scraped.
  */
 @Singleton
 public class SbusMetrics {
 
     private final MeterRegistry registry;
     private final OutboxEventRepository outboxRepository;
+    private final AvroSerde avroSerde;
+
+    private final AtomicLong cachedOutboxPending = new AtomicLong();
+    private final AtomicLong cachedDlqUnconfirmed = new AtomicLong();
+    private final AtomicLong cachedDlqUnconfirmedOldestAgeSeconds = new AtomicLong();
 
     private Counter outboxPublished;
     private Counter outboxPublishFailures;
@@ -35,19 +50,25 @@ public class SbusMetrics {
     private Counter unrecoverable;
     private Timer endToEndLatency;
 
-    public SbusMetrics(MeterRegistry registry, OutboxEventRepository outboxRepository) {
+    public SbusMetrics(MeterRegistry registry, OutboxEventRepository outboxRepository, AvroSerde avroSerde) {
         this.registry = registry;
         this.outboxRepository = outboxRepository;
+        this.avroSerde = avroSerde;
     }
 
     @PostConstruct
     void init() {
-        registry.gauge("sbus_outbox_pending", this,
-                m -> m.outboxRepository.countByStatus(OutboxStatus.PENDING));
-        registry.gauge("sbus_dlq_unconfirmed", this,
-                m -> m.outboxRepository.countUnconfirmedDeadLetters());
-        registry.gauge("sbus_dlq_unconfirmed_oldest_age_seconds", this,
-                m -> m.outboxRepository.oldestUnconfirmedDeadLetterAgeSeconds());
+        // One synchronous population at boot (not on a scrape thread) so the gauges below never
+        // read a stale zero before the first scheduled refresh fires.
+        refreshCachedCounts();
+        registry.gauge("sbus_outbox_pending", cachedOutboxPending, AtomicLong::get);
+        registry.gauge("sbus_dlq_unconfirmed", cachedDlqUnconfirmed, AtomicLong::get);
+        registry.gauge("sbus_dlq_unconfirmed_oldest_age_seconds",
+                cachedDlqUnconfirmedOldestAgeSeconds, AtomicLong::get);
+        registry.gauge("sbus_avro_codec_pool_capacity", avroSerde, s -> s.poolSnapshot().capacity());
+        registry.gauge("sbus_avro_codec_pool_available", avroSerde, s -> s.poolSnapshot().available());
+        registry.gauge("sbus_avro_codec_pool_borrowed", avroSerde, s -> s.poolSnapshot().borrowed());
+        registry.gauge("sbus_avro_codec_pool_timeouts_total", avroSerde, s -> s.poolSnapshot().timeouts());
         this.outboxPublished = registry.counter("sbus_outbox_published_total");
         this.outboxPublishFailures = registry.counter("sbus_outbox_publish_failures_total");
         this.dlq = registry.counter("sbus_dlq_total");
@@ -55,6 +76,18 @@ public class SbusMetrics {
         this.endToEndLatency = Timer.builder("sbus_end_to_end_latency")
                 .publishPercentiles(0.5, 0.95, 0.99)
                 .register(registry);
+    }
+
+    /**
+     * OBS-04: runs off the scrape thread, on its own fixed schedule (TTL 15s, well under the 30s
+     * ceiling) — package-private so a unit test can trigger a refresh deterministically instead of
+     * waiting on the real schedule.
+     */
+    @Scheduled(fixedDelay = "${sbus.metrics.count-cache-ttl:15s}")
+    void refreshCachedCounts() {
+        cachedOutboxPending.set(outboxRepository.countByStatus(OutboxStatus.PENDING));
+        cachedDlqUnconfirmed.set(outboxRepository.countUnconfirmedDeadLetters());
+        cachedDlqUnconfirmedOldestAgeSeconds.set(outboxRepository.oldestUnconfirmedDeadLetterAgeSeconds());
     }
 
     public void recordPublished(int count) {

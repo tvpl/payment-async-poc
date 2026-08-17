@@ -878,9 +878,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit: scrapes consecutivos dentro do TTL disparam uma única query
-- [ ] Gauges de codec visíveis no registry de teste
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
+- [x] Unit: scrapes consecutivos dentro do TTL disparam uma única query
+- [x] Gauges de codec visíveis no registry de teste
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
