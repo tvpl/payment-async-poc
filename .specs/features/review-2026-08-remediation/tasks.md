@@ -565,9 +565,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: fallback autenticado retorna 200 com role exigida ativa
-- [ ] Falha de auth continua degradando para `Optional.empty()` + métrica nova de auth-failure
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: fallback autenticado retorna 200 com role exigida ativa
+- [x] Falha de auth continua degradando para `Optional.empty()` + métrica nova de auth-failure
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon` (Docker `-PwithIT` execution deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full

@@ -21,6 +21,12 @@ micronaut:
 payment:
   security:
     clock-skew: 0s
+  sbus:
+    # SEC-05: a pre-minted token from external credential management, presented verbatim on the
+    # durable status fallback call. Empty by default: unset means no credential is presented and
+    # the call degrades exactly like any other SBUS unavailability (SbusStatusGateway).
+    credential:
+      token: ${SBUS_SERVICE_TOKEN:}
 
 # SEC-01: schema governance is the registry's job, never inferred from a producer's payload.
 # ProductionSecurityGuard fails boot if this is ever true in prod.

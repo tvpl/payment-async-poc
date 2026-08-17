@@ -42,6 +42,7 @@ public class ApiMetrics {
     private Counter failed;
     private Counter responseRetries;
     private Counter duplicateFinalEvents;
+    private Counter sbusAuthFailures;
     private Timer waitLatency;
 
     public ApiMetrics(MeterRegistry registry, ResponseCoordinator coordinator) {
@@ -56,6 +57,7 @@ public class ApiMetrics {
         this.failed = registry.counter("api_failed_total");
         this.responseRetries = registry.counter("api_response_retries_total");
         this.duplicateFinalEvents = registry.counter("api_duplicate_final_events_total");
+        this.sbusAuthFailures = registry.counter("api_sbus_auth_failures_total");
         this.waitLatency = Timer.builder("api_wait_latency")
                 .publishPercentiles(0.5, 0.95, 0.99)
                 .register(registry);
@@ -112,5 +114,10 @@ public class ApiMetrics {
     /** A repeated final event for a request whose terminal outcome was already chosen. */
     public void recordDuplicateFinalEvent() {
         duplicateFinalEvents.increment();
+    }
+
+    /** The SBUS rejected the Edge's own service credential (SEC-05) on the durable fallback. */
+    public void recordSbusAuthFailure() {
+        sbusAuthFailures.increment();
     }
 }
