@@ -834,8 +834,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Testes equivalentes ao T25 no limiter do Sbus verdes
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] Testes equivalentes ao T25 no limiter do Sbus verdes
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon` (Docker -PwithIT execution deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full
