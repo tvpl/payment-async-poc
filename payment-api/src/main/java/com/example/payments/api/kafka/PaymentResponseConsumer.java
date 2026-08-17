@@ -6,6 +6,7 @@ import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
 import com.example.payments.common.avro.PaymentSimulationCompleted;
 import com.example.payments.common.avro.PaymentSimulationFailed;
+import com.example.payments.common.events.EnvelopeVersions;
 import com.example.payments.common.events.EventEnvelope;
 import com.example.payments.common.events.Topics;
 import com.example.payments.common.kafka.AvroCodecUnavailableException;
@@ -99,14 +100,21 @@ public class PaymentResponseConsumer {
 
     private FinalEvent decode(ConsumerRecord<String, byte[]> record) {
         SpecificRecord avro = avroSerde.deserialize(record.topic(), record.value());
+        FinalEvent event;
         if (avro instanceof PaymentSimulationCompleted completed) {
-            return new FinalEvent(AvroMapper.fromAvro(completed), true);
+            event = new FinalEvent(AvroMapper.fromAvro(completed), true);
+        } else if (avro instanceof PaymentSimulationFailed failed) {
+            event = new FinalEvent(AvroMapper.fromAvro(failed), false);
+        } else {
+            throw new IllegalArgumentException(
+                    "Unexpected event type on " + record.topic() + ": " + avro.getClass().getName());
         }
-        if (avro instanceof PaymentSimulationFailed failed) {
-            return new FinalEvent(AvroMapper.fromAvro(failed), false);
-        }
-        throw new IllegalArgumentException(
-                "Unexpected event type on " + record.topic() + ": " + avro.getClass().getName());
+        // API-02: an eventVersion on a major this consumer does not know how to read must never
+        // be processed silently. EnvelopeVersions.assertKnownMajor throws UnknownEventMajorException,
+        // which propagates to receive()'s generic poison handling below — the existing DLQ path,
+        // with the exception's own message ("Unknown event major version: X") as the explicit reason.
+        EnvelopeVersions.assertKnownMajor(event.envelope().eventVersion());
+        return event;
     }
 
     private void applyWithinBudget(FinalEvent event, ConsumerRecord<String, byte[]> record) {

@@ -1,25 +1,30 @@
 package com.example.payments.api.kafka;
 
 import com.example.payments.api.coordination.ResponseCoordinator;
+import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.metrics.ApiMetrics;
 import com.example.payments.api.redis.RedisStatusStore;
 import com.example.payments.common.avro.PaymentSimulationCompleted;
 import com.example.payments.common.avro.SimulationResultPayload;
 import com.example.payments.common.events.Topics;
+import com.example.payments.common.events.UnknownEventMajorException;
 import com.example.payments.common.kafka.AvroCodecUnavailableException;
 import com.example.payments.common.kafka.AvroSerde;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -58,10 +63,14 @@ class PaymentResponseConsumerUnitTest {
     }
 
     private static PaymentSimulationCompleted completedAvroEvent() {
+        return completedAvroEventWithVersion("1");
+    }
+
+    private static PaymentSimulationCompleted completedAvroEventWithVersion(String eventVersion) {
         SimulationResultPayload payload = new SimulationResultPayload(
                 "sim-1", "req-1", "APPROVED", "123456", "125.50", "BRL", 1, null, null, null, null);
         return new PaymentSimulationCompleted(
-                "event-1", "PaymentSimulationCompleted", "1", 0L, "req-1", "corr-1", null, null, "sbus", "", payload);
+                "event-1", "PaymentSimulationCompleted", eventVersion, 0L, "req-1", "corr-1", null, null, "sbus", "", payload);
     }
 
     @Test
@@ -122,5 +131,36 @@ class PaymentResponseConsumerUnitTest {
                 .when(deadLetters).route(any(), eq(PaymentResponseConsumer.STAGE_APPLY), any());
 
         assertThrows(IllegalStateException.class, () -> consumer.receive(record()));
+    }
+
+    /**
+     * API-02: an eventVersion on a major this consumer does not know how to read must be
+     * dead-lettered as poison, with an explicit reason, and never be applied to the store.
+     */
+    @Test
+    void anUnknownEventVersionMajorIsDeadLetteredWithAnExplicitReasonAndNeverApplied() {
+        when(avroSerde.deserialize(anyString(), any())).thenReturn(completedAvroEventWithVersion("99.0"));
+
+        consumer.receive(record());
+
+        verify(deadLetters).route(any(), eq(PaymentResponseConsumer.STAGE_DECODE),
+                argThat(cause -> cause instanceof UnknownEventMajorException
+                        && cause.getMessage().contains("99.0")));
+        verify(store, never()).save(any());
+        verify(store, never()).get(anyString());
+    }
+
+    /** API-02: a known major keeps going through the normal apply flow, never dead-lettered. */
+    @Test
+    void aKnownEventVersionMajorIsAppliedNormallyNotDeadLettered() {
+        when(avroSerde.deserialize(anyString(), any())).thenReturn(completedAvroEventWithVersion("1"));
+        when(store.get("req-1")).thenReturn(Optional.empty());
+
+        consumer.receive(record());
+
+        verify(deadLetters, never()).route(any(), anyString(), any());
+        ArgumentCaptor<StatusEntry> saved = ArgumentCaptor.forClass(StatusEntry.class);
+        verify(store).save(saved.capture());
+        assertEquals("req-1", saved.getValue().requestId());
     }
 }

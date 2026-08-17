@@ -678,8 +678,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit: major desconhecido → DLQ, conhecido → fluxo normal
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Unit: major desconhecido → DLQ, conhecido → fluxo normal
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
