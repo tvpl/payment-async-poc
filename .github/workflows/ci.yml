@@ -40,7 +40,7 @@ jobs:
           - boundary: gateway
             command: cd gateway && make config
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install kustomize and kubeconform (gateway boundary only)
         if: matrix.boundary == 'gateway'
         run: |
@@ -126,7 +126,7 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -180,7 +180,7 @@ jobs:
     name: Workflow lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: actionlint
         run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7
       - name: Structural CI policy
@@ -193,7 +193,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -219,7 +219,7 @@ jobs:
     needs: [boundary-build, integration, workflow-lint, static-analysis]
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate repository policies
         run: |
           python3 scripts/workspace/check_root_governance.py
