@@ -1,6 +1,7 @@
 package com.example.payments.api.metrics;
 
 import com.example.payments.api.coordination.ResponseCoordinator;
+import com.example.payments.common.kafka.AvroSerde;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -19,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@code api_completed_total} / {@code api_failed_total}.</li>
  *   <li>{@code api_wait_latency} – time spent blocking for the async result.</li>
  *   <li>{@code api_pending} – gauge of requests currently waiting (PENDING).</li>
+ *   <li>{@code api_avro_codec_pool_*} – {@link AvroSerde#poolSnapshot()} capacity/available/
+ *       borrowed/timeouts (OBS-05).</li>
  * </ul>
  */
 @Singleton
@@ -35,6 +38,7 @@ public class ApiMetrics {
 
     private final MeterRegistry registry;
     private final ResponseCoordinator coordinator;
+    private final AvroSerde avroSerde;
     private final Set<String> seenPaymentMethods = ConcurrentHashMap.newKeySet();
 
     private Counter timeouts;
@@ -45,9 +49,10 @@ public class ApiMetrics {
     private Counter sbusAuthFailures;
     private Timer waitLatency;
 
-    public ApiMetrics(MeterRegistry registry, ResponseCoordinator coordinator) {
+    public ApiMetrics(MeterRegistry registry, ResponseCoordinator coordinator, AvroSerde avroSerde) {
         this.registry = registry;
         this.coordinator = coordinator;
+        this.avroSerde = avroSerde;
     }
 
     @PostConstruct
@@ -62,6 +67,10 @@ public class ApiMetrics {
                 .publishPercentiles(0.5, 0.95, 0.99)
                 .register(registry);
         registry.gauge("api_pending", coordinator, ResponseCoordinator::pendingCount);
+        registry.gauge("api_avro_codec_pool_capacity", avroSerde, s -> s.poolSnapshot().capacity());
+        registry.gauge("api_avro_codec_pool_available", avroSerde, s -> s.poolSnapshot().available());
+        registry.gauge("api_avro_codec_pool_borrowed", avroSerde, s -> s.poolSnapshot().borrowed());
+        registry.gauge("api_avro_codec_pool_timeouts_total", avroSerde, s -> s.poolSnapshot().timeouts());
     }
 
     /** Tagged by payment method (bounded cardinality) for per-method request rates. */

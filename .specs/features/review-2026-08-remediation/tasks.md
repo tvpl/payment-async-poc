@@ -901,8 +901,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Gauges visíveis no registry de teste do Edge
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Gauges visíveis no registry de teste do Edge
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
