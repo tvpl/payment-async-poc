@@ -99,7 +99,7 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:kafka'
     testImplementation 'org.testcontainers:junit-jupiter'
-    testImplementation 'com.redis:testcontainers-redis:2.2.2'
+    testImplementation 'com.redis:testcontainers-redis:2.2.4'
     testImplementation 'org.awaitility:awaitility:4.2.1'
     // OBS-02: InMemorySpanExporter for OutboxTraceContextIT, proving the outbox publish span
     // (and its link back to the persisted ingestion context) without a live OTel collector.
