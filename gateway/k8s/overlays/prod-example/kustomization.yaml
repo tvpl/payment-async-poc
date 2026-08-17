@@ -1,0 +1,62 @@
+# Exemplo ILUSTRATIVO de overlay de produção — placeholders (`example.com`, nome
+# de Secret sem o Secret real) que precisam ser substituídos pelo ambiente real.
+# Nunca aplique como está. Ver gateway/k8s/README.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: payment-gateway
+
+resources:
+  - ../../base
+
+patches:
+  # Listener HTTPS com TLS terminado no Envoy. certificateRefs aponta para um
+  # Secret kubernetes.io/tls que este overlay não cria — normalmente populado
+  # por cert-manager (Let's Encrypt/CA interna), fora do escopo destes manifests.
+  - target:
+      kind: Gateway
+      name: payment-gateway
+    patch: |-
+      - op: add
+        path: /spec/listeners/-
+        value:
+          name: https
+          protocol: HTTPS
+          port: 443
+          tls:
+            mode: Terminate
+            certificateRefs:
+              - kind: Secret
+                name: payment-gateway-tls
+          allowedRoutes:
+            namespaces:
+              from: Same
+  # Réplicas e anotações de operação (o valor do LB abaixo é ilustrativo; troque
+  # pela anotação real do provider de nuvem usado).
+  - target:
+      kind: EnvoyProxy
+      name: payment-gateway-proxy-config
+    patch: |-
+      - op: add
+        path: /spec/provider
+        value:
+          type: Kubernetes
+          kubernetes:
+            envoyDeployment:
+              replicas: 3
+            envoyService:
+              type: LoadBalancer
+              annotations:
+                example.com/load-balancer-backend-protocol: http
+  # Issuer/JWKS do IdP real (placeholder — troque pelo domínio do Keycloak/IdP
+  # de produção).
+  - target:
+      kind: SecurityPolicy
+      name: keycloak-jwt
+    patch: |-
+      - op: replace
+        path: /spec/jwt/providers/0/issuer
+        value: https://keycloak.example.com/realms/payments
+      - op: replace
+        path: /spec/jwt/providers/0/remoteJWKS/uri
+        value: https://keycloak.example.com/realms/payments/protocol/openid-connect/certs

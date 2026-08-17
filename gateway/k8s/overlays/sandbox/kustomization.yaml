@@ -1,0 +1,38 @@
+# Overlay para um cluster local (kind) — ver gateway/k8s/README.md para os
+# pré-requisitos (Envoy Gateway instalado, Keycloak + realm-payments.json e o
+# Service "payment-api" publicados neste namespace).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: payment-gateway-sandbox
+
+resources:
+  - ../../base
+
+patches:
+  # kind não tem load balancer de nuvem: expõe o Envoy num NodePort fixo,
+  # mapeável para o host via `extraPortMappings` na config do kind (documentado
+  # no README).
+  - target:
+      kind: EnvoyProxy
+      name: payment-gateway-proxy-config
+    patch: |-
+      - op: add
+        path: /spec/provider
+        value:
+          type: Kubernetes
+          kubernetes:
+            envoyService:
+              type: NodePort
+  # Issuer/JWKS do realm de teste apontam para o Keycloak deste mesmo namespace
+  # (mesmo realm-payments.json do compose, importado à parte neste cluster).
+  - target:
+      kind: SecurityPolicy
+      name: keycloak-jwt
+    patch: |-
+      - op: replace
+        path: /spec/jwt/providers/0/issuer
+        value: http://keycloak.payment-gateway-sandbox.svc.cluster.local/realms/payments
+      - op: replace
+        path: /spec/jwt/providers/0/remoteJWKS/uri
+        value: http://keycloak.payment-gateway-sandbox.svc.cluster.local/realms/payments/protocol/openid-connect/certs

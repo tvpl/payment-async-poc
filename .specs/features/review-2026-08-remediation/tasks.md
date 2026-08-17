@@ -1055,8 +1055,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Ambos os overlays renderizam via kustomize
-- [ ] Diferenças entre overlays documentadas no README do k8s
+- [x] Ambos os overlays renderizam via kustomize
+- [x] Diferenças entre overlays documentadas no README do k8s
 
 **Tests**: none
 **Gate**: build
