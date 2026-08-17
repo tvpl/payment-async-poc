@@ -293,7 +293,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | RES-03 | P1: Resiliência de fundo | Design | Verified |
 | RES-04 | P1: Resiliência de fundo | Design | Verified |
 | RES-05 | P1: Resiliência de fundo | Design | Verified |
-| RES-06 | P1: Resiliência de fundo | Design | Pending |
+| RES-06 | P1: Resiliência de fundo | Design | Verified |
 | OBS-01 | P2: Correlação e observabilidade | Design | Verified |
 | OBS-02 | P2: Correlação e observabilidade | Design | Pending |
 | OBS-03 | P2: Correlação e observabilidade | Design | Verified |

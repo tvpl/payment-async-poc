@@ -6,6 +6,7 @@ import com.example.payments.sbus.domain.OutboxEvent;
 import com.example.payments.sbus.kafka.KafkaPublisher;
 import com.example.payments.sbus.metrics.SbusMetrics;
 import com.example.payments.sbus.support.Json;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Orchestrates outbox publication. Claims a batch in a short transaction
@@ -43,6 +45,12 @@ public class OutboxDispatcher {
     private final RedisRateLimiter coreCommandLimiter;
     private final OutboxPublicationLock publicationLock;
 
+    // RES-06: set by @PreDestroy so an ordered shutdown stops claiming new batches; currentBatch
+    // tracks the batch this instance most recently claimed and has not fully processed yet, so
+    // shutdown() can release whatever is still unpublished in it without incrementing attempts.
+    private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
+    private volatile List<OutboxEvent> currentBatch = List.of();
+
     public OutboxDispatcher(OutboxClaimService claimService,
                             KafkaPublisher publisher,
                             SbusMetrics metrics,
@@ -58,51 +66,92 @@ public class OutboxDispatcher {
     }
 
     public int dispatchBatch() {
+        if (shuttingDown.get()) {
+            return 0;
+        }
         List<OutboxEvent> batch = claimService.claimBatch();
+        currentBatch = batch;
         int publishedCount = 0;
-        for (int i = 0; i < batch.size(); i++) {
-            OutboxEvent event = batch.get(i);
-            // Backpressure to the Core: if the limiter denies (or can't be reached — see
-            // tryAcquireCoreCommand), release the row (PENDING) and retry on the next poll.
-            // Other topics flow freely: a Redis outage on this one distributed counter must
-            // not stop payment.simulation.completed/failed/DLQ, which need no rate limiting.
-            if (Topics.CORE_COMMAND.equals(event.getTopic()) && !tryAcquireCoreCommand()) {
-                claimService.release(event, Instant.now().plusMillis(200));
-                continue;
-            }
-            if (publish(event)) {
-                // Marked right away, not batched to the end of the loop — see class javadoc.
-                if (claimService.markPublished(event)) {
-                    publishedCount++;
-                    metrics.recordPublished(1);
-                    if (Topics.DLQ.equals(event.getTopic())) {
-                        metrics.recordDlq();
+        try {
+            for (int i = 0; i < batch.size(); i++) {
+                if (shuttingDown.get()) {
+                    // RES-06: an ordered shutdown fired mid-batch — release whatever this
+                    // instance still has claimed but has not published, cleanly (PENDING,
+                    // attempts unchanged), instead of leaving it IN_PROGRESS for the reaper's
+                    // lease-based (attempts-incrementing) recovery to eventually find.
+                    releaseUnprocessed(batch.subList(i, batch.size()));
+                    break;
+                }
+                OutboxEvent event = batch.get(i);
+                // Backpressure to the Core: if the limiter denies (or can't be reached — see
+                // tryAcquireCoreCommand), release the row (PENDING) and retry on the next poll.
+                // Other topics flow freely: a Redis outage on this one distributed counter must
+                // not stop payment.simulation.completed/failed/DLQ, which need no rate limiting.
+                if (Topics.CORE_COMMAND.equals(event.getTopic()) && !tryAcquireCoreCommand()) {
+                    claimService.release(event, Instant.now().plusMillis(200));
+                    continue;
+                }
+                if (publish(event)) {
+                    // Marked right away, not batched to the end of the loop — see class javadoc.
+                    if (claimService.markPublished(event)) {
+                        publishedCount++;
+                        metrics.recordPublished(1);
+                        if (Topics.DLQ.equals(event.getTopic())) {
+                            metrics.recordDlq();
+                        }
+                    } else {
+                        LOG.warn("Outbox event {} sent to Kafka but its claim was stale when marking "
+                                + "published — a duplicate PUBLISHED mark from a previous owner is "
+                                + "expected to have already recorded it", event.getId());
                     }
-                } else {
-                    LOG.warn("Outbox event {} sent to Kafka but its claim was stale when marking "
-                            + "published — a duplicate PUBLISHED mark from a previous owner is "
-                            + "expected to have already recorded it", event.getId());
+                }
+                // AUD-07: renew the lease of the rows this batch still hasn't gotten to, right after
+                // this row's own turn — never accumulated to the end of the loop. A slow batch (one
+                // row taking a long time) must not let its OWN lease expire out from under the rows
+                // still waiting; without this, the reaper could reclaim — and a later poll could
+                // republish — a row this dispatcher is still actively about to send.
+                List<OutboxEvent> remaining = batch.subList(i + 1, batch.size());
+                if (!remaining.isEmpty() && !claimService.renewRemaining(remaining)) {
+                    // A genuinely lost fence: something else (the reaper, on an already-expired
+                    // lease) reclaimed at least one remaining row out from under this batch.
+                    // Continuing would risk double-publishing it — abort the rest of the batch; the
+                    // reaper's normal recovery path (attempts + backoff, see OutboxReaper) picks up
+                    // whatever is left.
+                    metrics.recordPublishFailure();
+                    LOG.error("Lost the outbox claim lease while renewing {} remaining row(s) "
+                            + "mid-batch — aborting the rest of this batch", remaining.size());
+                    break;
                 }
             }
-            // AUD-07: renew the lease of the rows this batch still hasn't gotten to, right after
-            // this row's own turn — never accumulated to the end of the loop. A slow batch (one
-            // row taking a long time) must not let its OWN lease expire out from under the rows
-            // still waiting; without this, the reaper could reclaim — and a later poll could
-            // republish — a row this dispatcher is still actively about to send.
-            List<OutboxEvent> remaining = batch.subList(i + 1, batch.size());
-            if (!remaining.isEmpty() && !claimService.renewRemaining(remaining)) {
-                // A genuinely lost fence: something else (the reaper, on an already-expired
-                // lease) reclaimed at least one remaining row out from under this batch.
-                // Continuing would risk double-publishing it — abort the rest of the batch; the
-                // reaper's normal recovery path (attempts + backoff, see OutboxReaper) picks up
-                // whatever is left.
-                metrics.recordPublishFailure();
-                LOG.error("Lost the outbox claim lease while renewing {} remaining row(s) "
-                        + "mid-batch — aborting the rest of this batch", remaining.size());
-                break;
-            }
+        } finally {
+            currentBatch = List.of();
         }
         return publishedCount;
+    }
+
+    /**
+     * RES-06: stops claiming new batches and releases whatever this instance's most recent batch
+     * still had claimed but unpublished, without incrementing {@code attempts} — {@link
+     * OutboxClaimService#release} is the same fenced, immediate reset to PENDING the throttle
+     * path already uses, so a row released here is never IN_PROGRESS for the reaper to find (a
+     * clean release and a crash are distinguishable exactly by that: a crash leaves the row
+     * IN_PROGRESS until the lease expires, and only then does the reaper — a genuinely different
+     * path — increment attempts).
+     */
+    @PreDestroy
+    public void shutdown() {
+        shuttingDown.set(true);
+        releaseUnprocessed(currentBatch);
+    }
+
+    private void releaseUnprocessed(List<OutboxEvent> rows) {
+        for (OutboxEvent event : rows) {
+            try {
+                claimService.release(event, Instant.now());
+            } catch (Exception e) {
+                LOG.warn("Failed to cleanly release outbox event {} during shutdown", event.getId(), e);
+            }
+        }
     }
 
     /**

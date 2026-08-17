@@ -160,6 +160,61 @@ class OutboxBatchResilienceIT {
         assertEquals("PUBLISHED", row("batch-1c").status());
     }
 
+    /**
+     * task_T31 (RES-06): an ordered shutdown firing mid-batch must stop claiming new batches and
+     * release whatever this instance's current batch still has unpublished, cleanly (PENDING,
+     * {@code attempts} unchanged) — not left IN_PROGRESS for the reaper's lease-based (and
+     * attempts-incrementing) recovery to eventually find.
+     */
+    @Test
+    void preDestroyStopsClaimingNewBatchesAndReleasesUnpublishedRowsWithoutIncrementingAttempts()
+            throws Exception {
+        repository.save(pendingEvent("shutdown-1", Topics.REQUESTED));
+        repository.save(pendingEvent("shutdown-2", Topics.REQUESTED));
+        repository.save(pendingEvent("shutdown-3", Topics.REQUESTED));
+
+        KafkaPublisher publisher = mock(KafkaPublisher.class);
+        OutboxDispatcher dispatcher = dispatcher(publisher, mock(RedisRateLimiter.class));
+        // Shutdown fires while the first row is mid-send, standing in for the real ordered
+        // shutdown hook firing on another thread while a batch is in flight.
+        org.mockito.Mockito.doAnswer(invocation -> {
+            dispatcher.shutdown();
+            return null;
+        }).when(publisher).send(any(), eq("shutdown-1"), any(), any());
+
+        int published = dispatcher.dispatchBatch();
+
+        assertEquals(1, published, "the row already sent before shutdown fired still counts as published");
+        assertEquals("PUBLISHED", row("shutdown-1").status());
+        assertEquals("PENDING", row("shutdown-2").status(),
+                "an unpublished claimed row must be released back to PENDING on shutdown, not left claimed");
+        assertEquals("PENDING", row("shutdown-3").status());
+        assertEquals(0, attemptsOf("shutdown-2"),
+                "a clean shutdown release must not increment attempts the way a reaper reclaim would");
+        assertEquals(0, attemptsOf("shutdown-3"));
+        verify(publisher, never()).send(any(), eq("shutdown-2"), any(), any());
+        verify(publisher, never()).send(any(), eq("shutdown-3"), any(), any());
+
+        // A dispatcher that has shut down must not claim a new batch on a later poll.
+        repository.save(pendingEvent("shutdown-4", Topics.REQUESTED));
+        int publishedAfterShutdown = dispatcher.dispatchBatch();
+        assertEquals(0, publishedAfterShutdown, "a dispatcher that has shut down must not claim a new batch");
+        assertEquals("PENDING", row("shutdown-4").status());
+        verify(publisher, never()).send(any(), eq("shutdown-4"), any(), any());
+    }
+
+    private static int attemptsOf(String identity) throws Exception {
+        try (var connection = connection();
+             var statement = connection.prepareStatement(
+                     "SELECT attempts FROM outbox_event WHERE deduplication_key = ?")) {
+            statement.setString(1, identity);
+            try (var result = statement.executeQuery()) {
+                assertTrue(result.next());
+                return result.getInt(1);
+            }
+        }
+    }
+
     @Test
     void aRateLimiterFailureDefersOnlyTheThrottledRowAndTheRestOfTheBatchStillPublishes() throws Exception {
         // A mixed batch: two rows on topics the rate limiter never governs, one core.command row.
