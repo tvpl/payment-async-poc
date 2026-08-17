@@ -23,9 +23,10 @@ import java.util.regex.Pattern;
  * be the recovery path). If persisting the failure *also* fails, every method here logs a
  * <strong>pointer only</strong> (SEC-02: {@code topic/partition/offset/key}, never the payload in
  * clear text or base64) at ERROR before rethrowing, so the consumer's {@code @ErrorStrategy}
- * keeps retrying the whole record (it is never acknowledged) for its full budget — 900 attempts
- * at 2s, 30 minutes, calibrated to outlast a realistic Postgres failover or restart rather than
- * give up on an ordinary blip. Only past that point does the offset advance and this stops being
+ * keeps retrying the whole record (it is never acknowledged) for its full budget — a short one
+ * (SCAL-01: a handful of attempts at a few hundred ms, not the 30-minute budget task_T15/AUD-10
+ * originally used), deliberately small so a prolonged Postgres outage never holds this consumer's
+ * partition hostage. Only past that point does the offset advance and this stops being
  * automatic: the {@code sbus_unrecoverable_message_total} metric fires, and the record — still on
  * its origin topic at that logged offset — is a human's path to replay it by hand.
  */

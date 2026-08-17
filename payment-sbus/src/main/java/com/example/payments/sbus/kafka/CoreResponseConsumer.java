@@ -18,7 +18,7 @@ import java.util.Map;
  * Consumes the Core's response (Avro). Poison → DLQ; transient → retry topic.
  *
  * <p>{@code retryCount}/{@code retryDelay}: see {@link PaymentRequestedConsumer}'s javadoc —
- * same 30-minute budget against the same failure (Postgres down when {@link RetryPublisher}
+ * same short (SCAL-01) budget against the same failure (Postgres down when {@link RetryPublisher}
  * tries to durably record the retry/DLQ).
  *
  * <p>{@code groupId} (AUD-10): dedicated to this topic, same reasoning as
@@ -33,7 +33,7 @@ import java.util.Map;
         groupId = "payment-sbus-core-response",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
-        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 900, retryDelay = "2s"))
+        errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 4, retryDelay = "250ms"))
 public class CoreResponseConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(CoreResponseConsumer.class);
