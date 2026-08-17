@@ -26,6 +26,7 @@ import java.sql.DriverManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -96,31 +97,85 @@ class OutboxBatchResilienceIT {
         context.close();
     }
 
+    /**
+     * task_T38 (SCAL-02): rewritten from the pre-parallel-dispatch version, which proved
+     * "marked per item, not batched to the end" by observing strict row-to-row sequential
+     * ordering (row 2's send asserting row 1 was already marked) — no longer meaningful once rows
+     * dispatch concurrently, since nothing waits for anything else to start. The proof now holds
+     * row 2 deliberately in flight (blocked) and asserts row 1's own mark is ALREADY visible while
+     * the whole {@code dispatchBatch()} call has provably not returned yet — still exactly the
+     * "as soon as its own send succeeds, not accumulated to the end" guarantee, via the mechanism
+     * that fits concurrent dispatch.
+     */
     @Test
-    void dispatchBatchMarksEachEventPublishedAsSoonAsItsOwnSendSucceedsNotAtTheEndOfTheBatch()
+    void dispatchBatchMarksEachEventPublishedAsSoonAsItsOwnSendSucceedsNotOnlyOnceTheWholeBatchReturns()
             throws Exception {
-        // Two rows claimed as one batch. If marking happened only once at the end of the whole
-        // loop (the old behavior), the first row would still be IN_PROGRESS while the second is
-        // being sent. Asserting from inside the second send's own answer observes exactly that
-        // instant — this is the check that would fail against the pre-fix code.
         repository.save(pendingEvent("mark-order-1", Topics.REQUESTED));
         repository.save(pendingEvent("mark-order-2", Topics.REQUESTED));
 
+        CountDownLatch row2Blocked = new CountDownLatch(1);
+        CountDownLatch releaseRow2 = new CountDownLatch(1);
         KafkaPublisher publisher = mock(KafkaPublisher.class);
         org.mockito.Mockito.doAnswer(invocation -> null)
                 .when(publisher).send(any(), eq("mark-order-1"), any(), any());
         org.mockito.Mockito.doAnswer(invocation -> {
-            assertEquals("PUBLISHED", row("mark-order-1").status(),
-                    "the first event must already be marked PUBLISHED by the time the second "
-                            + "one's send is attempted, not only after the whole batch returns");
+            row2Blocked.countDown();
+            assertTrue(releaseRow2.await(5, java.util.concurrent.TimeUnit.SECONDS));
             return null;
         }).when(publisher).send(any(), eq("mark-order-2"), any(), any());
 
-        int published = dispatcher(publisher, mock(RedisRateLimiter.class)).dispatchBatch();
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            java.util.concurrent.Future<Integer> result =
+                    executor.submit(dispatcher(publisher, mock(RedisRateLimiter.class))::dispatchBatch);
+            assertTrue(row2Blocked.await(5, java.util.concurrent.TimeUnit.SECONDS));
 
-        assertEquals(2, published);
+            // The whole dispatchBatch() call has NOT returned yet (row 2 is still blocked in its
+            // own send) — but row 1's own mark must already be visible.
+            assertEquals("PUBLISHED", row("mark-order-1").status(),
+                    "row 1 must already be marked PUBLISHED while row 2's send is still in "
+                            + "flight, not only after the whole batch returns");
+            assertEquals("IN_PROGRESS", row("mark-order-2").status());
+
+            releaseRow2.countDown();
+            assertEquals(2, result.get(10, java.util.concurrent.TimeUnit.SECONDS));
+        }
         assertEquals("PUBLISHED", row("mark-order-1").status());
         assertEquals("PUBLISHED", row("mark-order-2").status());
+    }
+
+    /**
+     * task_T38 (SCAL-02): a batch of 10 with one artificially slow send must not take anywhere
+     * close to 10x that row's own delay — proving the sends actually run in parallel, not
+     * sequentially with a thin async wrapper around the same old loop.
+     */
+    @Test
+    void aSlowSendInABatchOfTenDoesNotSerializeTheRestOfTheBatch() throws Exception {
+        int batchSize = 10;
+        for (int i = 0; i < batchSize; i++) {
+            repository.save(pendingEvent("parallel-" + i, Topics.REQUESTED));
+        }
+        java.time.Duration slowSendDelay = java.time.Duration.ofMillis(800);
+        KafkaPublisher publisher = mock(KafkaPublisher.class);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            Thread.sleep(slowSendDelay.toMillis());
+            return null;
+        }).when(publisher).send(any(), eq("parallel-0"), any(), any());
+        // The other nine rows use the default (instantaneous) mock answer.
+
+        long startNanos = System.nanoTime();
+        int published = dispatcher(publisher, mock(RedisRateLimiter.class)).dispatchBatch();
+        java.time.Duration elapsed = java.time.Duration.ofNanos(System.nanoTime() - startNanos);
+
+        assertEquals(batchSize, published);
+        // Serialized, this would take >= 10 x 800ms = 8s; run in parallel it should finish close
+        // to the one slow send's own duration — a generous 3x margin absorbs scheduling jitter
+        // while still clearly distinguishing "parallel" from "serialized".
+        assertTrue(elapsed.compareTo(slowSendDelay.multipliedBy(3)) < 0,
+                "a batch of " + batchSize + " with one slow send took " + elapsed
+                        + " — looks serialized, not parallel");
+        for (int i = 0; i < batchSize; i++) {
+            assertEquals("PUBLISHED", row("parallel-" + i).status());
+        }
     }
 
     @Test
@@ -164,39 +219,56 @@ class OutboxBatchResilienceIT {
     }
 
     /**
-     * task_T31 (RES-06): an ordered shutdown firing mid-batch must stop claiming new batches and
-     * release whatever this instance's current batch still has unpublished, cleanly (PENDING,
-     * {@code attempts} unchanged) — not left IN_PROGRESS for the reaper's lease-based (and
-     * attempts-incrementing) recovery to eventually find.
+     * task_T31 (RES-06), rewritten for task_T38 (SCAL-02): the pre-parallel-dispatch version
+     * asserted that specific ROWS (shutdown-2/shutdown-3) were NEVER even attempted once shutdown
+     * fired mid-batch, relying on strict sequential ordering (shutdown fires during row 1's turn,
+     * before rows 2/3 start). Under concurrent dispatch every eligible row's task starts at
+     * roughly the same time, so which rows a real shutdown "catches" before their own send starts
+     * is inherently racy — asserting a specific row was never attempted would be flaky by
+     * construction, not a real regression signal. What still matters, and is what this asserts:
+     * every row ends up in a SAFE terminal state (PUBLISHED, or cleanly PENDING with attempts
+     * unchanged — never stuck IN_PROGRESS), and a dispatcher that has shut down never claims a
+     * new batch afterward.
      */
     @Test
-    void preDestroyStopsClaimingNewBatchesAndReleasesUnpublishedRowsWithoutIncrementingAttempts()
-            throws Exception {
+    void preDestroyStopsClaimingNewBatchesAndLeavesEveryRowSafeNeverStuckInProgress() throws Exception {
         repository.save(pendingEvent("shutdown-1", Topics.REQUESTED));
         repository.save(pendingEvent("shutdown-2", Topics.REQUESTED));
         repository.save(pendingEvent("shutdown-3", Topics.REQUESTED));
 
         KafkaPublisher publisher = mock(KafkaPublisher.class);
         OutboxDispatcher dispatcher = dispatcher(publisher, mock(RedisRateLimiter.class));
-        // Shutdown fires while the first row is mid-send, standing in for the real ordered
-        // shutdown hook firing on another thread while a batch is in flight.
+        CountDownLatch aRowStartedSending = new CountDownLatch(1);
+        CountDownLatch releaseSends = new CountDownLatch(1);
+        // Every row's send blocks until released — standing in for "still in flight" when the
+        // real @PreDestroy hook fires on another thread while a batch is being dispatched.
         org.mockito.Mockito.doAnswer(invocation -> {
-            dispatcher.shutdown();
+            aRowStartedSending.countDown();
+            assertTrue(releaseSends.await(5, java.util.concurrent.TimeUnit.SECONDS));
             return null;
-        }).when(publisher).send(any(), eq("shutdown-1"), any(), any());
+        }).when(publisher).send(any(), any(), any(), any());
 
-        int published = dispatcher.dispatchBatch();
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            java.util.concurrent.Future<Integer> batchResult = executor.submit(dispatcher::dispatchBatch);
+            assertTrue(aRowStartedSending.await(5, java.util.concurrent.TimeUnit.SECONDS));
 
-        assertEquals(1, published, "the row already sent before shutdown fired still counts as published");
-        assertEquals("PUBLISHED", row("shutdown-1").status());
-        assertEquals("PENDING", row("shutdown-2").status(),
-                "an unpublished claimed row must be released back to PENDING on shutdown, not left claimed");
-        assertEquals("PENDING", row("shutdown-3").status());
-        assertEquals(0, attemptsOf("shutdown-2"),
-                "a clean shutdown release must not increment attempts the way a reaper reclaim would");
-        assertEquals(0, attemptsOf("shutdown-3"));
-        verify(publisher, never()).send(any(), eq("shutdown-2"), any(), any());
-        verify(publisher, never()).send(any(), eq("shutdown-3"), any(), any());
+            dispatcher.shutdown();
+            releaseSends.countDown();
+
+            int published = batchResult.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertTrue(published >= 0 && published <= 3);
+        }
+
+        for (String identity : List.of("shutdown-1", "shutdown-2", "shutdown-3")) {
+            Row current = row(identity);
+            assertTrue("PUBLISHED".equals(current.status()) || "PENDING".equals(current.status()),
+                    identity + " must end up PUBLISHED or cleanly PENDING, never stuck: was "
+                            + current.status());
+            if ("PENDING".equals(current.status())) {
+                assertEquals(0, attemptsOf(identity),
+                        "a clean shutdown release must not increment attempts the way a reaper reclaim would");
+            }
+        }
 
         // A dispatcher that has shut down must not claim a new batch on a later poll.
         repository.save(pendingEvent("shutdown-4", Topics.REQUESTED));
@@ -243,97 +315,96 @@ class OutboxBatchResilienceIT {
     }
 
     /**
-     * task_T12 (AUD-07): each row published used to leave the REMAINING claimed rows' lease
-     * untouched — a slow batch (one row taking a long time) could let the claim lease of rows
-     * still waiting their turn expire mid-batch, so the reaper could reclaim (and a later poll
-     * could republish) a row this exact dispatcher instance was still actively about to send.
-     * Row 1's mocked send backdates rows 2 and 3's {@code claimed_at} directly — standing in for
-     * "a lot of wall-clock time passed while row 1 was slow" without a flaky real sleep — and each
-     * later row's own send asserts its claim was already renewed (fresh, not the backdated value)
-     * BEFORE its own turn began, proving the dispatcher renews proactively as it goes, not by luck.
+     * task_T12 (AUD-07), rewritten for task_T38 (SCAL-02): each row now renews (and re-verifies)
+     * its OWN claim immediately before its OWN send (see {@code OutboxDispatcher#dispatchOne}),
+     * instead of the dispatcher renewing "the rows still waiting their turn" after each
+     * sequential row's own turn. Slow-2's claim freshness no longer depends on slow-1's own send
+     * completing first — it is renewed on slow-2's own independent thread, so a slow SIBLING row
+     * never delays it.
      */
     @Test
-    void aSlowBatchRenewsTheRemainingClaimedRowsSoNoneIsEverLeftToOutliveItsLease() throws Exception {
+    void aSlowSiblingRowNeverDelaysAnotherRowsOwnLeaseRenewal() throws Exception {
         repository.save(pendingEvent("slow-1", Topics.REQUESTED));
         repository.save(pendingEvent("slow-2", Topics.REQUESTED));
-        repository.save(pendingEvent("slow-3", Topics.REQUESTED));
 
+        CountDownLatch slow1Started = new CountDownLatch(1);
+        CountDownLatch releaseSlow1 = new CountDownLatch(1);
         KafkaPublisher publisher = mock(KafkaPublisher.class);
         org.mockito.Mockito.doAnswer(invocation -> {
-            backdateClaim("slow-2");
-            backdateClaim("slow-3");
+            slow1Started.countDown();
+            assertTrue(releaseSlow1.await(5, java.util.concurrent.TimeUnit.SECONDS));
             return null;
         }).when(publisher).send(any(), eq("slow-1"), any(), any());
         org.mockito.Mockito.doAnswer(invocation -> {
-            assertEquals("IN_PROGRESS", row("slow-2").status());
+            // slow-2's own claim must already be freshly renewed by the time ITS OWN send
+            // happens, regardless of slow-1 still being blocked above — its renewal never had to
+            // wait for an unrelated sibling's still-in-flight send.
             assertTrue(claimedAtIsRecent("slow-2"),
-                    "slow-2's claim must already have been renewed before its own turn began");
+                    "slow-2's claim must already have been renewed before its own send, "
+                            + "independent of slow-1's own pace");
             return null;
         }).when(publisher).send(any(), eq("slow-2"), any(), any());
-        org.mockito.Mockito.doAnswer(invocation -> {
-            assertTrue(claimedAtIsRecent("slow-3"),
-                    "slow-3's claim must already have been renewed before slow-2's turn began");
-            return null;
-        }).when(publisher).send(any(), eq("slow-3"), any(), any());
 
-        int published = dispatcher(publisher, mock(RedisRateLimiter.class)).dispatchBatch();
-
-        assertEquals(3, published);
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            java.util.concurrent.Future<Integer> result =
+                    executor.submit(dispatcher(publisher, mock(RedisRateLimiter.class))::dispatchBatch);
+            assertTrue(slow1Started.await(5, java.util.concurrent.TimeUnit.SECONDS));
+            releaseSlow1.countDown();
+            assertEquals(2, result.get(10, java.util.concurrent.TimeUnit.SECONDS));
+        }
         assertEquals("PUBLISHED", row("slow-1").status());
         assertEquals("PUBLISHED", row("slow-2").status());
-        assertEquals("PUBLISHED", row("slow-3").status());
         verify(publisher, times(1)).send(any(), eq("slow-1"), any(), any());
         verify(publisher, times(1)).send(any(), eq("slow-2"), any(), any());
-        verify(publisher, times(1)).send(any(), eq("slow-3"), any(), any());
     }
 
     /**
-     * task_T12 (AUD-07): a genuinely lost fence — something else already reclaimed a remaining
-     * row while this batch was mid-flight — must still abort the rest of the batch and record a
-     * metric, exactly as any other outbox publish failure does (existing behavior preserved).
-     * {@code forceReclaim} stands in for a real concurrent reaper cycle winning the race against
-     * fence-2 before this dispatcher's own renewal gets to it.
+     * task_T12 (AUD-07), rewritten for task_T38 (SCAL-02): a row's claim going stale (reclaimed by
+     * something else — a concurrent reaper cycle) WHILE its own send is already in flight must
+     * never let it falsely count as PUBLISHED — {@code markPublished}'s own fencing (by claim
+     * token) catches it after the send returns. The row stays safely recoverable (PENDING, already
+     * reclaimed once) instead of being double-marked. Deterministic by construction: both sends
+     * are held open on a latch (proving both renewals already succeeded) before the reclaim is
+     * triggered explicitly from the test thread — no cross-thread race to win.
      */
     @Test
-    void aTrulyLostFenceDuringRenewalAbortsTheRestOfTheBatchWithAMetric() throws Exception {
+    void aRowReclaimedWhileItsSendIsInFlightNeverFalselyCountsAsPublished() throws Exception {
         repository.save(pendingEvent("fence-1", Topics.REQUESTED));
         repository.save(pendingEvent("fence-2", Topics.REQUESTED));
-        repository.save(pendingEvent("fence-3", Topics.REQUESTED));
 
+        CountDownLatch bothSendsStarted = new CountDownLatch(2);
+        CountDownLatch releaseSends = new CountDownLatch(1);
         KafkaPublisher publisher = mock(KafkaPublisher.class);
         org.mockito.Mockito.doAnswer(invocation -> {
-            forceReclaim("fence-2");
+            bothSendsStarted.countDown();
+            assertTrue(releaseSends.await(5, java.util.concurrent.TimeUnit.SECONDS));
             return null;
-        }).when(publisher).send(any(), eq("fence-1"), any(), any());
+        }).when(publisher).send(any(), any(), any(), any());
 
-        SbusMetrics metrics = mock(SbusMetrics.class);
-        OutboxDispatcher dispatcher = new OutboxDispatcher(
-                claims, publisher, metrics, json, mock(RedisRateLimiter.class), publicationLock, tracer);
-        int published = dispatcher.dispatchBatch();
+        OutboxDispatcher dispatcher = dispatcher(publisher, mock(RedisRateLimiter.class));
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            java.util.concurrent.Future<Integer> batchResult = executor.submit(dispatcher::dispatchBatch);
+            assertTrue(bothSendsStarted.await(5, java.util.concurrent.TimeUnit.SECONDS),
+                    "both rows' own renewal must already have succeeded and their sends started");
 
-        assertEquals(1, published, "only fence-1, already sent before the fence was lost, counts as published");
-        assertEquals("PUBLISHED", row("fence-1").status());
-        // fence-2 was reclaimed out from under the batch (simulating a real concurrent reaper) —
-        // the aborted batch must not touch it further.
-        assertEquals("PENDING", row("fence-2").status());
-        // fence-3 was never reached: the batch aborted instead of ploughing ahead once its own
-        // fencing of the remaining rows could no longer be trusted. Its own claim is untouched —
-        // the reaper's normal schedule recovers it once that claim's own lease expires.
-        assertEquals("IN_PROGRESS", row("fence-3").status());
-        verify(publisher, never()).send(any(), eq("fence-2"), any(), any());
-        verify(publisher, never()).send(any(), eq("fence-3"), any(), any());
-        verify(metrics).recordPublishFailure();
-    }
+            // Reclaim fence-1's claim while its send is still in flight — the exact window a slow
+            // sibling row can leave open under SCAL-02's parallel dispatch.
+            ageClaim("fence-1");
+            reaper.reclaim();
+            assertEquals("PENDING", row("fence-1").status(), "reclaimed while fence-1's send is in flight");
 
-    private void backdateClaim(String identity) throws Exception {
-        try (var connection = connection();
-             var statement = connection.prepareStatement("""
-                     UPDATE outbox_event SET claimed_at = now() - interval '10 seconds'
-                     WHERE deduplication_key = ?
-                     """)) {
-            statement.setString(1, identity);
-            assertEquals(1, statement.executeUpdate());
+            releaseSends.countDown();
+            int published = batchResult.get(10, java.util.concurrent.TimeUnit.SECONDS);
+
+            assertEquals(1, published,
+                    "only fence-2 counts — fence-1's claim went stale before it could mark published");
         }
+        // fence-1 WAS sent to Kafka (its send ran to completion) but never falsely marked
+        // published, since markPublished's own fencing rejected the now-stale claim.
+        assertEquals("PENDING", row("fence-1").status());
+        assertEquals("PUBLISHED", row("fence-2").status());
+        verify(publisher, times(1)).send(any(), eq("fence-1"), any(), any());
+        verify(publisher, times(1)).send(any(), eq("fence-2"), any(), any());
     }
 
     private boolean claimedAtIsRecent(String identity) throws Exception {
@@ -347,17 +418,6 @@ class OutboxBatchResilienceIT {
                 assertTrue(result.next());
                 return result.getBoolean(1);
             }
-        }
-    }
-
-    private void forceReclaim(String identity) throws Exception {
-        try (var connection = connection();
-             var statement = connection.prepareStatement("""
-                     UPDATE outbox_event SET status = 'PENDING', claimed_at = NULL, claim_token = NULL
-                     WHERE deduplication_key = ?
-                     """)) {
-            statement.setString(1, identity);
-            assertEquals(1, statement.executeUpdate());
         }
     }
 

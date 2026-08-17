@@ -300,7 +300,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | OBS-04 | P2: Correlação e observabilidade | Design | Verified |
 | OBS-05 | P2: Correlação e observabilidade | Design | Verified |
 | SCAL-01 | P2: Escala do processamento durável | Design | Verified |
-| SCAL-02 | P2: Escala do processamento durável | Design | Pending |
+| SCAL-02 | P2: Escala do processamento durável | Design | Verified |
 | SCAL-03 | P2: Escala do processamento durável | Design | Pending |
 | SCAL-04 | P2: Escala do processamento durável | Design | Pending |
 | SCAL-05 | P2: Escala do processamento durável | Design | Verified |

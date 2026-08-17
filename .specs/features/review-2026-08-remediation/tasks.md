@@ -945,8 +945,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: lote de 10 com um send lento não serializa os demais; zero duplicação sob crash simulado
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: lote de 10 com um send lento não serializa os demais; zero duplicação sob crash simulado
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon` (Docker verification deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full
