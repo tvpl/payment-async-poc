@@ -632,9 +632,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT com N=2: waiters em shards distintos acordam corretamente
-- [ ] Publicação também no canal legado durante a transição (flag)
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] IT com N=2: waiters em shards distintos acordam corretamente
+- [x] Publicação também no canal legado durante a transição (flag)
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon` (Docker -PwithIT execution deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full

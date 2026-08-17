@@ -18,6 +18,14 @@ public class ApiProperties {
     private Duration idempotencyTtl = Duration.ofHours(24);
     /** Redis pub/sub channel used to wake waiters across instances. */
     private String responseChannel = "payment-sim-responses";
+    /** SCAL-05: number of hash-sharded channels the response channel is split into. */
+    private int responseChannelShards = 4;
+    /**
+     * SCAL-05: while true, {@code publishResponse} also publishes on the legacy, unsharded
+     * channel so instances not yet upgraded to shard-aware subscription still wake up. Kept for
+     * one release, then flipped off once the fleet has fully transitioned.
+     */
+    private boolean responseChannelLegacyEnabled = true;
     /** How long a publish attempt is considered in flight before a retry may resume it. */
     private Duration publishLease = Duration.ofSeconds(30);
 
@@ -53,6 +61,22 @@ public class ApiProperties {
         this.responseChannel = responseChannel;
     }
 
+    public int getResponseChannelShards() {
+        return responseChannelShards;
+    }
+
+    public void setResponseChannelShards(int responseChannelShards) {
+        this.responseChannelShards = responseChannelShards;
+    }
+
+    public boolean isResponseChannelLegacyEnabled() {
+        return responseChannelLegacyEnabled;
+    }
+
+    public void setResponseChannelLegacyEnabled(boolean responseChannelLegacyEnabled) {
+        this.responseChannelLegacyEnabled = responseChannelLegacyEnabled;
+    }
+
     public Duration getPublishLease() {
         return publishLease;
     }
@@ -79,6 +103,9 @@ public class ApiProperties {
         }
         if (publishLease == null || publishLease.isNegative() || publishLease.isZero()) {
             throw new ConfigurationException("payment.simulation.publish-lease must be positive");
+        }
+        if (responseChannelShards < 1) {
+            throw new ConfigurationException("payment.simulation.response-channel-shards must be >= 1");
         }
         if (idempotencyTtl.compareTo(statusTtl) < 0) {
             throw new ConfigurationException(

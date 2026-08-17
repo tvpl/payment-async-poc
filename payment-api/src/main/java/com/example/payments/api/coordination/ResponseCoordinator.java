@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,9 +95,10 @@ public class ResponseCoordinator {
                 }
             });
             // Lettuce re-subscribes channels automatically after a reconnect.
-            connection.sync().subscribe(properties.getResponseChannel());
+            String[] channels = channelsToSubscribe();
+            connection.sync().subscribe(channels);
             pubSub = connection;
-            LOG.info("Subscribed to Redis channel {}", properties.getResponseChannel());
+            LOG.info("Subscribed to Redis channels {}", String.join(", ", channels));
         } catch (Exception e) {
             if (connection != null) {
                 connection.close();
@@ -103,6 +106,21 @@ public class ResponseCoordinator {
             LOG.warn("Redis pub/sub subscribe failed; retrying in 5s ({})", e.getMessage());
             scheduler.schedule(this::trySubscribe, 5, TimeUnit.SECONDS);
         }
+    }
+
+    /**
+     * SCAL-05: every shard channel for the configured shard count, plus the legacy unsharded
+     * channel — this instance always subscribes to <em>all</em> shards (never a partitioned
+     * subset), so a shard-count change on another, not-yet-restarted instance can never leave a
+     * requestId's wake-up unheard here. The legacy channel is kept alongside it for one release
+     * so an instance that has not yet upgraded to shard-aware subscription (still publishing
+     * only to the legacy channel) still wakes up waiters on this instance during the transition.
+     */
+    String[] channelsToSubscribe() {
+        List<String> channels = new ArrayList<>(
+                ResponseChannels.allShardChannels(properties.getResponseChannel(), properties.getResponseChannelShards()));
+        channels.add(properties.getResponseChannel());
+        return channels.toArray(new String[0]);
     }
 
     /**

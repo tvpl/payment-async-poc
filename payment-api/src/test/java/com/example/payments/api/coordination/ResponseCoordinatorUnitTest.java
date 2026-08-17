@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -270,12 +271,55 @@ class ResponseCoordinatorUnitTest {
         RedisPubSubCommands<String, String> syncCommands = mock(RedisPubSubCommands.class);
         when(redisClient.connectPubSub()).thenReturn(connection);
         when(connection.sync()).thenReturn(syncCommands);
-        doThrow(new RuntimeException("subscribe failed")).when(syncCommands).subscribe(anyString());
+        doThrow(new RuntimeException("subscribe failed")).when(syncCommands).subscribe(any(String[].class));
         ResponseCoordinator leaky = new ResponseCoordinator(redisClient, store, new ApiProperties());
 
         leaky.start();
 
         verify(connection).close();
         leaky.close();
+    }
+
+    /**
+     * SCAL-05: this instance always subscribes to every shard channel for the configured shard
+     * count (never a partitioned subset) plus the legacy, unsharded channel - kept for one
+     * release so an instance still publishing only to the legacy channel keeps waking up
+     * waiters here during the transition.
+     */
+    @Test
+    void subscribesToEveryConfiguredShardChannelPlusTheLegacyChannel() {
+        ApiProperties sharded = new ApiProperties();
+        sharded.setResponseChannel("payment-sim-responses");
+        sharded.setResponseChannelShards(3);
+        ResponseCoordinator shardedCoordinator = new ResponseCoordinator(mock(RedisClient.class), store, sharded);
+
+        String[] channels = shardedCoordinator.channelsToSubscribe();
+
+        assertEquals(
+                List.of(
+                        "payment-sim-responses-0",
+                        "payment-sim-responses-1",
+                        "payment-sim-responses-2",
+                        "payment-sim-responses"),
+                List.of(channels));
+    }
+
+    /** With the default shard count (4), the shard channels 0..3 are subscribed to. */
+    @Test
+    void subscribesToTheDefaultFourShardsPlusLegacyByDefault() {
+        ResponseCoordinator defaultCoordinator =
+                new ResponseCoordinator(mock(RedisClient.class), store, new ApiProperties());
+
+        String[] channels = defaultCoordinator.channelsToSubscribe();
+
+        assertEquals(5, channels.length);
+        assertEquals(
+                List.of(
+                        "payment-sim-responses-0",
+                        "payment-sim-responses-1",
+                        "payment-sim-responses-2",
+                        "payment-sim-responses-3",
+                        "payment-sim-responses"),
+                List.of(channels));
     }
 }

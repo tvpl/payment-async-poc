@@ -1,6 +1,7 @@
 package com.example.payments.api.redis;
 
 import com.example.payments.api.config.ApiProperties;
+import com.example.payments.api.coordination.ResponseChannels;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.StoreUnavailableException;
 import com.example.payments.api.idempotency.IdempotencyOutcome;
@@ -203,9 +204,21 @@ public class RedisStatusStore {
         }
     }
 
+    /**
+     * SCAL-05: publishes on the hash-sharded channel derived from {@code requestId} so a
+     * subscriber only needs to watch a fraction of the traffic to receive its own wake-ups.
+     * While {@code response-channel-legacy-enabled} is true (the default, for one release), the
+     * legacy unsharded channel is also published to, so an instance not yet upgraded to
+     * shard-aware subscription still wakes up during the transition.
+     */
     public void publishResponse(String requestId) {
         try {
-            commands().publish(properties.getResponseChannel(), requestId);
+            String shardChannel = ResponseChannels.shardChannel(
+                    properties.getResponseChannel(), requestId, properties.getResponseChannelShards());
+            commands().publish(shardChannel, requestId);
+            if (properties.isResponseChannelLegacyEnabled()) {
+                commands().publish(properties.getResponseChannel(), requestId);
+            }
         } catch (RedisException e) {
             throw new StoreUnavailableException("Failed to publish response for " + requestId, e);
         }
