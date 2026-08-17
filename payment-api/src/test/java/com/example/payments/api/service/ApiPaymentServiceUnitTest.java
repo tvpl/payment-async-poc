@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -126,6 +127,33 @@ class ApiPaymentServiceUnitTest {
         service.submit(REQUEST, null, "tenant-a");
 
         assertEquals("tenant-a", tenantIdDuringPublish.get());
+    }
+
+    /** OBS-03: a valid inbound x-correlation-id is adopted as-is instead of a fresh one. */
+    @Test
+    void adoptsAValidInboundCorrelationId() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, null, "tenant-a", "client-abcdefgh-1");
+
+        assertEquals("client-abcdefgh-1", result.correlationId());
+    }
+
+    /**
+     * OBS-03: a malformed inbound x-correlation-id is silently ignored (a fresh id is generated)
+     * and never turned into a rejection - the submit still completes normally.
+     */
+    @Test
+    void ignoresAMalformedInboundCorrelationIdAndNeverRejectsTheRequest() {
+        when(coordinator.await(anyString(), any())).thenReturn(Optional.empty());
+        when(store.get(anyString())).thenReturn(Optional.empty());
+
+        ApiPaymentService.SubmitResult result = service.submit(REQUEST, null, "tenant-a", "not valid!");
+
+        assertFalse(result.correlationId().isBlank());
+        assertTrue(result.correlationId().length() >= 8);
+        assertNotEquals("not valid!", result.correlationId());
     }
 
     @Test

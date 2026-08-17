@@ -3,6 +3,7 @@ package com.example.payments.api.controller;
 import com.example.payments.api.dto.PaymentSimulationRequest;
 import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.service.ApiPaymentService;
+import com.example.payments.common.events.Headers;
 import com.example.platform.featurecontrol.config.FeatureSettings;
 import com.example.platform.featurecontrol.model.FlagDefinition;
 import com.example.platform.featurecontrol.model.FlagType;
@@ -57,14 +58,14 @@ class V0GatingTest {
     @Test
     void hidesV0FromNonEligibleCallers() {
         ApiPaymentService service = mock(ApiPaymentService.class);
-        HttpResponse<?> response = controller(service).create(user("carol"), request, "");
+        HttpResponse<?> response = controller(service).create(user("carol"), request, "", null);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus());
     }
 
     @Test
     void anonymousGetsNotFound() {
         ApiPaymentService service = mock(ApiPaymentService.class);
-        HttpResponse<?> response = controller(service).create(null, request, "");
+        HttpResponse<?> response = controller(service).create(null, request, "", null);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus());
     }
 
@@ -72,9 +73,10 @@ class V0GatingTest {
     void eligibleCallerReachesPipelineWithV0Header() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString(), any()))
+                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false, "corr-1"));
 
-        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key");
+        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key", null);
 
         assertEquals(HttpStatus.OK, response.getStatus());
         assertEquals("v0", response.getHeaders().get("X-Api-Version"));
@@ -89,9 +91,10 @@ class V0GatingTest {
     void v0ResponseNeverAnnouncesARoutedTopic() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString(), anyString())).thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString(), any()))
+                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false, "corr-1"));
 
-        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key");
+        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key", null);
 
         assertNull(response.getHeaders().get("X-Routed-Topic"));
     }
@@ -101,9 +104,23 @@ class V0GatingTest {
     void eligibleCallerWithoutIdempotencyKeyIsRejectedBeforeAnyDomainIO() {
         ApiPaymentService service = mock(ApiPaymentService.class);
 
-        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "");
+        HttpResponse<?> response = controller(service).create(user("bob", "v0-testers"), request, "", null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         org.mockito.Mockito.verifyNoInteractions(service);
+    }
+
+    /** OBS-03: the v0 endpoint also echoes the resolved correlation-id back to the caller. */
+    @Test
+    void eligibleCallerResponseEchoesTheResolvedCorrelationId() {
+        ApiPaymentService service = mock(ApiPaymentService.class);
+        StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
+        when(service.submit(any(), anyString(), anyString(), any()))
+                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false, "corr-echo-v0"));
+
+        HttpResponse<?> response =
+                controller(service).create(user("bob", "v0-testers"), request, "v0-idem-key", "corr-echo-v0");
+
+        assertEquals("corr-echo-v0", response.getHeaders().get(Headers.CORRELATION_ID));
     }
 }

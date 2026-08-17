@@ -610,8 +610,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit: válido adotado, inválido ignorado (nunca 4xx), response ecoa o id
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Unit: válido adotado, inválido ignorado (nunca 4xx), response ecoa o id
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

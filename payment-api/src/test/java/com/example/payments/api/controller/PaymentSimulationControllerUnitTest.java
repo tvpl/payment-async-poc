@@ -6,6 +6,7 @@ import com.example.payments.api.dto.StatusEntry;
 import com.example.payments.api.error.Problem;
 import com.example.payments.api.service.ApiPaymentService;
 import com.example.payments.api.tenant.TenantResolver;
+import com.example.payments.common.events.Headers;
 import com.example.payments.common.model.SimulationStatus;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -43,7 +44,7 @@ class PaymentSimulationControllerUnitTest {
     void missingIdempotencyKeyIsRejectedWithoutTouchingTheService() {
         ApiPaymentService service = mock(ApiPaymentService.class);
 
-        HttpResponse<?> response = controller(service).create(request, "", API_KEY, null);
+        HttpResponse<?> response = controller(service).create(request, "", API_KEY, null, null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         assertEquals(Problem.MEDIA_TYPE, response.getContentType().orElseThrow().toString());
@@ -55,7 +56,7 @@ class PaymentSimulationControllerUnitTest {
     void nullIdempotencyKeyIsRejectedWithoutTouchingTheService() {
         ApiPaymentService service = mock(ApiPaymentService.class);
 
-        HttpResponse<?> response = controller(service).create(request, null, API_KEY, null);
+        HttpResponse<?> response = controller(service).create(request, null, API_KEY, null, null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         verifyNoInteractions(service);
@@ -66,7 +67,7 @@ class PaymentSimulationControllerUnitTest {
         ApiPaymentService service = mock(ApiPaymentService.class);
         String tooLong = "a".repeat(129);
 
-        HttpResponse<?> response = controller(service).create(request, tooLong, API_KEY, null);
+        HttpResponse<?> response = controller(service).create(request, tooLong, API_KEY, null, null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         verifyNoInteractions(service);
@@ -76,7 +77,7 @@ class PaymentSimulationControllerUnitTest {
     void idempotencyKeyWithDisallowedCharactersIsRejectedWithoutTouchingTheService() {
         ApiPaymentService service = mock(ApiPaymentService.class);
 
-        HttpResponse<?> response = controller(service).create(request, "not a valid key!", API_KEY, null);
+        HttpResponse<?> response = controller(service).create(request, "not a valid key!", API_KEY, null, null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         verifyNoInteractions(service);
@@ -86,10 +87,10 @@ class PaymentSimulationControllerUnitTest {
     void validIdempotencyKeyReachesTheService() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString(), anyString()))
-                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), anyString(), any()))
+                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false, "corr-1"));
 
-        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, null);
+        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatus());
     }
@@ -99,7 +100,7 @@ class PaymentSimulationControllerUnitTest {
     void tenantOutsideTheBindingIsForbiddenWithoutTouchingTheService() {
         ApiPaymentService service = mock(ApiPaymentService.class);
 
-        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, "not-bound-tenant");
+        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, "not-bound-tenant", null);
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatus());
         assertEquals(Problem.MEDIA_TYPE, response.getContentType().orElseThrow().toString());
@@ -116,7 +117,7 @@ class PaymentSimulationControllerUnitTest {
         PaymentSimulationController controller =
                 new PaymentSimulationController(service, new TenantResolver(properties));
 
-        HttpResponse<?> response = controller.create(request, "valid-key-1", API_KEY, null);
+        HttpResponse<?> response = controller.create(request, "valid-key-1", API_KEY, null, null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatus());
         assertTrue(response.body() instanceof Problem problem && problem.status() == 400);
@@ -128,12 +129,25 @@ class PaymentSimulationControllerUnitTest {
     void missingTenantHeaderWithASingleBoundTenantReachesTheServiceWithThatTenant() {
         ApiPaymentService service = mock(ApiPaymentService.class);
         StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
-        when(service.submit(any(), anyString(), org.mockito.ArgumentMatchers.eq("tenant-a")))
-                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false));
+        when(service.submit(any(), anyString(), org.mockito.ArgumentMatchers.eq("tenant-a"), any()))
+                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false, "corr-1"));
 
-        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, null);
+        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatus());
+    }
+
+    /** OBS-03: the response echoes back whatever correlationId the service resolved to. */
+    @Test
+    void successfulResponseEchoesTheResolvedCorrelationId() {
+        ApiPaymentService service = mock(ApiPaymentService.class);
+        StatusEntry entry = new StatusEntry("req-1", SimulationStatus.COMPLETED, null);
+        when(service.submit(any(), anyString(), anyString(), any()))
+                .thenReturn(new ApiPaymentService.SubmitResult(entry, false, false, "corr-echo-1"));
+
+        HttpResponse<?> response = controller(service).create(request, "valid-key-1", API_KEY, null, "corr-echo-1");
+
+        assertEquals("corr-echo-1", response.getHeaders().get(Headers.CORRELATION_ID));
     }
 
     private static PaymentSimulationController controller(ApiPaymentService service) {
