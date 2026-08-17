@@ -95,7 +95,7 @@ dependencies {
     // SEC-06: verifies the shipped logback.xml actually resolves LOG_LEVEL_APP at runtime
     // (JoranConfigurator against the real resource), not a hand-rolled inline config.
     testImplementation 'ch.qos.logback:logback-classic'
-    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-core:5.23.0'
     testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:kafka'
