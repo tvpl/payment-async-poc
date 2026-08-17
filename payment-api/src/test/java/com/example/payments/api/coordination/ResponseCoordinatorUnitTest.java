@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -225,6 +226,32 @@ class ResponseCoordinatorUnitTest {
         assertEquals(fastTerminal, fastFuture.get(1, TimeUnit.SECONDS),
                 "a stuck notification for another request must not delay this one");
         releaseStuck.countDown();
+    }
+
+    /**
+     * OBS-01: a lost pub/sub notification must not turn a finished result into a false timeout.
+     * Nothing here ever calls {@code complete()}/{@code onMessage()} - only {@code await()}'s own
+     * periodic re-poll of the store can surface the result, and the first re-poll deliberately
+     * finds nothing so this proves the loop keeps checking rather than giving up after one look.
+     */
+    @Test
+    void aRepollFindsATerminalResultThatArrivedWithoutAPublish() {
+        ApiProperties longerWait = new ApiProperties();
+        longerWait.setWaitTimeout(Duration.ofSeconds(2));
+        ResponseCoordinator patient = new ResponseCoordinator(mock(RedisClient.class), store, longerWait);
+        String requestId = "req-repoll";
+        StatusEntry terminal = new StatusEntry(requestId, SimulationStatus.COMPLETED, null);
+        CompletableFuture<StatusEntry> future = patient.register(requestId);
+        when(store.get(requestId)).thenReturn(Optional.empty(), Optional.of(terminal));
+
+        long start = System.nanoTime();
+        Optional<StatusEntry> result = patient.await(requestId, future);
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
+
+        assertEquals(Optional.of(terminal), result);
+        verify(store, times(2)).get(requestId);
+        assertTrue(elapsed.compareTo(Duration.ofSeconds(2)) < 0,
+                "result only surfaced at/after the full wait-timeout, not via re-poll: " + elapsed);
     }
 
     /**

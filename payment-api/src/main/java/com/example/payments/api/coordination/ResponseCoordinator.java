@@ -39,6 +39,9 @@ public class ResponseCoordinator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResponseCoordinator.class);
 
+    /** OBS-01: maximum gap between store re-polls while a waiter's future has not completed. */
+    private static final Duration REPOLL_INTERVAL = Duration.ofMillis(500);
+
     private final ConcurrentHashMap<String, CompletableFuture<StatusEntry>> waiters =
             new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler =
@@ -155,14 +158,36 @@ public class ResponseCoordinator {
     /**
      * Blocks (on the calling virtual thread) up to {@code timeout} for the result.
      *
+     * <p>OBS-01: the Redis pub/sub notification is at-most-once - a message can be lost (a
+     * subscribe race on reconnect, a dropped connection) without the underlying result ever
+     * being missing from the store. Waiting on the future alone would then time out into a false
+     * 202 even though the terminal result has been sitting in the store the whole time. Instead
+     * of one {@code future.get(timeout)}, the wait is chunked into polls of at most {@link
+     * #REPOLL_INTERVAL}: each timed-out chunk re-checks the store via {@link #completeFromStore}
+     * (which completes the future if a terminal result is there) before the next chunk, so a
+     * lost wake-up is caught well within the overall budget instead of only at its edge.
+     *
      * @return the terminal entry, or empty on timeout/shutdown.
      */
     public Optional<StatusEntry> await(String requestId, CompletableFuture<StatusEntry> future) {
-        Duration timeout = properties.getWaitTimeout();
+        long deadlineNanos = System.nanoTime() + properties.getWaitTimeout().toNanos();
         try {
-            return Optional.of(future.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
-        } catch (TimeoutException e) {
-            return Optional.empty();
+            while (true) {
+                long remainingNanos = deadlineNanos - System.nanoTime();
+                if (remainingNanos <= 0) {
+                    return Optional.empty();
+                }
+                long chunkMillis = Math.min(REPOLL_INTERVAL.toMillis(),
+                        Math.max(1, Duration.ofNanos(remainingNanos).toMillis()));
+                try {
+                    return Optional.of(future.get(chunkMillis, TimeUnit.MILLISECONDS));
+                } catch (TimeoutException e) {
+                    completeFromStore(requestId);
+                    if (future.isDone()) {
+                        return Optional.of(future.get());
+                    }
+                }
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return Optional.empty();
