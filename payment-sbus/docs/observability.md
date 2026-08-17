@@ -31,6 +31,8 @@ Métricas em `/prometheus` (autenticado). Os nomes abaixo são verificados contr
 
 **`sbus_end_to_end_latency` no p99 subindo com o p50 estável** indica cauda, não degradação geral — normalmente retry acontecendo em uma fração do tráfego, não lentidão do Core.
 
+**Pool PostgreSQL (Hikari)**: o indicator `postgresql-pool` em `/health` tenta adquirir uma conexão do pool com timeout curto (`sbus.health.pool-acquire-timeout`, default 2s) — distinto do indicator `postgresql`, que ignora o pool de propósito para checar o próprio PostgreSQL. As métricas `hikaricp_connections_active`/`_idle`/`_pending`/`_timeout` (padrão do `micronaut-jdbc-hikari` com Micrometer) alimentam o dashboard `ops/dashboards/postgres-pool.json` e o alerta [`postgres-pool.yml`](../ops/alerts/postgres-pool.yml). Runbook: [`postgres-pool.md`](../ops/runbooks/postgres-pool.md).
+
 Além das métricas próprias, acompanhe **consumer lag** por tópico e o **pool JDBC**: as transações aqui são curtas de propósito, então pool saturado costuma apontar para uma conexão presa em I/O, não para volume.
 
 ## Logs

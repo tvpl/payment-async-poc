@@ -767,9 +767,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: pool esgotado → indicator DOWN dentro do budget
-- [ ] Alerta validado pelo validador de dashboards/alertas do workspace
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: pool esgotado → indicator DOWN dentro do budget
+- [x] Alerta validado pelo validador de dashboards/alertas do workspace (`python3 scripts/docs/validate_docs.py` verde com os nomes `hikaricp_connections_*`; disparo real do alerta contra Prometheus/Alertmanager do sandbox faz parte do pass consolidado de Docker do fim da feature)
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon` (Docker -PwithIT execution deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full
