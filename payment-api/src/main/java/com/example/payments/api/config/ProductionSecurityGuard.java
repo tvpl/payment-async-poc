@@ -1,5 +1,6 @@
 package com.example.payments.api.config;
 
+import com.example.payments.api.filter.ApiKeyFilter;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
@@ -24,12 +25,15 @@ public final class ProductionSecurityGuard {
             @Value("${payment.security.clock-skew}") Duration clockSkew,
             @Value("${payment.security.enabled}") boolean apiKeyAuthEnabled,
             @Value("${payment.security.api-keys}") List<String> apiKeys,
+            @Value("${payments.avro.auto-register}") boolean avroAutoRegister,
             SecurityProperties securityProperties) {
-        validate(jwksUrl, issuer, audience, clockSkew, apiKeyAuthEnabled, apiKeys, securityProperties.getTenants());
+        validate(jwksUrl, issuer, audience, clockSkew, apiKeyAuthEnabled, apiKeys, avroAutoRegister,
+                securityProperties.getTenants());
     }
 
     static void validate(String jwksUrl, String issuer, String audience, Duration clockSkew,
-                         boolean apiKeyAuthEnabled, List<String> apiKeys, Map<String, List<String>> tenants) {
+                         boolean apiKeyAuthEnabled, List<String> apiKeys, boolean avroAutoRegister,
+                         Map<String, List<String>> tenants) {
         requireHttps("JWKS URL", jwksUrl);
         requireHttps("JWT issuer", issuer);
         if (audience == null || audience.isBlank()) {
@@ -50,6 +54,16 @@ public final class ProductionSecurityGuard {
                 throw new ConfigurationException(
                         "payment.security.api-keys must not be blank or the development default in production");
             }
+            if (!key.startsWith(ApiKeyFilter.HASH_PREFIX)) {
+                throw new ConfigurationException(
+                        "payment.security.api-keys must be " + ApiKeyFilter.HASH_PREFIX
+                                + "<hex> hashes in production (SEC-04); plaintext keys are dev-only");
+            }
+        }
+        if (avroAutoRegister) {
+            throw new ConfigurationException(
+                    "payments.avro.auto-register must be false in production (SEC-01): schema "
+                            + "governance is enforced by the registry, never inferred from a producer's payload");
         }
         validateTenants(tenants);
     }

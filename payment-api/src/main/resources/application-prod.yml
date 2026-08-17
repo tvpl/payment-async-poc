@@ -21,3 +21,9 @@ micronaut:
 payment:
   security:
     clock-skew: 0s
+
+# SEC-01: schema governance is the registry's job, never inferred from a producer's payload.
+# ProductionSecurityGuard fails boot if this is ever true in prod.
+payments:
+  avro:
+    auto-register: false

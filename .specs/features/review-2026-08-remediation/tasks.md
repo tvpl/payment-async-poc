@@ -475,9 +475,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Asserção de thread nos testes: filtro nunca roda em thread de event loop
-- [ ] ITs de admissão existentes verdes sem alteração de expectativa
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] Asserção de thread nos testes: filtro nunca roda em thread de event loop
+- [x] ITs de admissão existentes verdes sem alteração de expectativa
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full
@@ -498,8 +498,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Liveness medido < 500ms com admissão degradando (429/fração) em paralelo
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] Liveness medido < 500ms com admissão degradando (429/fração) em paralelo
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
 
 **Tests**: integration
 **Gate**: full
@@ -520,8 +520,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit: aceitação por hash, rejeição, boot prod com claro falha
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Unit: aceitação por hash, rejeição, boot prod com claro falha
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
@@ -542,9 +542,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Boot prod com auto-register true falha (teste de contexto)
-- [ ] Nível de log muda por env sem rebuild (teste de config)
-- [ ] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
+- [x] Boot prod com auto-register true falha (teste de contexto)
+- [x] Nível de log muda por env sem rebuild (teste de config)
+- [x] Gate check passes: `cd payment-api && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

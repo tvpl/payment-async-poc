@@ -120,7 +120,10 @@ class ProductionProfileIT {
                 Map.entry("micronaut.security.token.jwt.claims-validators.audience", "payment-api"),
                 Map.entry("payment.security.clock-skew", "0s"),
                 Map.entry("payment.security.enabled", true),
-                Map.entry("payment.security.api-keys", List.of("prod-issued-key")),
+                // SEC-04: production accepts only sha256:<hex> - sha256("prod-issued-key") below - never
+                // the plaintext credential in config. Callers still authenticate with the raw key.
+                Map.entry("payment.security.api-keys",
+                        List.of("sha256:5c7d1219dbfe41a8993897b29976bfa78408bb496727d7ad1794800cb1982eef")),
                 // sha256("prod-issued-key"): the binding for the sole production key above (T4/TEN-01-03).
                 Map.entry("payment.security.tenants.5c7d1219dbfe41a8993897b29976bfa78408bb496727d7ad1794800cb1982eef",
                         List.of("tenant-a")));
