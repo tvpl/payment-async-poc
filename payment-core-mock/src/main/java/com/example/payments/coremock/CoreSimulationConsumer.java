@@ -33,11 +33,21 @@ import java.time.ZoneOffset;
  * Simulated external Core. Consumes {@code ProcessPaymentSimulationCommand} (Avro),
  * fakes authorization + fee computation (with an occasional decline), and replies on
  * {@code payment.simulation.core.response}. Intentionally minimal.
+ *
+ * <p>{@code threadsValue} (SCAL-03): {@link #onCommand} deliberately sleeps for
+ * {@code decision.latencyMs()} to simulate a realistic Core response time — that sleep is real
+ * per-command work, not something to remove. What matters is what it SERIALIZES: on a
+ * single-threaded listener, every command in the topic queues up behind whichever one is
+ * currently sleeping, however many partitions exist. With {@code threads} &gt; 1, each thread
+ * owns its own share of the partitions and sleeps independently — the sleep still serializes
+ * commands that land on the SAME partition (ordering there is intentional), but no longer
+ * serializes the whole topic behind a single thread. Same default (3) as the SBUS listeners.
  */
 @KafkaListener(
         groupId = "payment-core-mock",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
+        threadsValue = "${core.kafka.consumers.command.threads:3}",
         errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.NONE))
 public class CoreSimulationConsumer {
 
@@ -68,6 +78,8 @@ public class CoreSimulationConsumer {
 
         CoreSimulationDecisionEngine.Decision decision =
                 decisionEngine.decide(env.requestId(), behavior.snapshot());
+        // SCAL-03: simulated Core latency, real per-command work — see the class javadoc for what
+        // this serializes (only this thread's own partitions) now that threads is configurable.
         Thread.sleep(decision.latencyMs());
 
         if (decision.outcome() == CoreSimulationDecisionEngine.Outcome.TRANSIENT_FAILURE) {

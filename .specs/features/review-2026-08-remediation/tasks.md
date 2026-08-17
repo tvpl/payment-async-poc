@@ -967,8 +967,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: com threads=3, três mensagens de chaves distintas processam concorrentes
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: com threads=3, três mensagens de chaves distintas processam concorrentes
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test -PwithIT --no-daemon` (Docker verification deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full

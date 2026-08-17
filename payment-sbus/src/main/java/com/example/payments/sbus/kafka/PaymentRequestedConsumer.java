@@ -37,11 +37,19 @@ import java.util.Map;
  * since {@code request_id UNIQUE} makes replaying an already-processed {@code Requested} record a
  * no-op (see {@code PaymentPersistenceService#persistRequested}); proven directly by
  * {@code ConsumerGroupReplayIsInertIT}.
+ *
+ * <p>{@code threadsValue} (SCAL-03): configurable consumer thread count for this group — each
+ * thread runs its own poll loop over a share of the topic's partitions, so distinct-key messages
+ * on distinct partitions process concurrently instead of behind a single thread. Default 3
+ * doubles the margin over the AD-007 capacity target without repartitioning later; production
+ * tunes it via env {@code SBUS_KAFKA_CONSUMERS_REQUESTED_THREADS} (Micronaut's standard
+ * dotted-to-uppercase-underscore mapping of {@code sbus.kafka.consumers.requested.threads}).
  */
 @KafkaListener(
         groupId = "payment-sbus-requested",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
+        threadsValue = "${sbus.kafka.consumers.requested.threads:3}",
         errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 4, retryDelay = "250ms"))
 public class PaymentRequestedConsumer {
 

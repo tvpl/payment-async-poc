@@ -28,11 +28,15 @@ import java.util.Map;
  * construction, since a Core response for a simulation that is already terminal (or unknown) is
  * ignored (see {@code PaymentSimulationService#handleCoreResponse}); proven directly by
  * {@code ConsumerGroupReplayIsInertIT}.
+ *
+ * <p>{@code threadsValue} (SCAL-03): see {@link PaymentRequestedConsumer}'s javadoc — same
+ * reasoning, this group's own default of 3.
  */
 @KafkaListener(
         groupId = "payment-sbus-core-response",
         offsetReset = OffsetReset.EARLIEST,
         offsetStrategy = OffsetStrategy.SYNC_PER_RECORD,
+        threadsValue = "${sbus.kafka.consumers.core-response.threads:3}",
         errorStrategy = @ErrorStrategy(value = ErrorStrategyValue.RETRY_ON_ERROR, retryCount = 4, retryDelay = "250ms"))
 public class CoreResponseConsumer {
 
