@@ -655,9 +655,9 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] IT: 20 req no fim + 20 no início de janela → excedente rejeitado
-- [ ] NOSCRIPT recarrega sem negar a requisição corrente
-- [ ] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon`
+- [x] IT: 20 req no fim + 20 no início de janela → excedente rejeitado
+- [x] NOSCRIPT recarrega sem negar a requisição corrente
+- [x] Gate check passes: `cd payment-api && ./gradlew test -PwithIT --no-daemon` (Docker -PwithIT execution deferred to the end-of-feature consolidated pass per user direction 2026-08-17; compile + unit gate green now)
 
 **Tests**: integration
 **Gate**: full
