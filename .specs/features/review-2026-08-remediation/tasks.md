@@ -700,8 +700,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Distribuição de N=100 atrasos com mesmo attempts tem dispersão ≥ 20%
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
+- [x] Distribuição de N=100 atrasos com mesmo attempts tem dispersão ≥ 20%
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick
