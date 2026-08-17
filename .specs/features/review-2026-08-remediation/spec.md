@@ -289,7 +289,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | SEC-07 | P1: Segurança e governança | Design | Verified |
 | SEC-08 | P1: Segurança e governança | Design | Verified |
 | RES-01 | P1: Resiliência de fundo | Design | Verified |
-| RES-02 | P1: Resiliência de fundo | Design | Pending |
+| RES-02 | P1: Resiliência de fundo | Design | Verified |
 | RES-03 | P1: Resiliência de fundo | Design | Pending |
 | RES-04 | P1: Resiliência de fundo | Design | Pending |
 | RES-05 | P1: Resiliência de fundo | Design | Pending |

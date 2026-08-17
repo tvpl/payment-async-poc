@@ -14,6 +14,12 @@ Métricas em `/prometheus` (autenticado). Os nomes abaixo são verificados contr
 | `sbus_dlq_unconfirmed_oldest_age_seconds` | gauge | Idade do item de DLQ não confirmado mais antigo |
 | `sbus_unrecoverable_message_total` | contador | Um registro cuja própria falha também não pôde ser persistida |
 | `sbus_end_to_end_latency` | timer (p50/p95/p99) | Do evento de solicitação até o evento final |
+| `sbus_outbox_housekeeping_purged_total` | contador | Linhas PUBLISHED purgadas por execuções de housekeeping do outbox |
+| `sbus_outbox_housekeeping_remaining` | gauge | Linhas PUBLISHED ainda elegíveis para purga ao fim da última execução (drenou tudo = 0; teto de tempo atingido = backlog restante) |
+| `sbus_housekeeping_idempotency_purged_total` | contador | Registros de `idempotency_record` purgados |
+| `sbus_housekeeping_idempotency_remaining` | gauge | Registros de `idempotency_record` ainda elegíveis ao fim da última execução |
+| `sbus_housekeeping_message_purged_total` | contador | Linhas terminais de `payment_sbus_message` purgadas |
+| `sbus_housekeeping_message_remaining` | gauge | Linhas terminais de `payment_sbus_message` ainda elegíveis ao fim da última execução |
 
 ## O que observar primeiro
 

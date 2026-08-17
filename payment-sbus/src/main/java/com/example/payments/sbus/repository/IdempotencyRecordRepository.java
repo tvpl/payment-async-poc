@@ -25,4 +25,8 @@ public interface IdempotencyRecordRepository extends CrudRepository<IdempotencyR
             WHERE id IN (SELECT id FROM idempotency_record WHERE created_at < :threshold LIMIT :limit)
             """, nativeQuery = true)
     int deleteCreatedBefore(Instant threshold, int limit);
+
+    /** RES-02: how many rows are still eligible after a housekeeping run stopped (drained or capped). */
+    @Query(value = "SELECT count(*) FROM idempotency_record WHERE created_at < :threshold", nativeQuery = true)
+    long countCreatedBefore(Instant threshold);
 }
