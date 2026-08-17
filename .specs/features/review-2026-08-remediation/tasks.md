@@ -812,8 +812,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Unit: log de risco não contém base64/payload; headers sanitizados
-- [ ] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
+- [x] Unit: log de risco não contém base64/payload; headers sanitizados
+- [x] Gate check passes: `cd payment-sbus && ./gradlew test --no-daemon`
 
 **Tests**: unit
 **Gate**: quick

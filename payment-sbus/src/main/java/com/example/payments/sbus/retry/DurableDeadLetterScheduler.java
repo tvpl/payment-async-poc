@@ -1,5 +1,6 @@
 package com.example.payments.sbus.retry;
 
+import com.example.payments.sbus.kafka.RetryPublisher;
 import com.example.payments.sbus.repository.OutboxEventRepository;
 import com.example.payments.sbus.support.Json;
 import jakarta.inject.Singleton;
@@ -31,7 +32,9 @@ public class DurableDeadLetterScheduler {
         Map<String, String> headers = new LinkedHashMap<>(sourceHeaders);
         headers.put("x-dlq-origin-topic", originTopic);
         headers.put("x-dlq-stage", stage);
-        headers.put("x-dlq-reason", String.valueOf(cause == null ? stage : cause.getMessage()));
+        // SEC-03: sanitized (truncated, payload-like runs redacted) before it becomes a
+        // persisted header — an exception message can otherwise echo raw input content.
+        headers.put("x-dlq-reason", RetryPublisher.sanitizeReason(cause == null ? stage : cause.getMessage()));
         String deduplicationKey = deduplicationKey(source, stage);
         String messageKey = source.key() == null || source.key().isBlank()
                 ? source.topic() + ':' + source.partition() + ':' + source.offset()

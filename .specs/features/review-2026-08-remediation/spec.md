@@ -281,11 +281,11 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | BUDG-03 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-04 | P1: Orçamentos de tempo | Design | Verified |
 | SEC-01 | P1: Segurança e governança | Design | Verified |
-| SEC-02 | P1: Segurança e governança | Design | Pending |
-| SEC-03 | P1: Segurança e governança | Design | Pending |
+| SEC-02 | P1: Segurança e governança | Design | Verified |
+| SEC-03 | P1: Segurança e governança | Design | Verified |
 | SEC-04 | P1: Segurança e governança | Design | Verified |
 | SEC-05 | P1: Segurança e governança | Design | Verified |
-| SEC-06 | P1: Segurança e governança | Design | Implementing |
+| SEC-06 | P1: Segurança e governança | Design | Verified |
 | SEC-07 | P1: Segurança e governança | Design | Verified |
 | SEC-08 | P1: Segurança e governança | Design | Verified |
 | RES-01 | P1: Resiliência de fundo | Design | Verified |

@@ -39,7 +39,7 @@ Além das métricas próprias, acompanhe **consumer lag** por tópico e o **pool
 
 Estruturados, propagando `requestId`, `correlationId`, `causationId` e `traceId` em todo o caminho de consumo e publicação. Nunca registre token, payload sensível, idempotency key integral ou conteúdo de `.env`.
 
-A exceção deliberada é a mensagem irrecuperável descrita acima: ela registra o payload em base64 justamente porque não há mais nenhum lugar durável para guardá-lo, e perdê-lo seria perder o pagamento.
+A mensagem irrecuperável descrita acima (`SBUS_MESSAGE_AT_RISK`) registra apenas o ponteiro recuperável do registro (`topic/partition/offset/key`, SEC-02) — nunca o payload em claro ou em base64. O registro em si permanece recuperável direto do Kafka nesse ponteiro enquanto o orçamento de retry mantiver o offset sem avançar; `x-retry-reason`/`x-dlq-reason` são truncados e têm trechos com aparência de payload redigidos antes de virar header ou coluna persistida (SEC-03).
 
 ## Tracing
 

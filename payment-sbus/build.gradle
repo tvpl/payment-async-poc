@@ -105,6 +105,10 @@ dependencies {
     // ConsumerErrorStrategyUnitTest can assert against the actual YAML-configured
     // max.poll.interval.ms instead of duplicating the value as a literal.
     testImplementation 'org.yaml:snakeyaml'
+    // Already a runtime dependency (logback.xml) — exposed to tests too so
+    // RetryPublisherUnitTest can attach a ListAppender and assert real log output never
+    // carries the payload (SEC-02), instead of only inspecting the code that builds it.
+    testImplementation 'ch.qos.logback:logback-classic'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
