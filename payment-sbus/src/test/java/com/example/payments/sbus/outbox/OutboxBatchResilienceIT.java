@@ -10,6 +10,7 @@ import com.example.payments.sbus.repository.OutboxEventRepository;
 import com.example.payments.sbus.support.Json;
 import com.redis.testcontainers.RedisContainer;
 import io.micronaut.context.ApplicationContext;
+import io.opentelemetry.api.trace.Tracer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,6 +67,7 @@ class OutboxBatchResilienceIT {
     private OutboxReaper reaper;
     private OutboxPublicationLock publicationLock;
     private Json json;
+    private Tracer tracer;
 
     @BeforeAll
     void start() {
@@ -79,6 +81,7 @@ class OutboxBatchResilienceIT {
         reaper = context.getBean(OutboxReaper.class);
         publicationLock = context.getBean(OutboxPublicationLock.class);
         json = context.getBean(Json.class);
+        tracer = context.getBean(Tracer.class);
     }
 
     @BeforeEach
@@ -305,7 +308,7 @@ class OutboxBatchResilienceIT {
 
         SbusMetrics metrics = mock(SbusMetrics.class);
         OutboxDispatcher dispatcher = new OutboxDispatcher(
-                claims, publisher, metrics, json, mock(RedisRateLimiter.class), publicationLock);
+                claims, publisher, metrics, json, mock(RedisRateLimiter.class), publicationLock, tracer);
         int published = dispatcher.dispatchBatch();
 
         assertEquals(1, published, "only fence-1, already sent before the fence was lost, counts as published");
@@ -359,7 +362,7 @@ class OutboxBatchResilienceIT {
     }
 
     private OutboxDispatcher dispatcher(KafkaPublisher publisher, RedisRateLimiter limiter) {
-        return new OutboxDispatcher(claims, publisher, mock(SbusMetrics.class), json, limiter, publicationLock);
+        return new OutboxDispatcher(claims, publisher, mock(SbusMetrics.class), json, limiter, publicationLock, tracer);
     }
 
     private static OutboxEvent pendingEvent(String identity, String topic) {

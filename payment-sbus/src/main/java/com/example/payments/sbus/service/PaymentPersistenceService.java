@@ -99,12 +99,12 @@ public class PaymentPersistenceService {
      */
     @Transactional
     public void persistReplayFinal(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
-                                   PaymentSbusMessage original, String eventType, String topic,
+                                   String traceparent, PaymentSbusMessage original, String eventType, String topic,
                                    byte[] finalBytes, String headers, String resultJson) {
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
             return;
         }
-        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId(),
+        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, traceparent, original.getSimulationId(),
                 original.getTenantId());
         replica.setStatus(original.getStatus());
         replica.setErrorCode(original.getErrorCode());
@@ -140,7 +140,7 @@ public class PaymentPersistenceService {
      */
     @Transactional
     public Optional<PaymentSbusMessage> registerReplayInFlight(EventEnvelope<PaymentSimulationRequestPayload> env,
-                                       String idempotencyKey, PaymentSbusMessage original) {
+                                       String idempotencyKey, String traceparent, PaymentSbusMessage original) {
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
             return Optional.empty();
         }
@@ -153,7 +153,7 @@ public class PaymentPersistenceService {
                     original.getRequestId(), original.getSimulationId());
             return Optional.of(fresh);
         }
-        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, original.getSimulationId(),
+        PaymentSbusMessage replica = newReplicaRow(env, idempotencyKey, traceparent, original.getSimulationId(),
                 original.getTenantId());
         replica.setStatus(SbusMessageStatus.PROCESSING);
         messageRepository.save(replica);
@@ -163,7 +163,8 @@ public class PaymentPersistenceService {
     }
 
     private PaymentSbusMessage newReplicaRow(EventEnvelope<PaymentSimulationRequestPayload> env,
-                                             String idempotencyKey, String simulationId, String tenantId) {
+                                             String idempotencyKey, String traceparent, String simulationId,
+                                             String tenantId) {
         PaymentSbusMessage replica = new PaymentSbusMessage();
         replica.setRequestId(env.requestId());
         replica.setCorrelationId(env.correlationId());
@@ -172,12 +173,13 @@ public class PaymentPersistenceService {
         replica.setIdempotencyKey(idempotencyKey);
         replica.setSimulationId(simulationId);
         replica.setPayload(json.toJson(env.payload()));
+        replica.setTraceparent(traceparent);
         return replica;
     }
 
     @Transactional
     public void persistRequested(EventEnvelope<PaymentSimulationRequestPayload> env, String tenantId,
-                                 String idempotencyKey, String simulationId, String fingerprint,
+                                 String idempotencyKey, String traceparent, String simulationId, String fingerprint,
                                  String eventType, String topic, byte[] commandBytes, String headers) {
         // Authoritative idempotency inside the tx (request_id UNIQUE is the backstop).
         if (messageRepository.findByRequestId(env.requestId()).isPresent()) {
@@ -209,6 +211,7 @@ public class PaymentPersistenceService {
         message.setSimulationId(simulationId);
         message.setStatus(SbusMessageStatus.PROCESSING);
         message.setPayload(json.toJson(env.payload()));
+        message.setTraceparent(traceparent);
         messageRepository.save(message);
 
         if (idempotencyKey != null && existingKeyRecord.isEmpty()) {

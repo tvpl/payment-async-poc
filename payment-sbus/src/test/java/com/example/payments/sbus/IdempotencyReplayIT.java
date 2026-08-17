@@ -270,7 +270,7 @@ class IdempotencyReplayIT {
         // "replay registrado": registerReplayInFlight runs with the STALE (still-PROCESSING)
         // snapshot captured above.
         var replayEnv = requestedEnvelope(replayRequestId, idempotencyKey);
-        var nowTerminal = persistence.registerReplayInFlight(replayEnv, idempotencyKey, staleOriginal);
+        var nowTerminal = persistence.registerReplayInFlight(replayEnv, idempotencyKey, null, staleOriginal);
 
         assertTrue(nowTerminal.isPresent(),
                 "registerReplayInFlight must detect the original already went terminal inside the "

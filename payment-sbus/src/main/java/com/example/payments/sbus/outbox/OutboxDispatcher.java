@@ -1,11 +1,21 @@
 package com.example.payments.sbus.outbox;
 
+import com.example.payments.common.events.Headers;
 import com.example.payments.common.events.Topics;
 import com.example.payments.sbus.ratelimit.RedisRateLimiter;
 import com.example.payments.sbus.domain.OutboxEvent;
 import com.example.payments.sbus.kafka.KafkaPublisher;
 import com.example.payments.sbus.metrics.SbusMetrics;
 import com.example.payments.sbus.support.Json;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
+import io.opentelemetry.context.propagation.TextMapGetter;
+import io.opentelemetry.context.propagation.TextMapSetter;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -38,12 +48,30 @@ public class OutboxDispatcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(OutboxDispatcher.class);
 
+    /** OBS-02: reads/writes the {@code traceparent} header on the plain string-map carrier the
+     * outbox already persists (see {@link #parseHeaders}) — never touches Kafka record headers
+     * directly, since the span must exist (and its OWN traceparent be computed) before the record
+     * is built. */
+    private static final TextMapGetter<Map<String, String>> HEADER_GETTER = new TextMapGetter<>() {
+        @Override
+        public Iterable<String> keys(Map<String, String> carrier) {
+            return carrier.keySet();
+        }
+
+        @Override
+        public String get(Map<String, String> carrier, String key) {
+            return carrier == null ? null : carrier.get(key);
+        }
+    };
+    private static final TextMapSetter<Map<String, String>> HEADER_SETTER = Map::put;
+
     private final OutboxClaimService claimService;
     private final KafkaPublisher publisher;
     private final SbusMetrics metrics;
     private final Json json;
     private final RedisRateLimiter coreCommandLimiter;
     private final OutboxPublicationLock publicationLock;
+    private final Tracer tracer;
 
     // RES-06: set by @PreDestroy so an ordered shutdown stops claiming new batches; currentBatch
     // tracks the batch this instance most recently claimed and has not fully processed yet, so
@@ -56,13 +84,15 @@ public class OutboxDispatcher {
                             SbusMetrics metrics,
                             Json json,
                             @Named("core-command") RedisRateLimiter coreCommandLimiter,
-                            OutboxPublicationLock publicationLock) {
+                            OutboxPublicationLock publicationLock,
+                            Tracer tracer) {
         this.claimService = claimService;
         this.publisher = publisher;
         this.metrics = metrics;
         this.json = json;
         this.coreCommandLimiter = coreCommandLimiter;
         this.publicationLock = publicationLock;
+        this.tracer = tracer;
     }
 
     public int dispatchBatch() {
@@ -175,7 +205,7 @@ public class OutboxDispatcher {
     private boolean publish(OutboxEvent event) {
         try {
             var result = publicationLock.executeIfAcquired(event.getId(), () -> {
-                publisher.send(event.getTopic(), event.getKey(), event.getPayload(), parseHeaders(event));
+                publishWithSpan(event);
                 return Boolean.TRUE;
             });
             if (result.isEmpty()) {
@@ -200,6 +230,35 @@ public class OutboxDispatcher {
                 LOG.warn("Outbox publish failed event={} (will retry)", event.getId(), e);
             }
             return false;
+        }
+    }
+
+    /**
+     * OBS-02: publish gets its OWN span ("outbox publish") rather than resuming the ingestion
+     * trace as a parent — a row can sit in the outbox for anywhere from milliseconds to minutes
+     * (backoff, lease waits, a slow batch ahead of it), and chaining it as a child would stretch
+     * the ingestion span's own duration to match however long that took. Instead this span links
+     * back to the ingestion context persisted on the row's own headers (if any — see {@code
+     * HeaderMap.from}), and stamps its OWN {@code traceparent} onto the record before sending, so
+     * the event a consumer receives always carries a fresh, currently-valid context rooted at the
+     * moment of publish, with a link an OTel backend can use to pivot back to the original request.
+     */
+    private void publishWithSpan(OutboxEvent event) {
+        Map<String, String> headers = parseHeaders(event);
+        Context ingestionContext = W3CTraceContextPropagator.getInstance()
+                .extract(Context.root(), headers, HEADER_GETTER);
+        Span ingestionSpan = Span.fromContextOrNull(ingestionContext);
+
+        SpanBuilder spanBuilder = tracer.spanBuilder("outbox publish").setSpanKind(SpanKind.PRODUCER);
+        if (ingestionSpan != null && ingestionSpan.getSpanContext().isValid()) {
+            spanBuilder.addLink(ingestionSpan.getSpanContext());
+        }
+        Span span = spanBuilder.startSpan();
+        try (Scope scope = span.makeCurrent()) {
+            W3CTraceContextPropagator.getInstance().inject(Context.current(), headers, HEADER_SETTER);
+            publisher.send(event.getTopic(), event.getKey(), event.getPayload(), headers);
+        } finally {
+            span.end();
         }
     }
 

@@ -76,7 +76,7 @@ public class PaymentSimulationService {
         Optional<PaymentSbusMessage> replayTarget =
                 persistence.findReplayTarget(tenantId, idempotencyKey, env.requestId(), fingerprint);
         if (replayTarget.isPresent()) {
-            resolveReplay(env, idempotencyKey, replayTarget.get());
+            resolveReplay(env, idempotencyKey, traceparent, replayTarget.get());
             return;
         }
 
@@ -90,7 +90,7 @@ public class PaymentSimulationService {
         byte[] commandBytes = avroSerde.serialize(Topics.CORE_COMMAND, AvroMapper.toAvroCommand(command));
         String headers = json.toJson(HeaderMap.from(command, traceparent));
 
-        persistence.persistRequested(env, tenantId, idempotencyKey, simulationId, fingerprint,
+        persistence.persistRequested(env, tenantId, idempotencyKey, traceparent, simulationId, fingerprint,
                 EventTypes.PROCESS_PAYMENT_SIMULATION_COMMAND, Topics.CORE_COMMAND, commandBytes, headers);
     }
 
@@ -105,13 +105,14 @@ public class PaymentSimulationService {
     }
 
     private void resolveReplay(EventEnvelope<PaymentSimulationRequestPayload> env, String idempotencyKey,
-                               PaymentSbusMessage original) {
+                               String traceparent, PaymentSbusMessage original) {
         if (!isTerminal(original.getStatus())) {
             // Original simulation still in flight (as of our last read): record the new requestId
             // against the same simulationId now, PROCESSING — persistFinal (see
             // handleCoreResponse) publishes its own terminal event for it once the Core responds,
             // same as any other row.
-            Optional<PaymentSbusMessage> nowTerminal = persistence.registerReplayInFlight(env, idempotencyKey, original);
+            Optional<PaymentSbusMessage> nowTerminal =
+                    persistence.registerReplayInFlight(env, idempotencyKey, traceparent, original);
             if (nowTerminal.isEmpty()) {
                 return;
             }
@@ -147,9 +148,9 @@ public class PaymentSimulationService {
         byte[] finalBytes = approved
                 ? avroSerde.serialize(finalTopic, AvroMapper.toAvroCompleted(finalEvent))
                 : avroSerde.serialize(finalTopic, AvroMapper.toAvroFailed(finalEvent));
-        String headers = json.toJson(HeaderMap.from(finalEvent, null));
+        String headers = json.toJson(HeaderMap.from(finalEvent, traceparent));
 
-        persistence.persistReplayFinal(env, idempotencyKey, original, finalType, finalTopic,
+        persistence.persistReplayFinal(env, idempotencyKey, traceparent, original, finalType, finalTopic,
                 finalBytes, headers, json.toJson(result));
     }
 
@@ -188,7 +189,11 @@ public class PaymentSimulationService {
             byte[] finalBytes = approved
                     ? avroSerde.serialize(finalTopic, AvroMapper.toAvroCompleted(finalEvent))
                     : avroSerde.serialize(finalTopic, AvroMapper.toAvroFailed(finalEvent));
-            String headers = json.toJson(HeaderMap.from(finalEvent, null));
+            // OBS-02: the traceparent captured at THIS row's own ingestion (persisted by
+            // persistRequested/persistReplayFinal), not the Core response's — the final event's
+            // trace context traces back to the request that originated it, not to the (unrelated)
+            // trace of whatever triggered the Core to answer now.
+            String headers = json.toJson(HeaderMap.from(finalEvent, message.getTraceparent()));
 
             persistence.persistFinal(message, approved, core.errorCode(), core.errorMessage(),
                     json.toJson(result), finalType, finalTopic, finalBytes, headers);
