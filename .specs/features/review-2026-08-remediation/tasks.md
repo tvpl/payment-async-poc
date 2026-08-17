@@ -1077,8 +1077,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] kubeconform verde localmente e no CI; manifest inválido reprovado (provado e revertido)
-- [ ] Fonte dos schemas documentada (gerados das CRDs oficiais se catálogo não cobrir)
+- [x] kubeconform verde localmente e no CI; manifest inválido reprovado (provado e revertido)
+- [x] Fonte dos schemas documentada (gerados das CRDs oficiais se catálogo não cobrir)
 
 **Tests**: none
 **Gate**: build
