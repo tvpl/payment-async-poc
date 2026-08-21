@@ -12,10 +12,13 @@ services:
   envoy:
     image: envoyproxy/envoy:v1.38.3@sha256:5f7c43e1147412fdb3af578c651c67478a3df818eae89d2261e707e06c209cdb
     command: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
-    environment:
-      # O entrypoint oficial troca para este UID antes de iniciar o processo.
-      ENVOY_UID: "101"
-      ENVOY_GID: "101"
+    # user: 101:101 (uid/gid "envoy" já embutido na imagem) em vez de ENVOY_UID/GID:
+    # o entrypoint oficial só troca de usuário quando inicia como root, executando
+    # antes um usermod/groupmod e um chown de /dev/stdout|stderr - ambos incompatíveis
+    # com read_only: true + cap_drop: ALL (write-lock num FS somente-leitura e CAP_CHOWN
+    # ausente). Partindo já como 101:101 pula esse trecho inteiro do entrypoint
+    # (USERID != 0 cai direto no `exec "$@"`), com o mesmo uid/gid final.
+    user: "101:101"
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
       - gateway-certs:/certs:ro
