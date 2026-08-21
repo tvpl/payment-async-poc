@@ -51,6 +51,27 @@
 - **Decision:** o gate alvo passa a ser 1.000 req/min sustentado por 15 minutos e spike de 2.000 req/min por 60 segundos, com latência média ≤ 300ms e p99 ≤ 10s (novo, não existia em AD-006). Admissão recalibrada: rota 20/s (era 200/s), tenant 10/s (era 50/s); o Core (`sbus.core.limit-for-period: 50`) fica inalterado, agora com 3× de folga em vez de ser o gargalo. Excesso continua `429`, `202` ou buffering limitado — nunca perda silenciosa aceita.
 - **Rationale:** decisão do usuário ("limite esperado esta alto, 10mil, pode ser 1000 por min") — o alvo de AD-006 estava alto demais para o propósito real do sistema. Junto com isso, a auditoria adversarial de 2026-08-13 invalidou o relatório CAP-02 vigente: ele media o rate limiter de um único tenant (50/s admitidos, 70% de 429), não capacidade do sistema, porque o k6 usava uma única API key. A recalibração da admissão e um gate honesto (k6 com ≥2 tenants, veredito reprova quando `429 > 1%` do steady) andam juntos — um alvo novo sem um gate honesto só trocaria o número errado por outro.
 
+### AD-008 — Tenant como conceito de domínio de primeira classe
+
+- **Status:** active
+- **Date:** 2026-08-21
+- **Decision:** o tenant efetivo de uma requisição é resolvido do binding credencial→tenants (`payment.security.tenants`, hash da API key → lista de tenants); o header declarativo `X-Tenant-Id` é sempre revalidado contra esse binding, nunca aceito como asserção de identidade por si só — comportamento idêntico com ou sem o gateway na frente (o Envoy só injeta o header a partir do claim JWT como defesa em profundidade adicional, T46/TEN-07). Idempotência, fingerprint, chaves de status e o `tenantId` do envelope de eventos são sempre compostos com o tenant efetivo; unicidade de idempotência no `payment-sbus` é por `(tenant_id, idempotency_key)`, nunca chave global.
+- **Rationale:** ancorar identidade na credencial (não no header) impede que um cliente force o tenant de outro; a revisão arquitetural 2026-08 encontrou vazamento cross-tenant como achado crítico (tenant B podia reutilizar a `Idempotency-Key` de A e herdar seu `requestId`/resultado/`409`) precisamente porque a idempotência anterior não tinha escopo de tenant algum.
+
+### AD-009 — `Idempotency-Key` obrigatória no contrato público
+
+- **Status:** active
+- **Date:** 2026-08-21
+- **Decision:** toda rota HTTP de escrita (`POST /payment-simulations`, `POST /v0/payment-simulations`) exige o header `Idempotency-Key` (`[A-Za-z0-9_-]{1,128}`), respondendo `400` quando ausente ou fora do padrão. A janela de idempotência efetiva é 24h (`payment.simulation.idempotency-ttl`), acima do TTL de status em cache (15m, `payment.simulation.status-ttl`).
+- **Rationale:** chave opcional tornava toda a proteção de idempotência elidível por quem simplesmente não a enviasse — o segundo achado crítico da revisão 2026-08. Tornar o header obrigatório fecha esse desvio sem introduzir uma chave gerada silenciosamente pelo servidor, que o cliente não controlaria e não poderia usar para detectar sua própria duplicata.
+
+### AD-010 — Estratégia de versionamento de API e de eventos
+
+- **Status:** active
+- **Date:** 2026-08-21
+- **Decision:** o path HTTP carrega o major somente quando diverge do major estável implícito corrente (hoje: `/payment-simulations` sem prefixo é a major estável; `/v0/payment-simulations` é uma major experimental anterior, gated por feature flag); toda rota que não for a major estável implícita emite `X-Api-Version` na resposta. No contrato de eventos, `eventVersion` é `major.minor` e cada consumer valida o major via `EnvelopeVersions.assertKnownMajor(...)`; major desconhecido é poison (DLQ direta), nunca processado às cegas. Detalhe completo e alternativas consideradas: [payment-api ADR-0002](../payment-api/docs/adr/0002-api-and-event-versioning-strategy.md).
+- **Rationale:** reaproveita o padrão `/v0`+header já emitidos (menor superfície nova); path só para major evita path explosion por mudanças menores; classificar major desconhecido como poison em vez de ignorar ou crashar torna um deploy divergente entre produtor/consumidor detectável, nunca processado às cegas.
+
 ## Handoff
 
 - **Feature**: `review-2026-08-remediation` (`.specs/features/review-2026-08-remediation/{spec,context,design,tasks}.md`) — **in progress**. Remediates every finding in `docs/architecture-review-2026-08.md` (2 critical, 10 high, 14 medium + lows) and adds a Kubernetes/Gateway-API path for the `gateway` boundary. 50 tasks across 9 phases; executing via the `tlc-spec-driven` skill with phase-batch sub-agents.

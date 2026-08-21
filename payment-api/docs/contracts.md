@@ -64,6 +64,12 @@ reentregue), nunca como mensagem envenenada.
 | `/health/liveness`, `/health/readiness` | GET | `200` anônimo |
 | `/prometheus` | GET | `200` autenticado |
 
+**Versionamento** (ver [ADR-0002](adr/0002-api-and-event-versioning-strategy.md)):
+o path só carrega o major quando diverge do major estável implícito -
+`/payment-simulations` é a major estável e não emite `X-Api-Version`;
+`/v0/payment-simulations` é uma major anterior, gated por `payment-api-v0`, e
+emite `X-Api-Version: v0` em toda resposta.
+
 Erros usam `application/problem+json`.
 
 **Janela de idempotência**: 24h (`payment.simulation.idempotency-ttl`), maior que

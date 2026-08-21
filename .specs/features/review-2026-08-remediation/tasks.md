@@ -1165,8 +1165,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] ADs registrados; ADR publicado; docs coerentes com a estratégia
-- [ ] `python3 scripts/docs/validate_docs.py` verde
+- [x] ADs registrados; ADR publicado; docs coerentes com a estratégia
+- [x] `python3 scripts/docs/validate_docs.py` verde
 
 **Tests**: none
 **Gate**: build
