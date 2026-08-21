@@ -140,9 +140,9 @@ static_resources:
                               retry_on: "5xx,reset,connect-failure,refused-stream"
                               num_retries: 2
                               per_try_timeout: 2s
-                          rate_limits:
-                            - actions: [ { remote_address: {} } ]
-                            - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
+                            rate_limits:
+                              - actions: [ { remote_address: {} } ]
+                              - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
                         # POST só re-tenta falhas que garantidamente não chegaram ao
                         # upstream (conexão recusada). Reenvio de 5xx fica proibido no
                         # gateway: a idempotência é do Edge, não desta camada.
@@ -156,9 +156,9 @@ static_resources:
                             retry_policy:
                               retry_on: "connect-failure,refused-stream"
                               num_retries: 2
-                          rate_limits:
-                            - actions: [ { remote_address: {} } ]
-                            - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
+                            rate_limits:
+                              - actions: [ { remote_address: {} } ]
+                              - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
                         - name: v0_payment_simulations
                           match: { prefix: "/v0/payment-simulations" }
                           route:
@@ -167,9 +167,9 @@ static_resources:
                             retry_policy:
                               retry_on: "connect-failure,refused-stream"
                               num_retries: 2
-                          rate_limits:
-                            - actions: [ { remote_address: {} } ]
-                            - actions: [ { generic_key: { descriptor_value: "v0-payment-simulations" } } ]
+                            rate_limits:
+                              - actions: [ { remote_address: {} } ]
+                              - actions: [ { generic_key: { descriptor_value: "v0-payment-simulations" } } ]
                         # Allowlist explícita: o que não está acima não existe através
                         # do gateway (/admin, /auth, /prometheus são só do operador).
                         - name: not_exposed
