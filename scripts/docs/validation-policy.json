@@ -12,6 +12,8 @@
     "gradle",
     "jq",
     "k6",
+    "kubeconform",
+    "kustomize",
     "make",
     "openssl",
     "psql",
