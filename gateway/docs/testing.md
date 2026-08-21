@@ -18,6 +18,10 @@ no ar. `make smoke` exige o stack completo (ver [operations.md](operations.md)).
 4. POST autenticado atravessa até o Core e devolve 200/202/422 com `requestId`.
 5. Polling do GET até desfecho terminal (`COMPLETED`/`FAILED`).
 6. `/health/liveness` passa sem token.
+7. Um `X-Tenant-Id` forjado pelo cliente é removido e sobrescrito pelo Envoy com
+   o claim `tenant_id` do JWT validado (TEN-07/K8S-04) antes de chegar ao Edge -
+   exige que a API key de teste esteja vinculada ao tenant `tenant-a` (o mesmo
+   claim dos usuários do realm), ver comentário de pré-requisitos em `smoke.sh`.
 
 ## Cenários manuais úteis
 

@@ -275,7 +275,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | TEN-04 | P1: Tenant e idempotência | Design | Verified |
 | TEN-05 | P1: Tenant e idempotência | Design | Verified |
 | TEN-06 | P1: Tenant e idempotência | Design | Verified |
-| TEN-07 | P1: Tenant e idempotência | Design | Pending |
+| TEN-07 | P1: Tenant e idempotência | Design | Verified |
 | BUDG-01 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-02 | P1: Orçamentos de tempo | Design | Verified |
 | BUDG-03 | P1: Orçamentos de tempo | Design | Verified |
@@ -308,7 +308,7 @@ lado; IT de evento com `eventVersion: 99.0` indo a DLQ.
 | K8S-01 | P2: Envoy Gateway em Kubernetes | Design | Verified |
 | K8S-02 | P2: Envoy Gateway em Kubernetes | Design | Verified |
 | K8S-03 | P2: Envoy Gateway em Kubernetes | Design | Verified |
-| K8S-04 | P2: Envoy Gateway em Kubernetes | Design | Pending |
+| K8S-04 | P2: Envoy Gateway em Kubernetes | Design | Verified |
 | K8S-05 | P2: Envoy Gateway em Kubernetes | Design | Pending |
 | API-01 | P3: Contrato e versionamento | Design | Pending |
 | API-02 | P3: Contrato e versionamento | Design | Verified |

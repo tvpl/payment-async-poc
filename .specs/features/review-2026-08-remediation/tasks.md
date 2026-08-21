@@ -1121,8 +1121,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `make config` verde; smoke prova header injetado chegando ao Edge (em ambiente com Docker)
-- [ ] Header forjado pelo cliente é sobrescrito pelo gateway
+- [x] `make config` verde; smoke prova header injetado chegando ao Edge (em ambiente com Docker)
+- [x] Header forjado pelo cliente é sobrescrito pelo gateway
 
 **Tests**: none
 **Gate**: build
