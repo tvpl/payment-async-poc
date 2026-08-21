@@ -19,13 +19,20 @@ sequenceDiagram
     participant Core as payment-core-mock
 
     C->>F: POST /payment-simulations
-    alt excede taxa
+    alt excede taxa (tenant/rota)
         F-->>C: 429 + Retry-After
     end
     F->>A: segue
-    A->>A: valida payload (400 se inválido)
-    A->>R: reserva idempotência (idem:{key})
-    alt chave já usada
+    A->>A: resolve tenant efetivo (X-Tenant-Id x binding da API key)
+    alt tenant não autorizado para a credencial
+        A-->>C: 403
+    end
+    A->>A: valida payload e Idempotency-Key obrigatória (400 se inválido)
+    A->>R: reserva idempotência (idem:{tenant}:{key})
+    alt mesma chave, payload diferente, mesmo tenant
+        A-->>C: 409
+    end
+    alt mesma chave, mesmo payload, mesmo tenant
         A-->>C: replay do requestId original
     end
     A->>R: status=PENDING
@@ -71,9 +78,10 @@ sequenceDiagram
 
 | Passo | Fronteira | O que acontece |
 |---|---|---|
-| Admissão | `payment-api` | Rate limit por taxa; excedente vira `429` |
-| Validação | `payment-api` | Bean Validation; inválido vira `400` (problem+json) |
-| Idempotência | `payment-api` | `SET NX` no Redis; duplicata replica o `requestId` original |
+| Admissão | `payment-api` | Rate limit por tenant e rota; excedente vira `429` |
+| Tenant | `payment-api` | Resolve o tenant efetivo (`X-Tenant-Id` x binding da API key); não autorizado vira `403` |
+| Validação | `payment-api` | Bean Validation + `Idempotency-Key` obrigatória; inválido vira `400` (problem+json) |
+| Idempotência | `payment-api` | `SET NX` no Redis, chave escopada por tenant (`idem:{tenant}:{key}`); mesmo payload replica o `requestId` original, payload diferente vira `409` |
 | Registro do waiter | `payment-api` | Cria o waiter antes de publicar |
 | Publicação | `payment-api` | `PaymentSimulationRequested` (Avro), key=`requestId` |
 | Read-after-register | `payment-api` | Cobre resposta ultrarrápida/replay |
@@ -93,11 +101,13 @@ Contrato de eventos (nomes, tópicos, payloads) está em [payment-contracts/docs
 |---|---|
 | **200 OK** | Resultado chegou no prazo e é `COMPLETED` (aprovado) |
 | **202 Accepted** | Timeout da espera; processamento segue assíncrono. Corpo traz `requestId` e `statusUrl` |
-| **400 Bad Request** | Payload inválido (Bean Validation). Corpo `application/problem+json` |
+| **400 Bad Request** | Payload inválido, `Idempotency-Key` ausente/fora do padrão, ou `X-Tenant-Id` obrigatório e ausente. Corpo `application/problem+json` |
+| **403 Forbidden** | `X-Tenant-Id` declarado fora do binding da API key |
+| **409 Conflict** | Mesma `(tenant, Idempotency-Key)` com payload diferente, dentro da janela de idempotência |
 | **422 Unprocessable Entity** | Resultado chegou no prazo e é `FAILED` (por exemplo, recusado pelo Core) |
-| **429 Too Many Requests** | Rate limit de admissão excedido. Header `Retry-After` |
-| **503 Service Unavailable** | Falha ao publicar no Kafka |
-| **404 Not Found** | `GET` de `requestId` desconhecido (nem Redis nem `payment-sbus`) |
+| **429 Too Many Requests** | Rate limit de admissão excedido (por tenant e rota). Header `Retry-After` |
+| **503 Service Unavailable** | Falha ao publicar no Kafka, ou (só no `GET`) nem Redis nem o fallback durável do `payment-sbus` responderam |
+| **404 Not Found** | `GET` de `requestId` desconhecido - Redis e `payment-sbus` responderam e nenhum o conhece |
 
 ## Ver também
 - [Arquitetura do workspace](workspace-architecture.md) · [Contratos de dados](data-ownership.md) · [Contratos entre fronteiras](resilience-contracts.md)

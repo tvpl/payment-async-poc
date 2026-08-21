@@ -1143,8 +1143,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `python3 scripts/docs/validate_docs.py` verde
-- [ ] Links, portas e variáveis novos validados pelo gate
+- [x] `python3 scripts/docs/validate_docs.py` verde
+- [x] Links, portas e variáveis novos validados pelo gate
 
 **Tests**: none
 **Gate**: build

@@ -21,6 +21,10 @@ payment-api (Edge) ── Kafka ── payment-sbus ── payment-core-mock
 O fluxo Edge → Sbus → serviços **não depende** desta camada: para testes rápidos,
 simplesmente não a suba e chame o Edge direto em `localhost:8080`, como sempre.
 
+Este README cobre o caminho **compose** (desenvolvimento local). Para o
+equivalente em **Kubernetes** (Gateway API/Envoy Gateway, com paridade
+semântica verificada em gate), ver [`k8s/README.md`](k8s/README.md).
+
 ## Subir
 
 Pré-requisito: sandbox e aplicações no ar (ver [ordem completa](docs/operations.md)).
@@ -53,6 +57,8 @@ fluxo completo POST + polling até desfecho terminal.
 | `certs/generate-certs.sh` | CA + certificados de servidor/cliente para o listener mTLS |
 | `scripts/smoke.sh` | prova E2E através do gateway |
 | `scripts/validate-config.py` | validação estrutural usada por `make config` e pelo CI |
+| `scripts/check-k8s-parity.py` | paridade semântica entre este compose e os manifests K8s |
+| `k8s/` | equivalente em CRDs do Envoy Gateway para Kubernetes - ver [k8s/README.md](k8s/README.md) |
 | `docs/` | arquitetura, configuração, segurança, operação e testes |
 
 ## Documentação

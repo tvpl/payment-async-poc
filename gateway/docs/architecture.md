@@ -23,10 +23,20 @@ de negócio para decidir.
 
 ## Decisões estruturais
 
-1. **Envoy estático, sem control plane.** O pedido desta camada é guardrail
-   simples, não plataforma. Um `envoy.yaml` estático e comentado é auditável e
-   suficiente; Envoy Gateway/K8s Gateway API entra quando houver Kubernetes de
-   verdade (ver ADR 0001).
+1. **Envoy estático, sem control plane, mais um caminho Kubernetes equivalente.**
+   O compose (`envoy.yaml` estático e comentado) é o caminho local, auditável e
+   suficiente para o guardrail em NON_PRODUCTION. [`k8s/`](../k8s/README.md)
+   traz o equivalente em CRDs do Envoy Gateway (Gateway, HTTPRoute,
+   SecurityPolicy, BackendTrafficPolicy, EnvoyProxy) para quando houver
+   Kubernetes de verdade - mesma allowlist, mesmo JWT, mesmas políticas de
+   tráfego, com paridade semântica verificada em gate
+   (`scripts/check-k8s-parity.py`). Overlay `sandbox` usa `kind` como exemplo
+   de cluster local; `prod-example` é ilustrativo, com placeholders que
+   precisam de valores reais antes de qualquer aplicação fora de um teste
+   descartável. Ver [ADR 0001](adr/0001-envoy-as-nonproduction-guardrail.md).
+   **Limite conhecido do caminho K8s**: sem equivalente ao listener mTLS do
+   compose (`edge_mtls`, porta 10443) - o mapeamento cobre allowlist, JWT e
+   políticas de tráfego, não mTLS de borda (ver [k8s/README.md](../k8s/README.md#limite-conhecido)).
 2. **Allowlist de rotas.** O que não está listado não existe através do gateway.
    Superfícies de operador (`/admin`, `/auth`, `/prometheus`) são acessadas
    direto no Edge, nunca pela borda pública.

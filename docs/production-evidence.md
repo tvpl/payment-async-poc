@@ -17,6 +17,8 @@ Resumo dos gaps de hardening já tratados no código, as garantias que resultam 
 | Latência de polling da outbox | Latência fim a fim | Poll-interval reduzido (documentado LISTEN/NOTIFY como evolução) | `payment-sbus` |
 | Retry bloqueando a partição principal | Stall sob falha transitória | Retry topics dedicados mais DLQ ao esgotar tentativas | `payment-sbus` |
 | Sem autenticação | Endpoint aberto | API key (`X-API-Key`) retorna `401` quando ausente/inválida | `payment-api` |
+| Idempotência sem escopo de tenant | Vazamento cross-tenant: tenant B podia reutilizar a `Idempotency-Key` de A e herdar seu `requestId`/resultado/`409` | Reserva, fingerprint e chaves de status compostas por `(tenant, key)`; unicidade por `(tenant_id, idempotency_key)` na migration do `payment-sbus` | `payment-api`, `payment-sbus` |
+| `Idempotency-Key` opcional | Requisição sem a chave desabilitava toda a proteção de idempotência | Header obrigatório (`400` se ausente ou fora de `[A-Za-z0-9_-]{1,128}`) em toda rota que a exige | `payment-api` |
 
 ## Garantias resultantes
 
@@ -29,7 +31,7 @@ Resumo dos gaps de hardening já tratados no código, as garantias que resultam 
 ## Responsabilidade de deploy/operação (checklist)
 
 - [ ] Kafka multi-broker: fator de replicação 3, `min.insync.replicas=2`, eleição de líder não limpa desabilitada. Exemplo ilustrativo em [`sandbox/deploy/docker-compose.kafka-cluster.example.yml`](../sandbox/deploy/docker-compose.kafka-cluster.example.yml), mantido pela fronteira `sandbox` (não testado neste repositório como cluster real).
-- [ ] TLS: terminar em gateway/service mesh (recomendado) ou habilitar TLS na aplicação e SASL/SSL no Kafka. Hoje os listeners locais são texto plano, apenas para desenvolvimento. A fronteira [`gateway`](../gateway/README.md) demonstra a terminação de borda (mTLS + OIDC/JWT no Envoy) em modo `NON_PRODUCTION`; TLS interno (gateway→Edge, Kafka, Redis, Postgres) segue pendente.
+- [ ] TLS: terminar em gateway/service mesh (recomendado) ou habilitar TLS na aplicação e SASL/SSL no Kafka. Hoje os listeners locais são texto plano, apenas para desenvolvimento. A fronteira [`gateway`](../gateway/README.md) demonstra a terminação de borda (mTLS + OIDC/JWT no Envoy) em modo `NON_PRODUCTION`, tanto via compose local quanto via manifests [Gateway API/Kubernetes](../gateway/k8s/README.md) (overlay `prod-example` ilustrativo); TLS interno (gateway→Edge, Kafka, Redis, Postgres) segue pendente.
 - [ ] AuthN/AuthZ: trocar a API key por JWT/OAuth2 mais mTLS entre fronteiras. A API key é um exemplo funcional, não o alvo de produção. O desenho de borda (canal via Envoy/Keycloak, aplicação via API key) está demonstrado no [`gateway`](../gateway/README.md); a autenticação **entre fronteiras internas** continua pendente.
 - [ ] Segredos: senhas de Postgres/Redis e chaves de API via secret manager, nunca em YAML versionado.
 - [ ] Dimensionamento: ajustar pool de conexões, concorrência dos consumers e limite do rate limiter à capacidade real do Core.

@@ -37,13 +37,49 @@ kustomize build gateway/k8s/overlays/prod-example
 | --- | --- | --- |
 | Namespace | `payment-gateway-sandbox` | `payment-gateway` |
 | Listener | só HTTP (porta 80), igual ao base | soma um listener HTTPS (porta 443, `tls.mode: Terminate`) via `certificateRefs` para um Secret `payment-gateway-tls` — **placeholder**: o Secret não é criado aqui, normalmente vem de cert-manager |
-| Exposição do Envoy | `EnvoyProxy.provider.kubernetes.envoyService.type: NodePort` — kind não tem load balancer de nuvem; mapeie a NodePort para o host via `extraPortMappings` na config do kind | `type: LoadBalancer` (default do CRD) + anotação ilustrativa de provider de nuvem |
+| Exposição do Envoy | `EnvoyProxy.provider.kubernetes.envoyService.type: NodePort` — kind não tem load balancer de nuvem; acesso local via `kubectl port-forward` (ver [Aplicar num cluster kind](#aplicar-num-cluster-kind)) | `type: LoadBalancer` (default do CRD) + anotação ilustrativa de provider de nuvem |
 | Réplicas | default do CRD (1) | `envoyDeployment.replicas: 3` |
 | Issuer/JWKS do JWT | `http://keycloak.payment-gateway-sandbox.svc.cluster.local/realms/payments` — Keycloak no mesmo cluster/namespace | `https://keycloak.example.com/realms/payments` — **placeholder**, troque pelo domínio real do IdP |
 
 `prod-example` é ilustrativo por definição: os placeholders (`example.com`, o nome
 do Secret TLS) precisam ser substituídos por valores reais do ambiente antes de
 qualquer aplicação fora de um teste descartável.
+
+## Aplicar num cluster kind
+
+Exemplo completo, do zero, com [`kind`](https://kind.sigs.k8s.io/) como cluster
+local (o mesmo papel que o compose cumpre para o caminho não-K8s):
+
+```bash
+kind create cluster --name payment-gateway-sandbox
+
+# Controller do Envoy Gateway (cria a GatewayClass "eg" referenciada por base/gateway.yaml).
+helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.2.0 \
+  -n envoy-gateway-system --create-namespace
+kubectl wait --timeout=5m -n envoy-gateway-system deployment/envoy-gateway --for=condition=Available
+
+kubectl create namespace payment-gateway-sandbox
+
+# Pré-requisitos que este repositório não publica neste cluster (ver acima):
+#   - Service "payment-api" na porta 8080, neste namespace
+#   - Keycloak com o realm-payments.json (claim tenant_id, T46) alcançável pela
+#     URL fixada no overlay (keycloak.payment-gateway-sandbox.svc.cluster.local)
+
+kubectl apply -k gateway/k8s/overlays/sandbox
+kubectl wait --timeout=5m -n payment-gateway-sandbox gateway/payment-gateway --for=condition=Programmed
+
+# Acesso local: kind não expõe NodePort/LoadBalancer no host por padrão, então
+# port-forward é o caminho mais simples (funciona sempre, sem editar a config
+# do kind nem descobrir a porta do Service gerado). O Envoy Gateway cria o
+# Service do proxy fora do namespace do Gateway por padrão (tipicamente
+# envoy-gateway-system) - localize pelas labels em vez de assumir o namespace:
+kubectl get svc -A -l gateway.envoyproxy.io/owning-gateway-name=payment-gateway,gateway.envoyproxy.io/owning-gateway-namespace=payment-gateway-sandbox
+kubectl port-forward -n <namespace-encontrado-acima> svc/<service-encontrado-acima> 10000:80
+
+curl -i http://localhost:10000/health/liveness   # sem token, igual ao smoke do compose
+```
+
+Derrubar: `kind delete cluster --name payment-gateway-sandbox`.
 
 ## Validação
 
