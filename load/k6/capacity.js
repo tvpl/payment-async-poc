@@ -21,7 +21,18 @@
 import http from 'k6/http';
 import exec from 'k6/execution';
 import { Counter } from 'k6/metrics';
-import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
+
+// Inlined instead of importing https://jslib.k6.io/k6-utils/1.4.0/index.js: a timed capacity
+// gate should not depend on a live fetch of remote code at run time (an outage or slow response
+// from jslib.k6.io would either fail the run outright or skew the very numbers being measured
+// with a cold module-load delay). RFC 4122 v4, same algorithm k6-utils itself uses.
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 const BASE_URLS = (__ENV.BASE_URLS || 'http://localhost:8080').split(',');
 // AUD-30: API_KEYS (comma-separated) replaces the single-tenant API_KEY. API_KEY is still read as
