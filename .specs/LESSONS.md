@@ -44,6 +44,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:159 (payment-sbus/test)
 - last seen: 2026-08-22T13:37:30Z
 
+### L-006 - Um teste de concorrência não deve provar 'processou em paralelo' comparando durações (razão de tempo contra baseline): a margem que separa serializado de concorrente encolhe num host lento/contendido até jitter comum cruzá-la. Prefira observar sobreposição real de threads (ex.: ThreadMXBean amostrando se ≥2 threads estão dentro do método-alvo no mesmo instante) — o sinal deixa de depender da velocidade do ambiente.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `payment-sbus/test` · harmful: 0
+- features: payment-requested-concurrency-it-flake
+- evidence: payment-sbus/src/test/java/com/example/payments/sbus/kafka/PaymentRequestedConsumerConcurrencyIT.java:118 (payment-sbus/test)
+- last seen: 2026-08-22T15:50:08Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

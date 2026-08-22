@@ -2781,7 +2781,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/PaymentRequestedConsumerConcurrencyIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/kafka/PaymentRequestedConsumerConcurrencyIT.java",
-      "sha256": "a28c635a4bf46100c565b5758f38952b91108702d54ecb74fc1fc1767cbccb0d"
+      "sha256": "26b5b5070c5e00dc54154562a2809b68870d5bac7a6e21e281c56d2dae711b48"
     },
     {
       "category": "tests",

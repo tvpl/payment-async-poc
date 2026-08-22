@@ -28,6 +28,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
@@ -35,6 +38,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,11 +50,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * topic pre-created with 3 partitions, three distinct-key messages — one per partition — must
  * process concurrently, not serialized one at a time behind a single consumer thread.
  *
- * <p>Proven by self-calibrated timing rather than a fixed threshold: first measures how long ONE
- * message alone takes end to end (publish -&gt; its row visible), THEN measures three messages
- * published back to back on three different partitions. Serialized, three would take roughly 3x
- * the single-message baseline; concurrent, roughly 1x — a generous margin between those two
- * absorbs jitter while still clearly distinguishing the two.
+ * <p>Proven by directly observing thread overlap, not by comparing wall-clock durations: a
+ * background sampler thread repeatedly dumps all live threads while the batch is in flight and
+ * counts how many are, at that sampled instant, inside {@link PaymentRequestedConsumer#receive}.
+ * Serialized processing can never show more than one thread there at once, however slow or fast
+ * the environment is; genuine concurrency will. This replaced an earlier version that compared
+ * batch duration against a single-message baseline (serialized ~3x, concurrent ~1x) — sound in
+ * principle, but the margin between those two shrinks on a slow/contended host to the point where
+ * ordinary jitter crosses it, so it both intermittently failed on real concurrent processing and
+ * risked passing on a genuine regression once the jitter went the other way. The thread-overlap
+ * signal is not a timing proxy at all, so host speed does not affect it.
  */
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -102,28 +112,72 @@ class PaymentRequestedConsumerConcurrencyIT {
     @Test
     void withThreeThreadsThreeDistinctKeyedMessagesOnThreePartitionsProcessConcurrently() throws Exception {
         // Warm-up: JIT/connection-pool/schema-registration costs on the FIRST message ever
-        // processed in this context would otherwise pollute the baseline measurement below.
+        // processed in this context are one-time and could otherwise hold a shared lock long
+        // enough to mask real overlap on the very first batch this context ever sees.
         publishAndAwait(0);
 
-        long baselineStart = System.nanoTime();
-        publishAndAwait(1);
-        Duration baseline = Duration.ofNanos(System.nanoTime() - baselineStart);
+        AtomicInteger maxObservedConcurrency = new AtomicInteger(0);
+        AtomicBoolean sampling = new AtomicBoolean(true);
+        Thread sampler = new Thread(() -> sampleUntilStopped(sampling, maxObservedConcurrency),
+                "receive-concurrency-sampler");
+        sampler.setDaemon(true);
 
         String[] requestIds = new String[PARTITIONS];
-        long batchStart = System.nanoTime();
-        for (int partition = 0; partition < PARTITIONS; partition++) {
-            requestIds[partition] = publish(partition);
+        sampler.start();
+        try {
+            for (int partition = 0; partition < PARTITIONS; partition++) {
+                requestIds[partition] = publish(partition);
+            }
+            for (String requestId : requestIds) {
+                await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
+                        assertTrue(messages.findByRequestId(requestId).isPresent()));
+            }
+        } finally {
+            sampling.set(false);
+            sampler.join(Duration.ofSeconds(5).toMillis());
         }
-        for (String requestId : requestIds) {
-            await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
-                    assertTrue(messages.findByRequestId(requestId).isPresent()));
-        }
-        Duration batchElapsed = Duration.ofNanos(System.nanoTime() - batchStart);
 
-        assertTrue(batchElapsed.compareTo(baseline.multipliedBy(5).dividedBy(2)) < 0,
-                "three distinct-key messages across three partitions took " + batchElapsed
-                        + " against a single-message baseline of " + baseline
-                        + " — looks serialized, not concurrent under threads=" + PARTITIONS);
+        assertTrue(maxObservedConcurrency.get() >= 2,
+                "expected at least two of the three distinct-key messages to be observed inside "
+                        + "PaymentRequestedConsumer.receive at the same sampled instant (threads="
+                        + PARTITIONS + "); max concurrent observed = " + maxObservedConcurrency.get()
+                        + " — looks serialized, not concurrent");
+    }
+
+    /**
+     * Polls in a tight loop (no sleep) rather than on a fixed interval: the batch below completes
+     * in well under a second, so the sampler needs sub-millisecond resolution to have any real
+     * chance of catching an overlap — the same reason {@link ThreadMXBean#dumpAllThreads} isn't
+     * used here, since capturing every live thread's full stack on each iteration would dominate
+     * runtime instead of the batch itself. Depth is capped at 64: {@link PaymentRequestedConsumer#receive}
+     * is always near the top of its thread's stack (a Kafka listener callback with a handful of
+     * frames above the JDBC/network calls it makes), so 64 is a generous margin, not a tight fit.
+     */
+    private static void sampleUntilStopped(AtomicBoolean sampling, AtomicInteger maxObservedConcurrency) {
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        while (sampling.get()) {
+            int concurrentInReceive = 0;
+            for (ThreadInfo info : threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 64)) {
+                if (isInsideReceive(info)) {
+                    concurrentInReceive++;
+                }
+            }
+            int observed = concurrentInReceive;
+            maxObservedConcurrency.updateAndGet(previous -> Math.max(previous, observed));
+        }
+    }
+
+    private static boolean isInsideReceive(ThreadInfo info) {
+        if (info == null) {
+            return false;
+        }
+        for (StackTraceElement frame : info.getStackTrace()) {
+            if (PaymentRequestedConsumer.class.getName().equals(frame.getClassName())
+                    && "receive".equals(frame.getMethodName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void publishAndAwait(int partition) throws Exception {
