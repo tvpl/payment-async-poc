@@ -181,8 +181,17 @@ class RecoverableDeadLetterIT {
         assertEquals(2, payloads.getAllValues().size());
         assertArrayEquals(raw, payloads.getAllValues().get(0));
         assertArrayEquals(raw, payloads.getAllValues().get(1));
+        // OBS-02 (commit 200dab4): every outbox publish — including a reclaim-triggered
+        // republish of the very same row — gets its own fresh span and stamps its own
+        // traceparent (see OutboxDispatcher#publishWithSpan), so only the pre-dispatcher
+        // direct send below still carries the source "00-crash-trace" literal; the real
+        // republish through the dispatcher legitimately carries a different, freshly minted
+        // one. correlation/causation/stage are untouched by that stamping and stay identical.
+        assertEquals("00-crash-trace", headers.getAllValues().get(0).get(Headers.TRACEPARENT));
+        assertTrue(headers.getAllValues().get(1).get(Headers.TRACEPARENT).matches("00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}"),
+                "republished traceparent should be a freshly stamped W3C value, was: "
+                        + headers.getAllValues().get(1).get(Headers.TRACEPARENT));
         for (Map<String, String> sentHeaders : headers.getAllValues()) {
-            assertEquals("00-crash-trace", sentHeaders.get(Headers.TRACEPARENT));
             assertEquals("correlation-10", sentHeaders.get(Headers.CORRELATION_ID));
             assertEquals("causation-10", sentHeaders.get(Headers.CAUSATION_ID));
             assertEquals("poison", sentHeaders.get("x-dlq-stage"));
