@@ -1209,8 +1209,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Veredito PASS: 1.000 req/min sustentado, avg ≤ 300ms, p99 ≤ 10s, 429 ≤ 1% no steady
-- [ ] Relatório datado commitado
+- [x] Veredito PASS: 1.000 req/min sustentado, avg ≤ 300ms, p99 ≤ 10s, 429 ≤ 1% no steady
+- [x] Relatório datado commitado
 
 **Tests**: none
 **Gate**: build
