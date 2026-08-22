@@ -9,6 +9,8 @@ import io.micrometer.core.instrument.Timer;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,6 +38,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @Singleton
 public class SbusMetrics {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SbusMetrics.class);
+
     private final MeterRegistry registry;
     private final OutboxEventRepository outboxRepository;
     private final AvroSerde avroSerde;
@@ -59,8 +63,16 @@ public class SbusMetrics {
     @PostConstruct
     void init() {
         // One synchronous population at boot (not on a scrape thread) so the gauges below never
-        // read a stale zero before the first scheduled refresh fires.
-        refreshCachedCounts();
+        // read a stale zero before the first scheduled refresh fires. Best-effort only: a
+        // @PostConstruct failure aborts the whole application context, and Postgres being down
+        // at boot must never crash-loop the SBUS instead of starting degraded and retrying —
+        // the scheduled refresh below will populate the real counts once the database recovers.
+        try {
+            refreshCachedCounts();
+        } catch (Exception e) {
+            LOG.warn("Could not populate outbox metric gauges at startup, will retry on the next "
+                    + "scheduled refresh: {}", e.getMessage());
+        }
         registry.gauge("sbus_outbox_pending", cachedOutboxPending, AtomicLong::get);
         registry.gauge("sbus_dlq_unconfirmed", cachedDlqUnconfirmed, AtomicLong::get);
         registry.gauge("sbus_dlq_unconfirmed_oldest_age_seconds",
