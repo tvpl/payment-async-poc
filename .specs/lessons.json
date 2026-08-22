@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 8,
   "lessons": [
     {
       "id": "L-001",
@@ -112,6 +112,24 @@
       ],
       "created": "2026-08-22T15:50:08Z",
       "last_seen": "2026-08-22T15:50:08Z"
+    },
+    {
+      "id": "L-007",
+      "key": "gate_fail::nao rode pwithit de multiplas fronteiras cada uma com seus proprios testcontainers postgres kafka apicurio redis em paralelo neste sandbox de 4 cpus 3 suites concorrentes chegaram a load average 500 e produziram um falso negativo no paymentrequestedconsumerconcurrencyit thread overlap sampler starved nao defeito real mesma suite passou limpa em isolamento logo depois sequencie gates pesados com testcontainers verifique cat proc loadavg e free h antes de rodar mais um",
+      "text": "Não rode -PwithIT de múltiplas fronteiras (cada uma com seus próprios Testcontainers: Postgres+Kafka+Apicurio+Redis) em paralelo neste sandbox de 4 CPUs — 3 suítes concorrentes chegaram a load average 500+ e produziram um falso negativo no PaymentRequestedConsumerConcurrencyIT (thread-overlap sampler starved, não defeito real: mesma suíte passou limpa em isolamento logo depois). Sequencie gates pesados com Testcontainers; verifique 'cat /proc/loadavg' e 'free -h' antes de rodar mais um.",
+      "signal": "gate_fail",
+      "scope": "process",
+      "status": "candidate",
+      "features": [
+        "workspace-boundary-reverification"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "sandbox/session-note:2026-08-22 (process)"
+      ],
+      "created": "2026-08-22T21:03:45Z",
+      "last_seen": "2026-08-22T21:03:45Z"
     }
   ]
 }

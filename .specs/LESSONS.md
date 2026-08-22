@@ -50,6 +50,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: payment-sbus/src/test/java/com/example/payments/sbus/kafka/PaymentRequestedConsumerConcurrencyIT.java:118 (payment-sbus/test)
 - last seen: 2026-08-22T15:50:08Z
 
+### L-007 - Não rode -PwithIT de múltiplas fronteiras (cada uma com seus próprios Testcontainers: Postgres+Kafka+Apicurio+Redis) em paralelo neste sandbox de 4 CPUs — 3 suítes concorrentes chegaram a load average 500+ e produziram um falso negativo no PaymentRequestedConsumerConcurrencyIT (thread-overlap sampler starved, não defeito real: mesma suíte passou limpa em isolamento logo depois). Sequencie gates pesados com Testcontainers; verifique 'cat /proc/loadavg' e 'free -h' antes de rodar mais um.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `process` · harmful: 0
+- features: workspace-boundary-reverification
+- evidence: sandbox/session-note:2026-08-22 (process)
+- last seen: 2026-08-22T21:03:45Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
