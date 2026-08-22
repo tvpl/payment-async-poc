@@ -1187,8 +1187,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `verify-workspace.sh` estágios estruturais + validate_docs + governança verdes
-- [ ] Tabela da revisão com status por achado
+- [x] `verify-workspace.sh` estágios estruturais + validate_docs + governança verdes
+- [x] Tabela da revisão com status por achado
 
 **Tests**: none
 **Gate**: build
