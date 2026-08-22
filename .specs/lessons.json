@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 4,
+  "next_id": 6,
   "lessons": [
     {
       "id": "L-001",
@@ -58,6 +58,42 @@
       ],
       "created": "2026-08-14T17:08:32Z",
       "last_seen": "2026-08-14T17:08:32Z"
+    },
+    {
+      "id": "L-004",
+      "key": "gate_fail::um pool de teste com maximum pool size 1 nao sobe com micronaut flyway o flyway migra dentro da criacao do bean datasource e abre uma segunda conexao getmigrationconnection com a do schema history ainda checked out dimensione o pool em 2 e exaure segurando todas as conexoes",
+      "text": "Um pool de teste com maximum-pool-size=1 não sobe com micronaut-flyway: o Flyway migra dentro da criação do bean DataSource e abre uma segunda conexão (getMigrationConnection) com a do schema history ainda checked-out; dimensione o pool em 2 e exaure segurando todas as conexões.",
+      "signal": "gate_fail",
+      "scope": "payment-sbus/test",
+      "status": "candidate",
+      "features": [
+        "hikari-pool-health-it-red"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:174 (payment-sbus/test)"
+      ],
+      "created": "2026-08-22T13:37:30Z",
+      "last_seen": "2026-08-22T13:37:30Z"
+    },
+    {
+      "id": "L-005",
+      "key": "gate_fail::com micronaut data jdbc no classpath o bean datasource devolve conexoes context managed cujo close lanca noconnectionexception fora de connectable transactional teste que precisa de checkout cru deve desembrulhar via datasourceresolver resolve ou vaza cada conexao que pega",
+      "text": "Com micronaut-data-jdbc no classpath, o bean DataSource devolve conexões context-managed cujo close() lança NoConnectionException fora de @Connectable/@Transactional; teste que precisa de checkout cru deve desembrulhar via DataSourceResolver.resolve(...) ou vaza cada conexão que pega.",
+      "signal": "gate_fail",
+      "scope": "payment-sbus/test",
+      "status": "candidate",
+      "features": [
+        "hikari-pool-health-it-red"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:159 (payment-sbus/test)"
+      ],
+      "created": "2026-08-22T13:37:30Z",
+      "last_seen": "2026-08-22T13:37:30Z"
     }
   ]
 }

@@ -32,6 +32,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: scripts/e2e/payment-failures/scenarios/crash_recovery.sh:48 (outbox-crash-window-reclaim) (e2e)
 - last seen: 2026-08-14T17:08:32Z
 
+### L-004 - Um pool de teste com maximum-pool-size=1 não sobe com micronaut-flyway: o Flyway migra dentro da criação do bean DataSource e abre uma segunda conexão (getMigrationConnection) com a do schema history ainda checked-out; dimensione o pool em 2 e exaure segurando todas as conexões.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `payment-sbus/test` · harmful: 0
+- features: hikari-pool-health-it-red
+- evidence: payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:174 (payment-sbus/test)
+- last seen: 2026-08-22T13:37:30Z
+
+### L-005 - Com micronaut-data-jdbc no classpath, o bean DataSource devolve conexões context-managed cujo close() lança NoConnectionException fora de @Connectable/@Transactional; teste que precisa de checkout cru deve desembrulhar via DataSourceResolver.resolve(...) ou vaza cada conexão que pega.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `payment-sbus/test` · harmful: 0
+- features: hikari-pool-health-it-red
+- evidence: payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:159 (payment-sbus/test)
+- last seen: 2026-08-22T13:37:30Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

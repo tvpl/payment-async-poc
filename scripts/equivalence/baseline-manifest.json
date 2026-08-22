@@ -2745,7 +2745,7 @@
       "category": "tests",
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java",
-      "sha256": "f12412db0a8a9558413f977b1ebb26d424ca5ea168351d54e82ae441357a2ae0"
+      "sha256": "303ed3d28828c46363a696935678d31c0685415a908133015ad68aa5d1729636"
     },
     {
       "category": "tests",
