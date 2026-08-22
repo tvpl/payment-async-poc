@@ -5,9 +5,9 @@
     "migrations": 13,
     "schemas": 11,
     "scripts": 49,
-    "sources": 225,
-    "test_cases": 750,
-    "tests": 163,
+    "sources": 226,
+    "test_cases": 755,
+    "tests": 165,
     "topics": 8
   },
   "entries": [
@@ -1615,6 +1615,12 @@
     },
     {
       "category": "sources",
+      "id": "payment-sbus/src/main/java/com/example/payments/sbus/config/FlywayPoolSizeGuard.java",
+      "path": "payment-sbus/src/main/java/com/example/payments/sbus/config/FlywayPoolSizeGuard.java",
+      "sha256": "e2786012527b9452a7a13aefdaa0e90fbe610809c7e8901111ea105cf8f94a02"
+    },
+    {
+      "category": "sources",
       "id": "payment-sbus/src/main/java/com/example/payments/sbus/config/HousekeepingProperties.java",
       "path": "payment-sbus/src/main/java/com/example/payments/sbus/config/HousekeepingProperties.java",
       "sha256": "d5f399a5a836cc648f713b64f8792ea5fde32970989f28e8ac3397cf1fe1a4ce"
@@ -2710,6 +2716,18 @@
       "id": "payment-sbus/src/test/java/com/example/payments/sbus/config/DependencyPolicyIT.java",
       "path": "payment-sbus/src/test/java/com/example/payments/sbus/config/DependencyPolicyIT.java",
       "sha256": "02e5ffde9b6705547c35ea59a9fd75fe57cdcd9b0b3eec64b15718a2fe08a0e3"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/config/FlywayPoolSizeGuardIT.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/config/FlywayPoolSizeGuardIT.java",
+      "sha256": "ac695348b9189397daa11e37c7ef9b46457aa2e4eec8a5fbf73d11b89d1ad8bc"
+    },
+    {
+      "category": "tests",
+      "id": "payment-sbus/src/test/java/com/example/payments/sbus/config/FlywayPoolSizeGuardUnitTest.java",
+      "path": "payment-sbus/src/test/java/com/example/payments/sbus/config/FlywayPoolSizeGuardUnitTest.java",
+      "sha256": "7f0e2d81a44d21c5fc6e14297a28a8059c6827464bf3ea4bba30432a54624ed6"
     },
     {
       "category": "tests",
