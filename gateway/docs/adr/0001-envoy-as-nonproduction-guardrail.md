@@ -30,7 +30,13 @@ Faltava uma camada que tornasse essa separação visível e testável ponta a po
   que aqui são ~300 linhas auditáveis de configuração estática. O desenho das
   rotas/filtros migra 1:1 para HTTPRoute/SecurityPolicy/BackendTrafficPolicy
   quando houver K8s; a decisão de *semântica* (o que a borda faz) fica
-  registrada aqui e sobrevive à troca de mecanismo.
+  registrada aqui e sobrevive à troca de mecanismo. **Atualização (K8S-01..05,
+  2026-08)**: esse caminho agora existe como um segundo path, não mais só uma
+  alternativa hipotética - ver [`k8s/`](../../k8s/README.md). O compose
+  continua sendo o guardrail padrão para desenvolvimento local; os manifests
+  K8s existem para quem já tem um cluster e quer a paridade semântica
+  verificada em gate, sem exigir Kubernetes como pré-requisito de ninguém que
+  só quer rodar o workspace localmente.
 - **Kong/nginx**: perderiam a simetria com o ecossistema Envoy (mesmo modelo de
   circuit breaking, rate limit service e telemetria que um mesh usaria).
 - **Embutir OIDC no Edge**: contamina a aplicação com preocupação de canal e

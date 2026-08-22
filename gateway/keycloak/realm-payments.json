@@ -22,7 +22,10 @@
       "credentials": [
         { "type": "password", "value": "alice-change-me", "temporary": false }
       ],
-      "realmRoles": ["payments-user"]
+      "realmRoles": ["payments-user"],
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
     },
     {
       "username": "ops-admin",
@@ -34,13 +37,16 @@
       "credentials": [
         { "type": "password", "value": "ops-admin-change-me", "temporary": false }
       ],
-      "realmRoles": ["payments-admin", "payments-user"]
+      "realmRoles": ["payments-admin", "payments-user"],
+      "attributes": {
+        "tenant_id": ["tenant-a"]
+      }
     }
   ],
   "clientScopes": [
     {
       "name": "payment-gateway-aud",
-      "description": "Adiciona a audience payment-gateway esperada pelo provider JWT do Envoy",
+      "description": "Adiciona a audience payment-gateway esperada pelo provider JWT do Envoy, e o claim tenant_id que o Envoy injeta como X-Tenant-Id (TEN-07/K8S-04)",
       "protocol": "openid-connect",
       "attributes": {
         "include.in.token.scope": "false",
@@ -56,6 +62,21 @@
             "included.custom.audience": "payment-gateway",
             "access.token.claim": "true",
             "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "tenant-id-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false",
+            "multivalued": "false"
           }
         }
       ]

@@ -34,7 +34,7 @@ def envoy_route(name: str, prefix: str, timeout: str, method: str | None = None,
         "route": {"cluster": "payment_api", "timeout": timeout},
     }
     if rate_limit_key:
-        route["rate_limits"] = [
+        route["route"]["rate_limits"] = [
             {"actions": [{"remote_address": {}}]},
             {"actions": [{"generic_key": {"descriptor_value": rate_limit_key}}]},
         ]

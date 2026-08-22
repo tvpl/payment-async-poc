@@ -1,9 +1,9 @@
 
-         /\      Grafana   /‾‾/
-    /\  /  \     |\  __   /  /
-   /  \/    \    | |/ /  /   ‾‾\
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
   /          \   |   (  |  (‾)  |
- / __________ \  |_|\_\  \_____/
+ / __________ \  |_|\_\  \_____/ 
 
      execution: local
         script: /load/k6/capacity.js
@@ -13,247 +13,247 @@
               * spike: 33.00 iterations/s for 1m0s (maxVUs: 150-500, gracefulStop: 30s)
 
 
-running (0m01.0s), 008/150 VUs, 25 complete and 0 interrupted iterations
-spike   [   2% ] 008/150 VUs  0m01.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:46Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c451fe74-ea48-406b-9306-6ff239a36934\",\"idempotencyKey\":\"03614f7b-1009-4cb6-91ce-000a3b211ff6\"}" source=console
+running (0m00.9s), 004/150 VUs, 27 complete and 0 interrupted iterations
+spike   [   2% ] 004/150 VUs  0m00.9s/1m0s  33.00 iters/s
 
-running (0m02.0s), 012/150 VUs, 54 complete and 0 interrupted iterations
-spike   [   3% ] 012/150 VUs  0m02.0s/1m0s  33.00 iters/s
+running (0m01.9s), 012/150 VUs, 52 complete and 0 interrupted iterations
+spike   [   3% ] 012/150 VUs  0m01.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:09Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"ebb4e894-70ce-4c7c-99e2-78080c173a17\",\"idempotencyKey\":\"6e2aeb05-b184-4ea8-af7d-217e3b78f78d\"}" source=console
 
-running (0m03.0s), 011/150 VUs, 88 complete and 0 interrupted iterations
-spike   [   5% ] 011/150 VUs  0m03.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:47Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"70ab3907-ad5a-4c51-ac6c-bcdd307bceb2\",\"idempotencyKey\":\"eb032527-5d46-49ab-a694-b9c295f7fbe9\"}" source=console
+running (0m02.9s), 010/150 VUs, 87 complete and 0 interrupted iterations
+spike   [   5% ] 010/150 VUs  0m02.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:10Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"38789643-e82b-496d-8998-f3da6e7dd855\"}" source=console
 
-running (0m04.0s), 008/150 VUs, 124 complete and 0 interrupted iterations
-spike   [   7% ] 008/150 VUs  0m04.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:49Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"75906282-b48f-4f26-9c3a-65ff445e1c49\",\"idempotencyKey\":\"96c635e1-d2e6-42bb-bbe0-8f227953ac31\"}" source=console
+running (0m03.9s), 008/150 VUs, 122 complete and 0 interrupted iterations
+spike   [   7% ] 008/150 VUs  0m03.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:11Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"5cc31c63-b56c-4cbf-aa0a-8c614fe09b50\"}" source=console
 
-running (0m05.0s), 005/150 VUs, 160 complete and 0 interrupted iterations
-spike   [   8% ] 005/150 VUs  0m05.0s/1m0s  33.00 iters/s
+running (0m04.9s), 013/150 VUs, 150 complete and 0 interrupted iterations
+spike   [   8% ] 013/150 VUs  0m04.9s/1m0s  33.00 iters/s
 
-running (0m06.0s), 013/150 VUs, 185 complete and 0 interrupted iterations
-spike   [  10% ] 013/150 VUs  0m06.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:50Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"aca245e1-c2e5-4e60-8bdf-0fd39759f0fe\"}" source=console
+running (0m05.9s), 012/150 VUs, 184 complete and 0 interrupted iterations
+spike   [  10% ] 012/150 VUs  0m05.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:13Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"591a0e01-12f8-4db5-aaa9-68a2eca1d177\",\"idempotencyKey\":\"a4a85c7a-db73-4590-97ce-718529c3112f\"}" source=console
 
-running (0m07.0s), 011/150 VUs, 220 complete and 0 interrupted iterations
-spike   [  12% ] 011/150 VUs  0m07.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:52Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"06ecf960-ff45-47fe-ad20-454b2a3befb9\",\"idempotencyKey\":\"eaf741f4-a88e-40ff-b28c-96462c7a2c59\"}" source=console
+running (0m06.9s), 010/150 VUs, 219 complete and 0 interrupted iterations
+spike   [  12% ] 010/150 VUs  0m06.9s/1m0s  33.00 iters/s
 
-running (0m08.0s), 007/150 VUs, 257 complete and 0 interrupted iterations
-spike   [  13% ] 007/150 VUs  0m08.0s/1m0s  33.00 iters/s
+running (0m07.9s), 011/150 VUs, 251 complete and 0 interrupted iterations
+spike   [  13% ] 011/150 VUs  0m07.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:15Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"1be1b561-63d5-41f9-b992-b7149b7b3a77\",\"idempotencyKey\":\"fb756ea3-18e6-4760-97ff-8124148d36b5\"}" source=console
 
-running (0m09.0s), 007/150 VUs, 290 complete and 0 interrupted iterations
-spike   [  15% ] 007/150 VUs  0m09.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:54Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"e901717e-a338-45e7-9ee5-3d2798269ecd\",\"idempotencyKey\":\"764b8344-19e6-4fd7-8537-2459c7c43bac\"}" source=console
+running (0m08.9s), 011/150 VUs, 284 complete and 0 interrupted iterations
+spike   [  15% ] 011/150 VUs  0m08.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:16Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f9ad04f1-a418-4beb-afc2-04b1554be0c4\",\"idempotencyKey\":\"f6e51fd0-1123-4df6-8396-cb7a00f8e1c1\"}" source=console
 
-running (0m10.0s), 011/150 VUs, 319 complete and 0 interrupted iterations
-spike   [  17% ] 011/150 VUs  0m10.0s/1m0s  33.00 iters/s
+running (0m09.9s), 005/150 VUs, 323 complete and 0 interrupted iterations
+spike   [  17% ] 005/150 VUs  0m09.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:18Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"a8d535cc-e7d0-455a-a13a-213a93f76088\",\"idempotencyKey\":\"fdeb2d24-4107-4e4b-b141-1af0a5d1c1ee\"}" source=console
 
-running (0m11.0s), 011/150 VUs, 352 complete and 0 interrupted iterations
-spike   [  18% ] 011/150 VUs  0m11.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:55Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"75bb62e0-8c69-4669-840c-fabcf72a35c0\",\"idempotencyKey\":\"972af9d5-0ddf-4f70-9e94-b33fe75fb492\"}" source=console
+running (0m10.9s), 003/150 VUs, 358 complete and 0 interrupted iterations
+spike   [  18% ] 003/150 VUs  0m10.9s/1m0s  33.00 iters/s
 
-running (0m12.0s), 009/150 VUs, 387 complete and 0 interrupted iterations
-spike   [  20% ] 009/150 VUs  0m12.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:56Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"e4e630cf-b746-46e9-8010-97668ee4350d\"}" source=console
+running (0m11.9s), 007/150 VUs, 387 complete and 0 interrupted iterations
+spike   [  20% ] 007/150 VUs  0m11.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:19Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"4933dd66-b627-4c40-b483-238dfc6487bc\"}" source=console
 
-running (0m13.0s), 006/150 VUs, 423 complete and 0 interrupted iterations
-spike   [  22% ] 006/150 VUs  0m13.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:33:57Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"49e97403-1074-42cd-860a-798ffc62e98d\"}" source=console
+running (0m12.9s), 007/150 VUs, 420 complete and 0 interrupted iterations
+spike   [  22% ] 007/150 VUs  0m12.9s/1m0s  33.00 iters/s
 
-running (0m14.0s), 012/150 VUs, 450 complete and 0 interrupted iterations
-spike   [  23% ] 012/150 VUs  0m14.0s/1m0s  33.00 iters/s
+running (0m13.9s), 008/150 VUs, 452 complete and 0 interrupted iterations
+spike   [  23% ] 008/150 VUs  0m13.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:21Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b1f98bce-b35b-4286-a55c-00a46b2940cd\",\"idempotencyKey\":\"3ace22bd-e73f-40fb-a98b-c525934719ff\"}" source=console
 
-running (0m15.0s), 010/150 VUs, 485 complete and 0 interrupted iterations
-spike   [  25% ] 010/150 VUs  0m15.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:00Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"d591a0a0-55d6-4536-9733-fea20a3dea1c\",\"idempotencyKey\":\"757d298a-be4d-4c96-bc30-8d12c5142990\"}" source=console
+running (0m14.9s), 009/150 VUs, 484 complete and 0 interrupted iterations
+spike   [  25% ] 009/150 VUs  0m14.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:22Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"615f3fe5-d404-40bf-826d-a2bef7d7358d\",\"idempotencyKey\":\"39dbc424-f450-49de-a6ed-7f2c6b4abfba\"}" source=console
 
-running (0m16.0s), 008/150 VUs, 520 complete and 0 interrupted iterations
-spike   [  27% ] 008/150 VUs  0m16.0s/1m0s  33.00 iters/s
+running (0m15.9s), 013/150 VUs, 513 complete and 0 interrupted iterations
+spike   [  27% ] 013/150 VUs  0m15.9s/1m0s  33.00 iters/s
 
-running (0m17.0s), 007/150 VUs, 554 complete and 0 interrupted iterations
-spike   [  28% ] 007/150 VUs  0m17.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:01Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"265d5495-04ff-4d25-bdc3-fcbadb1e5787\"}" source=console
+running (0m16.9s), 011/150 VUs, 548 complete and 0 interrupted iterations
+spike   [  28% ] 011/150 VUs  0m16.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:24Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"7b66d748-2c78-47da-892c-88b93dda72ec\",\"idempotencyKey\":\"eadd94c2-d9c7-4fac-86a9-1a088293b289\"}" source=console
 
-running (0m18.0s), 011/150 VUs, 583 complete and 0 interrupted iterations
-spike   [  30% ] 011/150 VUs  0m18.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:02Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"853cfeea-a631-4e72-b762-3ab8fd672d9b\",\"idempotencyKey\":\"fd4d9005-39cf-4759-95aa-79b37bc98186\"}" source=console
+running (0m17.9s), 010/150 VUs, 582 complete and 0 interrupted iterations
+spike   [  30% ] 010/150 VUs  0m17.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:26Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"67b38646-2006-459b-96d3-a25a08cf4205\",\"idempotencyKey\":\"2b5eb475-7e3f-425a-81c7-1aace57032bd\"}" source=console
 
-running (0m19.0s), 009/150 VUs, 618 complete and 0 interrupted iterations
-spike   [  32% ] 009/150 VUs  0m19.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:03Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"c98b25e8-2e6e-4371-b47c-3be00f462b5b\"}" source=console
+running (0m18.9s), 008/150 VUs, 617 complete and 0 interrupted iterations
+spike   [  32% ] 008/150 VUs  0m18.9s/1m0s  33.00 iters/s
 
-running (0m20.0s), 007/150 VUs, 653 complete and 0 interrupted iterations
-spike   [  33% ] 007/150 VUs  0m20.0s/1m0s  33.00 iters/s
+running (0m19.9s), 013/150 VUs, 645 complete and 0 interrupted iterations
+spike   [  33% ] 013/150 VUs  0m19.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:27Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"04770562-81a6-434f-ad14-0e87d9d0673d\",\"idempotencyKey\":\"60229e97-26a4-4bf4-bfb7-675e7d9e22c2\"}" source=console
 
-running (0m21.0s), 012/150 VUs, 681 complete and 0 interrupted iterations
-spike   [  35% ] 012/150 VUs  0m21.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:05Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5b2b4515-f3a0-4190-88a2-52f797be4a54\",\"idempotencyKey\":\"70c915f7-dc89-4dc8-9002-1df9623dbfbf\"}" source=console
+running (0m20.9s), 012/150 VUs, 679 complete and 0 interrupted iterations
+spike   [  35% ] 012/150 VUs  0m20.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:28Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"558aa48e-e9f9-41b8-9a66-be619690c046\"}" source=console
 
-running (0m22.0s), 011/150 VUs, 715 complete and 0 interrupted iterations
-spike   [  37% ] 011/150 VUs  0m22.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:07Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"9bd19f3c-a77e-4658-92dc-d562f3b1426c\",\"idempotencyKey\":\"c611cd88-1aa9-42b4-9e7f-f7ec3ff044fe\"}" source=console
+running (0m21.9s), 009/150 VUs, 715 complete and 0 interrupted iterations
+spike   [  37% ] 009/150 VUs  0m21.9s/1m0s  33.00 iters/s
 
-running (0m23.0s), 008/150 VUs, 751 complete and 0 interrupted iterations
-spike   [  38% ] 008/150 VUs  0m23.0s/1m0s  33.00 iters/s
+running (0m22.9s), 013/150 VUs, 744 complete and 0 interrupted iterations
+spike   [  38% ] 013/150 VUs  0m22.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:30Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"8f92198e-7810-48de-915f-c7d29a919482\",\"idempotencyKey\":\"97dcf757-4a90-410b-a846-a1bb21ca3d5a\"}" source=console
+time="2026-08-22T11:35:31Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"8c84afc4-86d6-4b00-8c90-3f3287d1021d\"}" source=console
 
-running (0m24.0s), 007/150 VUs, 785 complete and 0 interrupted iterations
-spike   [  40% ] 007/150 VUs  0m24.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:08Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"e65609a6-7a0f-41af-83a7-b896e75598e4\"}" source=console
+running (0m23.9s), 012/150 VUs, 778 complete and 0 interrupted iterations
+spike   [  40% ] 012/150 VUs  0m23.9s/1m0s  33.00 iters/s
 
-running (0m25.0s), 013/150 VUs, 812 complete and 0 interrupted iterations
-spike   [  42% ] 013/150 VUs  0m25.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:10Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"2622c89d-80e3-4677-ba66-bf3ef50502bd\",\"idempotencyKey\":\"6fa9b1a6-9c79-4544-8cd1-ed29af56aeee\"}" source=console
+running (0m24.9s), 009/150 VUs, 814 complete and 0 interrupted iterations
+spike   [  42% ] 009/150 VUs  0m24.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:32Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"dbe9d61e-c912-4526-87f9-6e47a244578d\"}" source=console
 
-running (0m26.0s), 011/150 VUs, 847 complete and 0 interrupted iterations
-spike   [  43% ] 011/150 VUs  0m26.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:11Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6dbfa43f-f999-4363-9fd3-f80aa8695483\",\"idempotencyKey\":\"badbf9eb-b8bc-4a6f-abbb-89630c52d6cf\"}" source=console
+running (0m25.9s), 013/150 VUs, 843 complete and 0 interrupted iterations
+spike   [  43% ] 013/150 VUs  0m25.9s/1m0s  33.00 iters/s
 
-running (0m27.0s), 008/150 VUs, 883 complete and 0 interrupted iterations
-spike   [  45% ] 008/150 VUs  0m27.0s/1m0s  33.00 iters/s
+running (0m26.9s), 012/150 VUs, 877 complete and 0 interrupted iterations
+spike   [  45% ] 012/150 VUs  0m26.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:34Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"0e0165f2-d4d6-4aa1-97a4-b79545240c86\",\"idempotencyKey\":\"9ba05e7f-dc84-4d4e-aacb-33cd056d94a9\"}" source=console
 
-running (0m28.0s), 007/150 VUs, 917 complete and 0 interrupted iterations
-spike   [  47% ] 007/150 VUs  0m28.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:13Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"43183250-05cb-4f2e-9170-884dbde56996\",\"idempotencyKey\":\"de4da41c-547c-4d29-bdb7-7ff4059990ff\"}" source=console
+running (0m27.9s), 010/150 VUs, 912 complete and 0 interrupted iterations
+spike   [  47% ] 010/150 VUs  0m27.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:35Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"aea0cc5a-1242-4df6-b103-d13ef14e150c\"}" source=console
 
-running (0m29.0s), 013/150 VUs, 944 complete and 0 interrupted iterations
-spike   [  48% ] 013/150 VUs  0m29.0s/1m0s  33.00 iters/s
+running (0m28.9s), 007/150 VUs, 948 complete and 0 interrupted iterations
+spike   [  48% ] 007/150 VUs  0m28.9s/1m0s  33.00 iters/s
 
-running (0m30.0s), 011/150 VUs, 979 complete and 0 interrupted iterations
-spike   [  50% ] 011/150 VUs  0m30.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:15Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c7ed018e-2394-416f-a1a8-d63ca06ec7b4\",\"idempotencyKey\":\"0ef38a23-6834-416c-9c47-c2624e5b8448\"}" source=console
+running (0m29.9s), 013/150 VUs, 975 complete and 0 interrupted iterations
+spike   [  50% ] 013/150 VUs  0m29.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:37Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"2fc2d299-aad6-47ce-a193-5d454db4426a\",\"idempotencyKey\":\"e9b841a2-3c4b-4e17-a64e-96db40325564\"}" source=console
 
-running (0m31.0s), 008/150 VUs, 1015 complete and 0 interrupted iterations
-spike   [  52% ] 008/150 VUs  0m31.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:15Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"5f2f540a-fc3f-4a41-a538-4af8a0f53e1f\"}" source=console
+running (0m30.9s), 011/150 VUs, 1010 complete and 0 interrupted iterations
+spike   [  52% ] 011/150 VUs  0m30.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:39Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"8454908a-23d9-46fe-a8db-1317c0c49803\"}" source=console
 
-running (0m32.0s), 006/150 VUs, 1050 complete and 0 interrupted iterations
-spike   [  53% ] 006/150 VUs  0m32.0s/1m0s  33.00 iters/s
+running (0m31.9s), 009/150 VUs, 1045 complete and 0 interrupted iterations
+spike   [  53% ] 009/150 VUs  0m31.9s/1m0s  33.00 iters/s
 
-running (0m33.0s), 012/150 VUs, 1077 complete and 0 interrupted iterations
-spike   [  55% ] 012/150 VUs  0m33.0s/1m0s  33.00 iters/s
+running (0m32.9s), 012/150 VUs, 1075 complete and 0 interrupted iterations
+spike   [  55% ] 012/150 VUs  0m32.9s/1m0s  33.00 iters/s
 
-running (0m34.0s), 010/150 VUs, 1112 complete and 0 interrupted iterations
-spike   [  57% ] 010/150 VUs  0m34.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:18Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"b5cf3cc6-9528-4a70-835b-19776e9af1fb\",\"idempotencyKey\":\"703dab60-bda8-4937-a7a4-7d7d1d1733d2\"}" source=console
+running (0m33.9s), 012/150 VUs, 1108 complete and 0 interrupted iterations
+spike   [  57% ] 012/150 VUs  0m33.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:41Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"cbb621db-f242-496a-bce0-d197dadbd52e\",\"idempotencyKey\":\"733acd16-f4c2-4269-9cef-c9f7a87daf68\"}" source=console
 
-running (0m35.0s), 008/150 VUs, 1147 complete and 0 interrupted iterations
-spike   [  58% ] 008/150 VUs  0m35.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:19Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"50da0ab7-1493-47ed-8460-67d0661286a2\",\"idempotencyKey\":\"7b32858a-c374-47d7-9907-2850637c2078\"}" source=console
-time="2026-08-14T12:34:20Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5e0e428d-3b14-4adb-a75f-75151093a94f\",\"idempotencyKey\":\"9171ee96-1784-461f-8d3f-3d7053db0ba3\"}" source=console
+running (0m34.9s), 010/150 VUs, 1143 complete and 0 interrupted iterations
+spike   [  58% ] 010/150 VUs  0m34.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:42Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"e5555c05-2774-4153-9fb7-975ddb4b336b\",\"idempotencyKey\":\"00758f98-87f4-4213-87ce-4aa38df663f8\"}" source=console
 
-running (0m36.0s), 010/150 VUs, 1178 complete and 0 interrupted iterations
-spike   [  60% ] 010/150 VUs  0m36.0s/1m0s  33.00 iters/s
+running (0m35.9s), 008/150 VUs, 1178 complete and 0 interrupted iterations
+spike   [  60% ] 008/150 VUs  0m35.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:43Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"aabc7496-7b59-4dcd-b943-08981d6bd03c\"}" source=console
 
-running (0m37.0s), 011/150 VUs, 1210 complete and 0 interrupted iterations
-spike   [  62% ] 011/150 VUs  0m37.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:21Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"565394c6-c1ae-4576-998d-d2e7a24a9a62\"}" source=console
+running (0m36.9s), 012/150 VUs, 1207 complete and 0 interrupted iterations
+spike   [  62% ] 012/150 VUs  0m36.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:45Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"6daead62-20df-416d-86f3-d380a19d7a06\",\"idempotencyKey\":\"9c64d70f-36e3-4ee1-9721-391715ae624e\"}" source=console
 
-running (0m38.0s), 010/150 VUs, 1244 complete and 0 interrupted iterations
-spike   [  63% ] 010/150 VUs  0m38.0s/1m0s  33.00 iters/s
+running (0m37.9s), 008/150 VUs, 1244 complete and 0 interrupted iterations
+spike   [  63% ] 008/150 VUs  0m37.9s/1m0s  33.00 iters/s
 
-running (0m39.0s), 007/150 VUs, 1280 complete and 0 interrupted iterations
-spike   [  65% ] 007/150 VUs  0m39.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:23Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"7ca06d11-83ae-417c-b078-b283be050f54\",\"idempotencyKey\":\"5ccabcb7-244d-4e0b-9de7-5c10d9e32d25\"}" source=console
+running (0m38.9s), 009/150 VUs, 1276 complete and 0 interrupted iterations
+spike   [  65% ] 009/150 VUs  0m38.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:46Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"56f76680-046b-46bb-82e7-90b7356db458\",\"idempotencyKey\":\"48f039b5-a1c7-4838-a6f2-a4ad4ad815e4\"}" source=console
 
-running (0m40.0s), 013/150 VUs, 1307 complete and 0 interrupted iterations
-spike   [  67% ] 013/150 VUs  0m40.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:25Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"81983286-cc3d-4f65-8627-33d4c1468e45\",\"idempotencyKey\":\"06fd2d77-c184-4a4d-bb81-b23382c4a520\"}" source=console
+running (0m39.9s), 013/150 VUs, 1305 complete and 0 interrupted iterations
+spike   [  67% ] 013/150 VUs  0m39.9s/1m0s  33.00 iters/s
 
-running (0m41.0s), 010/150 VUs, 1343 complete and 0 interrupted iterations
-spike   [  68% ] 010/150 VUs  0m41.0s/1m0s  33.00 iters/s
+running (0m40.9s), 012/150 VUs, 1339 complete and 0 interrupted iterations
+spike   [  68% ] 012/150 VUs  0m40.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:48Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"09e90f38-98d3-4eb5-a81a-57430faeb56d\",\"idempotencyKey\":\"b19d0b44-e024-47db-9d97-7f84429c0df8\"}" source=console
 
-running (0m42.0s), 008/150 VUs, 1378 complete and 0 interrupted iterations
-spike   [  70% ] 008/150 VUs  0m42.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:26Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"c9328470-b671-4e1f-8e0c-d9badf30d042\"}" source=console
+running (0m41.9s), 011/150 VUs, 1373 complete and 0 interrupted iterations
+spike   [  70% ] 011/150 VUs  0m41.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:49Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"0ac2ea31-4e30-441b-acf8-d82d2ef527a9\",\"idempotencyKey\":\"0efa7bd6-fe08-4eef-b848-b96840646c9d\"}" source=console
 
-running (0m43.0s), 007/150 VUs, 1412 complete and 0 interrupted iterations
-spike   [  72% ] 007/150 VUs  0m43.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:27Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"d320152a-11cd-4bbe-be11-8a7d8ce81816\"}" source=console
+running (0m42.9s), 013/150 VUs, 1404 complete and 0 interrupted iterations
+spike   [  72% ] 013/150 VUs  0m42.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:50Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"f6aa3344-c7cc-4735-83bc-22c0cf6a3c40\",\"idempotencyKey\":\"2e50b3c7-c95f-42cb-8053-29d15afd29d1\"}" source=console
 
-running (0m44.0s), 012/150 VUs, 1440 complete and 0 interrupted iterations
-spike   [  73% ] 012/150 VUs  0m44.0s/1m0s  33.00 iters/s
+running (0m43.9s), 013/150 VUs, 1437 complete and 0 interrupted iterations
+spike   [  73% ] 013/150 VUs  0m43.9s/1m0s  33.00 iters/s
 
-running (0m45.0s), 010/150 VUs, 1475 complete and 0 interrupted iterations
-spike   [  75% ] 010/150 VUs  0m45.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:30Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"bebbf077-f520-48dc-bbab-e10144e6d9c1\",\"idempotencyKey\":\"77dc7120-9b76-47ad-a9cf-dc3ac1b00ba0\"}" source=console
+running (0m44.9s), 011/150 VUs, 1472 complete and 0 interrupted iterations
+spike   [  75% ] 011/150 VUs  0m44.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:52Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"138ee81f-39de-49dc-9923-1fef490b174d\",\"idempotencyKey\":\"661aa431-47ad-4fed-a9e1-db4c1eb6fed3\"}" source=console
 
-running (0m46.0s), 008/150 VUs, 1510 complete and 0 interrupted iterations
-spike   [  77% ] 008/150 VUs  0m46.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:30Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"07701950-4a79-4d8a-96f0-babaa97f0d0f\",\"idempotencyKey\":\"c65507f0-1cd3-4cc4-ba49-520e628e6106\"}" source=console
+running (0m45.9s), 010/150 VUs, 1506 complete and 0 interrupted iterations
+spike   [  77% ] 010/150 VUs  0m45.9s/1m0s  33.00 iters/s
 
-running (0m47.0s), 013/150 VUs, 1538 complete and 0 interrupted iterations
-spike   [  78% ] 013/150 VUs  0m47.0s/1m0s  33.00 iters/s
+running (0m46.9s), 008/150 VUs, 1541 complete and 0 interrupted iterations
+spike   [  78% ] 008/150 VUs  0m46.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:54Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"c4b6b45e-2ba0-4e90-92de-54fe3d295c77\",\"idempotencyKey\":\"d980f980-6b1c-44e6-b4d0-de9b0f94f902\"}" source=console
 
-running (0m48.0s), 011/150 VUs, 1573 complete and 0 interrupted iterations
-spike   [  80% ] 011/150 VUs  0m48.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:32Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"3b8f02de-ab55-4f75-8355-9e0bb06b2713\"}" source=console
+running (0m47.9s), 013/150 VUs, 1569 complete and 0 interrupted iterations
+spike   [  80% ] 013/150 VUs  0m47.9s/1m0s  33.00 iters/s
 
-running (0m49.0s), 009/150 VUs, 1608 complete and 0 interrupted iterations
-spike   [  82% ] 009/150 VUs  0m49.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:34Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"9e6b849f-f3f7-4e3c-aeae-dc34419c4683\",\"idempotencyKey\":\"965fac5d-5776-43a4-9c5d-d191d585cc46\"}" source=console
+running (0m48.9s), 012/150 VUs, 1603 complete and 0 interrupted iterations
+spike   [  82% ] 012/150 VUs  0m48.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:56Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"ac2ac17f-5ce1-4dcf-888a-45a72ffb8630\",\"idempotencyKey\":\"9ffe2472-8dd9-4058-a5c6-68a34a8a32e9\"}" source=console
+time="2026-08-22T11:35:56Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"5b654e9c-d36a-4f0f-aed9-145c34e30e16\"}" source=console
 
-running (0m50.0s), 006/150 VUs, 1644 complete and 0 interrupted iterations
-spike   [  83% ] 006/150 VUs  0m50.0s/1m0s  33.00 iters/s
+running (0m49.9s), 009/150 VUs, 1639 complete and 0 interrupted iterations
+spike   [  83% ] 009/150 VUs  0m49.9s/1m0s  33.00 iters/s
 
-running (0m51.0s), 013/150 VUs, 1670 complete and 0 interrupted iterations
-spike   [  85% ] 013/150 VUs  0m51.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:35Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"33bec13a-0d7b-434e-b73e-6b266e3160a7\"}" source=console
+running (0m50.9s), 013/150 VUs, 1668 complete and 0 interrupted iterations
+spike   [  85% ] 013/150 VUs  0m50.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:35:58Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"0fa0ff94-12f9-498c-806e-836f94aa16af\",\"idempotencyKey\":\"ec918a64-759d-45a2-af03-7ef6729a11fb\"}" source=console
 
-running (0m52.0s), 010/150 VUs, 1706 complete and 0 interrupted iterations
-spike   [  87% ] 010/150 VUs  0m52.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:37Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"fdc5a6ec-df77-41ea-9f98-294b46922b80\",\"idempotencyKey\":\"ec8216ae-2c3d-4bc3-b835-7b4da844e379\"}" source=console
+running (0m51.9s), 012/150 VUs, 1702 complete and 0 interrupted iterations
+spike   [  87% ] 012/150 VUs  0m51.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:36:00Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":422,\"requestId\":\"7f6ea199-2a0d-4271-a5fe-ead74f75ea03\",\"idempotencyKey\":\"fd755d62-b9d8-4ca8-afaf-09fa6f72d4e9\"}" source=console
 
-running (0m53.0s), 009/150 VUs, 1740 complete and 0 interrupted iterations
-spike   [  88% ] 009/150 VUs  0m53.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:38Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"5e22bc14-633f-4a15-8fed-d545c1604bd8\",\"idempotencyKey\":\"550b9618-c9a1-4d29-8295-0156efff7ccf\"}" source=console
+running (0m52.9s), 010/150 VUs, 1737 complete and 0 interrupted iterations
+spike   [  88% ] 010/150 VUs  0m52.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:36:00Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"4c434c8c-5611-46c1-b549-77fdab8685c3\",\"idempotencyKey\":\"d4ec2870-2fa7-4f3a-86bf-9c8c7626f877\"}" source=console
 
-running (0m54.0s), 005/150 VUs, 1777 complete and 0 interrupted iterations
-spike   [  90% ] 005/150 VUs  0m54.0s/1m0s  33.00 iters/s
+running (0m53.9s), 008/150 VUs, 1772 complete and 0 interrupted iterations
+spike   [  90% ] 008/150 VUs  0m53.9s/1m0s  33.00 iters/s
 
-running (0m55.0s), 013/150 VUs, 1802 complete and 0 interrupted iterations
-spike   [  92% ] 013/150 VUs  0m55.0s/1m0s  33.00 iters/s
+running (0m54.9s), 013/150 VUs, 1800 complete and 0 interrupted iterations
+spike   [  92% ] 013/150 VUs  0m54.9s/1m0s  33.00 iters/s
 
-running (0m56.0s), 010/150 VUs, 1838 complete and 0 interrupted iterations
-spike   [  93% ] 010/150 VUs  0m56.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:41Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"3be5b3e7-5d9a-48bb-a254-12b3daaa0dde\",\"idempotencyKey\":\"8a846af9-10e7-4107-a2ce-eced2ddfcca5\"}" source=console
+running (0m55.9s), 012/150 VUs, 1834 complete and 0 interrupted iterations
+spike   [  93% ] 012/150 VUs  0m55.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:36:03Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"9f5e8314-401f-4179-9271-eb71df92aae7\"}" source=console
 
-running (0m57.0s), 007/150 VUs, 1874 complete and 0 interrupted iterations
-spike   [  95% ] 007/150 VUs  0m57.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:41Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"08c3b8d4-5ef0-4413-8df8-da71fcd54fab\"}" source=console
+running (0m56.9s), 010/150 VUs, 1869 complete and 0 interrupted iterations
+spike   [  95% ] 010/150 VUs  0m56.9s/1m0s  33.00 iters/s
 
-running (0m58.0s), 012/150 VUs, 1902 complete and 0 interrupted iterations
-spike   [  97% ] 012/150 VUs  0m58.0s/1m0s  33.00 iters/s
-time="2026-08-14T12:34:42Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"338ef0c7-eef2-4613-844e-3b0757eebe8e\",\"idempotencyKey\":\"84676f35-f3ea-45e5-b706-f338145c1439\"}" source=console
+running (0m57.9s), 013/150 VUs, 1899 complete and 0 interrupted iterations
+spike   [  97% ] 013/150 VUs  0m57.9s/1m0s  33.00 iters/s
+time="2026-08-22T11:36:05Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":200,\"requestId\":\"3e5f9b80-0944-4572-85b2-17a152e12a46\",\"idempotencyKey\":\"8eb72c8c-e75b-4669-ba11-c12d006651f4\"}" source=console
+time="2026-08-22T11:36:05Z" level=info msg="{\"sample\":true,\"scenario\":\"spike\",\"instance\":\"http://payment-api-1:8080\",\"status\":429,\"requestId\":null,\"idempotencyKey\":\"1440c231-751f-4117-8201-59f2ea22bee4\"}" source=console
 
-running (0m59.0s), 003/150 VUs, 1944 complete and 0 interrupted iterations
-spike   [  98% ] 003/150 VUs  0m59.0s/1m0s  33.00 iters/s
+running (0m58.9s), 012/150 VUs, 1933 complete and 0 interrupted iterations
+spike   [  98% ] 012/150 VUs  0m58.9s/1m0s  33.00 iters/s
 
-running (1m00.0s), 006/150 VUs, 1974 complete and 0 interrupted iterations
-spike   [ 100% ] 006/150 VUs  1m00.0s/1m0s  33.00 iters/s
+running (0m59.9s), 010/150 VUs, 1968 complete and 0 interrupted iterations
+spike   [ 100% ] 010/150 VUs  0m59.9s/1m0s  33.00 iters/s
 
-     cap_key_0_reqs.................: 991    16.470083/s
-     cap_key_1_reqs.................: 990    16.453463/s
-     cap_status_200.................: 1111   18.464442/s
-     cap_status_422.................: 101    1.678586/s
-     cap_status_429.................: 769    12.780518/s
-     data_received..................: 764 kB 13 kB/s
+     cap_key_0_reqs.................: 991    16.447814/s
+     cap_key_1_reqs.................: 990    16.431217/s
+     cap_status_200.................: 1028   17.06191/s
+     cap_status_422.................: 115    1.908677/s
+     cap_status_429.................: 838    13.908444/s
+     data_received..................: 791 kB 13 kB/s
      data_sent......................: 800 kB 13 kB/s
-     http_req_blocked...............: avg=51.71µs  min=1.66µs   med=4.5µs    max=10.85ms  p(90)=160.5µs  p(95)=211.83µs p(99)=418.83µs
-     http_req_connecting............: avg=38.48µs  min=0s       med=0s       max=10.81ms  p(90)=121.37µs p(95)=161.75µs p(99)=318.16µs
-   ✓ http_req_duration..............: avg=182.55ms min=245.29µs med=228.04ms max=464.26ms p(90)=379.14ms p(95)=399.77ms p(99)=416.72ms
-       { expected_response:true }...: avg=182.55ms min=245.29µs med=228.04ms max=464.26ms p(90)=379.14ms p(95)=399.77ms p(99)=416.72ms
+     http_req_blocked...............: avg=100.38µs min=5.9µs    med=9.46µs   max=15.83ms  p(90)=340.83µs p(95)=411.28µs p(99)=900.22µs
+     http_req_connecting............: avg=66.89µs  min=0s       med=0s       max=15.72ms  p(90)=230.11µs p(95)=278.19µs p(99)=584.07µs
+   ✓ http_req_duration..............: avg=188.17ms min=923.63µs med=243.41ms max=491.02ms p(90)=408.55ms p(95)=427.82ms p(99)=449.65ms
+       { expected_response:true }...: avg=188.17ms min=923.63µs med=243.41ms max=491.02ms p(90)=408.55ms p(95)=427.82ms p(99)=449.65ms
      http_req_failed................: 0.00%  0 out of 1981
-     http_req_receiving.............: avg=42.28µs  min=6.5µs    med=34.54µs  max=259.16µs p(90)=78.75µs  p(95)=95.29µs  p(99)=131.54µs
-     http_req_sending...............: avg=25.74µs  min=5.79µs   med=17.62µs  max=235.12µs p(90)=51.12µs  p(95)=64.54µs  p(99)=101.12µs
-     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s       p(99)=0s
-     http_req_waiting...............: avg=182.48ms min=229.29µs med=227.98ms max=464.17ms p(90)=379.09ms p(95)=399.7ms  p(99)=416.63ms
-     http_reqs......................: 1981   32.923546/s
-     iteration_duration.............: avg=182.88ms min=366.08µs med=228.41ms max=464.5ms  p(90)=379.36ms p(95)=400.12ms p(99)=417.04ms
-     iterations.....................: 1981   32.923546/s
-     vus............................: 6      min=3         max=13
+     http_req_receiving.............: avg=137.89µs min=20.4µs   med=82.18µs  max=3.95ms   p(90)=225.72µs p(95)=382.68µs p(99)=1.12ms  
+     http_req_sending...............: avg=72.07µs  min=20.21µs  med=54.24µs  max=7.46ms   p(90)=102.61µs p(95)=132.61µs p(99)=294.97µs
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s       p(99)=0s      
+     http_req_waiting...............: avg=187.96ms min=841.65µs med=243.26ms max=490.77ms p(90)=408.24ms p(95)=427.68ms p(99)=448.87ms
+     http_reqs......................: 1981   32.879032/s
+     iteration_duration.............: avg=188.82ms min=1.32ms   med=244.15ms max=491.45ms p(90)=409.09ms p(95)=428.19ms p(99)=450.21ms
+     iterations.....................: 1981   32.879032/s
+     vus............................: 10     min=3         max=13 
      vus_max........................: 150    min=150       max=150
 
 
-running (1m00.2s), 000/150 VUs, 1981 complete and 0 interrupted iterations
+running (1m00.3s), 000/150 VUs, 1981 complete and 0 interrupted iterations
 spike ✓ [ 100% ] 000/150 VUs  1m0s  33.00 iters/s

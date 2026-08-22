@@ -1121,8 +1121,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `make config` verde; smoke prova header injetado chegando ao Edge (em ambiente com Docker)
-- [ ] Header forjado pelo cliente é sobrescrito pelo gateway
+- [x] `make config` verde; smoke prova header injetado chegando ao Edge (em ambiente com Docker)
+- [x] Header forjado pelo cliente é sobrescrito pelo gateway
 
 **Tests**: none
 **Gate**: build
@@ -1143,8 +1143,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `python3 scripts/docs/validate_docs.py` verde
-- [ ] Links, portas e variáveis novos validados pelo gate
+- [x] `python3 scripts/docs/validate_docs.py` verde
+- [x] Links, portas e variáveis novos validados pelo gate
 
 **Tests**: none
 **Gate**: build
@@ -1165,8 +1165,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] ADs registrados; ADR publicado; docs coerentes com a estratégia
-- [ ] `python3 scripts/docs/validate_docs.py` verde
+- [x] ADs registrados; ADR publicado; docs coerentes com a estratégia
+- [x] `python3 scripts/docs/validate_docs.py` verde
 
 **Tests**: none
 **Gate**: build
@@ -1187,8 +1187,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] `verify-workspace.sh` estágios estruturais + validate_docs + governança verdes
-- [ ] Tabela da revisão com status por achado
+- [x] `verify-workspace.sh` estágios estruturais + validate_docs + governança verdes
+- [x] Tabela da revisão com status por achado
 
 **Tests**: none
 **Gate**: build
@@ -1209,8 +1209,8 @@ T47 → T48 → T49 → T50
 - Skill: NONE
 
 **Done when**:
-- [ ] Veredito PASS: 1.000 req/min sustentado, avg ≤ 300ms, p99 ≤ 10s, 429 ≤ 1% no steady
-- [ ] Relatório datado commitado
+- [x] Veredito PASS: 1.000 req/min sustentado, avg ≤ 300ms, p99 ≤ 10s, 429 ≤ 1% no steady
+- [x] Relatório datado commitado
 
 **Tests**: none
 **Gate**: build

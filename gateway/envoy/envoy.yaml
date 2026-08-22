@@ -71,6 +71,16 @@ static_resources:
                           jwt_subject: "%DYNAMIC_METADATA(envoy.filters.http.jwt_authn:jwt_payload:sub)%"
                           route: "%ROUTE_NAME%"
                 http_filters: &http_filters
+                  # TEN-07/K8S-04: remove um X-Tenant-Id forjado pelo cliente antes de
+                  # qualquer outra coisa. O jwt_authn abaixo injeta o valor validado a
+                  # partir do claim na sequência — mesma ordem do equivalente K8s
+                  # (ver gateway/k8s/base/securitypolicy.yaml e httproutes.yaml).
+                  - name: envoy.filters.http.header_mutation
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.header_mutation.v3.HeaderMutation
+                      mutations:
+                        request_mutations:
+                          - remove: "X-Tenant-Id"
                   - name: envoy.filters.http.jwt_authn
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
@@ -84,6 +94,14 @@ static_resources:
                           # validação. O Edge nunca recebe o token do Keycloak e
                           # segue usando X-API-Key como autenticação de aplicação.
                           payload_in_metadata: jwt_payload
+                          # TEN-07/K8S-04: injeta X-Tenant-Id a partir do claim
+                          # "tenant_id" do JWT validado. O Edge revalida o header
+                          # contra o binding da API key de qualquer forma
+                          # (TenantResolver) - esta injeção é defesa em profundidade,
+                          # não a única barreira.
+                          claim_to_headers:
+                            - header_name: X-Tenant-Id
+                              claim_name: tenant_id
                           remote_jwks:
                             http_uri:
                               uri: http://keycloak:8080/realms/payments/protocol/openid-connect/certs
@@ -140,9 +158,9 @@ static_resources:
                               retry_on: "5xx,reset,connect-failure,refused-stream"
                               num_retries: 2
                               per_try_timeout: 2s
-                          rate_limits:
-                            - actions: [ { remote_address: {} } ]
-                            - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
+                            rate_limits:
+                              - actions: [ { remote_address: {} } ]
+                              - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
                         # POST só re-tenta falhas que garantidamente não chegaram ao
                         # upstream (conexão recusada). Reenvio de 5xx fica proibido no
                         # gateway: a idempotência é do Edge, não desta camada.
@@ -156,9 +174,9 @@ static_resources:
                             retry_policy:
                               retry_on: "connect-failure,refused-stream"
                               num_retries: 2
-                          rate_limits:
-                            - actions: [ { remote_address: {} } ]
-                            - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
+                            rate_limits:
+                              - actions: [ { remote_address: {} } ]
+                              - actions: [ { generic_key: { descriptor_value: "payment-simulations" } } ]
                         - name: v0_payment_simulations
                           match: { prefix: "/v0/payment-simulations" }
                           route:
@@ -167,9 +185,9 @@ static_resources:
                             retry_policy:
                               retry_on: "connect-failure,refused-stream"
                               num_retries: 2
-                          rate_limits:
-                            - actions: [ { remote_address: {} } ]
-                            - actions: [ { generic_key: { descriptor_value: "v0-payment-simulations" } } ]
+                            rate_limits:
+                              - actions: [ { remote_address: {} } ]
+                              - actions: [ { generic_key: { descriptor_value: "v0-payment-simulations" } } ]
                         # Allowlist explícita: o que não está acima não existe através
                         # do gateway (/admin, /auth, /prometheus são só do operador).
                         - name: not_exposed

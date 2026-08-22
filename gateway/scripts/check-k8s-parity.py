@@ -48,7 +48,7 @@ def envoy_routes(envoy_doc: dict) -> list[Route]:
                     if header.get("name") == ":method":
                         method = header["string_match"]["exact"]
                 rate_limit_key = None
-                for limit in route.get("rate_limits", []):
+                for limit in route["route"].get("rate_limits", []):
                     for action in limit.get("actions", []):
                         generic = action.get("generic_key")
                         if generic:

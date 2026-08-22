@@ -7,6 +7,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,6 +78,38 @@ class SbusMetricsUnitTest {
 
         assertEquals(12.0, registry.get("sbus_outbox_pending").gauge().value());
         verify(repository, times(2)).countByStatus(OutboxStatus.PENDING);
+    }
+
+    /**
+     * A {@code @PostConstruct} failure aborts the whole application context — Postgres being
+     * down at boot must never crash-loop the SBUS instead of starting degraded. {@code init()}'s
+     * own startup population is best-effort: it must not propagate the repository's exception,
+     * and once the database recovers the next scheduled {@link SbusMetrics#refreshCachedCounts()}
+     * must still populate the gauges normally.
+     */
+    @Test
+    void initNeverPropagatesARepositoryFailureSoAPostgresOutageAtBootNeverAbortsTheContext() {
+        OutboxEventRepository repository = mock(OutboxEventRepository.class);
+        when(repository.countByStatus(OutboxStatus.PENDING))
+                .thenThrow(new RuntimeException("Postgres unreachable"))
+                .thenReturn(9L);
+        when(repository.countUnconfirmedDeadLetters()).thenThrow(new RuntimeException("Postgres unreachable"));
+        when(repository.oldestUnconfirmedDeadLetterAgeSeconds())
+                .thenThrow(new RuntimeException("Postgres unreachable"));
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        SbusMetrics metrics = new SbusMetrics(registry, repository, mock(AvroSerde.class));
+
+        metrics.init();
+
+        assertEquals(0.0, registry.get("sbus_outbox_pending").gauge().value());
+
+        // Re-stubbing via when(mock.method()) would invoke the still-throwing previous stub
+        // before it could be replaced — doReturn(...).when(mock) sidesteps that.
+        doReturn(0L).when(repository).countUnconfirmedDeadLetters();
+        doReturn(0L).when(repository).oldestUnconfirmedDeadLetterAgeSeconds();
+        metrics.refreshCachedCounts();
+
+        assertEquals(9.0, registry.get("sbus_outbox_pending").gauge().value());
     }
 
     /** task_T35 (OBS-05): the Avro codec pool gauges must be visible in the test registry. */

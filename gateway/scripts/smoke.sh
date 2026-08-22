@@ -2,7 +2,9 @@
 # Smoke E2E através do gateway: token no Keycloak -> Envoy -> Edge -> Sbus -> Core.
 #
 # Pré-requisitos: sandbox up, payment-api/payment-sbus/payment-core-mock up, gateway up.
-#   PAYMENT_API_KEY  chave aceita pelo Edge (a mesma do payment-api/.env)
+#   PAYMENT_API_KEY  chave aceita pelo Edge (a mesma do payment-api/.env), com
+#                     payment.security.tenants vinculando seu hash a ["tenant-a"] -
+#                     o mesmo tenant_id do usuário $KC_USER no realm (TEN-07/K8S-04)
 #   GATEWAY_URL      default http://localhost:10000
 #   KEYCLOAK_URL     default http://localhost:8086
 set -euo pipefail
@@ -66,5 +68,20 @@ esac
 echo "==> 6. health passa sem token pelo gateway"
 curl -fsS "$GATEWAY_URL/health/liveness" >/dev/null || fail "health via gateway falhou"
 echo "    health OK"
+
+echo "==> 7. X-Tenant-Id forjado pelo cliente é sobrescrito pelo gateway (TEN-07/K8S-04)"
+IDEM_FORGED="smoke-gw-tenant-$(date +%s)-$RANDOM"
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY_URL/payment-simulations" \
+  -H "Authorization: Bearer $TOKEN" -H "X-API-Key: $PAYMENT_API_KEY" \
+  -H "X-Tenant-Id: forged-tenant-should-be-overwritten" \
+  -H "Idempotency-Key: $IDEM_FORGED" -H 'Content-Type: application/json' -d "$BODY")
+# Se o gateway não sobrescrevesse o header, o Edge veria um tenant sem binding
+# para esta API key e responderia 403 (TEN-01). Um código igual ao do passo 4
+# prova que o claim_to_headers do Envoy substituiu o valor forjado.
+[ "$CODE" != "403" ] || fail "X-Tenant-Id forjado não foi sobrescrito: Edge respondeu 403"
+case "$CODE" in
+  200|202|422) echo "    header forjado sobrescrito OK ($CODE)" ;;
+  *) fail "POST com header forjado retornou $CODE inesperado: $CODE" ;;
+esac
 
 echo "SMOKE PASS: gateway -> edge -> sbus -> core"

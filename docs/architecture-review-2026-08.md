@@ -171,3 +171,60 @@ A camada [`gateway`](../gateway/README.md) cobre desde já, sem tocar código: a
 rota `/v0` anônima passa a ter barreira de token na borda, retries de cliente
 ficam disciplinados (POST nunca re-tentado após alcançar o upstream) e abuso
 volumétrico é cortado antes do Edge.
+
+## Status de remediação (2026-08)
+
+Toda a remediação está registrada como a feature
+[`review-2026-08-remediation`](../.specs/features/review-2026-08-remediation/)
+(spec/design/tasks/STATE — `tasks.md` traz o commit exato de cada tarefa;
+`spec.md` traz a tabela completa de rastreabilidade por requisito, todos
+`Verified`). A tabela abaixo aponta, por achado desta revisão, a(s) tarefa(s)
+que fecharam.
+
+| Achado | Status | Tarefa(s) |
+| --- | --- | --- |
+| Crítico 1 — Idempotency-Key sem escopo de tenant | ✅ Resolvido | T1, T3, T4, T6, T7, T8, T9, T10, T11, T46 |
+| Crítico 2 — Idempotency-Key opcional | ✅ Resolvido | T5, T9 |
+| Alto 3 — chave de idempotência sem validação de tamanho/formato | ✅ Resolvido | T5 |
+| Alto 4 — publish Kafka sem orçamento na thread da requisição | ✅ Resolvido | T16 |
+| Alto 5 — filtros HTTP bloqueantes no event loop Netty | ✅ Resolvido | T17, T18 |
+| Alto 6 — housekeeping três ordens de grandeza abaixo da ingestão | ✅ Resolvido | T28 |
+| Alto 7 — backoff exponencial sem jitter | ✅ Resolvido | T27 |
+| Alto 8 — readiness acoplada a dependência não crítica | ✅ Resolvido | T29 |
+| Alto 9 — readiness de Postgres não observa exaustão do pool | ✅ Resolvido | T30 |
+| Alto 10 — `auto-register` de schema ligado em prod no Edge | ✅ Resolvido | T20 |
+| Alto 11 — payload de pagamento em log ERROR (base64) | ✅ Resolvido | T32 |
+| Alto 12 — wake-up da correlação at-most-once | ✅ Resolvido | T22 |
+| Médio — trace distribuído quebra no último salto | ✅ Resolvido | T34 |
+| Médio — janelas de idempotência divergentes (15min vs 7d) | ✅ Resolvido | T6 |
+| Médio — correlation-id do gateway não herdado | ✅ Resolvido | T23 |
+| Médio — gauges com `COUNT(*)` por scrape | ✅ Resolvido | T35 |
+| Médio — `max.poll.interval.ms` de 35min | ✅ Resolvido | T37 |
+| Médio — outbox serial + 1 thread + 3 partições | ✅ Resolvido | T38, T39, T40 |
+| Médio — fan-out do pub/sub num canal único | ✅ Resolvido | T24 |
+| Médio — `OutboxPublicationLock` frágil | ✅ Resolvido | T41 |
+| Médio — pool de codecs Avro sem métrica | ✅ Resolvido | T35, T36 |
+| Médio — DEBUG por default no logback | ✅ Resolvido | T20, T32 |
+| Médio — API key comparada sem tempo constante / em claro | ✅ Resolvido | T19 |
+| Médio — campos de negócio sem `@Size` | ✅ Resolvido | T5 |
+| Médio — versionamento de API inconsistente | ✅ Resolvido | T13, T26, T47, T48 |
+| Médio — dados de pagamento sem proteção em repouso | ✅ Resolvido (política + teste de guarda; criptografia de campo é projeto próprio, ver Out of Scope do spec.md) | T2 |
+| Baixo — `EVAL` em vez de `EVALSHA`; janela fixa admite 2× a rajada | ✅ Resolvido | T25, T33 |
+| Baixo — ordenação do outbox não preservada sob retry | ⚪ Risco aceito conscientemente — inócuo enquanto um requestId emitir só um evento terminal; reavaliar se isso mudar | nenhuma (aceito) |
+| Baixo — ausência de contract test HTTP interno Edge↔Sbus | ✅ Resolvido | T14, T15 |
+| Baixo — reaper conta rolling deploy como tentativa de falha | ✅ Resolvido | T31 |
+| Baixo — endpoints de management abertos no `payment-core-mock` | ⚪ Risco aceito conscientemente — fronteira é `NON_PRODUCTION` por decisão AD-005; padrão não deve ser copiado às fronteiras produtivas | nenhuma (aceito) |
+| Nota factual — `SbusStatusClient` sem `Authorization` no fallback | ✅ Resolvido | T21 |
+
+Achados adicionais fechados fora da revisão original (pedido explícito do
+usuário, feature própria dentro do mesmo plano): paridade do gateway em
+Kubernetes (K8S-01..05, T42-T46) e documentação/ADRs associados (T47, T48).
+
+Todos os 6 boundaries do workspace (`payment-contracts`, `payment-api`,
+`payment-sbus`, `payment-core-mock`, `feature-control`, `async-redis-service`)
+tiveram seu `./gradlew test -PwithIT` completo (Testcontainers reais, não só
+unitários) executado ao vivo nesta sessão pela primeira vez desde que T21
+introduziu a deferral — ver `.specs/STATE.md` para o detalhe de cada bug real
+encontrado e corrigido nesse processo (2 em `payment-sbus`, fora do escopo
+desta revisão: `HikariPoolHealthIndicator` vazando conexão e derrubando
+readiness, `SbusMetrics` derrubando o boot inteiro num outage do Postgres).

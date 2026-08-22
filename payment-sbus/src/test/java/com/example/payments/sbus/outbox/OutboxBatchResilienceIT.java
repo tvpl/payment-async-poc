@@ -488,7 +488,14 @@ class OutboxBatchResilienceIT {
                 Map.entry("sbus.outbox.max-attempts", 2),
                 Map.entry("sbus.outbox.base-backoff", "10ms"),
                 Map.entry("sbus.outbox.max-backoff", "10ms"),
-                Map.entry("sbus.outbox.lease", "1ms"),
+                // Every reclaim in this class is driven by ageClaim()'s explicit "now() - 5
+                // seconds" (never by the lease alone), so this only needs to comfortably
+                // separate "genuinely aged 5s ago" from "just renewed moments ago" — 1ms gave
+                // renewClaim's fresh timestamp no real margin against ordinary JVM/DB scheduling
+                // jitter, so a row renewed right before the reaper ran (see
+                // aRowReclaimedWhileItsSendIsInFlightNeverFalselyCountsAsPublished) could look
+                // just as stale as the row deliberately aged, and get wrongly reclaimed too.
+                Map.entry("sbus.outbox.lease", "1s"),
                 Map.entry("sbus.outbox.initial-delay", "1h"),
                 Map.entry("sbus.outbox.poll-interval", "1h"),
                 Map.entry("otel.traces.exporter", "none"));
