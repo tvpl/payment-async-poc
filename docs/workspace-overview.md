@@ -56,4 +56,4 @@ Este documento e os demais arquivos deste `docs/` cobrem só as decisões cross-
 O foco do fluxo principal é `payment-api` e `payment-sbus`. O Core é tratado como dependência externa simulada por `payment-core-mock`. É uma PoC profissional: base para evoluir, com decisões e trade-offs explícitos, ver [Contratos de resiliência](resilience-contracts.md).
 
 ## Ver também
-- [Arquitetura do workspace](workspace-architecture.md) · [Fluxo de pagamento](payment-flow.md) · [Glossário](glossary.md)
+- [Guia do sistema (HTML, com diagramas e simulador interativo)](system-guide.html) · [Arquitetura do workspace](workspace-architecture.md) · [Fluxo de pagamento](payment-flow.md) · [Glossário](glossary.md)

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 4,
+  "next_id": 10,
   "lessons": [
     {
       "id": "L-001",
@@ -58,6 +58,114 @@
       ],
       "created": "2026-08-14T17:08:32Z",
       "last_seen": "2026-08-14T17:08:32Z"
+    },
+    {
+      "id": "L-004",
+      "key": "gate_fail::um pool de teste com maximum pool size 1 nao sobe com micronaut flyway o flyway migra dentro da criacao do bean datasource e abre uma segunda conexao getmigrationconnection com a do schema history ainda checked out dimensione o pool em 2 e exaure segurando todas as conexoes",
+      "text": "Um pool de teste com maximum-pool-size=1 não sobe com micronaut-flyway: o Flyway migra dentro da criação do bean DataSource e abre uma segunda conexão (getMigrationConnection) com a do schema history ainda checked-out; dimensione o pool em 2 e exaure segurando todas as conexões.",
+      "signal": "gate_fail",
+      "scope": "payment-sbus/test",
+      "status": "candidate",
+      "features": [
+        "hikari-pool-health-it-red"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:174 (payment-sbus/test)"
+      ],
+      "created": "2026-08-22T13:37:30Z",
+      "last_seen": "2026-08-22T13:37:30Z"
+    },
+    {
+      "id": "L-005",
+      "key": "gate_fail::com micronaut data jdbc no classpath o bean datasource devolve conexoes context managed cujo close lanca noconnectionexception fora de connectable transactional teste que precisa de checkout cru deve desembrulhar via datasourceresolver resolve ou vaza cada conexao que pega",
+      "text": "Com micronaut-data-jdbc no classpath, o bean DataSource devolve conexões context-managed cujo close() lança NoConnectionException fora de @Connectable/@Transactional; teste que precisa de checkout cru deve desembrulhar via DataSourceResolver.resolve(...) ou vaza cada conexão que pega.",
+      "signal": "gate_fail",
+      "scope": "payment-sbus/test",
+      "status": "candidate",
+      "features": [
+        "hikari-pool-health-it-red"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "payment-sbus/src/test/java/com/example/payments/sbus/health/HikariPoolHealthIndicatorIT.java:159 (payment-sbus/test)"
+      ],
+      "created": "2026-08-22T13:37:30Z",
+      "last_seen": "2026-08-22T13:37:30Z"
+    },
+    {
+      "id": "L-006",
+      "key": "gate_fail::um teste de concorrencia nao deve provar processou em paralelo comparando duracoes razao de tempo contra baseline a margem que separa serializado de concorrente encolhe num host lento contendido ate jitter comum cruza la prefira observar sobreposicao real de threads ex threadmxbean amostrando se 2 threads estao dentro do metodo alvo no mesmo instante o sinal deixa de depender da velocidade do ambiente",
+      "text": "Um teste de concorrência não deve provar 'processou em paralelo' comparando durações (razão de tempo contra baseline): a margem que separa serializado de concorrente encolhe num host lento/contendido até jitter comum cruzá-la. Prefira observar sobreposição real de threads (ex.: ThreadMXBean amostrando se ≥2 threads estão dentro do método-alvo no mesmo instante) — o sinal deixa de depender da velocidade do ambiente.",
+      "signal": "gate_fail",
+      "scope": "payment-sbus/test",
+      "status": "candidate",
+      "features": [
+        "payment-requested-concurrency-it-flake"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "payment-sbus/src/test/java/com/example/payments/sbus/kafka/PaymentRequestedConsumerConcurrencyIT.java:118 (payment-sbus/test)"
+      ],
+      "created": "2026-08-22T15:50:08Z",
+      "last_seen": "2026-08-22T15:50:08Z"
+    },
+    {
+      "id": "L-007",
+      "key": "gate_fail::nao rode pwithit de multiplas fronteiras cada uma com seus proprios testcontainers postgres kafka apicurio redis em paralelo neste sandbox de 4 cpus 3 suites concorrentes chegaram a load average 500 e produziram um falso negativo no paymentrequestedconsumerconcurrencyit thread overlap sampler starved nao defeito real mesma suite passou limpa em isolamento logo depois sequencie gates pesados com testcontainers verifique cat proc loadavg e free h antes de rodar mais um",
+      "text": "Não rode -PwithIT de múltiplas fronteiras (cada uma com seus próprios Testcontainers: Postgres+Kafka+Apicurio+Redis) em paralelo neste sandbox de 4 CPUs — 3 suítes concorrentes chegaram a load average 500+ e produziram um falso negativo no PaymentRequestedConsumerConcurrencyIT (thread-overlap sampler starved, não defeito real: mesma suíte passou limpa em isolamento logo depois). Sequencie gates pesados com Testcontainers; verifique 'cat /proc/loadavg' e 'free -h' antes de rodar mais um.",
+      "signal": "gate_fail",
+      "scope": "process",
+      "status": "candidate",
+      "features": [
+        "workspace-boundary-reverification"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "sandbox/session-note:2026-08-22 (process)"
+      ],
+      "created": "2026-08-22T21:03:45Z",
+      "last_seen": "2026-08-22T21:03:45Z"
+    },
+    {
+      "id": "L-008",
+      "key": "gate_fail::mkdir p rodando como root cria diretorios 755 root root que o container grafana k6 uid 12345 nao root nao consegue escrever via summary export falha silenciosa permission denied o cenario continua e so o summary json some sem abortar nada chmod a rwx no diretorio de reports antes de cada rodada quando orquestrando manualmente como root",
+      "text": "mkdir -p rodando como root cria diretórios 755 root:root que o container grafana/k6 (uid=12345, não-root) não consegue escrever via --summary-export — falha silenciosa (permission denied), o cenário continua e só o .summary.json some, sem abortar nada. chmod a+rwX no diretório de reports antes de cada rodada quando orquestrando manualmente como root.",
+      "signal": "gate_fail",
+      "scope": "load/capacity",
+      "status": "candidate",
+      "features": [
+        "capacity-gate-summary-json-permission"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "load/capacity/lib.sh:run_k6_scenario (load/capacity)"
+      ],
+      "created": "2026-08-23T11:36:28Z",
+      "last_seen": "2026-08-23T11:36:28Z"
+    },
+    {
+      "id": "L-009",
+      "key": "spec_precision_gap::reconcile py roda seu polling fallback duravel imediatamente apos o cenario k6 terminar antes do recovery sh ou do proprio restore do slowdown sh drenar o backlog para um cenario que deliberadamente deixa requisicoes em voo slowdown isso conta backlog esperado como lost cap 02 contagem identica 52 90 reproduzida em dois profiles com velocidades de core muito diferentes e o sinal de que e timing do gate nao perda dependente do sistema",
+      "text": "reconcile.py roda seu polling+fallback durável imediatamente após o cenário k6 terminar, antes do recovery.sh (ou do próprio restore do slowdown.sh) drenar o backlog — para um cenário que deliberadamente deixa requisições em voo (slowdown), isso conta backlog esperado como 'lost' (CAP-02). Contagem idêntica (52/90) reproduzida em dois profiles com velocidades de Core muito diferentes é o sinal de que é timing do gate, não perda dependente do sistema.",
+      "signal": "spec_precision_gap",
+      "scope": "load/capacity",
+      "status": "candidate",
+      "features": [
+        "capacity-gate-slowdown-reconcile-timing"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "load/capacity/reconcile.py:main (load/capacity)"
+      ],
+      "created": "2026-08-23T11:36:28Z",
+      "last_seen": "2026-08-23T11:36:28Z"
     }
   ]
 }
