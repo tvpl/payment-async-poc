@@ -108,5 +108,5 @@ Essa raiz não usa `payment-contracts`, Kafka, `payment-sbus` ou Postgres. Ela e
 | Gateway de borda opcional e fora do caminho dos testes | Demonstra a separação canal (OIDC/mTLS/rate limit no Envoy) vs. aplicação (`X-API-Key`, idempotência no Edge) sem tocar código; testes rápidos continuam indo direto ao Edge | Duas camadas de auth para manter coerentes; E2E completo exige subir mais um compose ([ADR 0001 do gateway](../gateway/docs/adr/0001-envoy-as-nonproduction-guardrail.md)) |
 
 ## Ver também
-- [Visão geral do workspace](workspace-overview.md) · [Fluxo de pagamento](payment-flow.md) · [Ownership de dados](data-ownership.md) · [Contratos de resiliência](resilience-contracts.md)
+- [Guia do sistema (HTML, com diagramas e simulador interativo)](system-guide.html) · [Visão geral do workspace](workspace-overview.md) · [Fluxo de pagamento](payment-flow.md) · [Ownership de dados](data-ownership.md) · [Contratos de resiliência](resilience-contracts.md)
 - `architecture.md` de cada raiz: [payment-api](../payment-api/docs/architecture.md) · [payment-sbus](../payment-sbus/docs/architecture.md) · [payment-contracts](../payment-contracts/docs/architecture.md)

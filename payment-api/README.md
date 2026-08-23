@@ -32,8 +32,9 @@ cp .env.example .env                       # preencha PAYMENT_API_KEY
 docker compose --env-file .env up --build api
 ```
 
-`POST /payment-simulations` exige o header `X-API-Key`. `Idempotency-Key` é opcional, mas sem ele
-cada submissão é uma identidade nova.
+`POST /payment-simulations` exige os headers `X-API-Key` e `Idempotency-Key` (AD-009); uma requisição
+sem `Idempotency-Key` é rejeitada com `400`, exatamente para impedir que uma resubmissão sem chave
+vire uma identidade nova por acidente.
 
 ## Dependências externas e contratos
 
