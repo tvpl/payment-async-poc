@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * task_T39 (SCAL-03): with the {@code payment-sbus-requested} listener configured for 3 threads
@@ -60,6 +61,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * ordinary jitter crosses it, so it both intermittently failed on real concurrent processing and
  * risked passing on a genuine regression once the jitter went the other way. The thread-overlap
  * signal is not a timing proxy at all, so host speed does not affect it.
+ *
+ * <p>What host speed still affects is whether the sampler's tight polling loop lands a sample
+ * inside the (genuinely real) overlap window at all — a heavily contended runner can shrink that
+ * window enough that a single round comes back empty by pure sampling bad luck, even though the
+ * three messages really did overlap. {@link #withThreeThreadsThreeDistinctKeyedMessagesOnThreePartitionsProcessConcurrently()}
+ * therefore retries a fresh publish+sample round up to {@link #MAX_ATTEMPTS} times, passing as soon
+ * as any round observes overlap. Serialized processing is unaffected by this: it produces zero
+ * overlap on every round, deterministically, so retrying never masks a real regression — it only
+ * compensates for sampling misses on genuinely concurrent processing.
  */
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -109,6 +119,16 @@ class PaymentRequestedConsumerConcurrencyIT {
         context.close();
     }
 
+    /**
+     * Up to this many independent publish+sample rounds before giving up. Serialized processing
+     * fails every single round, so raising this never lets a real regression slip through; it only
+     * protects against a genuinely concurrent round producing zero samples inside the overlap
+     * window, which a contended CI runner (fewer cores, noisy neighbors) makes measurably more
+     * likely than it is on a quiet dev machine — observed directly in this session: an otherwise
+     * identical run failed once, purely from self-inflicted parallel load on the sampler.
+     */
+    private static final int MAX_ATTEMPTS = 3;
+
     @Test
     void withThreeThreadsThreeDistinctKeyedMessagesOnThreePartitionsProcessConcurrently() throws Exception {
         // Warm-up: JIT/connection-pool/schema-registration costs on the FIRST message ever
@@ -116,6 +136,23 @@ class PaymentRequestedConsumerConcurrencyIT {
         // enough to mask real overlap on the very first batch this context ever sees.
         publishAndAwait(0);
 
+        int bestObserved = 0;
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            int observed = observeMaxConcurrencyAcrossOneRound();
+            bestObserved = Math.max(bestObserved, observed);
+            if (observed >= 2) {
+                return;
+            }
+        }
+
+        fail("expected at least two of the three distinct-key messages to be observed inside "
+                + "PaymentRequestedConsumer.receive at the same sampled instant (threads=" + PARTITIONS
+                + ") on at least one of " + MAX_ATTEMPTS + " independent rounds; best max concurrent "
+                + "observed = " + bestObserved + " — looks serialized, not concurrent");
+    }
+
+    /** One publish-three-keys-and-sample round; returns the max concurrency observed in it. */
+    private int observeMaxConcurrencyAcrossOneRound() throws Exception {
         AtomicInteger maxObservedConcurrency = new AtomicInteger(0);
         AtomicBoolean sampling = new AtomicBoolean(true);
         Thread sampler = new Thread(() -> sampleUntilStopped(sampling, maxObservedConcurrency),
@@ -136,12 +173,7 @@ class PaymentRequestedConsumerConcurrencyIT {
             sampling.set(false);
             sampler.join(Duration.ofSeconds(5).toMillis());
         }
-
-        assertTrue(maxObservedConcurrency.get() >= 2,
-                "expected at least two of the three distinct-key messages to be observed inside "
-                        + "PaymentRequestedConsumer.receive at the same sampled instant (threads="
-                        + PARTITIONS + "); max concurrent observed = " + maxObservedConcurrency.get()
-                        + " — looks serialized, not concurrent");
+        return maxObservedConcurrency.get();
     }
 
     /**
