@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 8,
+  "next_id": 10,
   "lessons": [
     {
       "id": "L-001",
@@ -130,6 +130,42 @@
       ],
       "created": "2026-08-22T21:03:45Z",
       "last_seen": "2026-08-22T21:03:45Z"
+    },
+    {
+      "id": "L-008",
+      "key": "gate_fail::mkdir p rodando como root cria diretorios 755 root root que o container grafana k6 uid 12345 nao root nao consegue escrever via summary export falha silenciosa permission denied o cenario continua e so o summary json some sem abortar nada chmod a rwx no diretorio de reports antes de cada rodada quando orquestrando manualmente como root",
+      "text": "mkdir -p rodando como root cria diretórios 755 root:root que o container grafana/k6 (uid=12345, não-root) não consegue escrever via --summary-export — falha silenciosa (permission denied), o cenário continua e só o .summary.json some, sem abortar nada. chmod a+rwX no diretório de reports antes de cada rodada quando orquestrando manualmente como root.",
+      "signal": "gate_fail",
+      "scope": "load/capacity",
+      "status": "candidate",
+      "features": [
+        "capacity-gate-summary-json-permission"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "load/capacity/lib.sh:run_k6_scenario (load/capacity)"
+      ],
+      "created": "2026-08-23T11:36:28Z",
+      "last_seen": "2026-08-23T11:36:28Z"
+    },
+    {
+      "id": "L-009",
+      "key": "spec_precision_gap::reconcile py roda seu polling fallback duravel imediatamente apos o cenario k6 terminar antes do recovery sh ou do proprio restore do slowdown sh drenar o backlog para um cenario que deliberadamente deixa requisicoes em voo slowdown isso conta backlog esperado como lost cap 02 contagem identica 52 90 reproduzida em dois profiles com velocidades de core muito diferentes e o sinal de que e timing do gate nao perda dependente do sistema",
+      "text": "reconcile.py roda seu polling+fallback durável imediatamente após o cenário k6 terminar, antes do recovery.sh (ou do próprio restore do slowdown.sh) drenar o backlog — para um cenário que deliberadamente deixa requisições em voo (slowdown), isso conta backlog esperado como 'lost' (CAP-02). Contagem idêntica (52/90) reproduzida em dois profiles com velocidades de Core muito diferentes é o sinal de que é timing do gate, não perda dependente do sistema.",
+      "signal": "spec_precision_gap",
+      "scope": "load/capacity",
+      "status": "candidate",
+      "features": [
+        "capacity-gate-slowdown-reconcile-timing"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "load/capacity/reconcile.py:main (load/capacity)"
+      ],
+      "created": "2026-08-23T11:36:28Z",
+      "last_seen": "2026-08-23T11:36:28Z"
     }
   ]
 }

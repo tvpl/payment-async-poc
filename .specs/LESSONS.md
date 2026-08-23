@@ -56,6 +56,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: sandbox/session-note:2026-08-22 (process)
 - last seen: 2026-08-22T21:03:45Z
 
+### L-008 - mkdir -p rodando como root cria diretórios 755 root:root que o container grafana/k6 (uid=12345, não-root) não consegue escrever via --summary-export — falha silenciosa (permission denied), o cenário continua e só o .summary.json some, sem abortar nada. chmod a+rwX no diretório de reports antes de cada rodada quando orquestrando manualmente como root.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `load/capacity` · harmful: 0
+- features: capacity-gate-summary-json-permission
+- evidence: load/capacity/lib.sh:run_k6_scenario (load/capacity)
+- last seen: 2026-08-23T11:36:28Z
+
+### L-009 - reconcile.py roda seu polling+fallback durável imediatamente após o cenário k6 terminar, antes do recovery.sh (ou do próprio restore do slowdown.sh) drenar o backlog — para um cenário que deliberadamente deixa requisições em voo (slowdown), isso conta backlog esperado como 'lost' (CAP-02). Contagem idêntica (52/90) reproduzida em dois profiles com velocidades de Core muito diferentes é o sinal de que é timing do gate, não perda dependente do sistema.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `load/capacity` · harmful: 0
+- features: capacity-gate-slowdown-reconcile-timing
+- evidence: load/capacity/reconcile.py:main (load/capacity)
+- last seen: 2026-08-23T11:36:28Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
