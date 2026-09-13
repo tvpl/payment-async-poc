@@ -63,7 +63,7 @@ dependencies {
     // Trivy (SEC-08) flagged HIGH/CRITICAL CVEs on the Netty/Kafka-clients versions the
     // Micronaut BOM still pins as of micronautVersion above; force the fixed versions confirmed
     // resolvable on Maven Central rather than waiting on the next BOM release.
-    implementation platform('io.netty:netty-bom:4.2.17.Final')
+    implementation platform('io.netty:netty-bom:4.2.18.Final')
     implementation "org.apache.kafka:kafka-clients:3.9.2"
 
     implementation "com.example.payments:payment-contract-model:${contractsVersion}"
