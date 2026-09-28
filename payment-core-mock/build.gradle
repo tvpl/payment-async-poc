@@ -81,7 +81,7 @@ dependencies {
     runtimeOnly 'org.yaml:snakeyaml'
 
     testImplementation 'io.micronaut.test:micronaut-test-junit5'
-    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+    testImplementation platform('org.testcontainers:testcontainers-bom:2.0.5')
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:kafka'
     testImplementation 'org.testcontainers:junit-jupiter'
