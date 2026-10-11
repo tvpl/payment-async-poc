@@ -34,7 +34,7 @@ dependencies {
     // Trivy (SEC-08) flagged HIGH/CRITICAL CVEs on the Netty version the Micronaut BOM still
     // pins as of micronautVersion above; force the fixed version confirmed resolvable on Maven
     // Central rather than waiting on the next BOM release.
-    implementation platform('io.netty:netty-bom:4.2.17.Final')
+    implementation platform('io.netty:netty-bom:4.2.19.Final')
 
     implementation 'io.micronaut:micronaut-http-server-netty'
     implementation 'io.micronaut.serde:micronaut-serde-jackson'
