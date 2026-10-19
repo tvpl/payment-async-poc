@@ -87,7 +87,7 @@ dependencies {
 
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
-    runtimeOnly 'net.logstash.logback:logstash-logback-encoder:7.4'
+    runtimeOnly 'net.logstash.logback:logstash-logback-encoder:9.0'
     runtimeOnly 'ch.qos.logback:logback-classic'
     runtimeOnly 'org.yaml:snakeyaml'
 
