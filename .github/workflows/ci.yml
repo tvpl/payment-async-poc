@@ -59,7 +59,7 @@ jobs:
           java-version: "21"
       - name: Set up Gradle
         if: ${{ !contains(fromJSON('["sandbox","gateway"]'), matrix.boundary) }}
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
       # Cross-boundary deps resolve by GAV from a sibling boundary's build output, which a fresh
       # checkout does not have (build/ is gitignored). Without this, payment-api/payment-sbus/
       # payment-core-mock fail on "Could not find com.example.payments:payment-contract-model".
@@ -131,7 +131,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Publish prerequisite artifacts
         if: contains(fromJSON('["payment-api","payment-sbus"]'), matrix.boundary)
         run: |
@@ -201,7 +201,7 @@ jobs:
       - uses: github/codeql-action/init@v3
         with:
           languages: java-kotlin
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Compile every standalone root for CodeQL
         run: |
           # Publish first: the consumer roots resolve contracts/feature-control by GAV from a
